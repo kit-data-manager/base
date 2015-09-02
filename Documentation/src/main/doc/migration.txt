@@ -1,0 +1,46 @@
+Migration of Digital Objects
+----------------------------
+The migration tools for digital objects provide extraction and insertion of digital objects in order 
+to move digital objects between two or more KIT-DM repository instances. 
+
+The Utils module (maven module) contains the migration code. The class `CreateMigrationObject` and 
+`MigrateObject` extract and insert a migration object (class `MirgrationObject`) as an xml file to 
+the given path. Currently it is hard coded. 
+
+The state of the metadata migration is depicted in the following table.
+
+[width="60%",frame="topbot",options="header"]
+|=======================================
+|Component        |Extraction |Insertion
+|Basemetadata     |done       |done
+|DataOrganization |-          |-
+|Data             |-          |-
+|=======================================
+
+As soon as all components are available, a migration tool will wrap all the components into
+a nice command line client. There is an idea about creating an RESTful migration service 
+but it is not necessary to decide yet.
+
+Implementation
+~~~~~~~~~~~~~~
+The migration from the xml file to the destination repository will check if the entities are 
+already present in the destination repository. If something is missing, it will be added. 
+This is necessary because two digital objects from the same investigation will not create 
+two different investigations.
+
+The following section contains technical terms. Please make sure you have an idea of the JPA and JAXB.
+
+During the ingest procedure, the KIT-DM generates metadata and stores them in a relational database. 
+For migration, the relational data is converted to xml with the help of JAXB. The KIT-DM specific 
+representation of the data entities contains cycles, which cannot be handled with JAXB. In addition, 
+the JPA creates a big structure, where only a part of it is necessary. 
+
+To create the migration xml file the class MigrationObject is composed, which contains all 
+entities. The connection between the entities is established with the primary keys of the 
+origin repository. During the insertion, the primary keys are not set for new entities in 
+the destination repository because they will have different primary keys. 
+
+The fact, that primary keys change makes it necessary to identify entities uniquely. This 
+is difficult for entities without a unique identifier like `Relation` or `Participant`. 
+For those entities, the IDs of the related entities will be used for identification.
+

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <groupId>edu.kit.dama</groupId>
+    <artifactId>KITDM</artifactId>
+    <version>1.1</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>edu.kit.dama.rest</groupId>
+  <artifactId>RestInterfaces</artifactId>
+  <name>RestInterfaces</name>
+  <packaging>pom</packaging>
+  <version>1.1</version>
+  
+  <description>Module holding all REST interfaces available for KIT Data Manager. The actual implementation of each interface are in separate modules, 
+    e.g. in module REST-DataOrganization or REST-Sharing as sub-modules of MetaDataManagement or inside the StagingClient module as sub-module of the Staging
+    module.
+  </description>
+    
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <projectName>RestInterfaces</projectName>
+    <firstName>Thomas</firstName>
+    <lastName>Jejkal</lastName>
+    <nameId>mf6319</nameId>
+  </properties>
+  
+  <developers>
+    <developer>
+      <id>${nameId}</id>
+      <name>${firstName} ${lastName}</name>
+      <email>${firstName}.${lastName}@kit.edu</email>
+      <organization>Karlsruhe Institute of Technology (KIT)</organization>
+      <roles>
+        <role>Project manager</role>
+      </roles>
+      <timezone>1</timezone>
+    </developer>
+  </developers>
+
+  <profiles>
+    <profile>
+      <id>generate-doc</id>
+      <activation>
+        <property>
+          <name>assembleMode</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <!--Create Rest documentation-->
+          <plugin>
+            <groupId>com.qmino</groupId>
+            <artifactId>miredot-maven-plugin</artifactId>
+            <version>1.4.1</version>
+            <executions>
+              <execution>
+                <id>miredot</id>
+                <phase>package</phase> 
+                <goals>
+                  <goal>restdoc</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <statusCodes>
+                <statusCode>
+                  <httpCode>200</httpCode>
+                  <document>always</document>
+                  <defaultMessage>The service call has completed successfully.</defaultMessage>
+                </statusCode>
+                <statusCode>
+                  <httpCode>403</httpCode>
+                  <document>always</document>
+                  <defaultMessage>The user is not allowed to perform this operation.</defaultMessage>
+                </statusCode>
+                <statusCode>
+                  <httpCode>404</httpCode>
+                  <document>always</document>
+                  <defaultMessage>The requested resource was not found.</defaultMessage>
+                </statusCode>
+                <statusCode>
+                  <httpCode>412</httpCode>
+                  <document>put,post</document>
+                  <defaultMessage>Invalid JSON/XML input.</defaultMessage>
+                </statusCode>
+                <statusCode>
+                  <httpCode>500</httpCode>
+                  <document>always</document>
+                  <defaultMessage>The service call has not succeeded.</defaultMessage>
+                </statusCode>
+              </statusCodes>
+              <visibility>
+                <ALL>NONE</ALL>
+                <FIELD>ANY</FIELD>
+              </visibility>
+              <title>
+                <strategy>tag: summary</strategy>
+                <strategy>tag: title</strategy>
+                <strategy>firstsentence</strategy>
+              </title>
+            </configuration>
+          </plugin>	
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.1.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet.jsp</groupId>
+      <artifactId>jsp-api</artifactId>
+      <version>2.1</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-server</artifactId>
+      <version>1.8</version>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.jersey</groupId>
+      <artifactId>jersey-client</artifactId>
+      <version>1.8</version>
+    </dependency>
+    <dependency>
+      <groupId>com.qmino</groupId>
+      <artifactId>miredot-annotations</artifactId>
+      <version>1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>edu.kit.dama</groupId>
+      <artifactId>Authorization</artifactId>
+      <version>1.1</version>
+    </dependency>
+    <dependency>
+      <groupId>edu.kit.dama</groupId>
+      <artifactId>Commons</artifactId>
+      <version>1.1</version>
+    </dependency>
+  </dependencies>
+   
+  <modules>
+    <module>ClientBase</module>
+    <module>ServiceBase</module>
+    <module>StagingRestInterface</module>
+    <module>UserGroupRestInterface</module>
+    <module>BaseMetaDataRestInterface</module>
+    <module>DataOrganizationRestInterface</module>
+    <module>SharingRestInterface</module>
+    <module>DataWorkflowRestInterface</module>
+  </modules>
+</project>

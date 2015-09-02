@@ -1,0 +1,50 @@
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  </head>
+  <body>
+    <h2>Core package for MetaDataManagement</h2>
+    This API implements an interface for persisting java instances. This module
+    also contains all implementation for this interface. The configuration
+    of the implemetations is done via a xml config file.
+    The configuration contains:
+    <ul>
+      <li>implementation label</li>
+      <li>implementation class</li>
+      <li>supported 'persistence units'</li>
+    </ul>
+    
+    The MetaDataManagement is implemented as a singleton and holds all implementations
+    and its persistence units. 
+    The interface MetaDataManager provides all methods for persist instances.
+    There should be only one instance of MetaDataManager for each 'persistence unit'.
+    (recommended)
+    
+    The following class diagram shows the structure of this package:
+    <img src="UML_MDM-Core.png" />
+    
+    <h3>Usage:</h3>
+    <ol> 
+      <li>get 'MetaDataManagement' (mdm = MetaDataManagement.getMetaDataManagement())</li>
+      <li>get all possible implementations (List impls = mdm.getAllImplementations())</li>
+      <li>get all persistence units of an implementation (units = mdm.getAllPersistenceUnits(impl.get(0))</li>
+      <li>get 'MetaDataManager' (mdm.getMetaDataManager(impls.get(0), units.get(0))</li>
+    </ol>
+    <h2>Interface MetaDataManager</h2>
+    The interface supports the following tasks:
+    <ul>
+      <li>is instance already persisted</li>
+      <li>persist instance</li>
+      <li>update instance</li>
+      <li>find instance by primary key</li>
+      <li>find all instances of a given class</li>
+      <li>find all instances in a given range</li>
+    </ul>
+  </body>
+</html>

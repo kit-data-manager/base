@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C)2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>edu.kit.dama</groupId>
+    <artifactId>KITDM</artifactId>
+    <version>1.1</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <groupId>edu.kit.dama</groupId>
+  <artifactId>Documentation</artifactId>
+  <name>Documentation</name>
+  <packaging>jar</packaging>
+  <version>1.1</version>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <projectName>Documentation</projectName>
+    <firstName>Thomas</firstName>
+    <lastName>Jejkal</lastName>
+    <nameId>jejkal</nameId>
+  </properties>
+  <developers>
+    <developer>
+      <id>${nameId}</id>
+      <name>${firstName} ${lastName}</name>
+      <email>${firstName}.${lastName}@kit.edu</email>
+      <organization>Karlsruhe Institute of Technology (KIT)</organization>
+      <roles>
+        <role>Project manager</role>
+      </roles>
+      <timezone>1</timezone>
+    </developer>
+  </developers>
+    
+  <description>Documentation/Manual of KIT Data Manager</description>
+   
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.asciidoctor</groupId>
+        <artifactId>asciidoctor-maven-plugin</artifactId>
+        <version>1.5.0</version>
+        <executions>
+          <execution>
+            <id>output-html</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>process-asciidoc</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <sourceDirectory>src/main/doc/</sourceDirectory>
+          <sourceDocumentName>documentation.txt</sourceDocumentName>
+          <sourceHighlighter>highlightjs</sourceHighlighter>
+          <backend>html5</backend>
+          <attributes>
+             <!--stylesheet>flask.css</stylesheet-->
+          </attributes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>	
+</project>

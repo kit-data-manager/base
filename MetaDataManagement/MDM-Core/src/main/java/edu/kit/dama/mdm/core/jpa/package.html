@@ -1,0 +1,41 @@
+<!--
+
+    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+  <head>
+    <title>JPA reference implementation of KIT Data Manager MetaDataManagement.</title>
+  </head>
+  <body>
+    <h1> Description of package</h1>
+    The package contains the reference implementations of the KIT Data Manager MetaDataManagement. 
+    This implementation wraps the Java Persistence API (JPA) and allows to access relational databases of various types. 
+    However, there are some limitations compared to using JPA directly:
+    <ul>
+      <li>No Caching - Caches are actively empties whereever possible. Caching should also be disabled in the persistence.xml. 
+        This decision was mainly made due to problems with caching and committing entities between multiple instances of the MetaDataManagement.</li>
+      <li>No Thread-Safety (similar to JPA) - The implementation class MetaDataManagerJpa is not thread-safe (comparable to EntityManager in JPA). 
+        An instance should not be used by multiple threads. Please call MetaDataManagement.getMetaDataManagement().getMetaDataManager() 
+        each time you want to access the database and close the returned IMetaDataManager using close() if not longer needed to free resources.</li>
+      <li>No control over transactions - Transactions are handled in the recommended way automatically in the background. However, due to the missing caching features 
+        for each modify operation a transaction is used and there is no way perform multiple operations within one transaction.</li>
+      <li>Decreased Performance - Mainly due to the missing support for caching the performance might be lower compared to using JPA directly.</li>
+    </ul>
+    By default the EclipseLink JPA implementation is used and was tested. Other JPA implementation may also work out of the box but are not supported directly.
+  </body>
+</html>

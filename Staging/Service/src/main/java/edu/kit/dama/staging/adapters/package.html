@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--
+Copyright 2014 Karlsruhe Institute of Technology.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<html>
+  <head>
+    <title>Staging Adapters</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <p>Adapter implementations that can be configured and used within the StagingService. These Adapters are intended to be used to configure how and where related service are 
+    accessed. In the default scenario all services needed for Staging (Ingest-/DownloadInformationService, StorageVirtualization and DataOrganization) are located on the same 
+    machine within the same virtual machine and can be accessed directly. In more sophisticated use cases, e.g. the StorageVirtualization could access external storage services
+    that might be located on a remote site and need special configuration. In this case a new StorageVirtualizationAdapter would be necessary.</p>
+  </body>
+</html>

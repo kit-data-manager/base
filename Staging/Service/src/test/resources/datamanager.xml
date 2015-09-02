@@ -1,0 +1,130 @@
+
+<!--
+Copyright 2015 Karlsruhe Institute of Technology.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<config>
+  <general>
+    <systemMailAddress>noreply@datamanager.kit.edu</systemMailAddress>
+    <mailServer>smtp.kit.edu</mailServer>
+    <globalSecret>qr2I9Hyp0CBhUUXj</globalSecret>
+    <!--The base URL of your Web application, e.g. http://localhost:8080/MyApp.
+    -->
+    <baseUrl>http://localhost:8889/PubRepoUI</baseUrl>
+    <productionMode>false</productionMode>
+  </general>
+  <!--
+  Liferay-related settings.
+  -->
+  <liferay>
+    <!--The primary key of the default company. This value is needed as queries for Liferay users must be linked to a company id.
+    By default, all Liferay users are in the default company identified by this id. 
+    -->
+    <defaultCompanyId>10000</defaultCompanyId>
+  </liferay>
+  <!--
+  Elasticsearch-related settings.
+  -->
+  <elasticsearch>
+    <!--The cluster name used by KIT Data Manager to publish metadata.-->
+    <cluster>KITDataManager</cluster>
+    <!--The hostname of the node where metadata should be published to.-->
+    <host>localhost</host>
+    <!--The port of the Elasticsearch instance, typically 9300.-->
+    <port>9300</port>
+    <!--The default index which is queries for metadata. 
+    The index to which metadata is published depends on the published metadata schema.
+    -->
+    <index>dc</index>
+    <!--The search key which contains the fulltext representation of an entire documents. 
+    The availability of this key depends on the metadata stored in the document.
+    -->
+    <fulltextKey>es.fulltext</fulltextKey>
+  </elasticsearch>
+
+  <!--
+  MetaDataManagement related config.
+  -->
+  <MetaDataManagement>
+    <PersistenceImplementations>
+      <PersistenceImplementation>
+        <Name>JPA</Name>
+        <Class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</Class>
+        <PersistenceUnits>
+          <!-- All databases which have to be supported by this implementation. 
+          Attention: Labels should be the same for all implementations. -->
+          <PersistenceUnit>MDM-Core</PersistenceUnit>  
+          <PersistenceUnit>MDM-Core-Test</PersistenceUnit>  
+          <PersistenceUnit>MDM-DigitalObjects</PersistenceUnit>  
+          <PersistenceUnit>MDM-DigitalObjects-Test</PersistenceUnit>  
+          <PersistenceUnit>MDM-Microscopy</PersistenceUnit>  
+          <PersistenceUnit>MDM-Microscopy-Test</PersistenceUnit>  
+          <PersistenceUnit>MDM-Lifecycle</PersistenceUnit>  
+          <PersistenceUnit>MDM-Lifecycle-Test</PersistenceUnit>  
+          <PersistenceUnit>MDM-Admin</PersistenceUnit>  
+          <PersistenceUnit>MDM-Admin-Test</PersistenceUnit>  
+          <PersistenceUnit>MDM-DataIngest</PersistenceUnit>  
+          <PersistenceUnit>MDM-DataIngest-Test</PersistenceUnit>  
+          <PersistenceUnit>MDM-DataWorkflow</PersistenceUnit>  
+          <PersistenceUnit>MDM-DataWorkflow-Test</PersistenceUnit>  
+          <PersistenceUnit>MDM-DataOrganization</PersistenceUnit>  
+          <PersistenceUnit>MDM-DataOrganization-Test</PersistenceUnit>  
+          <PersistenceUnit>MDM-Query</PersistenceUnit>  
+          <PersistenceUnit>MDM-Query-Test</PersistenceUnit>  
+          <PersistenceUnit>Staging_Test</PersistenceUnit>  
+        </PersistenceUnits>
+      </PersistenceImplementation>  
+    </PersistenceImplementations>
+  </MetaDataManagement>  
+  <!--
+  JPA-related settings.
+  -->
+  <persistence>
+    <!--The default persistence unit for KIT Data Manager Staging services.
+    Currently, staging persistence does not support the KIT Data Manager MetaDataManagement. 
+    Therefore, they are configured separately. After switching to KIT Data Manager MetaDataManagement in the next version, 
+    this setting will be deprecated.
+    -->
+    <stagingPU>StagingUnit</stagingPU>
+    <!--The default persistence unit for KIT Data Manager Authorization services.
+    Due to its complexity, the generic nature of KIT Data Manager MetaDataManagement is not feasible for Authorization services.
+    Therefore, they will be configured separately also in future releases.
+    -->
+    <authorizationPU>AuthorizationPU</authorizationPU>
+  </persistence>
+  <!--
+  Staging-related configuration.
+  -->
+  <staging>   
+    <adapters>
+      <dataOrganizationAdapter class="edu.kit.dama.staging.adapters.DefaultDataOrganizationServiceAdapter" target="LOCAL"/>        
+      <ingestInformationServiceAdapter class="edu.kit.dama.staging.adapters.DefaultIngestInformationServiceAdapter" target="LOCAL"/>
+      <downloadInformationServiceAdapter class="edu.kit.dama.staging.adapters.DefaultDownloadInformationServiceAdapter" target="LOCAL"/>
+      <storageVirtualizationAdapter class="edu.kit.dama.staging.adapters.DefaultStorageVirtualizationAdapter" target="LOCAL">
+        <archiveUrl>file://$tmp</archiveUrl>
+        <pathPattern>$year/$month/$day/$owner</pathPattern>
+      </storageVirtualizationAdapter>
+    </adapters>
+    
+    <remoteAccess>
+      <restUrl>http://localhost/KITDM/rest/staging/StagingService/</restUrl>
+    </remoteAccess>
+       
+    <mailNotifier>
+      <mailServer>smtp.kit.edu</mailServer>
+      <sender>noreply@localhost.kit.edu</sender>
+    </mailNotifier>
+    
+  </staging>
+</config>

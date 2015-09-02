@@ -1,0 +1,780 @@
+Administration UI
+-----------------
+
+The Administration UI, shortly *AdminUI*, is a straightforward web application 
+for administrating users and user groups, registered at KIT Data Manager. 
+It further allows an effortless configuration of all required staging components.
+
+[[ChapterLogin]]
+Login
+~~~~~
+
+For accessing AdminUI enter the required credentials in the AdminUI's login-form 
+and confirm them by clicking the left-hand login-button.
+
+[[Login]]
+image::Login.png[Login, align="center"]
+
+[horizontal]
+`Email`:: Text field expecting the email address which has been defined as one 
+of two credentials while registration for accessing AdminUI
+
+`Password`:: Text field expecting the password which has been defined as second 
+credential to access AdminUI
+
+`Login`:: Button for accessing AdminUI with given credentials
+
+`Register`:: Button leading to the AdminUI’s registration-form
+
+'''
+
+[NOTE]
+Base for a successful login is a previous, one-time registration. If you 
+are not registered yet, make up for it by clicking the right-hand register-button. 
+For further information read the corresponding <<ChapterRegistration,chapter>>.
+
+'''
+
+[[ChapterRegistration]]
+Registration
+~~~~~~~~~~~~
+
+For using the KIT Data Manager services, it is necessary to register as user via 
+the registration-form that is reached through the right-hand button of the 
+AdminUI's <<ChapterLogin,login-panel>>. Please enter requested 
+registration details and confirm them by clicking the left-hand register-button. 
+In case of success you are led back to the login-panel from which the AdminUI 
+can now be accessed.
+
+[[Registration]]
+image::Registration.png[Registration, align="center"]
+
+[horizontal]
+`Screen_Name`:: Text field expecting the name that will be used as unique
+identifier within the KIT Data Manager context
+
+`Email`:: Text field expecting the email address used as first credential for
+logging on to AdminUI
+
+`Last_Name`:: Text field expecting the user's last name for identification
+
+`First_Name`:: Text field expecting the user's first name for identification
+
+`Password`:: Text field expecting the password used as second credential for 
+logging on to AdminUI
+
+`Repeat_Password`:: Text field expecting the same password as the one that has 
+been entered in the previous text field `Password`; by this the definition of an 
+incorrectly entered password can be prevented.
+
+'''
+
+[NOTE]
+Text fields tagged with image:Tag_Required.png[Tag] expect a value with a certain 
+character length.
+
+'''
+
+[[ChapterViews]]
+Views
+~~~~~
+
+The AdminUI's content view, visible after a successful login, can be physically 
+divided into three parts:
+
+[[AdminUIMainStructure]]
+image::AdminUIMainStructure.png[AdminUIMainStructure, align="center"]
+
+[horizontal]
+`HEADER`:: The header, the unchanging frame within the whole web application, 
+displays only a clickable label representing the title of this application. A 
+click on it leads back to the AdminUI's welcome-panel.
+
+`MENU_BAR`:: The menu bar is visible only when the user is logged in. It is 
+composed of
++
+--
+- five buttons, each representing a menu item leading to a special AdminUI 
+content view
+- a blank placeholder for tooltips appearing whenever the mouse pointer hovers
+over one of the five menu items
+- a placeholder displaying the full name of the logged-in-user
+- a combo box showing the <<ChapterActiveRole,active role>>, one group in which
+the logged-is-user is member of.
+--
+
+`BODY`:: The body changes dependent on the menu item selected by the logged-in-user. 
+In the following the different body views are specified:
++
+--
+<<ChapterProfile,image:Profile_Button.png[Profile_Button, width="45"]>>  Profile
+
+<<ChapterAccountPreferences,image:AccountPreferences_Button.png [AccountPreferences_Button, width="45"]>> Account Preferences
+
+<<ChapterSiMon,image:SiMon_Button.png[SiMon_Button, width="45"]>> SiMon
+
+<<ChapterSettings,image:Settings_Button.png[Settings_Button, width="45"]>> Settings
+
+<<ChapterLogout,image:Logout_Button.png[Logout_Button, width="45"]>> Logout
+--
+
+[[ChapterActiveGroup]]
+Active Group
+^^^^^^^^^^^^
+
+The set of actions you are authorized to do as logged-in-user within the AdminUI 
+context, shortly your authorization context, is mainly determinded by the role you possess within the active group 
+selected via the combo box on the right-hand side of the AdminUI's <<ChapterViews,menu bar>>.
+
+_Example_::
+By selecting a group as active group, in which you have been declared group manager, 
+you are authorized to perform actions only executable by group managers, e.g. view and modify parts of the 
+<<ChapterSettings,image:Settings_Button.png[Settings_Button, width="30"] KIT Data Manager Settings>>.
+
+[[ChapterProfile]]
+Profile
+^^^^^^^
+
+The profile-view, displayed by clicking the menu item image:Profile_Button.png[Profile_Button, width="30"], 
+offers you a basic overview of your activities as KIT Data Manager user. The 
+table, for example, compares the amount of resources currently accessible by you 
+with the total amount of generally available resources, i.d. you get to 
+know at a glance
+[disc]
+- the number of user groups you are currently member of compared to the total 
+amount of available user groups
+- the number of digital objects currently accessible by 
+you compared to the total amount of available digital objects
+- the number of files collected in digital objects currently accessible by you 
+compared to the total amount of available files
+- the data amount of digital objects currently accessible by you compared to the
+total data amount of available digital objects.
+
+[[Profile]]
+image::Profile.png[Profile, align="center"]
+
+[horizontal]
+`YOUR_SHARE`:: Amount of resources footnoteref:[nResources, specified in unnamed column] 
+currently accessible by logged-in-user
+
+`GLOBAL_AMOUNT`:: Total amount of resources footnoteref:[nResources] available in the 
+corresponding KIT Data Manager repository system
+
+`PERCENTAGE`:: Own percentage share in relation to the total amount of resources 
+footnoteref:[nResources]
+
+[[ChapterAccountPreferences]]
+Account Preferences
+^^^^^^^^^^^^^^^^^^^
+
+The account-preferences-view, displayed by clicking the menu item 
+image:AccountPreferences_Button.png[AccountPreferences_Button, width="30"], 
+gives a neat overview of your personal information and different credentials. 
+Among the possibility to change your login-password for the AdministrationUI, 
+it also offers you the regeneration of your OAuth credentials, e.g. if they where 
+compromised.
+
+[[AccountPreferences]]
+image::AccountPreferences.png[AccountPreferences, align="center"]
+
+[horizontal]
+`Screen_Name`:: Non-editable text field displaying the unique identifier of the
+logged-in-user, which is used within the KIT Data Manager context
+
+`First_Name`:: Non-editable text field displaying the first name of the 
+logged-in-user
+
+`Last_Name`:: Non-editable text field displaying the last name of the 
+logged-in-user
+
+`Email`:: Non-editable text field displaying the email address used as first 
+credential for accessing AdminUI
+
+`Current_Password`:: Text field expecting the current password used as second 
+credential for accessing AdminUI
+
+`Password`:: Text field expecting the password that replace the current password
+
+`Repeat_Password`:: Text field expecting the same password as the one that has 
+been entered in the previous text field `Password`; by this the definition of an 
+incorrectly entered password can be prevented.
+
+`Change`:: Button for activating the new password
+
+`Access_Token`:: Non-editable text field displaying the first OAuth credential
+for using the REST services provided by KIT Data Manager
+
+`Access_Token_Secret`:: Non-editable text field displaying the second OAuth 
+credential for using the REST services provided by KIT Data Manager
+
+`Regenerate`:: Button for regenerating the OAuth credentials to random values
+
+'''
+
+[NOTE]
+Your email address and your password are credentials for accessing the AdministrationUI. 
+Your OAuth credentials, on the other hand, are needed whenever you use the REST services of 
+KIT Data Manager.
+
+'''
+
+[[ChapterSiMon]]
+SiMon - SimpleMonitoring
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+image::SiMon.png[SiMon, align="center"]
+
+SiMon offers a simple and configurable service monitoring. For this purpose different so called `Probes` can be defined. 
+By default, there are four different probe types:
+
+[horizontal]
+`edu.kit.dama.ui.simon.impl.MountProbe`:: This probe can be used to check the availability of mount points. It checks whether to 
+configured location is readable and writable. See `$KITDM_LOCATION/simon/MOUNT.properties' for an example.
+
+`edu.kit.dama.ui.simon.impl.RestServiceProbe`:: This probe checks the availability of a RESTful service. Therefore, the service URL 
+and an unsecured service method must be provided. If the method returns HTTP 200 the probe succeeds. See `$KITDM_LOCATION/simon/REST.properties' 
+for an example.
+
+`edu.kit.dama.ui.simon.impl.WebServerProbe`:: This probe simply tries to connect to a Web Server behind a specified URL. If the call succeeds within the provided timeout, the probe 
+also succeeds. See `$KITDM_LOCATION/simon/WEBSERVER.properties' for an example.
+
+`edu.kit.dama.ui.simon.impl.ShellScriptProbe`:: This probe should cover all other scenarios as it allows to execute an arbitrary shell script. If the shell script finishes with the exit code 0 
+the probe succeeds. See `$KITDM_LOCATION/simon/SCRIPT.properties' for an example.
+
+You can also create own probes by implementing `edu.kit.dama.ui.simon.impl.AbstractProbe` and placing the Jar file containing your probe class at 
+`$KITDM_LOCATION/KITDM/WEB-INF/lib` Please refer to the JavaDoc for detailed information.
+
+[[ChapterSettings]]
+Settings
+^^^^^^^^
+
+The settings-view, displayed by clicking the menu item 
+image:Settings_Button.png[Settings_Button, width="30"], offers a collection of 
+tabs, each designed for a different purpose. Among the administration
+of users and user groups, registered at KIT Data Manager, it allows the 
+configuration of all components necessary for performing the <<ChapterStaging,staging>> 
+process:
+[none]
+- <<ChapterUserAdministration,image:UserAdmin_TabIcon.png[UserAdmin_TabIcon] User Administration>>
+- <<ChapterGroupAdministration,image:GroupAdmin_TabIcon.png[GroupAdmin_TabIcon] Group Administration>>
+- <<ChapterStagingAccessPointConfiguration,image:Staging_TabIcon.png[Staging_TabIcon] Staging Access Point Configuration>>
+- <<ChapterStagingProcessorConfiguration,image:Staging_TabIcon.png[Staging_TabIcon] Staging Processor Configuration>>
+
+'''
+
+[WARNING]
+The menu item image:Settings_Button.png[Settings_Button, width="30"] is visible 
+only if your role in the active group is MANAGER or ADMINISTRATOR. Therefor, you
+may have to change the <<ChapterActiveGroup,`active group`>> in order to obtain an
+appropriate role.
+
+'''
+
+[[ChapterUserAdministration]]
+User Administration
+^^^^^^^^^^^^^^^^^^^
+
+The set of functionalities offered by the user-administration-tab, which is one 
+of five tabs embedded in the <<ChapterSettings,settings-panel>>, depends on the 
+authorization context determined by your selected <<ChapterActiveGroup,active group>>:
+
+`MANAGER`:: If your current role, means your role within the selected active group
+is `MANAGER`, you are authorized *only* to *select* a *user* from the user-table at the 
+bottom of the user-administration-tab for *view*ing his/her *data* in the upper form.
+As `MANAGER` you are *not* allowed to *change* the *data* of the selected user or to 
+*administrate* his/her *memberships*. In the letter case, please contact an administrator.
+
+`ADMINISTRATOR`:: If you are logged in as `ADMINISTRATOR`, the functionalities
+offered by the user-administration-tab depend only on your user selection:
++
+--
+Own Data:: You are not allowed to modify your own data. Hence, you can only
+view your user data and memberships.
+
+Disabled Users:: The data of disabled users, more precisely of users who have been 
+assigned `NO_ACCESS` as maximum role are only readable. For changing their data,
+you need to set their maximum role to at least `GUEST`.
+--
+
+[[UserAdministration]]
+image::UserAdministration_Selection.png[UserAdministration, align="center"]
+
+[horizontal]
+`ID`:: Text field displaying the identifier of the selected user 
+footnoteref:[nUserSelection, user selected from the user-table at the bottom of the user-administration-tab]. 
+This `ID` is automatically assigned by the KIT Data Manager database during the 
+user registration, and is exclusively used for relating the database tables.
+
+`DISTINGUISHED_NAME`:: Text field displaying the unique identifier of the selected 
+user footnoteref:[nUserSelection]. In contrast to the `ID` the `DISTINGUISHED NAME`
+is not assigned automatically, but defined by the user while registration.
+
+`FIRST_NAME`:: Text field displaying the first name of the selected 
+user footnoteref:[nUserSelection]
+
+`LAST_NAME`:: Text field displaying the last name of the selected 
+user footnoteref:[nUserSelection]
+
+`VALID_FROM`:: Date field displaying the date from which the selected user 
+footnoteref:[nUserSelection] is allowed to use the KIT Data Manager services
+
+`VALID_UNTIL`:: Date field displaying the date until when the selected user 
+footnoteref:[nUserSelection] is allowed to use the KIT Data Manager services
+
+`EMAIL`:: Text field displaying the email address of the selected user 
+footnoteref:[nUserSelection]
+
+`MAXIMUM_ROLE`:: Combo box displaying the current maximum role of the selected 
+user footnoteref:[nUserSelection] 
+
+`Commit_Changes`:: Button for committing modified data of the selected user 
+footnoteref:[nUserSelection] 
+
+`Show_Memberships`:: Button opening the <<ChapterMembershipsView,subwindow>> for 
+administrating the memberships of the selected user footnoteref:[nUserSelection] 
+
+image:NewUser_Button.png[NewUser_Button]:: Button informing the logged-in-user
+that the user registration can happen only via the AdminUI's registration-form
+
+image:AddFilter_Button.png[AddFilter_Button]:: Button opening a <<ChapterFilterSetter,panel>> 
+for setting table filters
+
+image:DeleteFilter_Button.png[DeleteFilter_Button]:: Button removing all applied
+table filters
+
+`<userTable>`:: Table listing all registered KIT Data Manager users
+
+'''
+
+[NOTE]
+If you want to change membership-details of a group in which you are declared 
+`MANAGER`, then switch to the <<ChapterGroupAdministration,group-administration-tab>>.
+
+'''
+
+[NOTE]
+Text fields tagged with [red]#*# are mandatory.
+
+'''
+
+[WARNING]
+The user-table shows only a snapshot of the underlying database; that means, 
+reload the user-administration-tab by switching between different tabs if you 
+need the latest status of the underlying database.
+
+'''
+
+[[ChapterMembershipsView]]
+Memberships-View
+^^^^^^^^^^^^^^^^
+
+For administrating the memberships of a user, select the corresponding user from 
+the user-table embedded in the <<ChapterUserAdministration,user-administration-tab>>
+and view all his/her memberships by clicking the button `Show Memberships`, also
+available in the user-administration-tab. The funtionalities offered by the 
+appearing subwindow are listed in the following:
+[disc]
+- For changing one or more member roles, select the corresponding memberships
+from the left-hand table, set the new role through the combo box embedded on the
+right-hand side of the subwindow and confirm your action by clicking the button
+`Commit Changes`.
+- For granting more memberships, select the corresponding groups from the group 
+container at the lower left and move them to the container at the lower right by 
+clicking the button `[>>]` placed between both containers.
+- For canceling memberships, select the corresponding groups from the group container 
+at the lower right and move them to the container at the lower left by clicking 
+the button `[<<]` placed between both containers..
+
+[[MembershipsView]]
+image::MembershipsView.png[MembershipsView, align="center"]
+
+[horizontal]
+`<membershipsTable>`:: Table listing all group memberships of the selected user 
+footnoteref:[nUserSelection]. For each membership the group identifier and the
+member role of the selected user is given. Whenever the maximum role of the selected
+user is more than a member role, the (restrictive) maximum role is entered in the 
+corresponding cell of the table column `CONFLICT`. In case of conflict, the maximum 
+role is the effective member role.
+
+`NEW_ROLE`:: Combo box listing all available roles.
+
+`Commit_Changes`:: Button for committing the changed member roles.
+
+`<groupSelector>`:: Component for granting and canceling memberships. The left-hand
+container lists all groups which are still available for a membership, the
+right-hand container, on the other hand, displays all groups the selected user
+footnoteref:[nUserSelection] is member of.
+
+[[ChapterFilterSetter]]
+Filter Setter
+^^^^^^^^^^^^^
+
+The filter-setter-panel that opens by clicking the icon-button image:AddFilter_Button.png[AddFilter_Button]
+placed at the right upper corner of each table allows you to define and set a table filter.
+
+[[Filter]]
+image::Filter.png[Filter, align="center"]
+
+[horizontal]
+`TABLE_COLUMN`:: Combo box listing all filterable table columns
+
+`FILTER_EXPRESSION`:: Text field expecting the expression by which the previously 
+selected table column shall be filtered
+
+`FILTER_OPTION`:: Collection of filter options allowing only a single-selection
++
+--
+`Contains`:: Option for filtering the specified table column by the cell content 
+*containing* the given filter expression
+`Starts_With`:: Option for filtering the specified table column by the cell 
+content *starting* with the given filter expression
+`Ends_With`:: Option for filtering the specified table column by the cell 
+content *ending* with the given filter expression
+--
+`Filter`:: Button for setting the customized table filter
+
+'''
+
+[NOTE]
+Text fields tagged with [red]#*# are mandatory.
+
+'''
+
+[[ChapterGroupAdministration]]
+Group Administration
+^^^^^^^^^^^^^^^^^^^^
+
+The group-administration-tab, one of five tabs displayed in the <<ChapterSettings,settings-view>>,
+allows you to administrate the groups in which you are (at least) group manager.
+For modifying the data of a specific group or administrating its members, make sure 
+that your <<ChapterActiveGroup,active group>> is equivalent to the group you want 
+to view or modify. Then select the desired group from the lower user-group-table.
+In case your active group differs from the selected group, the details of the
+selected group are no longer editable. Also the administration of the group members, 
+which happens in a subwindow opened by clicking the button `Show Members`, is no 
+longer available for you.
+
+If you are logged in as administrator, you can change and view all groups listed
+in the user-group table.
+
+[[GroupAdministration]]
+image::GroupAdministration_Selection.png[GroupAdministration, align="center"]
+
+[horizontal]
+`ID`:: Text field displaying the identifier of the selected group 
+footnoteref:[nGroupSelection, group selected from the group-table at the bottom of the group-administration-tab]. 
+This `ID` is automatically assigned by the KIT Data Manager database during the 
+group registration, and is exclusively used for relating the database tables.
+
+`GROUP_ID`:: Text field displaying the unique identifier of the selected 
+group footnoteref:[nGroupSelection]. In contrast to the `ID` the `GROUP ID` is not 
+assigned automatically, but defined by the group manager while its registration.
+
+`GROUP_NAME`:: Text field displaying the name of the selected group 
+footnoteref:[nGroupSelection]
+
+`NUMBER_OF_MEMBERS`:: Text field displaying the number of members of the selected 
+group footnoteref:[nGroupSelection]
+
+`DESCRIPTION`:: Text area displaying additional information with respect to the 
+selected group footnoteref:[nGroupSelection]
+
+`Commit_Changes`:: Button for committing the modified data of the selected group 
+footnoteref:[nGroupSelection] 
+
+`Show_Members`:: Button opening the <<ChapterMembersView,subwindow>> for 
+administrating the members of the selected group footnoteref:[nGroupSelection] 
+
+image:NewGroup_Button.png[NewGroup_Button]:: Button opening a <<ChapterNewGroup,panel>> 
+for creating a new user group
+
+image:AddFilter_Button.png[AddFilter_Button]:: Button opening a <<ChapterFilterSetter,panel>> 
+for setting table filters
+
+image:DeleteFilter_Button.png[DeleteFilter_Button]:: Button removing all applied
+table filters
+
+`<userGroupTable>`:: Table listing all registered KIT Data Manager user groups
+
+'''
+
+[NOTE]
+Text fields tagged with [red]#*# are mandatory.
+
+'''
+
+[WARNING]
+The user-group-table shows only a snapshot of the underlying database; that means, 
+reload the group-administration-tab by switching between different tabs if you 
+need the latest status of the underlying database.
+
+'''
+
+[[ChapterNewGroup]]
+New Group
+^^^^^^^^^
+
+For creating a new user group, click on the icon-button 
+image:NewGroup_Button.png[NewGroup_Button, width="25"] displayed on the right-hand 
+side of the <<ChapterGroupAdministration,group-administration-tab>>.
+
+[[GroupAdministration_NewGroup]]
+image::GroupAdministration_NewGroup.png[GroupAdministration_NewGroup, align="center"]
+
+[horizontal]
+`GROUP_ID`:: Text field expecting an identifier for the new user group, which is 
+unique within the KIT Data Manager context
+
+`GROUP_NAME`:: Text field expecting a name for the new user group
+
+`DESCRIPTION`:: Text area for additional information describing the new user group
+
+`Commit`:: Button for creating a new group assigning the given group data
+
+'''
+
+[NOTE]
+Text fields tagged with [red]#*# are mandatory.
+
+'''
+
+[[ChapterMembersView]]
+Members-View
+^^^^^^^^^^^^
+
+For administrating the members of a group, select the corresponding group from 
+the group-table embedded in the <<ChapterGroupAdministration,group-administration-tab>>
+and view all its members by clicking the button `Show Members`, also available 
+in the group-administration-tab. The funtionalities offered by the appearing subwindow 
+are listed in the following:
+[disc]
+- For changing the role of a group member, select the corresponding member
+from the left-hand table, set the new role through the combo box embedded on the
+right-hand side of the subwindow and confirm your action by clicking the button
+`Commit Changes`.
+- For adding more members to the selected group footnoteref:[nGroupSelection], 
+select the corresponding users from the user container at the lower left and move 
+them to the container at the lower right by clicking the button `[>>]` placed 
+between both containers.
+- For removing members from the selected group footnoteref:[nGroupSelection], 
+select the corresponding groups from the group container at the lower right and 
+move them to container at the lower left by clicking the button `[<<]` placed 
+between both containers.
+
+[[MembersView]]
+image::MembersView.png[MembersView, align="center"]
+
+[horizontal]
+`<membersTable>`:: Table listing all members of the selected group 
+footnoteref:[nGroupSelection]. For each member the user identifier and the
+member role is given. Whenever the role of a member within the selected group is 
+more than his/her maximum role, the (restrictive) maximum role is entered in the
+corresponding cell of the table column `CONFLICT`. In case of conflict, the maximum 
+role is the effective member role.
+
+`NEW_ROLE`:: Combo box listing all available roles.
+
+`Commit_Changes`:: Button for committing the changed member roles.
+
+`<groupSelector>`:: Component for adding and removing group members. The left-hand
+container lists all available users, the right-hand container, on the other hand, 
+displays all members the selected group footnoteref:[nGroupSelection].
+
+[[ChapterStagingAccessPointConfiguration]]
+Staging Access Point Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The staging access point is one of three components relevant for <<ChapterStaging,staging>>. 
+A staging access point defined a storage location that can be accessed by the user for data up- or download. For this purpose each access point has 
+a Remote Base URL defining the access protocol can the remotely accessible base path and a Local Base Path, which is the local directory corresponding to
+Remote Base URL. This Loca Base Path must be accessible by the KIT Data Manager staging service direclty to read/write files for the repository or the user.
+
+The definition of a new access point and the modification of an already existing 
+one are both provided by the staging-access-point-configuration-tab selectable 
+from a tab collection in the <<ChapterSettings,settings-view>>:
+
+Create New Access Point:: For creating a new access point, select the item
+`NEW` from the left-hand container `AVAILABLE ACCESS PONTS`. The selection enables 
+both, the upper text field `ACCESS POINT IMPLEMENTATION CLASS` and the button 
+image:ImplementationClass_Button.png[ImplementationClass_Button]; contemporary 
+the lower part of the form, designed for declaring the properties of an access point,
+is disabled. For proceeding, enter the fully qualified class name of the implementation class that 
+shall be used for creating the new access point, and finalize the access point
+creation by clicking image:ImplementationClass_Button.png[ImplementationClass_Button].
++
+In case of a successfully created access point, the remaining form is enabled, 
+permitting the further configuration of the newly created access point. Now declare 
+all remaining properties and confirm them by clicking the button `Commit Changes`.
++
+--
+'''
+
+[NOTE]
+The properties panel offers two different views between which you can switch by
+clicking the icon-button image:RightNavigation_Button.png[RightNavigation_Button]
+or by selecting one of the bullets embedded right below the properties panel.
+
+'''
+
+[WARNING]
+Newly created access points are automatically disabled. Enable them by unselecting
+the check box `Disabled`.
+
+'''
+--
+
+View/Modify Existing Access Point:: For viewing or modifying the configuration
+of an already declared access point, select the corresponding access point
+from the left-hand container `AVAILABLE ACCESS POINTS`. A valid selection enables
+all components of changeable access-point-properties. Finalize your changes by
+clicking the button `Commit Changes`.
+
+[[StagingAccessPointConfiguration]]
+image::StagingAccessPointConfiguration_Selection.png[StagingAccessPointConfiguration, align="center"]
+
+[horizontal]
+`AVAILABLE_ACCESS_POINTS`:: Container listing all defined access points.
+
+`ACCESS_POINT_IMPLEMENTATION_CLASS`:: Text field declaring the implementation 
+class on which the selected access point footnoteref:[nPointSelection, access point selected from the left-hand container of the staging-access-point-configuration-tab] 
+is based
+
+image:ImplementationClass_Button.png[ImplementationClass_Button]:: Button for
+creating an access point with the implementation class declared in the text 
+field `ACCESS_POINT_IMPLEMENTATION_CLASS`
+
+`ACCESS_POINT_NAME`:: Text field displaying the name of the selected access point 
+footnoteref:[nPointSelection]
+
+`REMOTE_BASE_URL`:: Text field declaring the base URL for accessing the repository system via this access point. 
+Once declared, it is highly recommended NOT to change the `REMOTE_BASE_URL` without any valid reason. Otherwise, 
+already prepared staging operations might get invalidated.
+
+`LOCAL_BASE_PATH`:: Text field declaring the locally accessible path corresponding to `REMOTE_BASE_URL`.
+Once declared, it is highly recommended NOT to change the `LOCAL_BASE_PATH`. Otherwise, 
+already prepared staging operations might get invalidated.
+
+`Select_Path`:: Button opening a subwindow for selecting a directory from the local 
+file system as `LOCAL BASE PATH`.
+
+`ACCESSIBLE_BY`:: Combo box listing all registered user groups. By selecting a
+group, the selected access point footnoteref:[nPointSelection] is accessible
+by all group members
+
+`Default`:: Check box for setting the selected access point footnoteref:[nPointSelection] 
+as default staging access point for the user group this access point is associated with
+
+`Disabled`:: Check box for disabling the selected access point footnoteref:[nPointSelection]
+
+`DESCRIPTION`:: Text area displaying additional information with respect to the 
+selected access point footnoteref:[nPointSelection]
+
+image:RightNavigation_Button.png[RightNavigation_Button]:: Icon-button switch to the
+next available properties view.
+
+image:GreyBullet_Button.png[GreyBullet_Button]:: Icon-button switching to a specific
+properties view. A bullet is green in case it has been selected.
+
+`Commit Changes`:: Button for committing the changed configuration of the selected 
+access point footnoteref:[nPointSelection]
+
+[[ChapterStagingProcessorConfiguration]]
+Staging Processor Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The staging processor is one of three components relevant for <<ChapterStaging,staging>>. 
+A staging processor defines an operation that is performed before or after data ingest. This
+may cover data validation, checksumming or metadata extraction. For more details please refer to 
+chapter <<ChapterStagingProcessorCoding, Coding: Staging Processor>>.
+
+The definition of a new staging processor and the modification of an already existing 
+one are both provided by the staging-processor-configuration-tab selectable a
+from tab collection in the <<ChapterSettings,settings-view>>:
+
+Create New Staging Processor:: For creating a new staging processor, select the item
+`NEW` from the left-hand container `AVAILABLE STAGING PROCESSORS`. The selection enables 
+both, the upper text field `STAGING PROCESSOR IMPLEMENTATION CLASS` and the button 
+image:ImplementationClass_Button.png[ImplementationClass_Button]; contemporary 
+the lower part of the form, designed for declaring the properties of an staging processor,
+is disabled. For proceeding, enter the fully qualified class name of the implementation class that 
+shall be used for creating the new staging processor, and finalize the staging processor
+creation by clicking image:ImplementationClass_Button.png[ImplementationClass_Button].
++
+In case of a successfully created staging processor, the remaining form is enabled, 
+permitting the further configuration of the newly created staging processor. Now declare 
+all remaining properties and confirm them by clicking the button `Commit Changes`.
++
+--
+'''
+
+[NOTE]
+The properties panel offers two different views between which you can switch by
+clicking the icon-button image:RightNavigation_Button.png[RightNavigation_Button]
+or by selecting one of the bullets embedded right below the properties panel.
+
+'''
+
+[WARNING]
+Newly created staging processors are automatically disabled. Enable them by unselecting
+the check box `Disabled`.
+
+'''
+--
+
+View/Modify Existing Staging Processor:: For viewing or modifying the configuration
+of an already declared staging processor, select the corresponding staging processor
+from the left-hand container `AVAILABLE STAGING PROCESSORS`. A valid selection 
+enables all components of changeable processor-properties. Finalize your changes 
+by clicking the button `Commit Changes`.
+
+[[StagingProcessorConfiguration]]
+image::StagingProcessorConfiguration_Selection.png[StagingProcessorConfiguration, align="center"]
+
+[horizontal]
+`AVAILABLE_PROCESSORS`:: Container listing all defined staging processors.
+
+`PROCESSOR_IMPLEMENTATION_CLASS`:: Text field declaring the implementation 
+class on which the selected staging processor footnoteref:[nProcessorSelection, staging processor selected from the left-hand container of the staging-processor-configuration-tab] 
+is based
+
+image:ImplementationClass_Button.png[ImplementationClass_Button]:: Button for
+creating a staging processor with the implementation class declared in the text 
+fiel `PROCESSOR_IMPLEMENTATION_CLASS`
+
+`PROCESSOR_NAME`:: Text field displaying the name of the selected staging processor 
+footnoteref:[nProcessorSelection]
+
+`ACCESSIBLE_BY`:: Combo box listing all registered user groups. By selecting a
+group, the selected staging footnoteref:[nProcessorSelection] is accessible
+by all group members
+
+`PROCESSOR_TYPE`:: Combo box for declaring the type to which the selected staging
+processor footnoteref:[nProcessorSelection] belongs. The type depends on the staging 
+processor implementation and defined where the processor is executed. Typically, staging 
+processors will be of type SERVER_SIDE_ONLY or POST_ARCHIVING, in which SERVER_SIDE_ONLY processors 
+are executed as soon as an upload by the user is finished whereas POST_ARCHIVING processors are executed
+if the data was stored successfully in the repository.
+
+`Default`:: Check box for setting the selected staging processor footnoteref:[nProcessorSelection] 
+as default staging processor
+
+`Disabled`:: Check box for disabling the selected staging processor footnoteref:[nProcessorSelection]
+
+`DESCRIPTION`:: Text area displaying additional information with respect to the 
+selected staging processor footnoteref:[nProcessorSelection]
+
+image:RightNavigation_Button.png[RightNavigation_Button]:: Icon-button switch to the
+next available properties view.
+
+image:GreyBullet_Button.png[GreyBullet_Button]:: Icon-button switching to a specific
+properties view. A bullet is green in case it has been selected.
+
+`Commit Changes`:: Button for committing the changed configuration of the selected 
+access processor footnoteref:[nProcessorSelection] 
+
+[[ChapterLogout]]
+Logout
+^^^^^^
+
+The logout from AdminUI happens through the menu item image:Logout_Button.png[Logout_Button, width="30"]. 
+A successful logout leads you back to the AdminUI's <<ChapterLogin,login-panel>>.

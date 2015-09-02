@@ -1,0 +1,75 @@
+/* Import the reindeer theme. */
+/* This only allows us to use the mixins defined in it and does not add any styles by itself. */
+@import "../reindeer/reindeer.scss";
+
+/* This contains all of your theme. */
+/* If somebody wants to extend the theme she will include this mixin. */
+@mixin mytheme {
+  /* Include all the styles from the reindeer theme */
+  @include reindeer;
+
+  
+/**SIMON styles*/
+.v-label-probe-success{
+  background: url("img/24x24/green_bar.png") repeat-x!important;
+  height: 24px!important;
+  margin: 8px -1px 0 0 !important;
+  border-right: 1px solid black !important;
+}
+
+.v-label-probe-failed{
+  background: url("img/24x24/red_bar.png") repeat-x!important;
+  height: 24px!important;
+  margin: 8px -1px 0 0 !important;
+  border-right: 1px solid black !important;
+
+}
+.v-label-probe-updating{
+  background: url("img/24x24/blue_bar.png") repeat-x!important;
+  height: 24px!important;
+  margin: 8px -1px 0 0 !important;
+  border-right: 1px solid black !important;
+}
+
+.v-label-probe-unknown{
+  background: url("img/24x24/grey_bar.png") repeat-x!important;
+  height: 24px!important;
+  margin: 0 -1px 0 0!important;
+  border-right: 1px solid black !important;
+}
+
+.v-label-probe-unavailable{
+  background: url("img/24x24/white_bar.png") repeat-x!important;
+  height: 24px!important;
+  margin: 8px -1px 0 0 !important;
+  border-right: 1px solid black !important;
+}
+
+.v-label-probe-outer-left{
+  border-radius:  4px 0px 0px 4px;
+}
+
+.v-label-probe-outer-right{
+  border-radius: 0px 4px 4px 0px;
+  border: none!important;
+}
+.v-label-probe-single-probe{
+  border-radius:  4px 4px 4px 4px;
+  border: none!important;
+}
+
+.v-label-embedded-simon-logo{
+  overflow:hidden;
+  z-index:-1!important;
+  position:fixed;
+  top:70px;
+  left:30px;
+  width:199px!important;
+  height:40px!important;
+}
+
+.v-label-embedded-simon-logo img{
+  width:199px!important;
+  height:150px!important;
+}
+}

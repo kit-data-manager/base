@@ -1,0 +1,627 @@
+Programming KIT Data Manager
+----------------------------
+Without any additional effort, KIT Data Manager offers basic functionality for building up and running repository systems. There is a set of basic services which can be used to register 
+Base Metadata and schedule file transfers, but the whole spectrum of repository features can just be covered by using public interfaces, connect them to workflows and extend the whole system
+by custom functionalities. The following chapters will describe common interfaces, the access to High Level Services and which extension points can be used to integrate community-specific
+functionality.
+
+REST Access to High Level Services
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The typical access to KIT Data Manager services for basic (remote) use cases is the access via the available REST interfaces. Currently, there are five different REST services: 
+
+[cols="m,n", options="header"]
+|================================================================================================================================================
+|Service|Description
+|User-Group Management Service|Service for adding groups, assigning users to groups and getting information about existing users and groups.
+|BaseMetaData Service|Access to Base Metadata (Study, Investigation and DigitalObject) for registering and reading new metadata entities.
+|Staging Service|Service for initiating data transfers task to and from KIT Data Manager. This service does not take care on the actual transfer!
+|DataOrganization Service|Access to the DataOrganization of Digital Objects as soon as it is extractred during ingest.
+|Sharing Service|Obtaining and changing access permissions for secured resources (e.g. Study, Investigation, Digital Object).
+|================================================================================================================================================
+
+You'll find the documentation of all of these services in your KIT Data Manager distribution. All these REST interfaces are secured via oAuth 1.0. In order to 
+authorize the access to a service, you have to provide an oAuth header with each REST call using the following oAuth parameters: 
+
+[cols="m,n", options="header"]
+|================================================================================================================================================
+|Parameter|Value
+|Consumer Key|secret
+|Consumer Secret|secret
+|Access Token|Your Access Token Accessible via the administration backend at http://kitdm-host:8080/KITDM (default: admin) 
+|Access Key|Your Access Key Accessible via the administration backend at http://kitdm-host:8080/KITDM (default: dama14) 
+|================================================================================================================================================
+
+For Java programmers there are client implementations available for all services covering authorization and access to the services. 
+The implementation classes and default service base URLs are shown in the following table: 
+
+[cols="m,n", options="header"]
+|================================================================================================================================================
+|Service|Java Client Implementation/Service Base URL
+|User-Group Management Service|edu.kit.dama.rest.admin.client.impl.UserGroupRestClient
+||http://kitdm-host:8080/KITDM/rest/usergroup/
+|BaseMetaData Service|edu.kit.dama.rest.metadata.client.impl.BaseMetaDataRestClient
+||http://kitdm-host:8080/KITDM/rest/basemetadata/
+|Staging Service|edu.kit.dama.rest.staging.client.impl.StagingServiceRESTClient
+||http://kitdm-host:8080/KITDM/rest/staging/
+|DataOrganization Service|edu.kit.dama.rest.dataorganization.client.impl.DataOrganizationRestClient
+||http://kitdm-host:8080/KITDM/rest/dataorganization/
+|Sharing Service|edu.kit.dama.rest.sharing.client.impl.SharingRESTClient
+||http://kitdm-host:8080/KITDM/rest/sharing/
+|================================================================================================================================================
+
+In Java, the access to the different services looks quite similar. The following example shows how to create the BasicMetadata structure for a new Digital Object:
+
+[source,java]
+--------------------------------------
+String defaultGroup = edu.kit.dama.util.Constants.USERS_GROUP_ID;
+String accessKey = "putYourKeyHere";
+String accessSecret = "putYourSecretHere";
+String restBaseUrl = "http://kitdm-host:8080/KITDM";
+SimpleRESTContext context = new SimpleRESTContext(accessKey, accessSecret);
+
+//First, create temporary objects which contain the attributes you want to provide for the metadata entities.
+//It is recommended to collect as many attributes as possible in order to be able to distinguish registered metadata entities as good as possible.
+//At least topic/label should be provided for studies, investigations and digital objects.
+
+//Collect all study attributes and return it as a temporary object.
+Study newStudy = getStudy(); 
+//Collect all investigation attributes and return it as a temporary object.
+Investigation newInvestigation = getInvestigation(); 
+//Collect all digital object attributes and return it as a temporary object.
+DigitalObject newDigitalObject = getDigitalObject(); 
+
+//Instantiate BaseMetaDataRestClient using the base URL and the security context, both defined above
+BaseMetaDataRestClient client = new BaseMetaDataRestClient(restBaseUrl + "/rest/basemetadata/", context);
+
+//Create a new study. The study will be assigned to the default group whose ID we've obtained above.
+StudyWrapper studyWrapper = client.addStudy(newStudy, defaultGroup);
+//Assign returned study to 'newStudy' as the created entity now contains a valid studyId.
+newStudy = studyWrapper.getEntities().get(0);
+
+//Use the studyId to add a new investigation to the study we've just created.
+InvestigationWrapper investigationWrapper = client.addInvestigationToStudy(newStudy.getStudyId(), newInvestigation, defaultGroup);
+//Assign returned investigation to 'newInvestigation' as the created entity now contains a valid investigationId.
+newInvestigation = investigationWrapper.getEntities().get(0);
+
+//Use the investigationId to add a new digital object to the investigation just created.
+DigitalObjectWrapper digitalObjectWrapper = client.addDigitalObjectToInvestigation(newInvestigation.getInvestigationId(), newDigitalObject, defaultGroup);
+//Assign returned digitalObject to 'newDigitalObject' as the created entity now contains a valid objectId.
+newDigitalObject = digitalObjectWrapper.getEntities().get(0);
+--------------------------------------
+
+Now, that you have the Base Metadata structure defined, you may want to schedule a data ingest, which can be done as follows:
+
+[source,java]
+--------------------------------------
+//Instantiate the staging client re-using the credentials of the last call and the same base URL as defined above.
+StagingServiceRESTClient stagingClient = new StagingServiceRESTClient(restBaseUrl + "/rest/staging/", context);
+
+//At first we have to obtain the StagingAccessPoint in order to be able to schedule an ingest.
+//For convenience we expect to have exactly one AccessPoint as set up during the default installation.
+//At first we obtain the id, followed by a query for detailed information.
+long accessPointId = stagingClient.getAllAccessPoints(defaultGroup, context).getEntities().get(0).getId();
+String uniqueAPIdentifier = stagingClient.getAccessPointById(accessPointId, context).getEntities().get(0).getUniqueIdentifier();
+
+//Now, we schedule the ingest for the DigitalObject we have just created.
+//To identify the object you have to use the DigitalObjectId which is NOT identical with the objectId we were talking about before.
+String digitalObjectId = newDigitalObject.getDigitalObjectId().getStringRepresentation();
+IngestInformationWrapper ingest = stagingClient.createIngest(digitalObjectId, uniqueAPIdentifier);
+//Note: As of KIT Data Manager 1.1 the ingest can also be created using the numeric ids of digital object and access point.
+//Therefore, the following call would lead to the same result as the call above: 
+//IngestInformationWrapper ingest = stagingClient.createIngest(Long.toString(newDigitalObject.getBaseId()), Long.toString(accessPointId));
+
+//Now, you can obtain the id of the ingest, which will be used further on.
+long ingestId = ingest.getEntities().get(0).getId();
+
+//As the ingest preparation takes place synchronously, the ingest is usable immediately.
+//To be sure the current status can be polled by calling:
+IngestInformationWrapper wrapper = stagingClient.getIngestbyId(ingestId);
+int status = wrapper.getEntities().get(0).getStatus();
+
+//If the status is 4 (INGEST_STATUS.PRE_INGEST_SCHEDULED), data can be uploaded to the URL obtainable by:
+IngestInformationWrapper wrapper = stagingClient.getIngestbyId(ingestId);
+URL dataUploadFolder = wrapper.getEntities().get(0).getDataFolderURL();
+
+//If the upload has finished, the status has to be set to 16 (INGEST_STATUS.PRE_INGEST_FINISHED) in order to trigger archiving of the data.
+//updateIngest() returns a ClientResponse object that can be checked for success via response.getStatus() == 200
+stagingClient.updateIngest(ingestId, null, INGEST_STATUS.PRE_INGEST_FINISHED.getId());
+
+//If further monitoring is required, you can wait for a status change to status 128 (INGEST_STATUS.INGEST_FINISHED), which means that archiving has finished.
+IngestInformationWrapper wrapper = stagingClient.getIngestbyId(ingestId);
+boolean ingestFinished = wrapper.getEntities().get(0).getStatus() == INGEST_STATUS.INGEST_FINISHED.getId();
+--------------------------------------
+
+For more available status codes take a look at edu.kit.dama.staging.entities.ingest.INGEST_STATUS. The behavior and usage of all other REST services
+offered by KIT Data Manager are identical to the presented example. Please refer to the documentation on how to use them and which results can be expected. 
+
+[NOTE]
+If you want to use other programming languages than Java, please refer to the documentation on how to access REST services in your preferred language.
+
+[[ChapterStagingProcessorCoding]]
+Staging Processors
+~~~~~~~~~~~~~~~~~~
+As mentioned in the chapter describing the architecture of KIT Data Manager, the data ingest is often more than a simple upload of files. Depending on the 
+community and special use cases there could be additional steps that have to be performed before or/and after the actual data transfer in order to get a
+successful ingest. For KIT Data Manager such operations are covered by `StagingProcessors`. Each StagingProcessor must implement the abstract class
+`edu.kit.dama.staging.processor.AbstractStagingProcessor`. Please refer to the JavaDoc of this class in order to get familiar with the 
+functionality it offers. The following example will try to explain the implementation of a StagingProcessor:
+
+At first we implement the constructor which may contain custom initialization and the method `getName()` that returns a human readable name of the processor.
+
+[source,java]
+--------------------------------------
+public class MyStagingProcessor extends AbstractStagingProcessor{
+
+
+  public MyStagingProcessor(String pUniqueIdentifier) {
+    super(pUniqueIdentifier);
+  }
+
+  public String getName(){
+    return "MyStagingProcessor";
+  }
+--------------------------------------
+
+The second part covers custom properties. For each StagingProcessor such properties can be applied as key-value-pairs. They are used to configure the
+processor or to provide optional customization. `getPropertyKeys()` returns all keys that are available for the processor, `getPropertyDescription(String pKey)`
+returns a human readable description for each key. Both methods can be used by user interfaces (e.g. the AdminUI) to request the actual property value as user input. 
+`validateProperties(Properties pProperties)` and `configure(Properties pProperties)` are almost identical. The only difference is that `validateProperties(Properties pProperties)` 
+is used to check if all necessary properties are there and valid, whereas `configure(Properties pProperties)` is used as soon as the processor should be executed in order to obtain
+a usable StagingProcessor instance. However, if the validation succeeds the configuration must also succeed. Therefore, `configure(Properties pProperties)` is not expected to throw any exception.
+
+[source,java]
+--------------------------------------
+  public String[] getPropertyKeys(){
+    return new String[]{"metadataFilename"};
+  }
+
+  public String getPropertyDescription(String pKey){
+    if("metadataFilename".equals(pKey)){
+      return "This is the name of the metadata file checked by MyStagingProcessor."
+    }
+    return "Invalid property key '" + pKey + "'";
+  }
+
+  public void validateProperties(Properties pProperties) throws PropertyValidationException{
+    if(pProperties.get("metadataFilename") == null){
+       throw new PropertyValidationException("Mandatory property 'metadataFilename' is missing.");
+    }
+    //Perform additional validation steps if needed
+  }
+  
+  public void configure(Properties pProperties){
+    String metadataFilenameValue = (String)pProperties.get("metadataFilename");
+    //do something with the property value, e.g. set it as member variable and use it later
+    metadataFilenameMember = metadataFilenameValue;
+  }
+--------------------------------------
+
+Finally, there are four methods for the actual execution. Two of them are for pre-transfer operations which are exectured in case of an ingest (on the user side) before the transfer starts. 
+To use pre-transfer operations special transfer clients are needed. Therefore, we skip these two methods for now.
+The two other methods are for post-transfer operations which are executed on the server side as before the ingest the archive location starts (see <<ChapterStaging,Staging>>). The first method 
+`performPostTransferProcessing(TransferTaskContainer pContainer)` is responsible for the actual execution of the processor. The provided `TransferTaskContainer` contains all
+information available for the transfer itself as well as information about uploaded data. The data belonging to a single transfer is organized in a well-defined tree structure described in 
+chapter <<ChapterStaging,Staging>>. All data generated during an execution of a staging processor must be stored in the `generated` folder. The URL of this folder can be obtained
+from the TransferTaskContainer as it is shown in the example. Finally, the generated file must be added to the container in order to ingest it together with the data to access it later. 
+The second method `finalizePostTransferProcessing(TransferTaskContainer pContainer)` is meant to be used for cleanup purposes in case of a successful execution as this method is only called if the 
+processor was executed without errors. In our example, no special cleanup is needed. 
+
+[source,java]
+--------------------------------------
+  public void performPreTransferProcessing(TransferTaskContainer pContainer) 
+  throws StagingProcessorException{
+    //not used as this processor is only applicable on the server-side
+  }
+
+  public void finalizePreTransferProcessing(TransferTaskContainer pContainer) 
+  throws StagingProcessorException{
+    //not used as this processor is only applicable on the server-side
+  }
+
+  public void performPostTransferProcessing(TransferTaskContainer pContainer) 
+  throws StagingProcessorException{
+    //Example 1: Read an uploaded file
+    //Obtain the root node of the file tree uploaded by the user
+    ICollectionNode root = pContainer.getFileTree().getRootNode();
+    //Use helper class edu.​kit.​dama.​mdm.​dataorganization.​impl.​util.Util to get the subtree containing the uploaded data...
+    IDataOrganizationNode dataSubTree = Util.getNodeByName(root, Constants.STAGING_DATA_FOLDER_NAME);
+    //... and search for a node with the name specified as property 'metadataFilename'
+    IFileNode metadataFile = (IFileNode) Util.getNodeByName((ICollectionNode) dataSubTree, metadataFilenameMember);
+    if (metadataFile == null) {
+       throw new StagingProcessorException("No metadata file named " + metadataFilenameMember + " found.");
+    } else {
+      try {
+        //Obtain the logical filename (should be accessible locally as we are inside the staging service)
+        File metadataFile = new File(new URL(metadataFile.getLogicalFileName().asString()).toURI());
+        //Read file, validate content etc.
+      } catch (MalformedURLException | URISyntaxException ex) {
+        throw new StagingProcessorException("Failed to obtain metadata file from URL " + metadataFile.getLogicalFileName().asString() + ".", ex);
+      } catch (IOException ex) {
+        throw new StagingProcessorException("Error reading file from URL " + metadataFile.getLogicalFileName().asString() + ".", ex);
+      }
+    }
+    //Example 2: Generate a file
+    try{
+      //Generated files should go into the 'generated' folder of the according ingest.
+      //This folder can be obtained from the TransferTaskContainer: 
+      File processorOutput = new File(pContainer.getGeneratedUrl().toURI(), "myProcessor.log");
+      //Create an output stream and write some dummy data.
+      FileOutputStream fout = new FileOutputStream(processorOutput)
+      fout.write(("Processor '" + getName() + "' was successfully executed.\n").getBytes());
+      fout.write(("Custom metadata was successfully detected in file " + metadataFilenameMember).getBytes());
+      fout.flush();
+      fout.close();
+      //Add the generated file to the TransferTaskContainer in order to archive it later on.
+      pContainer.addGeneratedFile(processorOutput);
+    }catch(Exception e){
+      throw new StagingProcessorException("StagingProcessor " + getName() + " has failed.", e);
+    }
+  }
+
+  public void finalizePostTransferProcessing(TransferTaskContainer pContainer) 
+  throws StagingProcessorException{
+     //not needed here
+  }
+}
+--------------------------------------
+
+Finally, the processor has to be deployed and registered in your KIT Data Manager instance. Therefor, the JAR file(s) containing the StagingProcessor class(es) and necessary dependencies have 
+to be placed in the Web Application path of your KIT Data Manager deployment, typically this is `$CATALINA_HOME/webapps/KITDM/WEB-INF/lib/`. Afterwards, the Web Application server 
+(typically Apache Tomcat) or at least the KIT Data Manager Web Application have to be restarted. The registration and configuration of the deployed StagingProcessor can be done after a successful 
+restart using the administration user interface.
+
+[NOTE]
+Currently, staging processors are only supported for ingests. Adding this functionality to downloads is planned for future versions of KIT Data Manager.
+
+Server-sided Development
+~~~~~~~~~~~~~~~~~~~~~~~~
+The final part of this chapter covers the delevopment on the server-side. For local, high-performance access to KIT Data Manager services, 
+e.g. for implementing modern Web applications for repository access, there are plenty of Java APIs providing much more flexibility than the general REST interfaces. 
+For each high level service there is an according local implementation as listed in the following table:
+
+[cols="m,n", options="header"]
+|================================================================================================================================================
+|Service|Local Implementation(s)
+|User-Group Management Service|edu.kit.dama.authorization.services.administration.[User|Group]ServiceLocal
+|BaseMetaData Service|edu.kit.dama.mdm.core.MetaDataManagement
+|Staging Service|edu.kit.dama.staging.services.impl.StagingService
+|DataOrganization Service|edu.kit.dama.mdm.dataorganization.service.core.DataOrganizationServiceLocal
+|Sharing Service|edu.kit.dama.authorization.services.administration.ResourceServiceLocal
+|================================================================================================================================================
+
+All these service implementations are realized as singletons, their use is described in the following chapters. 
+
+Querying for Metadata
+^^^^^^^^^^^^^^^^^^^^^
+As decribed in chapter <<ChapterMetadataManagement,Metadata Management>>, there are three different kinds of metadata which can be accessed in different ways. The access to
+`Content Metadata` is done via special interfaces according to the system the Content Metadata is published to, which won't be described here. The other two kinds of metadata are 
+accessible via the integrated MetaDataManagement Service of KIT Data Manager. Basically, these functionalities are roughly oriented towards the Java Persistence API (JPA) 
+standard and are defined in the interface `edu.kit.dama.mdm.IMetaDataManager`. Please refer to the JavaDoc of this interface for a detailed description of each method. 
+The following examples refer to the JPA-based implementation of the interface, which is the one available in the default KIT Data Manager distribution. 
+A typical example for accessing persisted entities is shown in the following snippet:
+
+[source,java]
+--------------------------------------
+public List<DigitalObject> findAllDigitalObjects(IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException{
+  //Default persistence unit for Base Metadata
+  String persistenceUnit = "MDM-Core";
+  //Create IMetaDataManager instance
+  IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(persistenceUnit);
+  //Set AuthorizationContext(authorizationContext);
+  mdm.setAuthorizationContext(ctx);
+  try{
+      return mdm.find(DigitalObject.class);
+   }finally{
+      //!Important! Otherwise you may run out of database connections.
+      mdm.close();
+   }
+}
+--------------------------------------
+
+The only thing you have to do is to create a new instance of an IMetaDataManager implementation, providing the authorizationContext used to authorize the access and perform
+ a query, e.g. for all entities of a specific class, in our example `DigitalObject.class`. This call will return a list of Digital Objects accessible by the provided authorizationContext. 
+Please pay attention to the fact, that you should close the MetaDataManager instance as soon as you don't need it any longer. Otherwise, you may run out of database
+ connections sooner or later. Another, more specific query would be:
+
+[source,java]
+--------------------------------------
+public DigitalObject getDigitalObjectByPrimaryKey(Long primaryKey, IAuthorizationContext authorizationContext) 
+throws UnauthorizedAccessAttemptException{
+  //Default persistence unit for Base Metadata
+  String persistenceUnit = "MDM-Core";
+  //Create IMetaDataManager instance
+  IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(persistenceUnit);
+  //Set AuthorizationContext(authorizationContext);
+  try{
+    return mdm.find(DigitalObject.class, primaryKey);
+  }finally{
+    mdm.close();
+  }
+}
+--------------------------------------
+
+In this case, the DigitalObject with the provided primary key is returned or an UnauthorizedAccessAttemptException is thrown if the Digital Object with the provided primary key is not
+accessible using the provided authorizationContext. Another example shows a more enhanced way to query for results: 
+
+[source,java]
+--------------------------------------
+public List<DigitalObject> getDigitalObjectInRange(Long first, Long last, IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException{
+   IMetaDataManager mgr = SecureMetaDataManager.factorySecureMetaDataManager(authorizationContext);
+
+   //define the left sample and set the base id (primary key), e.g. to 1
+   DigitalObject sample_left = new DigitalObject();
+   sample_left.setBaseId(first);
+   //define the right sample and set the base id (primary key), e.g. to 10
+   DigitalObject sample_right = new DigitalObject();
+   sample_right.setBaseId(last);
+   //perform a query for entities of type DigitalObject and baseId between 
+   //sample_left.baseId and sample_right.baseId, in our example between 1 and 10
+   try{
+      return mgr.find(sample_left, sample_right);
+    }finally{
+      mgr.close();
+    }
+}
+--------------------------------------
+
+The snippet above shows a way to perform enhanced queries based on samples. For the provided samples all basic attributes (Attribute.PersistentAttributeType.BASIC) which are set are 
+used for the resulting query applying the following mappings:
+
+[cols="m,n", options="header"]
+|============================================================================================================================
+|Attribute value provided in ... |Resulting Query
+|Left Sample| ... WHERE attribute >= LeftSample.attibuteValue ...
+|Right Sample|... WHERE attribute <= RightSample.attibuteValue ...
+|Both Samples|... WHERE attribute BETWEEN LeftSample.attributeValue AND RightSample.attibuteValue ...
+|============================================================================================================================
+
+If multiple attributes are set, all resulting conditions are concatenated and may result in complex queries that are hard to handle. 
+Therefore, it is recommended to assign only single attributes per query. For more control over queries there is another way to perform them:
+
+[source,java]
+--------------------------------------
+IMetaDataManager mgr = SecureMetaDataManager.factorySecureMetaDataManager(authorizationContext);
+
+//perform a custom query expecting exactly one or no result
+String singleResultQuery = "SELECT o FROM DigitalObject o WHERE o.digitalObjectIdentifier='abcd-efgh-1234-5678-9'";
+DigitalObject object = mgr.findSingleResult(singleResultQuery, DigitalObject.class);
+
+//perform a custom query expecting multiple or no results
+String wildcardQuery = "SELECT o FROM DigitalObject o WHERE o.digitalObjectIdentifier LIKE '%efgh%'";
+List<DigitalObject> objects =  mgr.findResultList(wildcardQuery, DigitalObject.class);
+--------------------------------------
+
+The last snippet shows two different queries: The first is a query for exactly one single result. This method will throw an exception if more than one result matches the query.
+In our case it will return the DigitalObject with the DigitalObjectIdentifier +abcd-efgh-1234-5678-9+, no result if there is no object found for this identifier or 
+an UnauthorizedAccessAttemptException will be thrown if the caller is not allowed to access the query method or read the object.
+The second query will return a list as long as no UnauthorizedAccessAttemptException is produced. If no result was found, the list is empty. Otherwise, the list contains 
+all accessible DigitalObjects whose DigitalObjectIdentifier contains +efgh+. 
+
+Querying for entities using the beforementioned methods is easy but is limited and will load the entire object tree! 
+There are many different opportunities to reduce the amount of returned data and to speed up queries. Some of them are presented next: 
+
+[source,java]
+--------------------------------------
+//Return only the first 10 digital objects for pagination.
+List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o", DigitalObject.class, 0, 10);
+//Return all digital objects from investigation with id 5.
+List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o WHERE o.investigation.investigationId=5", DigitalObject.class);
+//Return all digital objects in any investigation of the study with id 3.
+List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o WHERE o.investigation.study.studyId=3", DigitalObject.class);
+//Return only the labels of all digital objects.
+List<String> labels = mgr.findResultList("SELECT o.label FROM DigitalObject o", String.class);
+
+//When providing query parameters a proper escaping, e.g. of strings, should be desired. Therefor, query arguments can be provided.
+//In the following call all digital objects containing 'test' in their note field are returned. The argument array contains the value 
+//on the first position and can therefore be referenced by ?1 in the query.
+List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o WHERE o.note LIKE ?1", new Object[]{"%test%"}, DigitalObject.class);
+
+//Finally, parameters may contain collections to query for different value for a single field.
+//The following list contains three base ids for which the according digital object should be returned.
+List<Long> relevantIds = Arrays.asList(new Long[]{1l, 2l, 10l});
+//JPA will take care of putting the collection elements into the query including proper escaping.
+List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o WHERE o.baseId IN ?1", new Object[]{relevantIds}, DigitalObject.class);
+--------------------------------------
+
+With such queries a very good performance while reading Base Metadata could be achieved. The same applies to updates. If e.g. a digital object
+should be updated this can be done in two different ways:
+
+[source,java]
+--------------------------------------
+//Obtain the digital object with base id 1.
+DigitalObject object = mgr.find(DigitalObject.class, 1l);
+object.setNote("Updated note");
+//Update the object in the database.
+object = mgr.update(object);
+
+//If the object tree of 'object' is really huge (> 5K entries) the previous call might be slow as it implies many checks and queries.
+//Alternatively, direct updates via JPQL are possible as follows:
+//int affectedEntities = mdm.performUpdate("UPDATE DigitalObject o SET o.note='Updated note' WHERE o.baseId=1");
+--------------------------------------
+
+For more details about the syntax of custom queries please refer to the link:http://docs.oracle.com/javaee/6/tutorial/doc/bnbuf.html[JPQL Standard].
+
+Adding Authorization on Method-Level
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In chapter <<ChapterAuthorization,Authorization>> the flexible authorization mechanisms of KIT Data Manager were described shortly. Integrating this functionality for authorizing 
+access to single methods is quite easy. But first, let's have a closer look at the following example:
+
+[source,java]
+--------------------------------------
+@SecuredMethod(roleRequired = Role.MEMBER)
+public void mySecuredMethod(@Context IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException{
+   //perform the actual functionality
+}
+--------------------------------------
+
+The code snippet shows a very basic scenario where a method is restricted to be called with an AuthorizationContext having the `MEMBER` role inside. The snippet contains two annotations: 
++@SecuredMethod(roleRequired = Role.MEMBER)+ marks the method itself as 'secured' by the authorization framework and accessible with at least the role `MEMBER`. 
+The second annotation +@Context+ marks the argument which defines user, group and role (or short, the AuthorizationContext) which is used to request access to the method. 
+Finally, the method has to throw an `UnauthorizedAccessAttemptException` for the case, that `authorizationContext` does not entitle the caller to access +mySecuredMethod()+. 
+The actual authorization code is weaved into the program code at compile time using AspectJ. To trigger this step you'll have to call a specific Maven plugin during your build. 
+Therefor, just add the following lines into the `pom.xml` of your project:
+
+[source, xml]
+--------------------------------------
+<build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>aspectj-maven-plugin</artifactId>
+        <version>1.6</version>
+        <configuration>
+          <complianceLevel>1.6</complianceLevel>
+          <aspectLibraries> 
+            <aspectLibrary>
+              <groupId>edu.kit.dama</groupId>
+              <artifactId>Authorization</artifactId>
+            </aspectLibrary>
+          </aspectLibraries> 
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>test-compile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!--More plugins coming here-->
+   </plugins>
+</build>
+--------------------------------------
+
+With these few steps the method +mySecuredMethod()+ can only be accessed using an AuthorizationContext with the role `MEMBER`. Another question relevant for this scenario is how
+to obtain a valid AuthorizationContext. This is shown in the following snippet: 
+
+[source,java]
+--------------------------------------
+public static IAuthorizationContext getAuthorizationContext(UserId pUserId, GroupId pGroupId) throws AuthorizationException {
+ try {
+      //obtain the effective role for pUserId in pGroupId using the system context
+      Role effectiveRole = (Role) GroupServiceLocal.getSingleton().getMaximumRole(pGroupId, pUserId, AuthorizationContext.factorySystemContext());
+      //create a new AuthorizationContext using the provided/obtained information
+      return new AuthorizationContext(pUserId, pGroupId, effectiveRole);
+    } catch (UnauthorizedAccessAttemptException ex) {
+      //fatal error
+      throw new AuthorizationException("Failed to get maximum role using system context.", ex);
+    }
+}
+--------------------------------------
+
+The method takes UserId and GroupId obtained from some external source (e.g. the user login) and obtains the effective role using the method 
+`getMaximumRole(GroupId, UserId, IAuthorizationContext)` of `GroupServiceLocal`. As this is an internal call we can use `AuthorizationContext.factorySystemContext()`
+to authorize the execution. 
+
+[WARNING]
+The AuthorizationContext returned by AuthorizationContext.factorySystemContext() is for internal use only. It overwrites ALL security mechanisms and should be used 
+only if there is no other context available or I you exactly aware of what you do.
+
+The effective role returned by the call already combines the group role and the global `MAX_ROLE` described in chapter <<ChapterAuthorization,Authorization>>. Finally,
+the AuthorizationContext is returned containing the provided/obtained information and can be used for authorization decisions.
+Another possibility of securing more than a method call is shown in the following code snippet:
+
+[source,java]
+--------------------------------------
+@SecuredMethod(roleRequired = Role.MEMBER)
+public void mySecuredMethod(@SecuredArgument ResourceClass securedArgument, @Context IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException{
+   //perform the actual functionality
+}
+--------------------------------------
+
+In the code you can find another annotation, +@SecuredArgument+. This annotation marks one or more arguments which should be accessed inside the method but may have 
+access restrictions that should be checked in beforehand.
+During authorization KIT Data Manager will check if the provided context `authorizationContext` is allowed to access the resource provided by `securedArgument`, which means that the
+caller must be able to access the resource with at least the GUEST role. In order to make `securedArgument` applicable for the @SecuredArgument annotation it has to implement the 
+interface `ISecurableResource` as follows:
+
+[source,java]
+--------------------------------------
+package edu.kit.dama;
+
+@Entity
+public class ResourceClass implements ISecurableResource{
+
+  @SecurableResourceIdField(domainName = "edu.kit.dama.ResourceClass")
+  @Column(nullable = false, unique = true)
+  private String uniqueIdentifier;
+
+  /**Default constructor.*/
+  public ResourceClass(){
+    //initial creation of the unique identifier
+    uniqueIdentifier = UUID.randomUUID().toString();
+  }
+
+  //your class code
+
+  @Override
+  public SecurableResourceId getSecurableResourceId() {
+    return new SecurableResourceId("edu.kit.dama.ResourceClass", uniqueIdentifier);
+  }
+}
+--------------------------------------
+
+In the beginning you see the annotation `@Entity`. This is the standard annotation to mark an entity stored in a database via Java Persistence API (JPA) which is used 
+by KIT Data Manager. Another JPA-specific annotation is provided next to the field `uniqueIdentifier` and has the content 
+`@Column(nullable = false, unique = true)`. This tells JPA that the table column holding the annotated field in the database backend contains values that must not 
+be 'null' and must be unique. However, both annotations are optional and not relevant for the authorization aspect of this example, but we'll come to this again in a few seconds.
+
+The first line relevant for the authorization is the annotation `@SecurableResourceIdField(domainName = "edu.kit.dama.ResourceClass")` which defines that the annotated field contains 
+the unique identifier for this SecurableResource. It takes a domainName as argument. The domainName defines the scope in which `uniqueIdentifier` has to be unique. 
+Typically, the class name is fine for this purpose. However, this annotation implies some requirements towards the annotated field: 
+
+Applicable to fields of type java.lang.String::
+   If the annotation is applied to a field of another type, the development environment will raise an error and compilation will fail.
+Once per class::
+   If the annotation is used twice in one class, a warning is shown in the development environment and the field annotated first will be used as uniqueIdentifier.
+Unique Identifiers in JPA Entities should be marked as 'not nullable' and 'unique'::
+   If the resource class is annotated with @Entity, the field annotated with @SecurableResourceIdField should also be annotated with @Column(nullable = false, unique = true). 
+   Otherwise, a warning is shown in the development environment.
+
+All warnings and errors mentioned before are normally not raised by the IDE. To enable this kind of pre-compile time validation for your project, please add the following 
+plugin configuration to your `pom.xml`: 
+
+[source, xml]
+--------------------------------------
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>2.5.1</version>
+    <configuration>
+    <source>1.7</source>
+    <target>1.7</target>
+    <!--Custom annotation processor for parsing classes for securable resource annotations.--> 
+    <annotationProcessors>
+      <annotationProcessor>
+          edu.kit.dama.authorization.annotations.SecurableResourceIdFieldProcessor
+      </annotationProcessor>
+      <annotationProcessor>
+          edu.kit.dama.authorization.annotations.FilterOutputValidationProcessor
+      </annotationProcessor>
+    </annotationProcessors>
+    </configuration> 
+</plugin>
+--------------------------------------
+
+The two annotation processors will check the annotations in your project based on the criterias mentioned before and can help you to detect misconfiguration easily.
+The final part necessary for implementing `ISecurableResource` is the implementation of the method `getSecurableResourceId()`. This method has to return an instance of `SecurableResourceId` 
+containing the `domainName` (the one we've used in the annotation above) as well as the content of the field `uniqueIdentifier`. The value of this field should be set during the initial creation of the 
+object and should *never change*.
+
+A final scenario of coding KIT Data Manager from the authorization perspective covers the case when a method returns a list of securable resources. 
+
+[source,java]
+--------------------------------------
+@SecuredMethod(roleRequired = Role.MEMBER)
+@FilterOutput(roleRequired = Role.MEMBER)
+public  <T extends ISecurableResource> List<T>  mySecuredMethod(@Context IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException{
+   List<T> unfilteredList = obtainUnfilteredList();
+   //just return the unfiltered list
+   return unfilteredList;
+}
+--------------------------------------
+
+As you see, the implementation is quite similar to the other cases. An additional annotation `@FilterOutput(roleRequired = Role.MEMBER)` tells the authorization framework to 
+filter the output and remove entities which need higher permissions than MEMBER from the initially returned list `unfilteredList`. This works as long as the entries in the 
+returned list do implement `ISecurableResource` as described in the last example. In the worst case, an empty list is returned as all elements were removed.

@@ -1,0 +1,364 @@
+Installing KIT Data Manager
+---------------------------
+
+The following sections describe the basic installation steps of KIT Data Manager. After following the installation instructions you'll have all available KIT Data Manager 
+services deployed in a Tomcat environment accessible via REST interfaces. Everything beyond, e.g. graphical user interfaces or advanced deployment scenarios, are not 
+part of this documentation.
+
+Prerequisites
+~~~~~~~~~~~~~
+In order to be able to provide KIT Data Manager services you'll need at least the following software components installed: 
+
+* Java SE Development Kit 7
+* Apache Tomcat 7
+* PostgreSQL 9.1
+* Apache Http Server (for sample WebDAV access to data)
+
+In principal it is possible to install KIT Data Manager on every operating system. For simplicity, this documentation only covers the installation on a Unix-based system 
+(namely Ubuntu 14.04 LTS) in detail.
+
+Software Installation
+~~~~~~~~~~~~~~~~~~~~~
+At first, please install the required software packages. Therefor, you can use either the package manager of your system or you can download the packages manually. 
+In the following we're using Apt:
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo apt-get install postgresql
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+postgresql is already the newest version.
+user@localhost:/home/user$ sudo apt-get install openjdk-7-jdk
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+openjdk-7-jdk is already the newest version.
+user@localhost:/home/user$ sudo apt-get install tomcat7
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+tomcat7 is already the newest version.
+user@localhost:/home/user$ sudo apt-get install apache2 apache2-utils
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+apache2 is already the newest version.
+user@localhost:/home/user$
+--------------------------------------
+Now you have installed all software packages you need to run KIT Data Manager. Not later than now you should extract your KIT Data Manager binary distribution archive 
+to a preferred location which will be referred below as `$KITDM_LOCATION`. Afterwards change the ownership to tomcat7:tomcat7. 
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ cd $KITDM_LOCATION
+user@localhost:/home/user$ unzip KITDM-<Version>.zip
+user@localhost:/home/user$ sudo chown tomcat7:tomcat7 KITDM
+user@localhost:/home/user$
+--------------------------------------
+
+You should now have the application itself and a number of configuration files and scripts we'll cover later extracted at $KITDM_LOCATION. 
+In the following steps the relational database used by KIT Data Manager is prepared. At first we set a password for the database user that was created 
+during installation.
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo -u postgres psql postgres
+psql (9.1.13)
+Type "help" for help.
+
+postgres=#\password postgres
+--------------------------------------
+
+Now set a password for the database user `postgres` and keep it in mind for later configuration steps. Now we create a database for KIT Data Manager. 
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo -u postgres createdb datamanager
+user@localhost:/home/user$ 
+--------------------------------------
+
+A database named `datamanager` has been created and can be set up. For this purpose, a file named `$KITDM_LOCATION/sql/schema.sql` is provided as part of your KIT Data 
+Manager distribution. Apply the SQL statements in this file to the database by the following command:
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo -u postgres psql -U postgres -d datamanager -f $KITDM_LOCATION/sql/schema.sql
+SET
+SET
+SET
+SET
+SET
+CREATE EXTENSION
+[...]
+user@localhost:/home/user$ 
+--------------------------------------
+
+Finally, the database has to be filled with some basic data in order to access KIT Data Manager later for the first time. This basic sample data is stored in the file 
+`$KITDM_LOCATION/sql/sampledata.sql`. Before you continue you may modify this file according to your needs. Afterwards, add all data stored in this file to the database 
+by the following command: 
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo -u postgres psql -U postgres -d datamanager -f $KITDM_LOCATION/sql/sampledata.sql
+SET
+SET
+SET
+SET
+SET
+SET
+INSERT 0 1
+[...]
+user@localhost:/home/user$ 
+--------------------------------------
+
+In the next step you have to deploy the KIT Data Manager Web application on the local Tomcat server. Therefor, copy the file `$KITDM_LOCATION/webapp/KITDM.xml` to 
+`$TOMCAT_HOME/conf/Catalina/localhost`. In our case this would be `/var/lib/tomcat7/conf/Catalina/localhost/`. 
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo cp $KITDM_LOCATION/webapp/KITDM.xml /var/lib/tomcat7/conf/Catalina/localhost/
+user@localhost:/home/user$ 
+--------------------------------------
+
+Finally, you have to modify `/var/lib/tomcat7/conf/Catalina/localhost/KITDM.xml` in order to make `<KIT_DM_PATH>` point to your `$KITDM_LOCATION/KITDM/`.
+Now, your KIT Data Manager services are ready for further configuration.
+
+Basic Configuration
+~~~~~~~~~~~~~~~~~~~
+
+All configuration files of KIT Data Manager are located inside the web application folder, by default at `$KITDM_LOCATION/KITDM/WEB-INF/classes/`. There are 
+three different configuration files: 
+
+META-INF/persistence.xml::
+   Contains all JPA persistence units for database access. Depending on your local configuration you may change the values for the database access user (javax.persistence.jdbc.user) 
+   and password (javax.persistence.jdbc.password) according to the values you've applied before, especially for the database user's password.
+datamanager.xml::
+   Contains all KIT Data Manager settings. Typically, most of them can remain unchanged, except settings containing placeholder variables (e.g. $HOSTNAME). Please refer to the comments
+   in the config file for more information.
+logback.xml::
+   The configuration of the logging framework. By default, all warnings and error messages are logged into the Tomcat temp directory located at `/tmp/tomcat7-tomcat7-tmp/`, 
+   but you can also set another value instead of `${java.io.tmpdir}/datamanager.log` as log file location at any time.
+
+[NOTE]
+Please go through all files at least during your first installation to check which settings are in there and which you have to change in order to get your KIT Data Manager instance running.
+
+In order to be able to use KIT Data Manager as a repository system, at least one access point must be configured to allow data ingest and download. The following example
+covers the setup of a WebDav access point provided by a Apache HTTP server. The Apache Http server package has been already installed in the first step of this installation
+instruction. Therefore, the following section only covers the setup of WebDav.
+
+Setting up a WebDav Access Point
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The first step is setting up WebDav starting with enabling the WebDav modules:
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo a2enmod dav
+Enabling module dav.
+user@localhost:/home/user$ sudo a2enmod dav_fs
+Enabling module dav_fs.
+user@localhost:/home/user$
+--------------------------------------
+
+Now we create a user database file containing all authorized WebDav users. You may replace the username `webdav` by a username of your choice.
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo htpasswd -c /etc/apache2/dav_users.db webdav
+New password: 
+Re-type new password: 
+Adding password for user webdav
+user@localhost:/home/user$ sudo chgrp www-data /etc/apache2/dav_users.db
+user@localhost:/home/user$
+--------------------------------------
+
+This step may be executed multiple times if multiple accounts should be allowed to ingest files via WebDav. However, in production environments more sophisticated setups using 
+e.g. LDAP for authentication are recommended. 
+
+The following steps are relatively complex, Linux distribution-dependent and might not be necessary in every case. The problem we have to solve is, that by default there is one 
+user running Tomcat (tomcat7 by default) and another user running the Apache Http server (www-data by default), both in groups with the same names. For data transfer tasks
+KIT Data Manager running in Tomcat has to create the destination folders that are filled via (ingest) or for (download) WebDav transfers afterwards. Hence, all files must 
+be accessible by both users, tomcat7 and www-data. Of course, the most simple solution is to run Tomcat and Apache Http server by the same user, but this is not feasible in 
+many cases and may cause security issues. Therefore, in the following lines another setup based on group permissions will be presented.
+
+At first, we create the folder that will be accessible via WebDav and assign the proper permissions.
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo mkdir /var/www/webdav
+user@localhost:/home/user$ sudo chgrp www-data /var/www/webdav
+user@localhost:/home/user$ sudo chmod 2770 /var/www/webdav
+--------------------------------------
+
+Now, the directory `/var/www/webdav` is owned by the group `www-data`, has full access for the owner and the owner's group and has the group sticky bit set, which takes care 
+that the group ownership is applied to all files and folders created below `/var/www/webdav/`. Apart from the ownership also access permissions have to be kept for newly 
+created files and folders. For this purpose we use the `umask` which can be set for the Apache process under Ubuntu quite easy. You just have to add `umask 007` at the 
+end of `/etc/apache2/envvars`, either manually or by using the following call: 
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ echo 'umask 007' | sudo tee --append /etc/apache2/envvars
+umask 007
+user@localhost:/home/user$
+--------------------------------------
+
+Please check afterwards, if the line was added and if it is the only entry setting the umask. Afterwards, permissions 770 will be assigned to all files and folders 
+created by the Apache process providing WebDav access. Finally, both users (the one running Tomcat and the one running the Apache Http server) must be in the same group, 
+in our case we use `www-data`. Therefore, the user running Tomcat has to be added to `www-data` in order to complete the setup: 
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo adduser tomcat7 www-data
+Adding user tomcat7 to group www-data
+Done.
+user@localhost:/home/user$
+--------------------------------------
+
+Finally, you have to configure WebDav in Apache. Therefor, please add the following section to the configuration `/etc/apache2/sites-enabled/000-default.conf`: 
+
+[source,sh]
+--------------------------------------
+<VirtualHost *:80>  
+  //[...]
+  Alias /webdav "/var/www/webdav/"
+
+  <Directory "/var/www/webdav/">
+    DAV on
+    Options Indexes FollowSymLinks
+    AuthType Basic
+    AuthName WebDav
+    AuthUserFile /etc/apache2/dav_users.db
+    Require valid-user
+    AllowOverride none 
+  </Directory>
+  //[...]
+</VirtualHost>
+--------------------------------------
+
+All these changes take effect after restarting Tomcat and Apache Http server and we are almost done with the system-level portion of the setup. The only thing which is 
+still missing are a couple of Cron jobs taking care of data staging. For this purpose there is a script called `TransferFinalizer.sh` available at 
+`$KITDM_LOCATION/scripts/`. At first, set the correct value of $KITDM_LOCATION in the script. Then, please pay attention that the scripts are executed by the user running 
+the KIT Data Manager Web application, in our case this should be `tomcat7`. Therefore, the Cron job must be assigned to this user as follows:
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo -u tomcat7 crontab -e
+#Press i to enter insert mode and put the following lines at the end.#
+##Modify the the base path $KITDM_LOCATION according to your local setup!##
+
+*/5 * * * * $KITDM_LOCATION/scripts/TransferFinalizer.sh -t DOWNLOAD > /dev/null 2>&1
+*/10 * * * * $KITDM_LOCATION/scripts/TransferFinalizer.sh -t INGEST > /dev/null 2>&1
+
+#Press ESC for leaving the insert mode and press :wq to save and quit
+user@localhost:/home/user$
+--------------------------------------
+
+[WARNING]
+Don't forget to set $KITDM_LOCATION inside the TransferFinalizer.sh script. Otherwise, all staging operations will fail.
+
+Now, a new access point using the created WebDav service can be registered using the administration backend of KIT Data Manager. For this purpose please browse to
+`http://localhost:8080/KITDM` in the browser of your KIT Data Manager machine and login. By default the administrator email is `dama@kit.edu` and the password is `dama14`. 
+Open the settings page using the button on the lower left hand side and select the tab `Staging Access Point Configuration`, which looks as follows:
+
+[[AdminUI_AP]]
+.Staging Access Point configuration tab in the administration backend.
+image::AdminUI_AP.png[AdminUI_AP]
+
+At first, insert `edu.kit.dama.staging.ap.impl.BasicStagingAccessPoint` as Access Point Implementation Class. Clicking the button next to the input fields will create
+a new Access Point. Now, please insert all values as shown in the screenshot in order to configure the Access Point properly. Pay special attention to the Remote Base URL, 
+which has to correspond to the FQDN of your machine running KIT Data Manager. Finally, commit all changes using the Commit button on the lower right. 
+Now, you should be able to use KIT Data Manager as a repository system including the ingest and the download of data.
+
+Updating KIT Data Manager
+-------------------------
+
+The effort for updating from one KIT Data Manager version to another mainly depends on how KIT Data Manager is used and customized. A typical update process of a standard installation 
+described earlier in this documentation includes the following steps:
+
+1. Stop the Tomcat container in which KIT Data Manager is running
+2. Create a backup of $KITDM_LOCATION and the database
+3. Update the KIT Data Manager libraries
+4. Update database schema and/or settings if required 
+5. Rebuild and redeploy all additionally added, custom libraries (*)
+6. Restart the Tomcat container
+
+(*) Step 5 is optional and will be described in section <<SectionCustomUpdate,Update Custom Libraries>>.
+
+The following detailed description for updating a KIT Data Manager installation is based on Ubuntu. 
+If you are using another distribution some commands and service names might be slightly different. Also the username and database name used by the pg_dump command 
+might be different depending on how your KIT Data Manager instance is configured.
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo service tomcat7 stop
+* Stopping Tomcat servlet engine tomcat7
+user@localhost:/home/user$ cd $KITDM_LOCATION
+user@localhost:/home/user$ mkdir ../backup_1.0
+user@localhost:/home/user$ cp * ../backup_1.0 -R
+user@localhost:/home/user$ sudo -u postgres pg_dump -U postgres -h localhost -d datamanager -W > ../backup_1.0/database_dump.sql
+user@localhost:/home/user$
+--------------------------------------
+
+In the next step, the libraries of your KIT Data Manager installation have to be updated. If you are updating from KIT Data Manager version 1.0 please download the update package 
+KITDM-Update-1.1.zip to `$KITDM_LOCATION` and continue as follows:
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ rm KITDM/WEB-INF/lib/*.jar 
+user@localhost:/home/user$ rm KITDM/WEB-INF/classes/edu/kit/dama/ -R
+user@localhost:/home/user$ unzip KITDM-Update-1.1.zip
+user@localhost:/home/user$ 
+--------------------------------------
+
+In the first two steps, all libraries and classes of version 1.0 are deleted. This is necessary due to the fact, that a library named `Authorization-1.0.jar` would be favored 
+by the classloader even if there is a new version named `Authorization-1.1.jar`. Afterwards, by extracting `KITDM-Update-1.1.zip` all libraries of version 1.1 are placed 
+directly at `$KITDM_LOCATION/KITDM/WEB-INF/lib/`. 
+
+[NOTE]
+As of KIT Data Manager 1.1 there will be an update tool offering support for the process of updating libraries from one version to another.
+
+After updating all core libraries there might be additional steps necessary, e.g. applying database schema or configuration file changes. Necessary steps are described for each
+new version in section <<SectionChanges,Additional Update Steps>>. If you skip one or more versions you typically have to apply all intermediate steps unless the documentation 
+states something different.
+
+[[SectionCustomUpdate]]
+Update Custom Libraries
+~~~~~~~~~~~~~~~~~~~~~~~
+
+As soon as you've started integrating community-specific features into the basic repository system, the question arises, how these customizations are carried from one version to the other.
+Basically, this is quite simple. At first, it is highly recommended to rebuild all customizations, e.g. Staging Processors or custom metadata entities, against the current version of 
+KIT Data Manager in order to detect the use of deprecated interfaces or updated imports. Afterwards, all custom libraries can be placed at `$KITDM_LOCATION/KITDM/WEB-INF/lib/` again and 
+should work as before. If this can not be expected, e.g. due to internal changes, an according remark will be stated in the following chapter.
+
+[[SectionChanges]]
+Additional Update Steps
+~~~~~~~~~~~~~~~~~~~~~~~
+The following section contains additional update steps necessary in order to update from different versions of KIT Data Manager to the next. There are different types of updates: 
+
+image:data.png[DatabaseUpdate] Database schema changes
+
+image:gear_preferences.png[ConfigurationUpdate] Configuration file changes 
+
+image:server_client_exchange.png[InterfaceUpdate] REST Interface changes
+
+For database changes (image:data.png[DatabaseUpdate]) typically an SQL update script is provided that has to be executed using the following command:
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo -u postgres psql -U postgres -W -h localhost -d datamanager -f $KITDM_LOCATION/sql/update.1.0-1.1.sql
+user@localhost:/home/user$
+--------------------------------------
+
+Of course you should use the username and database name fitting your KIT Data Manager installation. Also the name of the update script will change depending on the affected versions.
+
+Please refer to the following section for all changes, whether applying them is optional or not and their side effects:
+
+[underline]*Update 1.0 -> 1.1*
+
+[cols="1,1,6,2", options="header"]
+|============================================================================================================================
+|Type|Optional|Todo|Side Effects
+|image:data.png[DatabaseUpdate]|No|Apply script `sql/update.1.0-1.1.sql`|All ingest- and downloadinformation entries are deleted. Therefor, it is recommended to finish all data transfers before updating.
+|image:gear_preferences.png[ConfigurationUpdate]|Yes|Add nodes for *maxIngestLifetime* and *maxDownloadLifetime* to *staging* section 
+in `$KITDM_LOCATION/WEB-INF/classes/datamanager.xml` The default value is 604800 (seconds per week).|None.
+|============================================================================================================================

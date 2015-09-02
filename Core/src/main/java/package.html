@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!--
+Copyright 2014 Karlsruhe Institute of Technology.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<html>
+  <head>
+    <title>Core</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <p>The Core module is actually no source code module but contains all base libraries needed for KIT Data Manager Web applications (ReST-only or UI-based).
+      It contains all generic base libraries, e.g. for MetaDataManagement, BaseMetaData- and DataOrganization-Entities. Community-specific dependencies like 
+      content metadata or enhanced search must be added externally. Including the module is rather simple and can be achieved by adding the Maven artifact edu.kit.dama.Core of 
+      type 'war' to the project. During build the WAR file will be processed as overlay and is integrated into the child project's WAR.
+    </p>
+  </body>
+</html>

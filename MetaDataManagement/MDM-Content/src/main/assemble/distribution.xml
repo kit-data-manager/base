@@ -1,0 +1,76 @@
+<!--
+
+    Copyright (C)2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<assembly>
+  <id>default</id>
+  <!-- which format do you prefer?
+  Possible values are: zip, tar.gz, tar.bz2, jar, dir, war
+  See also: http://maven.apache.org/plugins/maven-assembly-plugin/
+  -->
+  <formats>
+    <format>zip</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <!-- Insert all jars the project depends on. -->
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>KITDM/WEB-INF/lib/</outputDirectory>
+	  <useTransitiveDependencies>false</useTransitiveDependencies>
+	  <excludes>
+		<!--Exclude all dependencies already added with the KIT Data Manager core distribution.-->
+		<exclude>edu.kit.dama:Commons</exclude>
+		<exclude>edu.kit.dama:MDM-BaseMetaData</exclude>
+		<exclude>edu.kit.dama:StagingService</exclude>
+		<exclude>edu.kit:ADALAPI</exclude>
+		<exclude>org.eclipse.persistence:javax.persistence</exclude>
+		<exclude>org.eclipse.persistence:eclipselink</exclude>
+		<exclude>org.eclipse.persistence:org.eclipse.persistence.moxy</exclude> 
+		<exclude>ch.qos.logback:logback-classic</exclude>
+		<exclude>org.slf4j:slf4j-api</exclude>
+		<exclude>postgresql:postgresql</exclude>
+		<exclude>commons-io:commons-io</exclude>
+		<exclude>commons-configuration:commons-configuration</exclude>
+		<exclude>commons-collections:commons-collections</exclude>
+		<exclude>commons-codec:commons-codec</exclude>
+		<exclude>org.apache.commons:commons-compress</exclude>
+		<exclude>org.fzk.ipe:Tools</exclude>
+	</excludes>
+    </dependencySet>
+	
+  </dependencySets>
+  <!-- Define filter to copy into assembly. -->
+  <fileSets>
+    <fileSet>
+      <directory>src/main/licences</directory>
+      <outputDirectory>licences</outputDirectory>
+      <filtered>false</filtered>
+	   <includes>
+        <include>**/*</include>
+      </includes>
+    </fileSet>
+	 <fileSet>
+      <directory>src/main/java</directory>
+      <outputDirectory>KITDM/WEB-INF/src/</outputDirectory>
+      <filtered>false</filtered>
+	   <includes>
+        <include>**/*</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+  
+  
+</assembly>

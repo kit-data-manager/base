@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C)2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<!--   *************************************************************************
+***                    persistence.xml                                ***
+*************************************************************************
+***   This file have to hold all persistence units which are used     ***
+***   in the KIT Data Manager.             ***
+***   ATTENTION: persistence units used also by others shouldn't      ***
+***              be edited. Handle them with care and be sure         ***
+***              what you are doing. In normal case you should        ***
+***              add a new persistence unit for your own.             ***
+*************************************************************************-->
+
+<persistence version="1.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence     http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd">
+  <!-- *************************************************************************
+  ***                                                                   ***
+  ***               M O D U L :  A U T H O R I S A T I O N              ***
+  ***                                                                   ***
+  *************************************************************************-->
+  <!-- *************************************************************************
+  ***                    AuthorizationUnit-Test                         ***
+  *************************************************************************-->
+  <persistence-unit name="AuthorizationUnit-Test" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.authorization.entities.impl.Group</class>
+    <class>edu.kit.dama.authorization.entities.impl.User</class>
+    <class>edu.kit.dama.authorization.entities.impl.Membership</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.Grant</class>
+    <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+    <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
+    <shared-cache-mode>NONE</shared-cache-mode>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://ipelsdf1.lsdf.kit.edu:3306/lsdf"/>
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+      <property name="javax.persistence.jdbc.user" value="lsdftest"/>
+      <property name="javax.persistence.jdbc.password" value="test4fdsl"/>
+      <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
+      <property name="eclipselink.jdbc.batch-writing.size" value="1000"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <!--Custom mapping to avoid model generator exception while using two PUs with the same entities-->
+      <property name="eclipselink.canonicalmodel.subpackage" value="test"/>
+    </properties>
+  </persistence-unit>
+  <!-- *************************************************************************
+  ***                    AuthorizationPU                       ***
+  *************************************************************************-->
+  <persistence-unit name="AuthorizationPU" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.authorization.entities.impl.Group</class>
+    <class>edu.kit.dama.authorization.entities.impl.User</class>
+    <class>edu.kit.dama.authorization.entities.impl.Membership</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.Grant</class>
+    <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+    <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
+    <shared-cache-mode>NONE</shared-cache-mode>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://ipelsdf1.lsdf.kit.edu:3306/kdm"/>
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+      <property name="javax.persistence.jdbc.user" value="lsdftest"/>
+      <property name="javax.persistence.jdbc.password" value="test4fdsl"/>
+      <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
+      <property name="eclipselink.jdbc.batch-writing.size" value="1000"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <!--Custom mapping to avoid model generator exception while using two PUs with the same entities-->
+      <property name="eclipselink.canonicalmodel.subpackage" value="release"/>
+    </properties>
+  </persistence-unit>
+  <!-- *************************************************************************
+  ***                                                                   ***
+  ***          M O D U L E :  D A T A O R G A N I S A T I O N             ***
+  ***                                                                   ***
+  *************************************************************************-->
+  <!-- *************************************************************************
+  ***                    DataOrganizationPU                             ***
+  *************************************************************************-->
+  <persistence-unit name="DataOrganizationPU" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.Attribute</class>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.CollectionNode</class>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.DataOrganizationNode</class>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.FileNode</class>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/postgres"/>
+      <property name="javax.persistence.jdbc.password" value="0kudH2O."/>
+      <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+      <property name="javax.persistence.jdbc.user" value="postgres"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <property name="eclipselink.ddl-generation" value="create-tables"/>
+    </properties>
+  </persistence-unit>
+  <!-- *************************************************************************
+  ***                    DataOrganisationPU-Test                        ***
+  *************************************************************************-->
+  <persistence-unit name="DataOrganizationPU-Test" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.Attribute</class>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.CollectionNode</class>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.DataOrganizationNode</class>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.FileNode</class>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.FileTreeMeta</class>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:unit-testing-jpa"/>
+      <property name="javax.persistence.jdbc.user" value="sa"/>
+      <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver"/>
+      <property name="javax.persistence.jdbc.password" value=""/>
+      <property name="eclipselink.ddl-generation" value="drop-and-create-tables"/>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect"/>
+      <property name="eclipselink.ddl-generation.output-mode" value="both"/>
+      <property name="eclipselink.create-ddl-jdbc-file-name" value="create.sql"/>
+    </properties>
+  </persistence-unit>
+  <!-- *************************************************************************
+  ***                    DataOrganisationPU-OraDB                       ***
+  *************************************************************************-->
+  <persistence-unit name="DataOrganisationPU-OraDB" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.mdm.dataorganisation.impl.jpa.Attribute</class>
+    <class>edu.kit.dama.mdm.dataorganisation.impl.jpa.CollectionNode</class>
+    <class>edu.kit.dama.mdm.dataorganisation.impl.jpa.DataOrganisationNode</class>
+    <class>edu.kit.dama.mdm.dataorganisation.impl.jpa.FileNode</class>
+    <class>edu.kit.dama.mdm.dataorganisation.impl.jpa.FileTreeMeta</class>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:oracle:thin:@(DESCRIPTION=(FAILOVER = ON)(ADDRESS=(PROTOCOL=TCP)(HOST=iwrcorv1.fzk.de)(PORT=1521))(ADDRESS=(PROTOCOL=TCP)(HOST=iwrcorv2.fzk.de)(PORT=1521))(LOAD_BALANCE=yes)(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=iwr.fzk.de)(FAILOVER_MODE=(TYPE=SELECT)(METHOD=BASIC)(RETRIES=180)(DELAY=5))))"/>
+      <property name="javax.persistence.jdbc.driver" value="oracle.jdbc.driver.OracleDriver"/>
+      <property name="javax.persistence.jdbc.user" value="lsdftest"/>
+      <property name="javax.persistence.jdbc.password" value="fdsl4test"/>
+      <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
+      <property name="eclipselink.jdbc.batch-writing.size" value="2000"/>
+      <property name="eclipselink.ddl-generation" value="drop-and-create-tables"/>
+      <property name="eclipselink.ddl-generation.output-mode" value="both"/>
+      <property name="eclipselink.create-ddl-jdbc-file-name" value="create.sql"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+    </properties>
+  </persistence-unit>
+  <!-- *************************************************************************
+  ***                                                                   ***
+  ***          M O D U L E :  M E T A D A T A M A N A G E M E N T         ***
+  ***                                                                   ***
+  *************************************************************************-->
+  <!-- *************************************************************************
+  ***                    MDM-Core                                             ***
+  *************************************************************************-->
+  <persistence-unit name="MDM-Core" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.mdm.base.OrganizationUnit</class>
+    <class>edu.kit.dama.mdm.base.Study</class>
+    <class>edu.kit.dama.mdm.base.Investigation</class>
+    <class>edu.kit.dama.mdm.base.DigitalObject</class>
+    <class>edu.kit.dama.mdm.base.Participant</class>
+    <class>edu.kit.dama.mdm.base.Relation</class>
+    <class>edu.kit.dama.mdm.base.Task</class>
+    <class>edu.kit.dama.mdm.base.UserData</class>
+    <class>edu.kit.dama.mdm.base.MetaDataSchema</class>
+    <class>edu.kit.dama.mdm.base.MetadataIndexingTask</class>
+    <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+    <class>edu.kit.dama.mdm.admin.ServiceAccessToken</class>
+    <class>edu.kit.dama.mdm.admin.UserGroup</class>
+    <class>edu.kit.dama.mdm.admin.UserProperty</class>
+    <class>edu.kit.dama.mdm.admin.UserPropertyCollection</class>
+    <shared-cache-mode>NONE</shared-cache-mode>
+
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/postgres"/>
+      <property name="javax.persistence.jdbc.password" value="0kudH2O."/>
+      <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+      <property name="javax.persistence.jdbc.user" value="postgres"/>
+      <property name="eclipselink.ddl-generation" value="create-tables"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <shared-cache-mode>NONE</shared-cache-mode>
+    </properties>
+  </persistence-unit>
+    
+  <!-- *************************************************************************
+  ***                    MDM-Core-Test                                  ***
+  *************************************************************************-->
+  <persistence-unit name="MDM-Core-Test" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.authorization.annotations.resources.TestEntity</class>
+    <class>edu.kit.dama.authorization.annotations.resources.SecurityTestEntity</class>
+    <class>edu.kit.dama.authorization.entities.impl.Group</class>
+    <class>edu.kit.dama.authorization.entities.impl.User</class>
+    <class>edu.kit.dama.authorization.entities.impl.Membership</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.Grant</class>
+    <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+    <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
+    <shared-cache-mode>NONE</shared-cache-mode>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://ipelsdf1.lsdf.kit.edu:3306/lsdf"/>
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+      <property name="javax.persistence.jdbc.user" value="lsdftest"/>
+      <property name="javax.persistence.jdbc.password" value="test4fdsl"/>
+      <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
+      <property name="eclipselink.jdbc.batch-writing.size" value="1000"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <property name="eclipselink.canonicalmodel.subpackage" value="test"/>
+      <property name="eclipselink.ddl-generation" value="create-tables" />        
+    </properties>
+  </persistence-unit>
+  <!-- *************************************************************************
+  ***                    MDM-BaseMetaData-Test                          ***
+  *************************************************************************-->
+  <persistence-unit name="MDM-BaseMetaData-Test" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.mdm.base.OrganizationUnit</class>
+    <class>edu.kit.dama.mdm.base.Study</class>
+    <class>edu.kit.dama.mdm.base.Investigation</class>
+    <class>edu.kit.dama.mdm.base.DigitalObject</class>
+    <class>edu.kit.dama.mdm.base.Participant</class>
+    <class>edu.kit.dama.mdm.base.Relation</class>
+    <class>edu.kit.dama.mdm.base.Task</class>
+    <class>edu.kit.dama.mdm.base.UserData</class>
+    <class>edu.kit.dama.mdm.base.MetaDataSchema</class>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:mdm-core-unit-testing-jpa"/>
+      <property name="javax.persistence.jdbc.user" value="sa"/>
+      <property name="javax.persistence.jdbc.password" value=""/>
+      <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver"/>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect"/>
+      <property name="hibernate.hbm2ddl.auto" value="create-drop"/>
+      <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:unit-testing-jpa"/>
+      <property name="javax.persistence.jdbc.user" value="sa"/>
+      <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver"/>
+      <property name="javax.persistence.jdbc.password" value=""/>
+      <property name="hibernate.hbm2ddl.auto" value="create-drop"/>
+      <property name="eclipselink.ddl-generation" value="create-tables"/>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect"/>
+    </properties>
+  </persistence-unit>
+  <!-- *************************************************************************
+  ***                    MDM-Microscopy-Test                            ***
+  *************************************************************************-->
+  <persistence-unit name="MDM-Microscopy-Test" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.mdm.microscopy.Construct</class>
+    <class>edu.kit.dama.mdm.microscopy.DevelopmentStage</class>
+    <class>edu.kit.dama.mdm.microscopy.EmbryoMetaData</class>
+    <class>edu.kit.dama.mdm.microscopy.EmbryoToxMetaData</class>
+    <class>edu.kit.dama.mdm.microscopy.FluorescenceColor</class>
+    <class>edu.kit.dama.mdm.microscopy.GeneticBackground</class>
+    <class>edu.kit.dama.mdm.microscopy.MicroscopyMetaData</class>
+    <class>edu.kit.dama.mdm.microscopy.Mode</class>
+    <class>edu.kit.dama.mdm.microscopy.Objective</class>
+    <class>edu.kit.dama.mdm.microscopy.Orientation</class>
+    <class>edu.kit.dama.mdm.microscopy.Structures</class>
+    <class>edu.kit.dama.mdm.microscopy.Tag</class>
+    <class>edu.kit.dama.mdm.microscopy.ToxUnit</class>
+    <class>edu.kit.dama.mdm.base.DigitalObject</class>
+    <class>edu.kit.dama.mdm.base.Investigation</class>
+    <class>edu.kit.dama.mdm.base.OrganizationUnit</class>
+    <class>edu.kit.dama.mdm.base.Participant</class>
+    <class>edu.kit.dama.mdm.base.Relation</class>
+    <class>edu.kit.dama.mdm.base.Study</class>
+    <class>edu.kit.dama.mdm.base.Task</class>
+    <class>edu.kit.dama.mdm.base.UserData</class>
+    <class>edu.kit.dama.mdm.base.MetaDataSchema</class>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:unit-testing-jpa"/>
+      <property name="javax.persistence.jdbc.user" value="sa"/>
+      <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver"/>
+      <property name="javax.persistence.jdbc.password" value=""/>
+      <property name="hibernate.hbm2ddl.auto" value="create-drop"/>
+      <property name="eclipselink.ddl-generation" value="create-tables"/>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect"/>
+    </properties>
+  </persistence-unit>
+  <!-- *************************************************************************
+  ***                                                                   ***
+  ***          M O D U L E:  S T A G I N G                               ***
+  ***                                                                   ***
+  *************************************************************************-->  
+  <persistence-unit name="StagingUnit" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.staging.entities.ingest.IngestInformation</class>
+    <class>edu.kit.dama.staging.entities.download.DownloadInformation</class>
+    <class>edu.kit.dama.staging.entities.StagingAccessPointConfiguration</class>
+    <class>edu.kit.dama.staging.entities.StagingAccessProviderConfiguration</class>
+    <class>edu.kit.dama.staging.entities.StagingProcessor</class>  
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/postgres"/>
+      <property name="javax.persistence.jdbc.password" value="0kudH2O."/>
+      <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+      <property name="javax.persistence.jdbc.user" value="postgres"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <property name="eclipselink.ddl-generation" value="create-tables"/>
+      <shared-cache-mode>NONE</shared-cache-mode>
+    </properties>
+  </persistence-unit>
+    
+  <persistence-unit name="Staging_Test" transaction-type="RESOURCE_LOCAL">
+   <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.staging.entities.ingest.IngestInformation</class>
+    <class>edu.kit.dama.staging.entities.download.DownloadInformation</class>
+    <class>edu.kit.dama.staging.entities.StagingAccessPointConfiguration</class>
+    <class>edu.kit.dama.staging.entities.StagingAccessProviderConfiguration</class>
+    <class>edu.kit.dama.staging.entities.StagingProcessor</class>  
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://ipelsdf1.lsdf.kit.edu:3306/lsdf"/>
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+      <property name="javax.persistence.jdbc.user" value="lsdftest"/>
+      <property name="javax.persistence.jdbc.password" value="test4fdsl"/>
+      <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
+      <property name="eclipselink.jdbc.batch-writing.size" value="1000"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <property name="eclipselink.canonicalmodel.subpackage" value="test"/>
+      <property name="eclipselink.ddl-generation" value="drop-and-create-tables" />        
+    </properties>
+  </persistence-unit>
+</persistence>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <groupId>edu.kit.dama</groupId>
+    <artifactId>KITDM</artifactId>
+    <version>1.1</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>edu.kit.dama</groupId>
+  <artifactId>UserInterface</artifactId>
+  <name>UserInterface</name>
+  <packaging>pom</packaging>
+  <version>1.1</version>
+  
+  <description>This module collection contains all modules related to (graphical) user interfaces. Typically, user interfaces are community dependent and hosted externally.
+    The user interfaces of this module are community indenpendent, e.g. for administration or monitoring.
+  </description>
+  
+  <properties>
+    <projectName>UserInterface</projectName>
+    <firstName>Thomas</firstName>
+    <lastName>Jejkal</lastName>
+    <nameId>jejkal</nameId>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>  
+  
+  <developers>
+    <developer>
+      <id>${nameId}</id>
+      <name>${firstName} ${lastName}</name>
+      <email>${firstName}.${lastName}@kit.edu</email>
+      <organization>Karlsruhe Institute of Technology (KIT)</organization>
+      <roles>
+        <role>Project manager</role>
+      </roles>
+      <timezone>1</timezone>
+    </developer>
+  </developers>
+    
+  <dependencies>
+    <dependency>
+      <groupId>javax.portlet</groupId>
+      <artifactId>portlet-api</artifactId>
+      <version>2.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.1.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>edu.kit.dama</groupId>
+      <artifactId>Commons</artifactId>
+      <version>1.1</version>
+    </dependency>
+    <dependency>
+      <groupId>edu.kit.dama</groupId>
+      <artifactId>UICommons7</artifactId>
+      <version>1.1</version>
+      <type>jar</type>
+    </dependency>
+  </dependencies>
+ 
+  <modules>
+    <module>AdminUI</module>
+    <module>UICommons7</module>
+    <module>SimpleMonitoringPortlet</module>
+  </modules>
+</project>

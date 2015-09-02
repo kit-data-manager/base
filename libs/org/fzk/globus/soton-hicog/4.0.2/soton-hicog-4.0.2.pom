@@ -1,0 +1,25 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.fzk.globus</groupId>
+  <artifactId>soton-hicog</artifactId>
+  <packaging>jar</packaging>
+  <version>4.0.2</version>
+  <name>Soton hicog</name>
+<distributionManagement>
+  <!-- use the following if you're not using a snapshot version. -->
+    <repository>
+        <id>deploymentRepo</id>
+        <name>Repository Name</name>
+
+        <url>scp://ipehartmann1/usr/local/java/app/maven/apache-archiva/1.2.1/data/repositories/internal</url>
+    </repository>
+    <!-- use the following if you ARE using a snapshot
+         version. -->
+    <snapshotRepository>
+        <id>deploymentRepo</id>
+        <name>Repository Name</name>
+        <url>scp://ipehartmann1/usr/local/java/app/maven/apache-archiva/1.2.1/data/repositories/snapshots</url>
+    </snapshotRepository>
+</distributionManagement>
+</project>

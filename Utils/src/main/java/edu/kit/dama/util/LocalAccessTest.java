@@ -1,0 +1,144 @@
+/*
+ * Copyright 2015 Karlsruhe Institute of Technology.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package edu.kit.dama.util;
+
+import edu.kit.dama.authorization.entities.GroupId;
+import edu.kit.dama.authorization.entities.IAuthorizationContext;
+import edu.kit.dama.authorization.entities.Role;
+import edu.kit.dama.authorization.entities.UserId;
+import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
+import edu.kit.dama.commons.types.DigitalObjectId;
+import edu.kit.dama.mdm.base.DigitalObject;
+import edu.kit.dama.mdm.base.xml.DigitalObject2Xml;
+import edu.kit.dama.mdm.content.es.MetadataIndexingHelper;
+import edu.kit.dama.mdm.content.impl.exceptions.MetaDataExtractionException;
+import edu.kit.dama.mdm.content.util.MetadataIndexer;
+import edu.kit.dama.mdm.core.IMetaDataManager;
+import edu.kit.dama.mdm.core.MetaDataManagement;
+import edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa;
+import edu.kit.dama.mdm.tools.BaseMetaDataHelper;
+import edu.kit.dama.staging.entities.TransferClientProperties;
+import edu.kit.dama.staging.services.impl.StagingService;
+import edu.kit.dama.staging.services.impl.ingest.IngestInformationServiceLocal;
+import edu.kit.dama.staging.util.TransferFinalizer;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.net.URL;
+import java.util.Enumeration;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import org.fzk.tools.xml.JaxenUtil;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+/**
+ *
+ * @author mf6319
+ */
+public class LocalAccessTest {
+
+  private static String getStringFromDocument(Document doc) throws TransformerException {
+    DOMSource domSource = new DOMSource(doc);
+    StringWriter writer = new StringWriter();
+    StreamResult result = new StreamResult(writer);
+    TransformerFactory tf = TransformerFactory.newInstance();
+    Transformer transformer = tf.newTransformer();
+    transformer.transform(domSource, result);
+    return writer.toString();
+  }
+
+  public static void main(String[] args) throws Exception {
+    DigitalObject o = DigitalObject.factoryNewDigitalObject();
+    Document docDigitalObject = null;
+    String completeXml = null;
+
+    String baseXML = DigitalObject2Xml.getXmlString(o);
+    try {
+      ByteArrayInputStream bin = new ByteArrayInputStream(baseXML.getBytes());
+      docDigitalObject = JaxenUtil.getW3CDocument(bin);//XMLTools.parseDOM(baseXML);
+    } catch (Exception exc) {
+      throw new MetaDataExtractionException("Failed to transform DigitalObject XML.", exc);
+    }
+
+    Element digitalObjectElement = docDigitalObject.getDocumentElement();
+
+    Document completeDocument = null;
+    try {
+      completeDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    } catch (ParserConfigurationException ex) {
+      throw new MetaDataExtractionException("Failed to generate target document.", ex);
+    }
+    Element rootElement = completeDocument.createElement("test");
+
+    Element root = completeDocument.createElementNS(BaseMetaDataHelper.DAMA_NAMESPACE_BASEMETADATA, BaseMetaDataHelper.DAMA_NAMESPACE_PREFIX);
+    root.appendChild(completeDocument.importNode(digitalObjectElement, true));
+    Node csmdRoot = root.appendChild(completeDocument.createElementNS(BaseMetaDataHelper.DAMA_NAMESPACE_METADATA, BaseMetaDataHelper.CSMD_NAMESPACE_PREFIX));
+    csmdRoot.appendChild(completeDocument.importNode(rootElement, true));
+
+    completeDocument.appendChild(root);
+    root.setAttributeNS("http://www.w3.org/2001/XMLSchema-instance", "xsi:schemaLocation", BaseMetaDataHelper.DAMA_NAMESPACE_METADATA + " " + BaseMetaDataHelper.DAMA_NAMESPACE_BASEMETADATA + "/MetaData.xsd");
+    // convert tweaked DOM back to XML string
+    try {
+      completeXml = getStringFromDocument(completeDocument);//XMLTools.getXML(completeDocument);
+    } catch (Exception exc) {
+      throw new MetaDataExtractionException("Internal XML conversion error.", exc);
+    }
+    System.out.println(completeXml);
+
+//    IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+//    IAuthorizationContext context = new AuthorizationContext(new UserId("admin"), new GroupId(Constants.USERS_GROUP_ID), Role.ADMINISTRATOR);//AuthorizationContext.factorySystemContext();
+//    mdm.setAuthorizationContext(context);
+//    try {
+//      //TransferClientProperties props = new TransferClientProperties();
+//      //props.setStagingAccessPointId("0000-0000-0000-0000");
+//      //IngestInformationServiceLocal.getSingleton().prepareIngest(new DigitalObjectId("c98408fc-36d0-4cc0-8197-340873d6698e"), props, context);
+//
+//      //System.out.println(StagingService.getSingleton().finalizeIngest(new DigitalObjectId("c98408fc-36d0-4cc0-8197-340873d6698e"), context));
+//      System.out.println(MetadataIndexingHelper.getSingleton().performIndexing("KITDataManager", "dc", new GroupId("USERS"), 10, context));
+//    } finally {
+//      mdm.close();
+//    }
+  }
+
+  //<editor-fold defaultstate="collapsed" desc="PerformenceTestCode">
+//  IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager("MDM-Core");
+//    IAuthorizationContext context = AuthorizationContext.factorySystemContext();//new AuthorizationContext(new UserId("admin"), new GroupId("eCod"), Role.MANAGER);//AuthorizationContext.factorySystemContext();
+//    mdm.setAuthorizationContext(context);
+//    try {
+//      long sum = 0;
+//      for (int i = 0; i < 10; i++) {
+//        long t = System.currentTimeMillis();
+//        List<DigitalObject> result = mdm.findResultList("SELECT o FROM DigitalObject o", DigitalObject.class, 0, 1000);
+//        //List<DigitalObject> result = new DigitalObjectSecureQueryHelper().getReadableResources(md, 0, 1000, context);
+//        //DigitalObject result = new DigitalObjectSecureQueryHelper().objectByIdentifierExists("907b23bc-f2f4-42b4-9bf0-c621c2033175", md, context);
+//        //DigitalObject result = new DigitalObjectSecureQueryHelper().getObjectByIdentifier("907b23bc-f2f4-42b4-9bf0-c621c2033175", md, context);
+//        //DigitalObject result = md.findSingleResult("SELECT o FROM DigitalObject o WHERE o.digitalObjectIdentifier='" + "907b23bc-f2f4-42b4-9bf0-c621c2033175" + "'", DigitalObject.class);
+//        sum += (System.currentTimeMillis() - t);
+//      }
+//      System.out.println("D " + (sum / 10));
+//
+//    } finally {
+//      mdm.close();
+//    }
+//</editor-fold>
+}

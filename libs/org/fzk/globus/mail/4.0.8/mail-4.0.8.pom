@@ -1,0 +1,16 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.fzk.globus</groupId>
+  <artifactId>mail</artifactId>
+  <packaging>jar</packaging>
+  <version>4.0.8</version>
+  <name>mail for GT4</name>
+  <distributionManagement>
+    <repository>
+      <id>deploymentRepo</id>
+      <name>Repository Name</name>
+      <url>scp://ipepc21.ka.fzk.de/srv/archiva/data/repositories/internal</url>
+    </repository>
+  </distributionManagement>
+</project>
+                                                 

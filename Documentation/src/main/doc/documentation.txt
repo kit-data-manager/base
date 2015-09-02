@@ -1,0 +1,29 @@
+KIT Data Manager Manual
+=======================
+Contact <support@kitdatamanager.net>
+:toc: left
+:iconsdir: ./icons
+:icons: font
+:max-width: 90em
+:author:    KIT Data Manager Dev Team
+:email:     support@kitdatamanager.net
+:revdate:   August 28, 2015
+:revnumber: 1.1.0
+:website: http://kitdatamanager.net/index.php/nav-pro-projects/nav-pro-act-kdm
+
+About this documentation
+------------------------
+This documentation wants to give a brief overview about the architecture of KIT Data Manager, its basic installation and some first steps into the topic of using and extending 
+KIT Data Manager to the needs of your community. Due to the flexibility of KIT Data Manager it is impossible to cover all scenarios of installing and using
+KIT Data Manager in this documentation. However, this documentation gives a first impression and will be extended over time. If you miss a special topic or specific example 
+please do not hesitate to contact the development team directly.
+
+include::architecture.txt[]
+
+include::installation.txt[]
+
+include::coding.txt[]
+
+include::administration.txt[]
+
+include::extensions.txt[]

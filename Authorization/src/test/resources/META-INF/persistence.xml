@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2015 Karlsruhe Institute of Technology.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<persistence version="1.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence     http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd">
+  <!-- *************************************************************************
+  ***                    AuthorizationUnit-Test                              ***
+  ***************************************************************************-->
+  <persistence-unit name="AuthorizationUnit-Test" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.authorization.entities.impl.Group</class>
+    <class>edu.kit.dama.authorization.entities.impl.User</class>
+    <class>edu.kit.dama.authorization.entities.impl.Membership</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.Grant</class>
+    <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+    <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
+    <class>edu.kit.dama.authorization.annotations.resources.TestEntity</class>
+    <class>edu.kit.dama.authorization.annotations.resources.SecurityTestEntity</class>
+    <shared-cache-mode>NONE</shared-cache-mode>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://ipelsdf1.lsdf.kit.edu:3306/lsdf"/>
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+      <property name="javax.persistence.jdbc.user" value="lsdftest"/>
+      <property name="javax.persistence.jdbc.password" value="test4fdsl"/>
+      <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
+      <property name="eclipselink.jdbc.batch-writing.size" value="1000"/>
+      <!--property name="eclipselink.logging.level" value="FINE"/-->
+      <property name="eclipselink.canonicalmodel.subpackage" value="test"/>
+      <property name="javax.persistence.schema-generation.database.action" value="create"/>
+    </properties>
+  </persistence-unit>
+</persistence>
