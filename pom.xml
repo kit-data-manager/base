@@ -41,6 +41,7 @@
     -->
     <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'CEST'</maven.build.timestamp.format>
     <deploy.target>release</deploy.target>
+	<maven.javadoc.skip>false</maven.javadoc.skip>
   </properties>
   
   <!--Definition of custom repositories-->  
@@ -327,8 +328,8 @@
   </build>
   
   <scm>
-    <developerConnection>https://github.com/orgs/kit-data-manager</developerConnection>
-    <url>https://github.com/orgs/kit-data-manager</url>
+    <developerConnection>https://github.com/kit-data-manager/base</developerConnection>
+    <url>https://github.com/kit-data-manager/base</url>
   </scm>
      
   <!--KIT Data Manager modules of this parent project.-->
