@@ -328,8 +328,8 @@
   </build>
   
   <scm>
-    <developerConnection>https://github.com/kit-data-manager/base</developerConnection>
-    <url>https://github.com/kit-data-manager/base</url>
+    <developerConnection>scm:git:https://github.com/kit-data-manager/base</developerConnection>
+    <url>scm:git:https://github.com/kit-data-manager/base</url>
   </scm>
      
   <!--KIT Data Manager modules of this parent project.-->
