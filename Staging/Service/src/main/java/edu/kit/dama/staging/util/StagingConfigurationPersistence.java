@@ -204,7 +204,7 @@ public final class StagingConfigurationPersistence {
 
     if (pGroupId == null || pGroupId.equals(Constants.SYSTEM_GROUP)) {
       try {
-        result = mdm.findResultList("SELECT h FROM StagingAccessPointConfiguration h WHERE h.groupId IS NULL AND h.defaultMethod='TRUE'", StagingAccessPointConfiguration.class);
+        result = mdm.findResultList("SELECT h FROM StagingAccessPointConfiguration h WHERE h.groupId IS NULL AND h.defaultAccessPoint='TRUE'", StagingAccessPointConfiguration.class);
       } catch (UnauthorizedAccessAttemptException ex) {
         LOGGER.error("Failed to obtain default AccessPoint configuration", ex);
       } finally {
@@ -212,7 +212,7 @@ public final class StagingConfigurationPersistence {
       }
     } else {
       try {
-        result = mdm.findResultList("SELECT h FROM StagingAccessPointConfiguration h WHERE h.groupId='" + pGroupId + "' AND h.defaultMethod='TRUE'", StagingAccessPointConfiguration.class);
+        result = mdm.findResultList("SELECT h FROM StagingAccessPointConfiguration h WHERE h.groupId='" + pGroupId + "' AND h.defaultAccessPoint='TRUE'", StagingAccessPointConfiguration.class);
       } catch (UnauthorizedAccessAttemptException ex) {
         LOGGER.error("Failed to obtain default AccessPoint configuration", ex);
       } finally {
