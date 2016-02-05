@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,8 @@ import java.util.WeakHashMap;
  * Enhanced type resolution utilities. Based on
  * org.springframework.core.GenericTypeResolver.
  *
- * @see https://github.com/jhalterman/typetools
+ * (see https://github.com/jhalterman/typetools)
+ * 
  * @author Jonathan Halterman
  */
 public final class TypeResolver {

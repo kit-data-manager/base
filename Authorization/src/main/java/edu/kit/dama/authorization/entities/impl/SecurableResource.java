@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
  */
 package edu.kit.dama.authorization.entities.impl;
 
+import edu.kit.dama.authorization.entities.IDefaultSecurableResource;
 import edu.kit.dama.authorization.entities.ISecurableResource;
 import edu.kit.dama.authorization.entities.SecurableResourceId;
 import java.io.Serializable;
@@ -36,150 +37,147 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
  * @author mf6319
  */
 @XmlNamedObjectGraphs({
-  @XmlNamedObjectGraph(
-          name = "simple",
-          attributeNodes = {
-            @XmlNamedAttributeNode("id")
-          }),
-  @XmlNamedObjectGraph(
-          name = "default",
-          attributeNodes = {
-            @XmlNamedAttributeNode("id"),
-            @XmlNamedAttributeNode("domainId"),
-            @XmlNamedAttributeNode("domainUniqueId"),
-            @XmlNamedAttributeNode(value = "resourceReferences", subgraph = "simple")
-          })})
+    @XmlNamedObjectGraph(
+            name = "simple",
+            attributeNodes = {
+                @XmlNamedAttributeNode("id")
+            }),
+    @XmlNamedObjectGraph(
+            name = "default",
+            attributeNodes = {
+                @XmlNamedAttributeNode("id"),
+                @XmlNamedAttributeNode("domainId"),
+                @XmlNamedAttributeNode("domainUniqueId"),
+                @XmlNamedAttributeNode(value = "resourceReferences", subgraph = "simple")
+            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @Entity(name = "Resources")
 @Table(name = "Resources", uniqueConstraints = @UniqueConstraint(columnNames = {"domainUniqueId", "domainId"}))
-public class SecurableResource implements ISecurableResource, Serializable {
+public class SecurableResource implements IDefaultSecurableResource, ISecurableResource, Serializable {
 
-  private static final long serialVersionUID = 1L;
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private long id;
-  @Column(nullable = false)
-  private String domainUniqueId;
-  @Column(nullable = false)
-  private String domainId;
-  @OneToMany(mappedBy = "resource")
-  @XmlElementWrapper(name = "references")
-  @XmlElement(name = "reference")
-  private List<ResourceReference> resourceReferences;
-  @OneToOne(orphanRemoval = true)
-  @XmlTransient
-  @JoinColumn(nullable = false)
-  private GrantSet grantSet;
+    private static final long serialVersionUID = 1L;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(nullable = false)
+    private String domainUniqueId;
+    @Column(nullable = false)
+    private String domainId;
+    @OneToMany(mappedBy = "resource")
+    @XmlElementWrapper(name = "references")
+    @XmlElement(name = "reference")
+    private List<ResourceReference> resourceReferences;
+    @OneToOne(orphanRemoval = true)
+    @XmlTransient
+    @JoinColumn(nullable = false)
+    private GrantSet grantSet;
 
-  /**
-   * Default constructor.
-   *
-   */
-  public SecurableResource() {
-  }
-
-  /**
-   * Default constructor.
-   *
-   * @param domainUniqueId The unique id of this resource within the resource
-   * domain, e.g. some auto-generated UUID.
-   * @param domainId The domain id of the resource, e.g. the class name.
-   */
-  public SecurableResource(String domainUniqueId, String domainId) {
-    this.domainUniqueId = domainUniqueId;
-    this.domainId = domainId;
-  }
-
-  /**
-   * Default constructor.
-   *
-   * @param resourceId The resource id including domain id and unique id.
-   */
-  public SecurableResource(SecurableResourceId resourceId) {
-    this.domainId = resourceId.getDomain();
-    this.domainUniqueId = resourceId.getDomainUniqueId();
-  }
-
-  /**
-   * Get the id.
-   *
-   * @return The id.
-   */
-  public long getId() {
-    return id;
-  }
-
-  /**
-   * Set the id.
-   *
-   * @param id The id.
-   */
-  public void setId(long id) {
-    this.id = id;
-  }
-
-  /**
-   * Get the resource id.
-   *
-   * @return The resource id.
-   */
-  @Override
-  public SecurableResourceId getSecurableResourceId() {
-    return new SecurableResourceId(domainId, domainUniqueId);
-  }
-
-  /**
-   * Set the resource id.
-   *
-   * @param resourceId The resource id.
-   */
-  public void setSecurableResourceId(SecurableResourceId resourceId) {
-    this.domainUniqueId = resourceId.getDomainUniqueId();
-    this.domainId = resourceId.getDomain();
-  }
-
-  /**
-   * Get the resource references.
-   *
-   * @return The resource references.
-   */
-  public List<ResourceReference> getResourceReferences() {
-    if (null == resourceReferences) {
-      resourceReferences = new ArrayList<ResourceReference>();
+    /**
+     * Default constructor.
+     *
+     */
+    public SecurableResource() {
     }
-    return resourceReferences;
-  }
 
-  /**
-   * Set the resource references.
-   *
-   * @param resourceReferences The resource references.
-   */
-  public void setResourceReferences(List<ResourceReference> resourceReferences) {
-    this.resourceReferences = resourceReferences;
-  }
+    /**
+     * Default constructor.
+     *
+     * @param domainUniqueId The unique id of this resource within the resource
+     * domain, e.g. some auto-generated UUID.
+     * @param domainId The domain id of the resource, e.g. the class name.
+     */
+    public SecurableResource(String domainUniqueId, String domainId) {
+        this.domainUniqueId = domainUniqueId;
+        this.domainId = domainId;
+    }
 
-  /**
-   * get the grant set.
-   *
-   * @return The grant set.
-   */
-  public GrantSet getGrantSet() {
-    return grantSet;
-  }
+    /**
+     * Default constructor.
+     *
+     * @param resourceId The resource id including domain id and unique id.
+     */
+    public SecurableResource(SecurableResourceId resourceId) {
+        this.domainId = resourceId.getDomain();
+        this.domainUniqueId = resourceId.getDomainUniqueId();
+    }
 
-  /**
-   * Set the grant set.
-   *
-   * @param grantSet The grant set.
-   */
-  public void setGrantSet(GrantSet grantSet) {
-    this.grantSet = grantSet;
-  }
+    @Override
+    public Long getId() {
+        return id;
+    }
 
-  @Override
-  public String toString() {
-    return "Resource{" + "id=" + id + ", resourceId=" + domainUniqueId + "," + domainId + "}";
-  }
+    /**
+     * Set the id.
+     *
+     * @param id The id.
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    @Override
+    public String getDomainId() {
+        return domainId;
+    }
+
+    @Override
+    public String getDomainUniqueId() {
+        return domainUniqueId;
+    }
+
+    @Override
+    public SecurableResourceId getSecurableResourceId() {
+        return new SecurableResourceId(domainId, domainUniqueId);
+    }
+
+    /**
+     * Set the resource id.
+     *
+     * @param resourceId The resource id.
+     */
+    public void setSecurableResourceId(SecurableResourceId resourceId) {
+        this.domainUniqueId = resourceId.getDomainUniqueId();
+        this.domainId = resourceId.getDomain();
+    }
+
+    @Override
+    public List<ResourceReference> getResourceReferences() {
+        if (null == resourceReferences) {
+            resourceReferences = new ArrayList<>();
+        }
+        return resourceReferences;
+    }
+
+    /**
+     * Set the resource references.
+     *
+     * @param resourceReferences The resource references.
+     */
+    public void setResourceReferences(List<ResourceReference> resourceReferences) {
+        this.resourceReferences = resourceReferences;
+    }
+
+    /**
+     * get the grant set.
+     *
+     * @return The grant set.
+     */
+    public GrantSet getGrantSet() {
+        return grantSet;
+    }
+
+    /**
+     * Set the grant set.
+     *
+     * @param grantSet The grant set.
+     */
+    public void setGrantSet(GrantSet grantSet) {
+        this.grantSet = grantSet;
+    }
+
+    @Override
+    public String toString() {
+        return "Resource{" + "id=" + id + ", resourceId=" + domainUniqueId + "," + domainId + "}";
+    }
 
 }

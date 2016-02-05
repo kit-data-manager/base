@@ -24,41 +24,40 @@ import java.util.List;
  */
 public class DCElasticSearchProvider extends BaseElasticSearchProvider {
 
-  public final static String OBJECT_TYPE_DC = "dc";
+    public final static String OBJECT_TYPE_DC = "dc";
 
-  private List<BaseSearchTerm> terms;
+    private List<BaseSearchTerm> terms;
 
-  public DCElasticSearchProvider() {
-    super(null, OBJECT_TYPE_DC);
-  }
+    public DCElasticSearchProvider() {
+        super(null, OBJECT_TYPE_DC);
+    }
 
-  public DCElasticSearchProvider(String pHostName, String pIndex, String pObjectType) {
-    super(pHostName, pIndex, OBJECT_TYPE_DC);
-  }
+    public DCElasticSearchProvider(String pHostName, String pIndex, String pObjectType) {
+        super(pHostName, pIndex, OBJECT_TYPE_DC);
+    }
 
-  public DCElasticSearchProvider(String pCluster, String pHostName, String pIndex, String pObjectType) {
-    super(pCluster, pHostName, pIndex, OBJECT_TYPE_DC);
-  }
+    public DCElasticSearchProvider(String pCluster, String pHostName, String pIndex, String pObjectType) {
+        super(pCluster, pHostName, pIndex, OBJECT_TYPE_DC);
+    }
 
-  @Override
-  public final void initialize() {
-    terms = new LinkedList<BaseSearchTerm>();
-    // terms.add(new TextTerm("All", "allfields"));
-    terms.add(new TextTerm("Creator", "dc\\:creator"));
-    terms.add(new TextTerm("Publisher", "dc\\:publisher"));
-    terms.add(new DateRangeTerm("Date", "dc\\:date"));
-    terms.add(new TextTerm("Description", "dc\\:description"));
-    terms.add(new TextTerm("Format", "dc\\:format"));
-    terms.add(new TextTerm("Object Id", "dc\\:identifier"));
-    terms.add(new TextTerm("Subject", "dc\\:subject"));
-    terms.add(new TextTerm("Title", "dc\\:title"));
-    terms.add(new TextTerm("Type", "dc\\:type"));
-  }
+    @Override
+    public final void initialize() {
+        terms = new LinkedList<BaseSearchTerm>();
+        terms.add(new TextTerm("Creator", "dc\\:creator"));
+        terms.add(new TextTerm("Publisher", "dc\\:publisher"));
+        terms.add(new DateRangeTerm("Date", "dc\\:date"));
+        terms.add(new TextTerm("Description", "dc\\:description"));
+        terms.add(new TextTerm("Format", "dc\\:format"));
+        terms.add(new TextTerm("Object Id", "dc\\:identifier"));
+        terms.add(new TextTerm("Subject", "dc\\:subject"));
+        terms.add(new TextTerm("Title", "dc\\:title"));
+        terms.add(new TextTerm("Type", "dc\\:type"));
+    }
 
-  @Override
-  public List<BaseSearchTerm> getSearchTerms() {
-    return terms;
-  }
+    @Override
+    public List<BaseSearchTerm> getSearchTerms() {
+        return terms;
+    }
 
 //  public static void main(String[] args) {
 //    DCElasticSearchProvider pro = new DCElasticSearchProvider("KITDataManager", "dama-virtualbox", "kitdatamanager", OBJECT_TYPE_DC);
@@ -69,5 +68,4 @@ public class DCElasticSearchProvider extends BaseElasticSearchProvider {
 //    pro.performSearch(Arrays.asList(term), null);
 //    System.out.println(pro.getResults());
 //  }
-
 }

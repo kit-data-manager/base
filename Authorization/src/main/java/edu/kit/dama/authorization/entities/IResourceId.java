@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,8 +19,10 @@ package edu.kit.dama.authorization.entities;
 import java.io.Serializable;
 
 /**
+ * Resource id interface providing interface methods a resource identifier
+ * implementation has to fulfill.
  *
- * @param <T>
+ * @param <T> The generic type.
  * @author pasic
  */
 public interface IResourceId<T> extends Serializable {

@@ -1,0 +1,154 @@
+<!--
+
+    Copyright (C)2014 Karlsruhe Institute of Technology 
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<!--KIT Data Manager configuration file. This file contains all general properties used to configure your KIT Data Manager instance. 
+Depending on your setup some properties may or may not be needed (e.g. Liferay- or Elasticsearch-related settings), others are mandatory.
+-->
+<config>
+<general>
+	<systemMailAddress>noreply@datamanager.kit.edu</systemMailAddress>
+	<mailServer>smtp.kit.edu</mailServer>
+	<globalSecret>qr2I9Hyp0CBhUUXj</globalSecret>
+	<!--The base URL of your Web application, e.g. http://localhost:8080/MyApp.
+	-->
+	<baseUrl>http://localhost:8889/PubRepoUI</baseUrl>
+	<!--Enable/Disable production mode to show/hide additional logging output.-->
+	<productionMode>false</productionMode>
+</general>
+
+<!--
+SimpleMonitoring-related settings.
+-->
+<simon>
+	<!--The path where the configuration files for the SimpleMonitoring are located.-->
+	<configLocation>/$KITDM_LOCATION/simon/</configLocation>
+</simon>
+<!--
+Liferay-related settings.
+-->
+<liferay>
+	<!--The primary key of the default company. This value is needed as queries for Liferay users must be linked to a company id.
+	By default, all Liferay users are in the default company identified by this id. 
+	-->
+	<defaultCompanyId>10153</defaultCompanyId>
+	<!--The base URL of your Liferay installation. This value is used to navigate inside your Liferay instance and to access the 
+	private pages of the users if needed.
+	-->
+	<baseUrl>${liferay.base.url}</baseUrl>
+</liferay>
+<!--
+Elasticsearch-related settings.
+-->
+<elasticsearch>
+	<!--The cluster name used by KIT Data Manager to publish metadata. (default: KITDataManager)-->
+	<cluster>KITDataManager</cluster>
+	<!--The hostname of the node where metadata should be published to. (default: localhost)-->
+	<host>localhost</host>
+	<!--The port of the Elasticsearch instance. (default: 9300)-->
+	<port>9300</port>
+	<!--The default index that is access for metadata publishing/querying. 
+	The index to which metadata is published depends on the published metadata schema. (default: dc)
+	-->
+	<index>dc</index>
+	<!--The elasticsearch document key which contains the fulltext representation of an entire document. 
+	The availability of this key depends on the metadata stored in the document. 
+	The default value is 'es.fulltext', this property should not be changed, 
+	-->
+	<!--fulltextKey>es.fulltext</fulltextKey-->
+</elasticsearch>
+<!--
+MetaDataManagement-related settings.
+-->
+<MetaDataManagement>
+    <PersistenceImplementations>
+      <PersistenceImplementation>
+        <!--Name of the persistence implementation-->
+        <Name>JPA</Name>
+        <!--Implementation class of the persistence implementation-->
+        <Class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</Class>
+        <PersistenceUnits>
+          <!-- A list of persistence units (configured endpoints) to store metadata. 
+          In case of the default JPA implementation these persistence units are 
+          actual persistence units configured in a persistence.xml file using the 
+		  MetaDataManagement implementation defined above. JPA persistence units not using 
+		  this implementation are not listed here. For other implementations of the 
+		  MetaDataManagement, these persistence units are probably mapped to something different.
+
+          Attention: 
+		  
+		  PersistenceUnit labels should be the same for all implementations 
+          in order to be able to switch implementations.
+		  
+                    The default persistence unit can be marked by an attribute 'default=true', 
+                    otherwise the first entry is interpreted as default persistence unit used by the 
+                    implementation if no persistence unit is specified.
+                    -->
+                    <PersistenceUnit>AuthorizationPU</PersistenceUnit>  
+                    <PersistenceUnit>DataOrganizationPU</PersistenceUnit>
+                    <!--Default persistence unit if the used persistence unit is not explicitly named.-->
+                    <PersistenceUnit default="true">MDM-Core</PersistenceUnit>  
+                    <PersistenceUnit>StagingUnit</PersistenceUnit>
+                </PersistenceUnits>
+            </PersistenceImplementation>  
+        </PersistenceImplementations>
+    </MetaDataManagement>  
+    <!--
+    JPA-related settings.
+    -->
+    <persistence>
+        <!--The default persistence unit for KIT Data Manager Staging services.
+        Currently, staging persistence does not support the KIT Data Manager MetaDataManagement. 
+        Therefore, they are configured separately. After switching to KIT Data Manager MetaDataManagement in the next version, 
+        this setting will be deprecated.
+        -->
+        <stagingPU>StagingUnit</stagingPU>
+        <!--The default persistence unit for KIT Data Manager Authorization services.
+        Due to its complexity, the generic nature of KIT Data Manager MetaDataManagement is not feasible for Authorization services.
+        Therefore, they will be configured separately also in future releases.
+        -->
+        <authorizationPU>AuthorizationPU</authorizationPU>
+    </persistence>
+    <!--
+    Staging-related settings.
+    -->
+    <staging>   
+        <adapters>
+            <dataOrganizationAdapter class="edu.kit.dama.staging.adapters.DefaultDataOrganizationServiceAdapter" target="LOCAL"/>        
+            <ingestInformationServiceAdapter class="edu.kit.dama.staging.adapters.DefaultIngestInformationServiceAdapter" target="LOCAL"/>
+            <downloadInformationServiceAdapter class="edu.kit.dama.staging.adapters.DefaultDownloadInformationServiceAdapter" target="LOCAL"/>
+            <storageVirtualizationAdapter class="edu.kit.dama.staging.adapters.DefaultStorageVirtualizationAdapter" target="LOCAL">
+                <archiveUrl>file://$ARCHIVE_STORAGE</archiveUrl>
+                <pathPattern>$year/$month/$day/$owner</pathPattern>
+            </storageVirtualizationAdapter>
+        </adapters>
+        <!--Possible overwrite for persistence unit defined in persistence section.-->
+        <!--persistenceUnit>StagingUnit</persistenceUnit-->   
+        <remoteAccess>
+            <restUrl>http://localhost/KITDM/rest/staging/StagingService/</restUrl>
+        </remoteAccess>
+    
+        <maxParallelTransfers>10</maxParallelTransfers>
+        <maxParallelIngests>2</maxParallelIngests>
+        <maxParallelDownloads>2</maxParallelDownloads>
+    </staging>
+    
+    <scheduler>
+        <configFile>quartz_scheduler.properties</configFile>
+        <waitOnShutdown>false</waitOnShutdown>
+        <startDelaySeconds>0</startDelaySeconds>
+    </scheduler>
+</config>

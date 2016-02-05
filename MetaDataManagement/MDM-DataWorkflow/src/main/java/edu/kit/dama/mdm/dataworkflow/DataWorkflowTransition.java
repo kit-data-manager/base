@@ -34,48 +34,48 @@ import org.slf4j.LoggerFactory;
 @DiscriminatorValue(value = "DATAWORKFLOW")
 public class DataWorkflowTransition extends DigitalObjectTransition<DataWorkflowTask> {
 
-  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DataWorkflowTransition.class);
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DataWorkflowTransition.class);
 
-  private static final long serialVersionUID = -8654831290865696474L;
+    private static final long serialVersionUID = -8654831290865696474L;
 
-  /**
-   * Default constructor.
-   */
-  public DataWorkflowTransition() {
-    super();
-  }
-
-  /**
-   * Default constructor.
-   *
-   * @param pTask The task from which the transition entity id (the task id)
-   * will be extracted in order to be able to obtain the task entity later by
-   * calling
-   * {@link #getTransitionEntity(edu.kit.dama.authorization.entities.IAuthorizationContext)}.
-   */
-  public DataWorkflowTransition(DataWorkflowTask pTask) {
-    super();
-    setTransitionEntityId(Long.toString(pTask.getId()));
-  }
-
-  @Override
-  public TransitionType getTransitionType() {
-    return TransitionType.DATAWORKFLOW;
-  }
-
-  @Override
-  public DataWorkflowTask getTransitionEntity(IAuthorizationContext pContext) {
-    IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
-    mdm.setAuthorizationContext(pContext);
-    try {
-      return new DataWorkflowTaskSecureQueryHelper().getDataWorkflowTaskById(Long.parseLong(getTransitionEntityId()), mdm, pContext);
-    } catch (UnauthorizedAccessAttemptException ex) {
-      LOGGER.warn("Failed to obtain DataWorkflow entity for id " + getTransitionEntityId(), ex);
-    } finally {
-      mdm.close();
+    /**
+     * Default constructor.
+     */
+    public DataWorkflowTransition() {
+        super();
     }
 
-    //unauthorized access exception...just return nothing.
-    return null;
-  }
+    /**
+     * Default constructor.
+     *
+     * @param pTask The task from which the transition entity id (the task id)
+     * will be extracted in order to be able to obtain the task entity later by
+     * calling
+     * {@link #getTransitionEntity(edu.kit.dama.authorization.entities.IAuthorizationContext)}.
+     */
+    public DataWorkflowTransition(DataWorkflowTask pTask) {
+        super();
+        setTransitionEntityId(Long.toString(pTask.getId()));
+    }
+
+    @Override
+    public TransitionType getTransitionType() {
+        return TransitionType.DATAWORKFLOW;
+    }
+
+    @Override
+    public DataWorkflowTask getTransitionEntity(IAuthorizationContext pContext) {
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+        mdm.setAuthorizationContext(pContext);
+        try {
+            return new DataWorkflowTaskSecureQueryHelper().getDataWorkflowTaskById(Long.parseLong(getTransitionEntityId()), mdm, pContext);
+        } catch (UnauthorizedAccessAttemptException ex) {
+            LOGGER.warn("Failed to obtain DataWorkflow entity for id " + getTransitionEntityId(), ex);
+        } finally {
+            mdm.close();
+        }
+
+        //unauthorized access exception...just return nothing.
+        return null;
+    }
 }

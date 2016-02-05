@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,10 +21,10 @@ package edu.kit.dama.authorization.entities;
  */
 public interface ISecurableResource {
 
-  /**
-   * Get the securable resource id.
-   *
-   * @return The securable resource id.
-   */
-  SecurableResourceId getSecurableResourceId();
+    /**
+     * Get the securable resource id.
+     *
+     * @return The securable resource id.
+     */
+    SecurableResourceId getSecurableResourceId();
 }

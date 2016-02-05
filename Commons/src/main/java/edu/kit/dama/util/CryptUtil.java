@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,35 +59,7 @@ public final class CryptUtil {
   private final Cipher enCipher;
   private static CryptUtil singleton = null;
 
-  /**
-   * Get the singleton instance.
-   *
-   * @return The singleton.
-   */
-  public static synchronized CryptUtil getSingleton() {
-    return getSingleton(null);
-  }
-
-  /**
-   * Get the singleton instance.
-   *
-   * @param pSecret The secret used for de-/encryption. The secret must have a
-   * length of 128, 192 or 256 bits.
-   *
-   * @return The singleton.
-   */
-  public static synchronized CryptUtil getSingleton(byte[] pSecret) {
-    if (singleton == null) {
-      if (pSecret != null) {
-        singleton = new CryptUtil(pSecret);
-      } else {
-        singleton = new CryptUtil();
-      }
-    }
-    return singleton;
-  }
-
-  /**
+    /**
    * Hidden constuctor.
    *
    * @param pSecret The secret used for the SecretKeySpec. The secret must have
@@ -116,6 +88,34 @@ public final class CryptUtil {
     ).getBytes());
   }
 
+  /**
+   * Get the singleton instance.
+   *
+   * @return The singleton.
+   */
+  public static synchronized CryptUtil getSingleton() {
+    return getSingleton(null);
+  }
+
+  /**
+   * Get the singleton instance.
+   *
+   * @param pSecret The secret used for de-/encryption. The secret must have a
+   * length of 128, 192 or 256 bits.
+   *
+   * @return The singleton.
+   */
+  public static synchronized CryptUtil getSingleton(byte[] pSecret) {
+    if (singleton == null) {
+      if (pSecret != null) {
+        singleton = new CryptUtil(pSecret);
+      } else {
+        singleton = new CryptUtil();
+      }
+    }
+    return singleton;
+  }
+  
   /**
    * Decrypt a string using DES and return the base64 encoded string of the
    * encrypted bytes.
@@ -244,7 +244,7 @@ public final class CryptUtil {
    * The main method.
    *
    * @param args The argument array.
-   * @throws Exception
+   * @throws Exception If something goes wrong.
    */
   public static void main(String[] args) throws Exception {
     /* final DockerClient docker = new DefaultDockerClient.Builder()

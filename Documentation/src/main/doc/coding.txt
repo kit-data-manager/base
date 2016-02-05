@@ -7,16 +7,17 @@ functionality.
 
 REST Access to High Level Services
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The typical access to KIT Data Manager services for basic (remote) use cases is the access via the available REST interfaces. Currently, there are five different REST services: 
+The typical access to KIT Data Manager services for basic (remote) use cases is the access via the available REST interfaces. Currently, there are six different REST services: 
 
 [cols="m,n", options="header"]
 |================================================================================================================================================
 |Service|Description
 |User-Group Management Service|Service for adding groups, assigning users to groups and getting information about existing users and groups.
 |BaseMetaData Service|Access to Base Metadata (Study, Investigation and DigitalObject) for registering and reading new metadata entities.
-|Staging Service|Service for initiating data transfers task to and from KIT Data Manager. This service does not take care on the actual transfer!
+|Staging Service|Service for initiating data transfers task to and from KIT Data Manager. This service does not take care of the actual transfer!
 |DataOrganization Service|Access to the DataOrganization of Digital Objects as soon as it is extractred during ingest.
 |Sharing Service|Obtaining and changing access permissions for secured resources (e.g. Study, Investigation, Digital Object).
+|Data Workflow Service|Apply processing tasks or workflows to digital objects in the repository system.
 |================================================================================================================================================
 
 You'll find the documentation of all of these services in your KIT Data Manager distribution. All these REST interfaces are secured via oAuth 1.0. In order to 
@@ -47,6 +48,8 @@ The implementation classes and default service base URLs are shown in the follow
 ||http://kitdm-host:8080/KITDM/rest/dataorganization/
 |Sharing Service|edu.kit.dama.rest.sharing.client.impl.SharingRESTClient
 ||http://kitdm-host:8080/KITDM/rest/sharing/
+|Data Workflow Service|edu.kit.dama.rest.dataworkflow.client.impl.DataWorkflowRestClient
+||http://kitdm-host:8080/KITDM/rest/dataworkflow/
 |================================================================================================================================================
 
 In Java, the access to the different services looks quite similar. The following example shows how to create the BasicMetadata structure for a new Digital Object:
@@ -282,11 +285,12 @@ For each high level service there is an according local implementation as listed
 [cols="m,n", options="header"]
 |================================================================================================================================================
 |Service|Local Implementation(s)
-|User-Group Management Service|edu.kit.dama.authorization.services.administration.[User|Group]ServiceLocal
+|User-Group Management Service|edu.kit.dama.authorization.services.administration.[User\|Group]ServiceLocal
 |BaseMetaData Service|edu.kit.dama.mdm.core.MetaDataManagement
 |Staging Service|edu.kit.dama.staging.services.impl.StagingService
 |DataOrganization Service|edu.kit.dama.mdm.dataorganization.service.core.DataOrganizationServiceLocal
 |Sharing Service|edu.kit.dama.authorization.services.administration.ResourceServiceLocal
+|Data Workflow Service|edu.kit.dama.dataworkflow.services.impl.DataWorkflowServiceLocal
 |================================================================================================================================================
 
 All these service implementations are realized as singletons, their use is described in the following chapters. 
@@ -308,7 +312,7 @@ public List<DigitalObject> findAllDigitalObjects(IAuthorizationContext authoriza
   //Create IMetaDataManager instance
   IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(persistenceUnit);
   //Set AuthorizationContext(authorizationContext);
-  mdm.setAuthorizationContext(ctx);
+  mdm.setAuthorizationContext(authorizationContext);
   try{
       return mdm.find(DigitalObject.class);
    }finally{
@@ -332,6 +336,7 @@ throws UnauthorizedAccessAttemptException{
   //Create IMetaDataManager instance
   IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(persistenceUnit);
   //Set AuthorizationContext(authorizationContext);
+  mdm.setAuthorizationContext(authorizationContext);
   try{
     return mdm.find(DigitalObject.class, primaryKey);
   }finally{
@@ -423,7 +428,7 @@ List<Long> relevantIds = Arrays.asList(new Long[]{1l, 2l, 10l});
 List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o WHERE o.baseId IN ?1", new Object[]{relevantIds}, DigitalObject.class);
 --------------------------------------
 
-With such queries a very good performance while reading Base Metadata could be achieved. The same applies to updates. If e.g. a digital object
+With such queries a very good performance while reading Base Metadata can be achieved. The same applies to updates. If e.g. a digital object
 should be updated this can be done in two different ways:
 
 [source,java]

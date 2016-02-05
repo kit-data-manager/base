@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,73 +17,76 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <parent>
+    <parent>
+        <groupId>edu.kit.dama</groupId>
+        <artifactId>KITDM</artifactId>
+        <version>1.2</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
     <groupId>edu.kit.dama</groupId>
-    <artifactId>KITDM</artifactId>
-    <version>1.1</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>edu.kit.dama</groupId>
-  <artifactId>UserInterface</artifactId>
-  <name>UserInterface</name>
-  <packaging>pom</packaging>
-  <version>1.1</version>
+    <artifactId>UserInterface</artifactId>
+    <name>UserInterface</name>
+    <packaging>pom</packaging>
+    <version>1.2</version>
   
-  <description>This module collection contains all modules related to (graphical) user interfaces. Typically, user interfaces are community dependent and hosted externally.
-    The user interfaces of this module are community indenpendent, e.g. for administration or monitoring.
-  </description>
+    <description>This module collection contains all modules related to (graphical) user interfaces. Typically, user interfaces are community dependent and hosted externally.
+        The user interfaces of this module are community indenpendent, e.g. for administration or monitoring.
+    </description>
   
-  <properties>
-    <projectName>UserInterface</projectName>
-    <firstName>Thomas</firstName>
-    <lastName>Jejkal</lastName>
-    <nameId>jejkal</nameId>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>  
+    <properties>
+        <projectName>UserInterface</projectName>
+        <firstName>Thomas</firstName>
+        <lastName>Jejkal</lastName>
+        <nameId>jejkal</nameId>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!--No Javadoc generation for UserInterface-->
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <additionalparam>-Xdoclint:none</additionalparam>
+    </properties>  
   
-  <developers>
-    <developer>
-      <id>${nameId}</id>
-      <name>${firstName} ${lastName}</name>
-      <email>${firstName}.${lastName}@kit.edu</email>
-      <organization>Karlsruhe Institute of Technology (KIT)</organization>
-      <roles>
-        <role>Project manager</role>
-      </roles>
-      <timezone>1</timezone>
-    </developer>
-  </developers>
+    <developers>
+        <developer>
+            <id>${nameId}</id>
+            <name>${firstName} ${lastName}</name>
+            <email>${firstName}.${lastName}@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Project manager</role>
+            </roles>
+            <timezone>1</timezone>
+        </developer>
+    </developers>
     
-  <dependencies>
-    <dependency>
-      <groupId>javax.portlet</groupId>
-      <artifactId>portlet-api</artifactId>
-      <version>2.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-      <version>3.1.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>Commons</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>UICommons7</artifactId>
-      <version>1.1</version>
-      <type>jar</type>
-    </dependency>
-  </dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>javax.portlet</groupId>
+            <artifactId>portlet-api</artifactId>
+            <version>2.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>Commons</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>UICommons7</artifactId>
+            <version>1.2</version>
+            <type>jar</type>
+        </dependency>
+    </dependencies>
  
-  <modules>
-    <module>AdminUI</module>
-    <module>UICommons7</module>
-    <module>SimpleMonitoringPortlet</module>
-  </modules>
+    <modules>
+        <module>AdminUI</module>
+        <module>UICommons7</module>
+        <module>SimpleMonitoringPortlet</module>
+    </modules>
 </project>

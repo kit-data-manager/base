@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@
  */
 package edu.kit.dama.mdm.dataorganization.entity.core;
 
+import com.qmino.miredot.annotations.MireDotIgnore;
 import edu.kit.dama.mdm.dataorganization.entity.impl.client.NodeId;
 import java.util.Set;
 import javax.xml.bind.annotation.XmlTransient;
@@ -128,7 +129,17 @@ public interface IDataOrganizationNode extends Cloneable {
      */
     IDataOrganizationNode clone() throws CloneNotSupportedException;
 
+    /**
+     * Get the view name this node is associated with.
+     *
+     * @return The view name.
+     */
     String getViewName();
 
+    /**
+     * Set the view name this node is associated with.
+     *
+     * @param viewName The view name.
+     */
     void setViewName(String viewName);
 }

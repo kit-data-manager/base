@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import edu.kit.dama.staging.entities.ingest.INGEST_STATUS;
 import edu.kit.dama.staging.entities.ingest.IngestInformation;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -310,7 +311,7 @@ public class IngestInformationPersistenceTest {
 
     for (int i = 0; i < 5; i++) {
       if (resultList.get(i).getId() == randomEntity.getId()) {
-        Assert.assertEquals("http://localhost:1234", resultList.get(i).getClientAccessURL());
+        Assert.assertEquals("http://localhost:1234", resultList.get(i).getClientAccessUrl());
         Assert.assertEquals(resultList.get(i).getStatus(), INGEST_STATUS.PRE_INGEST_SCHEDULED.getId());
         return;
       }
@@ -373,7 +374,7 @@ public class IngestInformationPersistenceTest {
     for (IngestInformation entity : pExpected) {
       boolean list2ContainsElement = false;
       for (IngestInformation pCurrent1 : pCurrent) {
-        if (entity.getId() == pCurrent1.getId()) {
+        if (Objects.equals(entity.getId(), pCurrent1.getId())) {
           Assert.assertEquals(entity, pCurrent1);
           list2ContainsElement = true;
           break;

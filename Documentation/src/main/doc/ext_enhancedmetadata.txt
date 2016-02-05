@@ -1,6 +1,7 @@
 [[ChapterEnhancedMetadataArchitecture]]
 Enhanced Metadata Module
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
 As KIT Data Manager aims to be applicable for many heterogeneous communities, it potentially has to support a huge number of community-specific metadata schemas, in our case summarized as content metadata. As this goes hand in hand with a lot
 of domain-specific knowledge, development effort and additional dependencies we have decided to outsource content metadata handling to a separate module providing a collection of examples and tools to extract and publish 
 content metadata. The basic workflow for handling content metadata in KIT Data Manager is relatively straightforward:
@@ -20,7 +21,7 @@ Register a Metadata Schema::
     mechanism implemented for validating the provided schema URL, but such feature might be available in future versions. Registering a new metadata schema can be done easily
     using the Base Metadata REST service or Java APIs of the KIT Data Manager Metadata Management and Base Metadata.
 Implement a Staging Processor for Extracting Metadata::
-    Extracting metadata is implementes as part of the KIT Data Manager ingest process. For adding custom steps to the basic ingest process Staging Processors are used. 
+    Extracting metadata is implemented as part of the KIT Data Manager ingest process. For adding custom steps to the basic ingest process Staging Processors are used. 
     For metadata extraction a new Staging Processor extending 'edu.kit.dama.mdm.content.impl.AbstractMetadataExtractor' must be implemented and deployed. 
     The implementation of 'AbstractMetadataExtractor' allows to link the processor to a metadata schema, it defines where extracted metadata is stored and it also defines the different phases of 
     the metadata extraction process. Typically, after executing a Staging Processor for metadata extraction an XML file containing the metadata following the linked schema will exist next 
@@ -33,12 +34,12 @@ Associate the Staging Processor with an Ingest::
 Publish Extracted Metadata::
     This final workflow step defines how and where extracted metadata is published. For this, the XML file written in the previous step has to be read, transformed if required and registered
     in an external metadata store, index or any other location. In case of the reference implementation of the Enhanced Metadata Module the XML file is read, transformed to a JSON structure and then sent to a local 
-    elasticsearch index. Now, the only open point is how the link to the Digital Object stored in KIT Data Manager is achieved. As mentioned before content metadata is linked via the OID of a 
+    elasticsearch index. Now, the only open question is how the link to the Digital Object stored in KIT Data Manager is achieved. As mentioned before content metadata is linked via the OID of a 
     Digital Object. For our reference implementation this means that the document id in elasticsearch is equal to the OID in the repository system, which makes the mapping between both 
     systems rather easy. In other cases it is imaginable that the OID is stored as part of the metadata, if there is an appropriate field available, or the mapping has to be realized by 
     some custom service or tool.
     
-As you can see, the concept of handling content metadata in KIT Data Manager offeres a lot of flexibility. However, implementing content metadata handling for a concrete use case 
+Summarizing, the concept of handling content metadata in KIT Data Manager offeres a lot of flexibility. However, implementing content metadata handling for a concrete use case 
 based on an example might be helpful to understand how the concept works. Therefor, please refer to the <<ChapterEnhancedMetadataCoding,according section>>.
 
 [[ChapterEnhancedMetadataInstallation]]
@@ -54,18 +55,18 @@ user@localhost:/home/user$ unzip EnhancedMetadata-<Version>.zip
 user@localhost:/home/user$
 --------------------------------------
 
-Please ensure, that you are inside `$KITDM_LOCATION`. Otherwise, the extracted files won't be placed at the proper location. After extraction, additional libraries are added to 
+Please ensure, that the current directory is `$KITDM_LOCATION`. Otherwise, the extracted files won't be placed at the proper location. After extraction, additional libraries are added to 
 `$KITDM_LOCATION/KITDM/WEB-INF/lib/`. They are available after restarting the KIT Data Manager Web application or the Tomcat container. 
 The Enhanced Metadata Module also provides a new script named 'MetadataIndexer.sh' placed at `$KITDM_LOCATION/scripts/`.
 This script is responsible for executing a metadata indexing tool publishing extracted metadata to a elasticsearch index as decribed under `Publish Extracted Metadata` 
-in the previous chapter. If you plan to use the reference implementation of the metadata extraction workflow this script fits perfectly and can be also used in production mode. 
+in the previous chapter. It is intended to be used with the reference implementation of the metadata extraction workflow. 
 As the script has to check regularly for new metadata indexing tasks its execution should be registered as a Cron job, which can be done as follows: 
 
 [source,sh]
 --------------------------------------
 user@localhost:/home/user$ sudo -u tomcat7 crontab -e
 #Press i to enter insert mode and put the following lines at the end.#
-##Modify the the base path $KITDM_LOCATION according to your local setup!##
+##Modify the the base path $KITDM_LOCATION according to the local setup!##
 
 */5 * * * * $KITDM_LOCATION/scripts/MetadataIndexer.sh > /dev/null 2>&1
 
@@ -88,7 +89,7 @@ usage: MetadataIndexer.sh [-c <arg>] [-g <arg>] [-h] [-i <arg>] [-n <arg>] [-p <
 user@localhost:/home/user$
 --------------------------------------
 
-Finally, the file `$KITDM_LOCATION/KITDM/WEB-INF/classes/META-INF/persistence.xml` has to be modified. Around line 100 you'll find the following lines: 
+Finally, the file `$KITDM_LOCATION/KITDM/WEB-INF/classes/META-INF/persistence.xml` has to be modified. Around line 100 there are the following lines: 
 
 [source,xml]
 --------------------------------------
@@ -99,30 +100,30 @@ Finally, the file `$KITDM_LOCATION/KITDM/WEB-INF/classes/META-INF/persistence.xm
 [...]
 --------------------------------------
 
-Uncomment the MetadataIndexingTask entity to allow the registration of metadata indexing tasks in the database. Afterwards, the enhanced metadata handling is ready to be used after restarting
+Uncommenting the MetadataIndexingTask entity allows the registration of metadata indexing tasks in the database. Afterwards, the enhanced metadata handling is ready to be used after restarting
 the KIT Data Manager Web application or Tomcat. Details on how to use it can be found the following section.
 
 [NOTE]
-If you plan to publish extracted metadata into to system than a local elasticsearch index you have to implement your own metadata indexer tool. However, for executing this 
-custom tool you can than use the 'MetadataIndexer.sh' script after changing main class and command line arguments.
+For publishing extracted metadata into a system which is not a local elasticsearch index a custom metadata indexer tool has to be implemented. However, for executing this 
+custom tool the 'MetadataIndexer.sh' script can be re-used after changing main class and command line arguments.
 
 [[ChapterEnhancedMetadataHandling]]
 Implement Metadata Extraction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-As decribed before, the basic content metadata workflow is divided into the extraction and the publishing. The metadata extraction process is accomplished by Staging Processors. 
+As decribed before, the basic content metadata workflow is divided into extraction and publishing. The metadata extraction process is accomplished by Staging Processors. 
 For details about Staging Processors and their anatomy please refer to <<ChapterStagingProcessorCoding,this section>>. Compared to standard Staging Processors the ones responsible for
 metadata extraction extend 'AbstractMetadataExtractor' instead of 'AbstractStagingProcessor'. The differences are the following: 
 
 Link to Metadata Schema::
-    Each 'AbstractMetadataExtractor' has a custom internal property with the key 'METADATA_SCHEMA_IDENTIFIER'. The value will be the unique identifier of a metadata schema previously defined 
-    (refer to `Register a Metadata Schema` in section <<Enhanced Metadata Module, Enhanced Metadata Module>>). 
-Custom Configuraration::
-    As the internal properties of a Staging Processor are used to associate a metadata schema with an 'AbstractMetadataExtractor', there is an alternative way to define internal properties for 
-    metadata extractor implementations. For this purpose the methods `getExtractorPropertyKeys()`, `getExtractorPropertyDescription()`, `validateExtractorProperties(Properties pProperties)` 
-    and `configureExtractor(Properties pProperties)` are the equivalents for the according methods having the term `Internal` instead of `Extractor` in their signature. The implementation of 
-    'AbstractMetadataExtractor' takes care of merging both configuration methods together.  
+    Each implemented 'AbstractMetadataExtractor' is associated with a metadata schema using an internal property with the key 'METADATA_SCHEMA_IDENTIFIER'. The value will be the unique identifier of a metadata 
+    schema previously defined (for more information, please refer to `Register a Metadata Schema` in section <<Enhanced Metadata Module, Enhanced Metadata Module>>). 
+Custom Configuration::
+    As the internal properties of the Staging Processor base class are used to associate a metadata schema with an implemented 'AbstractMetadataExtractor', metadata extractors are using an alternative way for
+    providing custom properties. For this purpose the methods `getExtractorPropertyKeys()`, `getExtractorPropertyDescription()`, `validateExtractorProperties(Properties pProperties)` 
+    and `configureExtractor(Properties pProperties)` are the equivalents for the according methods having the term `Internal` instead of `Extractor` in their signature. During runtime the 
+    'AbstractMetadataExtractor' base implementation takes care of merging both property lists together.  
 Metadata Extraction Workflow::
-    'AbstractMetadataExtractor' implements a basic workflow for metadata extraction. The first workflow phase is triggered as soon as 'performPostTransferProcessing(TransferTaskContainer pContainer)'
+    The base class 'AbstractMetadataExtractor' realizes a basic workflow for metadata extraction. The first workflow phase is triggered as soon as 'performPostTransferProcessing(TransferTaskContainer pContainer)'
     is called. In this call the digital object belonging to the associated ingest in obtained and internally stored. In the second phase triggered by 'finalizePostTransferProcessing(TransferTaskContainer pContainer)' 
     the actual metadata extraction takes place. 
 
@@ -131,12 +132,12 @@ By default, the resulting XML metadata document fulfills a standard schema, whic
 [source,xml]
 --------------------------------------
 <?xml version="1.0" encoding="UTF-8"?>
-<bmd xmlns="http://ipelsdf1.lsdf.kit.edu/dama/basemetadata/2012-04" xsi:schemaLocation="http://ipelsdf1.lsdf.kit.edu/dama/metadata/2012-04 http://ipelsdf1.lsdf.kit.edu/dama/basemetadata/2012-04/MetaData.xsd">
-   <bmd:digitalObject xmlns:bmd="http://ipelsdf1.lsdf.kit.edu/dama/basemetadata/2012-04">
+<bmd xmlns="http://kitdatamanager.net/dama/basemetadata/2012-04" xsi:schemaLocation="http://kitdatamanager.net/dama/metadata/2012-04 http://kitdatamanager.net/dama/basemetadata/2012-04/MetaData.xsd">
+   <bmd:digitalObject xmlns:bmd="http://kitdatamanager.net/dama/basemetadata/2012-04">
       <bmd:label>SampleObject</bmd:label>
       <bmd:digitalObjectIdentifier>6ad0-6017-5a66</bmd:digitalObjectIdentifier>
    </bmd:digitalObject>
-   <csmd xmlns="http://ipelsdf1.lsdf.kit.edu/dama/metadata/2012-04">
+   <csmd xmlns="http://kitdatamanager.net/dama/metadata/2012-04">
       <!--Content Metadata goes here-->
    </csmd>
 </bmd>
@@ -151,7 +152,7 @@ Even if putting all Base Metadata in the resulting XML document is part of the s
 is also a legitimate way to provide the content metadata XML document in a custom way.
 
 Finally, the resulting document is written to a file named `<SID>_<OID>.xml` where <SID> is the unique identifier of the associated metadata schema and <OID> the digital object identifier. 
-The file is stored in the `generated` folder of the associated ingest. Finally, a new metadata indexing task or the create XML file is written into the database.
+The file is stored in the `generated` folder of the associated ingest. Finally, a new metadata indexing task for indexing the previously created XML file is scheduled by creating a new indexing task entry in the database.
 
 In the publishing phase the previously configured script 'MetadataIndexer.sh' performs the following workflow: 
 
@@ -162,7 +163,7 @@ In the publishing phase the previously configured script 'MetadataIndexer.sh' pe
 - Publish the JSON structure to an elasticsearch node running on localhost:9300 (default elasticsearch settings) belonging to cluster and index stated in the paramters (default cluster is 'KITDataManager', default index 'dc').
 - Update the indexing entry in the database to a success/error state
 
-Querying the elasticsearch index can then be done using the elasticseach APIs you can find at https://www.elastic.co/. 
+Querying the elasticsearch index can then be done using the elasticseach APIs that can be found at https://www.elastic.co/. 
 
 In order to facilitate the implementation of metadata extractors following the described schema there are plenty examples located in the following packages: 
 
@@ -178,4 +179,4 @@ using Apache Tika.
 There are default providers for Dublin Core and fulltext search available.
 |============================================================================================================================
 
-The sources including all examples you can find after installing the Enhanced Metadata Module at `$KITDM_LOCATION/KITDM/WEB-INF/src/`.
+After installing the Enhanced Metadata Module, the sources including all examples can be found at `$KITDM_LOCATION/KITDM/WEB-INF/src/`.

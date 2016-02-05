@@ -36,11 +36,15 @@ import org.slf4j.LoggerFactory;
 /**
  * Abstract base class for all AccessPoints. Each AccessPoint defines a cache
  * used to store data for ingest and download and is configured using a
- * persistent {@link SStagingAccessPointConfiguration. The cache must be
- * accessible locally and remotely. For local access,
+ * persistent
+ * {@link edu.kit.dama.staging.entities.StagingAccessPointConfiguration}. The
+ * cache must be accessible locally and remotely. For local access,
  * {@link StagingAccessPointConfiguration#getLocalBasePath()} is used, whereas
- * for remote access {@link StagingAccessPointConfiguration#getRemoteBaseUrl()}
- * is responsible.<br/>The main responsibilities of an AccessPoint are:
+ * for remote access
+ * {@link edu.kit.dama.staging.entities.StagingAccessPointConfiguration#getRemoteBaseUrl()}
+ * is responsible.
+ * 
+ * The main responsibilities of an AccessPoint are:
  * <ul>
  * <li>Provide remote data access URLs depending on a transfer information
  * entity and a defined security context.</li>
@@ -157,7 +161,7 @@ public abstract class AbstractStagingAccessPoint implements IConfigurable {
    * Perform the actual preparation for the provided transfer information entity
    * using a map of properties and a security context.In a first preparation
    * phase,
-   * {@link #prepareCache(edu.kit.dama.rest.staging.interfaces.ITransferInformation, edu.kit.authorization.entities.IAuthorizationContext)}
+   * {@link #prepareCache(edu.kit.dama.staging.interfaces.ITransferInformation, edu.kit.dama.authorization.entities.IAuthorizationContext) }
    * is used to perform the basic, AccessPoint-specific preparation of the base
    * caching location. Afterwards, the common KIT Data Manager specific staging
    * structure is created by this abstract class.
@@ -219,7 +223,7 @@ public abstract class AbstractStagingAccessPoint implements IConfigurable {
   /**
    * Prepare the cleanup the provided transfer. During cleanup preparation the
    * AccessPoint first takes care, that no file is write protected and
-   * everything can be removed automatically. For this purpose, {@link #prepareCleanupInternal(edu.kit.dama.rest.staging.interfaces.ITransferInformation)
+   * everything can be removed automatically. For this purpose, {@link #prepareCleanupInternal(edu.kit.dama.staging.interfaces.ITransferInformation, edu.kit.dama.authorization.entities.IAuthorizationContext)
    * } is called. Afterwards, to mark the transfer folder as "deleteable", a
    * file named StagingService.DELETED_FILENAME (.deleted) is created inside the
    * folder of the transfer.
@@ -277,7 +281,7 @@ public abstract class AbstractStagingAccessPoint implements IConfigurable {
    * accessible folder on the caching location available. The AccessPoint
    * implementation should be able to return a remotely accessible URL by
    * calling
-   * {@link #getAccessUrl(edu.kit.dama.rest.staging.interfaces.ITransferInformation, edu.kit.authorization.entities.IAuthorizationContext)}
+   * {@link #getAccessUrl(edu.kit.dama.staging.interfaces.ITransferInformation, edu.kit.dama.authorization.entities.IAuthorizationContext) }
    * afterwards and this location should then be accessible using a appropriate
    * data transfer client. This method is executed while calling prepare(),
    * direct access should be forbidden.
@@ -355,10 +359,10 @@ public abstract class AbstractStagingAccessPoint implements IConfigurable {
 
   /**
    * Returns the URL for the data folder. In order to be able to obtain a valid
-   * data URL, pBaseFolderUrl should be the result of calling {@link #getAccessUrl(edu.kit.dama.rest.staging.interfaces.ITransferInformation, edu.kit.authorization.entities.IAuthorizationContext)
+   * data URL, pBaseFolderUrl should be the result of calling {@link #getAccessUrl(edu.kit.dama.staging.interfaces.ITransferInformation, edu.kit.dama.authorization.entities.IAuthorizationContext) 
    * } at an implementation of AbstractStagingAccessPoint.
    *
-   * @param pBaseFolderUrl The base folder URL obtained via {@link #getAccessUrl(edu.kit.dama.rest.staging.interfaces.ITransferInformation, edu.kit.authorization.entities.IAuthorizationContext)
+   * @param pBaseFolderUrl The base folder URL obtained via {@link #getAccessUrl(edu.kit.dama.staging.interfaces.ITransferInformation, edu.kit.dama.authorization.entities.IAuthorizationContext)
    * } or from an entity's staging URL.
    *
    * @return The URL to the data folder.
@@ -383,10 +387,10 @@ public abstract class AbstractStagingAccessPoint implements IConfigurable {
 
   /**
    * Returns the URL for the settings folder. In order to be able to obtain a
-   * valid settings URL, pBaseFolderUrl should be the result of calling {@link #getAccessUrl(edu.kit.dama.rest.staging.interfaces.ITransferInformation, edu.kit.authorization.entities.IAuthorizationContext)
+   * valid settings URL, pBaseFolderUrl should be the result of calling {@link #getAccessUrl(edu.kit.dama.staging.interfaces.ITransferInformation, edu.kit.dama.authorization.entities.IAuthorizationContext)
    * } at an implementation of AbstractStagingAccessPoint.
    *
-   * @param pBaseFolderUrl The base folder URL obtained via {@link #getAccessUrl(edu.kit.dama.rest.staging.interfaces.ITransferInformation, edu.kit.authorization.entities.IAuthorizationContext)
+   * @param pBaseFolderUrl The base folder URL obtained via {@link #getAccessUrl(edu.kit.dama.staging.interfaces.ITransferInformation, edu.kit.dama.authorization.entities.IAuthorizationContext)
    * } or from an entity's staging URL.
    *
    * @return The URL to the settings folder.
@@ -412,10 +416,10 @@ public abstract class AbstractStagingAccessPoint implements IConfigurable {
   /**
    * Returns the URL for the generated data folder. In order to be able to
    * obtain a valid generated data URL, pBaseFolderUrl should be the result of
-   * calling {@link #getAccessUrl(edu.kit.dama.rest.staging.interfaces.ITransferInformation, edu.kit.authorization.entities.IAuthorizationContext)
+   * calling {@link #getAccessUrl(edu.kit.dama.staging.interfaces.ITransferInformation, edu.kit.dama.authorization.entities.IAuthorizationContext)
    * } at an implementation of AbstractStagingAccessPoint.
    *
-   * @param pBaseFolderUrl The base folder URL obtained via {@link #getAccessUrl(edu.kit.dama.rest.staging.interfaces.ITransferInformation, edu.kit.authorization.entities.IAuthorizationContext)
+   * @param pBaseFolderUrl The base folder URL obtained via {@link #getAccessUrl(edu.kit.dama.staging.interfaces.ITransferInformation, edu.kit.dama.authorization.entities.IAuthorizationContext)
    * } or from an entity's staging URL.
    *
    * @return The URL to the generated folder.

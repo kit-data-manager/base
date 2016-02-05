@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * Implementation of the TransferInformationPersistence interface for data
  * ingest.
  *
- * @see TransferInformationPersistence
+ * @see edu.kit.dama.staging.interfaces.ITransferInformationPersistence
  * @author jejkal
  */
 public final class IngestInformationPersistenceImpl implements ITransferInformationPersistence<INGEST_STATUS, IngestInformation> {
@@ -145,8 +145,8 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
    * @param pDigitalObjectId The digital object id for which the ingest will be
    * created.
    * @param pAccessPointId The AccessPoint to use for ingesting data.
-   * @param pProcessors A list of StagingProcessors applied before/after the
-   * ingest.
+   * @param pProcessors A list of StagingProcessor applied before/after the
+ ingest.
    * @param pSecurityContext The security context.
    *
    * @return The created ingest information.

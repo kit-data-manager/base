@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
   <artifactId>UICommons7</artifactId>
   <name>UICommons7</name>
   <packaging>jar</packaging>
-  <version>1.1</version>
+  <version>1.2</version>
   
   <description>The Vaadin 7 compliant version of UICommons.</description>
   
@@ -36,6 +36,9 @@
     <vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
     <project.inceptionYear>2013-2014</project.inceptionYear>
     <root.relative.path>../..</root.relative.path>  
+    <!--No Javadoc generation for UserInterface-->
+    <maven.javadoc.skip>true</maven.javadoc.skip>
+    <additionalparam>-Xdoclint:none</additionalparam>
   </properties>
     
   <developers>
@@ -103,135 +106,120 @@
     <!--
 		  Needed when using the widgetset optimizer (custom ConnectorBundleLoaderFactory).
 		  
-      For widgetset compilation, vaadin-client-compiler is automatically added on the
-      compilation classpath by vaadin-maven-plugin so normally there is no need for an
-      explicit dependency.
-    -->
-    <!--
-    <dependency>
+          For widgetset compilation, vaadin-client-compiler is automatically added on the
+          compilation classpath by vaadin-maven-plugin so normally there is no need for an
+          explicit dependency.
+        -->
+        <!--
+        <dependency>
+                <groupId>com.vaadin</groupId>
+                <artifactId>vaadin-client-compiler</artifactId>
+                <version>${vaadin.version}</version>
+                <scope>provided</scope>
+        </dependency>
+        -->
+        <dependency>
             <groupId>com.vaadin</groupId>
-            <artifactId>vaadin-client-compiler</artifactId>
+            <artifactId>vaadin-client</artifactId>
             <version>${vaadin.version}</version>
             <scope>provided</scope>
-    </dependency>
-    -->
-    <dependency>
-      <groupId>com.vaadin</groupId>
-      <artifactId>vaadin-client</artifactId>
-      <version>${vaadin.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.vaadin</groupId>
-      <artifactId>vaadin-push</artifactId>
-      <version>${vaadin.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.vaadin</groupId>
-      <artifactId>vaadin-themes</artifactId>
-      <version>${vaadin.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-      <version>3.1.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.portlet</groupId>
-      <artifactId>portlet-api</artifactId>
-      <version>2.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.4</version>
-      <type>jar</type>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.7.5</version>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>Authorization</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>Commons</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>MDM-Core</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>MDM-BaseMetaData</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>MDM-Admin</artifactId>
-      <version>1.1</version>
-    </dependency>
+        </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-push</artifactId>
+            <version>${vaadin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-themes</artifactId>
+            <version>${vaadin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.portlet</groupId>
+            <artifactId>portlet-api</artifactId>
+            <version>2.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.4</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.5</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>Authorization</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>Commons</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>MDM-Core</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>MDM-BaseMetaData</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>MDM-Admin</artifactId>
+            <version>1.2</version>
+        </dependency>
     
-    <dependency>
-      <groupId>org.vaadin.addons</groupId>
-      <artifactId>contextmenu</artifactId>
-      <version>4.5</version>
-    </dependency>
-  </dependencies>
+        <dependency>
+            <groupId>org.vaadin.addons</groupId>
+            <artifactId>contextmenu</artifactId>
+            <version>4.5</version>
+        </dependency>
+    </dependencies>
                
-  <build>
-    <extensions>
-      <extension>
-        <groupId>org.apache.maven.wagon</groupId>
-        <artifactId>wagon-ssh-external</artifactId>
-        <version>2.6</version>
-      </extension>
-    </extensions>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.10.3</version>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+    <build>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>2.6</version>
+            </extension>
+        </extensions>
+    </build>
   
-  <distributionManagement>
-    <!-- *****************************************
-    ***             Repository IPE             ***
-    **********************************************-->
-    <repository>
-      <id>deploymentRepo</id>
-      <name>IPE-KIT Release Repository</name>
-      <url>scpexe://ipepc21.ka.fzk.de/srv/archiva/data/repositories/internal</url>
-    </repository>
-    <snapshotRepository>
-      <id>snapshotRepo</id>
-      <name>IPE-KIT Snapshot Repository</name>
-      <url>scpexe://ipepc21.ka.fzk.de/srv/archiva/data/repositories/snapshots/</url>
-      <uniqueVersion>false</uniqueVersion>
-    </snapshotRepository>
-  </distributionManagement>
+    <distributionManagement>
+        <!-- *****************************************
+        ***             Repository IPE             ***
+        **********************************************-->
+        <repository>
+            <id>deploymentRepo</id>
+            <name>IPE-KIT Release Repository</name>
+            <url>scpexe://ipepc21.ka.fzk.de/srv/archiva/data/repositories/internal</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshotRepo</id>
+            <name>IPE-KIT Snapshot Repository</name>
+            <url>scpexe://ipepc21.ka.fzk.de/srv/archiva/data/repositories/snapshots/</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+    </distributionManagement>
   
-  <scm>
-    <developerConnection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/KDM/tags/KITDM-1.1/UserInterface/UICommons7</developerConnection>
-    <url>http://ipepc21.ka.fzk.de/viewcvs/KDM/tags/KITDM-1.1/UserInterface/UICommons7</url>
-  </scm>
+    <scm>
+        <developerConnection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/KDM/tags/KITDM-1.2/UserInterface/UICommons7</developerConnection>
+        <url>http://ipepc21.ka.fzk.de/viewcvs/KDM/tags/KITDM-1.2/UserInterface/UICommons7</url>
+    </scm>
   
 </project>

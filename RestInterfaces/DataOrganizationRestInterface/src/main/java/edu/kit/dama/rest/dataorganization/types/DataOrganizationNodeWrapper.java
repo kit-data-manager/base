@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 package edu.kit.dama.rest.dataorganization.types;
 
 import edu.kit.dama.rest.base.AbstractEntityWrapper;
-import edu.kit.dama.staging.entities.DataOrganizationNodeImpl;
+import edu.kit.dama.mdm.dataorganization.impl.staging.DataOrganizationNodeImpl;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

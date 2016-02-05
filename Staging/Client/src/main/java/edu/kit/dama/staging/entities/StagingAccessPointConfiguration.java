@@ -15,8 +15,10 @@
  */
 package edu.kit.dama.staging.entities;
 
+import edu.kit.dama.staging.entities.interfaces.IDefaultStagingAccessPointConfiguration;
 import edu.kit.dama.util.PropertiesUtil;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Properties;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -44,361 +46,328 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
  * realized, is decided in an implementation of AbstractStagingAccessPoint which
  * uses this configuration class for basic setup.
  *
- * @see edu.kit.dama.rest.staging.impl.providers.AbstractStagingAccessPoint
- *
  * @author jejkal
  */
 @XmlNamedObjectGraphs({
-  @XmlNamedObjectGraph(
-          name = "simple",
-          attributeNodes = {
-            @XmlNamedAttributeNode("id")
-          }),
-  @XmlNamedObjectGraph(
-          name = "default",
-          attributeNodes = {
-            @XmlNamedAttributeNode("id"),
-            @XmlNamedAttributeNode("uniqueIdentifier"),
-            @XmlNamedAttributeNode("implementationClass"),
-            @XmlNamedAttributeNode("name"),
-            @XmlNamedAttributeNode("description"),
-            @XmlNamedAttributeNode("groupId"),
-            @XmlNamedAttributeNode("customProperties"),
-            @XmlNamedAttributeNode("remoteBaseUrl"),
-            @XmlNamedAttributeNode("localBasePath"),
-            @XmlNamedAttributeNode("defaultAccessPoint"),
-            @XmlNamedAttributeNode("transientAccessPoint"),
-            @XmlNamedAttributeNode("disabled")
-          })
+    @XmlNamedObjectGraph(
+            name = "simple",
+            attributeNodes = {
+                @XmlNamedAttributeNode("id")
+            }),
+    @XmlNamedObjectGraph(
+            name = "default",
+            attributeNodes = {
+                @XmlNamedAttributeNode("id"),
+                @XmlNamedAttributeNode("uniqueIdentifier"),
+                @XmlNamedAttributeNode("implementationClass"),
+                @XmlNamedAttributeNode("name"),
+                @XmlNamedAttributeNode("description"),
+                @XmlNamedAttributeNode("groupId"),
+                @XmlNamedAttributeNode("customProperties"),
+                @XmlNamedAttributeNode("remoteBaseUrl"),
+                @XmlNamedAttributeNode("localBasePath"),
+                @XmlNamedAttributeNode("defaultAccessPoint"),
+                @XmlNamedAttributeNode("transientAccessPoint"),
+                @XmlNamedAttributeNode("disabled")
+            })
 })
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @Entity
-public class StagingAccessPointConfiguration {
+public class StagingAccessPointConfiguration implements IDefaultStagingAccessPointConfiguration, Cloneable, Serializable {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-  @Column(nullable = false, unique = true)
-  private String uniqueIdentifier = null;
-  /**
-   * The implementation class of this access point.
-   */
-  private String implementationClass = null;
-  /**
-   * The plain name.
-   */
-  private String name = null;
-  /**
-   * A plain description.
-   */
-  @Column(length = 1024)
-  private String description = null;
-  /**
-   * The groupId for which this access point is intended to be used.
-   */
-  private String groupId = null;
-  /**
-   * The serialized custom properties.
-   */
-  @Column(length = 1024)
-  private String customProperties = null;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(nullable = false, unique = true)
+    private String uniqueIdentifier = null;
+    /**
+     * The implementation class of this access point.
+     */
+    private String implementationClass = null;
+    /**
+     * The plain name.
+     */
+    private String name = null;
+    /**
+     * A plain description.
+     */
+    @Column(length = 1024)
+    private String description = null;
+    /**
+     * The groupId for which this access point is intended to be used.
+     */
+    private String groupId = null;
+    /**
+     * The serialized custom properties.
+     */
+    @Column(length = 1024)
+    private String customProperties = null;
 
-  /**
-   * Base URL for remote access.
-   */
-  private String remoteBaseUrl = null;
-  /**
-   * Local base path equivalent to remoteBaseUrl.
-   */
-  private String localBasePath = null;
-  /**
-   * Flag which indicates if this access point is the default one.
-   */
-  private boolean defaultAccessPoint = false;
-  /**
-   * Flag which defines whether this access point is transient or not. If an
-   * access point is transient, the local folder of this access point will be
-   * re-created on each start. This flag is basically intended to be used for
-   * testing.
-   */
-  private boolean transientAccessPoint = false;
-  /**
-   * Flag which indicates if this access point is disabled or not.
-   */
-  private boolean disabled = false;
+    /**
+     * Base URL for remote access.
+     */
+    private String remoteBaseUrl = null;
+    /**
+     * Local base path equivalent to remoteBaseUrl.
+     */
+    private String localBasePath = null;
+    /**
+     * Flag which indicates if this access point is the default one.
+     */
+    private boolean defaultAccessPoint = false;
+    /**
+     * Flag which defines whether this access point is transient or not. If an
+     * access point is transient, the local folder of this access point will be
+     * re-created on each start. This flag is basically intended to be used for
+     * testing.
+     */
+    private boolean transientAccessPoint = false;
+    /**
+     * Flag which indicates if this access point is disabled or not.
+     */
+    private boolean disabled = false;
 
-  /**
-   * Factory a new access point configuration with the provided identifier.
-   *
-   * @param pIdentifier The unique access point configuration identifier.
-   *
-   * @return The new access point configuration .
-   */
-  public static StagingAccessPointConfiguration factoryNewStagingAccessPointConfiguration(String pIdentifier) {
-    if (pIdentifier == null) {
-      throw new IllegalArgumentException("Argument 'pIdentifier' must not be 'null'");
+    /**
+     * Factory a new access point configuration with the provided identifier.
+     *
+     * @param pIdentifier The unique access point configuration identifier.
+     *
+     * @return The new access point configuration .
+     */
+    public static StagingAccessPointConfiguration factoryNewStagingAccessPointConfiguration(String pIdentifier) {
+        if (pIdentifier == null) {
+            throw new IllegalArgumentException("Argument 'pIdentifier' must not be 'null'");
+        }
+        StagingAccessPointConfiguration result = new StagingAccessPointConfiguration();
+        result.setUniqueIdentifier(pIdentifier);
+        return result;
     }
-    StagingAccessPointConfiguration result = new StagingAccessPointConfiguration();
-    result.setUniqueIdentifier(pIdentifier);
-    return result;
-  }
 
-  /**
-   * Factory a new access point configuration with an auto-generated identifier.
-   * The identifier is generated using {@link UUID.randomUUID().toString()}
-   *
-   * @return The new access point configuration.
-   */
-  public static StagingAccessPointConfiguration factoryNewStagingAccessPointConfiguration() {
-    return factoryNewStagingAccessPointConfiguration(UUID.randomUUID().toString());
-  }
+    /**
+     * Factory a new access point configuration with an auto-generated
+     * identifier. The identifier is generated using
+     * {@link java.util.UUID#randomUUID()}
+     *
+     * @return The new access point configuration.
+     */
+    public static StagingAccessPointConfiguration factoryNewStagingAccessPointConfiguration() {
+        return factoryNewStagingAccessPointConfiguration(UUID.randomUUID().toString());
+    }
 
-  /**
-   * Default constructor.
-   */
-  public StagingAccessPointConfiguration() {
-  }
+    /**
+     * Default constructor.
+     */
+    public StagingAccessPointConfiguration() {
+    }
 
-  /**
-   * Set the id.
-   *
-   * @param id The id.
-   */
-  public void setId(Long id) {
-    this.id = id;
-  }
+    /**
+     * Set the id.
+     *
+     * @param id The id.
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-  /**
-   * Get the id.
-   *
-   * @return The id.
-   */
-  public Long getId() {
-    return id;
-  }
+    @Override
+    public Long getId() {
+        return id;
+    }
 
-  /**
-   * Set the unique identifier.
-   *
-   * @param uniqueIdentifier A unique identifier.
-   */
-  protected void setUniqueIdentifier(String uniqueIdentifier) {
-    this.uniqueIdentifier = uniqueIdentifier;
-  }
+    /**
+     * Set the unique identifier.
+     *
+     * @param uniqueIdentifier A unique identifier.
+     */
+    protected void setUniqueIdentifier(String uniqueIdentifier) {
+        this.uniqueIdentifier = uniqueIdentifier;
+    }
 
-  /**
-   * Get the unique identifier.
-   *
-   * @return The unique identifier.
-   */
-  public String getUniqueIdentifier() {
-    return uniqueIdentifier;
-  }
+    @Override
+    public String getUniqueIdentifier() {
+        return uniqueIdentifier;
+    }
 
-  /**
-   * Set the implementation class.
-   *
-   * @param implementationClass The implementation class.
-   */
-  public void setImplementationClass(String implementationClass) {
-    this.implementationClass = implementationClass;
-  }
+    /**
+     * Set the implementation class.
+     *
+     * @param implementationClass The implementation class.
+     */
+    public void setImplementationClass(String implementationClass) {
+        this.implementationClass = implementationClass;
+    }
 
-  /**
-   * Get the implementation class.
-   *
-   * @return The implementation class.
-   */
-  public String getImplementationClass() {
-    return implementationClass;
-  }
+    @Override
+    public String getImplementationClass() {
+        return implementationClass;
+    }
 
-  /**
-   * Set the group id this method is valid for.
-   *
-   * @param groupId The group id this method is valid for.
-   */
-  public void setGroupId(String groupId) {
-    this.groupId = groupId;
-  }
+    /**
+     * Set the group id this method is valid for.
+     *
+     * @param groupId The group id this method is valid for.
+     */
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+    }
 
-  /**
-   * Get the group id this access point is valid for.
-   *
-   * @return The group id this access point is valid for.
-   */
-  public String getGroupId() {
-    return groupId;
-  }
+    @Override
+    public String getGroupId() {
+        return groupId;
+    }
 
-  /**
-   * Set this access point's name.
-   *
-   * @param name This access point's name.
-   */
-  public void setName(String name) {
-    this.name = name;
-  }
+    /**
+     * Set this access point's name.
+     *
+     * @param name This access point's name.
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  /**
-   * Get this access point's name.
-   *
-   * @return This access point's name.
-   */
-  public String getName() {
-    return name;
-  }
+    @Override
+    public String getName() {
+        return name;
+    }
 
-  /**
-   * Set the description.
-   *
-   * @param description The description.
-   */
-  public void setDescription(String description) {
-    this.description = description;
-  }
+    /**
+     * Set the description.
+     *
+     * @param description The description.
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-  /**
-   * Get the description.
-   *
-   * @return The description.
-   */
-  public String getDescription() {
-    return description;
-  }
+    @Override
+    public String getDescription() {
+        return description;
+    }
 
-  /**
-   * Set the custom properties path.
-   *
-   * @param customProperties The custom properties path.
-   */
-  public void setCustomProperties(String customProperties) {
-    this.customProperties = customProperties;
-  }
+    /**
+     * Set the custom properties path.
+     *
+     * @param customProperties The custom properties path.
+     */
+    public void setCustomProperties(String customProperties) {
+        this.customProperties = customProperties;
+    }
 
-  /**
-   * Get the custom properties path.
-   *
-   * @return The custom properties path.
-   */
-  public String getCustomProperties() {
-    return customProperties;
-  }
+    @Override
+    public String getCustomProperties() {
+        return customProperties;
+    }
 
-  /**
-   * Set custom properties as object.
-   *
-   * @param pProperties The properties object.
-   *
-   * @throws IOException If the serialization failed.
-   */
-  public void setPropertiesAsObject(Properties pProperties) throws IOException {
-    this.customProperties = PropertiesUtil.propertiesToString(pProperties);
-  }
+    /**
+     * Set custom properties as object.
+     *
+     * @param pProperties The properties object.
+     *
+     * @throws IOException If the serialization failed.
+     */
+    public void setPropertiesAsObject(Properties pProperties) throws IOException {
+        this.customProperties = PropertiesUtil.propertiesToString(pProperties);
+    }
 
-  /**
-   * Get the custom properties as object.
-   *
-   * @return The properties object.
-   *
-   * @throws IOException If the deserialization failed.
-   */
-  public Properties getPropertiesAsObject() throws IOException {
-    return PropertiesUtil.propertiesFromString(customProperties);
-  }
+    /**
+     * Get the custom properties as object.
+     *
+     * @return The properties object.
+     *
+     * @throws IOException If the deserialization failed.
+     */
+    public Properties getPropertiesAsObject() throws IOException {
+        return PropertiesUtil.propertiesFromString(customProperties);
+    }
 
-  /**
-   * Get the remote base Url.
-   *
-   * @return The remote base Url.
-   */
-  public String getRemoteBaseUrl() {
-    return remoteBaseUrl;
-  }
+    @Override
+    public String getRemoteBaseUrl() {
+        return remoteBaseUrl;
+    }
 
-  /**
-   * Set the remote base Url. This url defines the remote access point to a
-   * folder, e.g. http://anyhost:80/webdav/. To reflect the folder status,
-   * remoteBaseUrl should end with a slash.
-   *
-   * @param remoteBaseUrl The remote base Url.
-   */
-  public void setRemoteBaseUrl(String remoteBaseUrl) {
-    this.remoteBaseUrl = remoteBaseUrl;
-  }
+    /**
+     * Set the remote base Url. This url defines the remote access point to a
+     * folder, e.g. http://anyhost:80/webdav/. To reflect the folder status,
+     * remoteBaseUrl should end with a slash.
+     *
+     * @param remoteBaseUrl The remote base Url.
+     */
+    public void setRemoteBaseUrl(String remoteBaseUrl) {
+        this.remoteBaseUrl = remoteBaseUrl;
+    }
 
-  /**
-   * Get the local base path.
-   *
-   * @return The local base path.
-   */
-  public String getLocalBasePath() {
-    return localBasePath;
-  }
+    @Override
+    public String getLocalBasePath() {
+        return localBasePath;
+    }
 
-  /**
-   * Set the local base path. This path defines the locally accessible path
-   * equivalent to remoteBaseUrl, e.g. /var/www/htdocs/davfolder/. To reflect
-   * the folder status, localBasePath should end with a slash.
-   *
-   * @param localBasePath The local base path..
-   */
-  public void setLocalBasePath(String localBasePath) {
-    this.localBasePath = localBasePath;
-  }
+    /**
+     * Set the local base path. This path defines the locally accessible path
+     * equivalent to remoteBaseUrl, e.g. /var/www/htdocs/davfolder/. To reflect
+     * the folder status, localBasePath should end with a slash.
+     *
+     * @param localBasePath The local base path..
+     */
+    public void setLocalBasePath(String localBasePath) {
+        this.localBasePath = localBasePath;
+    }
 
-  /**
-   * Set this access point as default for the associated group.
-   *
-   * @param defaultAccessPoint TRUE = default access point.
-   */
-  public void setDefaultAccessPoint(boolean defaultAccessPoint) {
-    this.defaultAccessPoint = defaultAccessPoint;
-  }
+    /**
+     * Set this access point as default for the associated group.
+     *
+     * @param defaultAccessPoint TRUE = default access point.
+     */
+    public void setDefaultAccessPoint(boolean defaultAccessPoint) {
+        this.defaultAccessPoint = defaultAccessPoint;
+    }
 
-  /**
-   * Check if this access point is the default for the associated group.
-   *
-   * @return TRUE = This access poin is the default access point.
-   */
-  public boolean isDefaultAccessPoint() {
-    return defaultAccessPoint;
-  }
+    @Override
+    public boolean isDefaultAccessPoint() {
+        return defaultAccessPoint;
+    }
 
-  /**
-   * (Un-)Set this access point transient.
-   *
-   * @param transientAccessPoint TRUE = the access point is transient.
-   */
-  public void setTransientAccessPoint(boolean transientAccessPoint) {
-    this.transientAccessPoint = transientAccessPoint;
-  }
+    /**
+     * (Un-)Set this access point transient.
+     *
+     * @param transientAccessPoint TRUE = the access point is transient.
+     */
+    public void setTransientAccessPoint(boolean transientAccessPoint) {
+        this.transientAccessPoint = transientAccessPoint;
+    }
 
-  /**
-   * Check if the access point is transient.
-   *
-   * @return TRUE = the access point is transient.
-   */
-  public boolean isTransientAccessPoint() {
-    return transientAccessPoint;
-  }
+    @Override
+    public boolean isTransientAccessPoint() {
+        return transientAccessPoint;
+    }
 
-  /**
-   * Enable/disable this access point.
-   *
-   * @param disabled TRUE = Disabled.
-   */
-  public void setDisabled(boolean disabled) {
-    this.disabled = disabled;
-  }
+    /**
+     * Enable/disable this access point.
+     *
+     * @param disabled TRUE = Disabled.
+     */
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
+    }
 
-  /**
-   * Return if this access point is enabled/disabled.
-   *
-   * @return TRUE = Disabled.
-   */
-  public boolean isDisabled() {
-    return disabled;
-  }
+    @Override
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    @Override
+    public StagingAccessPointConfiguration clone() {
+        StagingAccessPointConfiguration temporaryAccessPoint
+                = StagingAccessPointConfiguration.factoryNewStagingAccessPointConfiguration(
+                        getUniqueIdentifier());
+        temporaryAccessPoint.setName(getName());
+        temporaryAccessPoint.setGroupId(getGroupId());
+        temporaryAccessPoint.setRemoteBaseUrl(getRemoteBaseUrl());
+        temporaryAccessPoint.setLocalBasePath(getLocalBasePath());
+        temporaryAccessPoint.setDefaultAccessPoint(isDefaultAccessPoint());
+        temporaryAccessPoint.setDisabled(isDisabled());
+        temporaryAccessPoint.setTransientAccessPoint(isTransientAccessPoint());
+        temporaryAccessPoint.setDescription(getDescription());
+        return temporaryAccessPoint;
+    }
 }

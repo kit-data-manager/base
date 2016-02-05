@@ -58,8 +58,11 @@ public class MigrateObject {
    * entities of the added entities because the primary key between the the xml file
    * and the database differ. 
    * 
+   * @param args The arugments.
+   * 
    * Comment 2015-06-02 Sasa
    * The main method has to be decomposed into methods for readability.
+   * @throws Exception If something happens.
    */
   public static void main(String[] args) throws Exception {
 

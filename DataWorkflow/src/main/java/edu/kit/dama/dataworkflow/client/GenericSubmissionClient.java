@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
  */
 package edu.kit.dama.dataworkflow.client;
 
+import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.client.status.CommandStatus;
 import edu.kit.dama.client.status.Status;
@@ -27,15 +28,23 @@ import edu.kit.dama.dataworkflow.exceptions.UnsupportedTaskException;
 import edu.kit.dama.dataworkflow.impl.GenericExecutionEnvironment;
 import edu.kit.dama.dataworkflow.util.DataWorkflowHelper;
 import edu.kit.dama.dataworkflow.util.DataWorkflowTaskUtils;
+import edu.kit.dama.mdm.core.IMetaDataManager;
+import edu.kit.dama.mdm.core.MetaDataManagement;
+import edu.kit.dama.util.Constants;
+import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 import org.slf4j.LoggerFactory;
 
 /**
  * Generic submission client running next to the computing infrastructure and is
- * preferentially executed automatically, e.g. via CRON job.<BR/>
- * This client ist responsible for dealing with processing directives for
- * execution arbitrary jobs based on their meta data description.<BR/>
- * The execution of the client is divided into several parts which are:<BR/>
+ * preferentially executed automatically, e.g. via CRON job. This client ist
+ * responsible for dealing with processing directives for execution arbitrary
+ * jobs based on their meta data description.
+ *
+ * The execution of the client is divided into several parts which are:
+ *
  * <ul>
  * <li>Obtain processing directives from a defined, abstract data accessor</li>
  * <li>Check validity of each directive (Data exists? Job can be prepared?)</li>
@@ -56,69 +65,110 @@ import org.slf4j.LoggerFactory;
  */
 public class GenericSubmissionClient {
 
-  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(GenericSubmissionClient.class);
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(GenericSubmissionClient.class);
 
-  public static CommandStatus processTasks(ProcessParameters params) {
-    Status status = Status.SUCCESSFUL;
-    Exception exception = null;
+    public static CommandStatus processTasks(ProcessParameters params) {
+        Status status = Status.SUCCESSFUL;
+        Exception exception = null;
 
-    try {
-      //DataWorkflowPersistenceImpl not usable here...use manual query
-      List<DataWorkflowTask> tasks = DataWorkflowHelper.getDataWorkflowTasks(params.taskIds, (params.count > 0) ? params.count : 10, !params.listOnly);
+        try {
+            //DataWorkflowPersistenceImpl not usable here...use manual query
+            List<DataWorkflowTask> tasks = DataWorkflowHelper.getDataWorkflowTasks(params.taskIds, (params.count > 0) ? params.count : 10, !params.listOnly);
 
-      if (params.listOnly) {
-        DataWorkflowTaskUtils.printTaskList(tasks, params.verbose);
-      } else {
-        //check if count argument if applicable
-        if (params.taskIds == null || params.taskIds.isEmpty()) {
-          //apply count argument
-          int taskCount = (params.count > 0) ? params.count : 10;
-          LOGGER.debug("Applying count argument. Processing first {} tasks of task list.", taskCount);
-          tasks = tasks.subList(0, Math.min(tasks.size(), taskCount));
-        }
-
-        for (DataWorkflowTask task : tasks) {
-          //do processing
-          try {
-            LOGGER.debug("Processing task with id {}", task.getId());
-            //DataWorkflowTask.TASK_STATUS statusBefore = task.getStatus();
-            DataWorkflowTask.TASK_STATUS statusBefore = task.getStatus();
-            DataWorkflowTask.TASK_STATUS statusAfter;
-
-            if (DataWorkflowTask.TASK_STATUS.STAGING_FINISHED.equals(statusBefore)) {
-              //next step would be submission...check environment first
-              LOGGER.debug("Checking whether task can be scheduled by ExecutionEnvironment.");
-              if (!DataWorkflowHelper.canScheduleTask(task.getExecutionEnvironment())) {
-                LOGGER.info("ExecutionEnvironment with id {} cannot schedule another task. Submission of task with id {} is postponed.", task.getExecutionEnvironment().getId(), task.getId());
-                statusAfter = statusBefore;
-              } else {
-                LOGGER.debug("ExecutionEnvironment is capable of another task execution. Submitting task.");
-                statusAfter = GenericExecutionEnvironment.processTask(task);
-              }
+            if (params.listOnly) {
+                DataWorkflowTaskUtils.printTaskList(tasks, params.verbose);
             } else {
-              //normal step will follow, no checks needed.
-              statusAfter = GenericExecutionEnvironment.processTask(task);
-            }
-            LOGGER.debug("Task processing returned with status {}", statusAfter);
-          } catch (ConfigurationException ex) {
-            LOGGER.error("Failed to configure task execution.", ex);
-            exception = ex;
-          } catch (DataWorkflowException | UnsupportedTaskException ex) {
-            LOGGER.error("Failed to execute DataWorkflow task.", ex);
-            exception = ex;
-          }
-        }
-      }
-      //status might be SUCCESS even if no task has succeeded...'exception' holds the last exception.
-    } catch (UnauthorizedAccessAttemptException ex) {
-      LOGGER.error("Failed to obtain DataWorkflow tasks.", ex);
-      //result is FAILED as no task could be accessed.
-      status = Status.FAILED;
-      exception = ex;
-    }
+                //check if count argument if applicable
+                if (params.taskIds == null || params.taskIds.isEmpty()) {
+                    //apply count argument
+                    int taskCount = (params.count > 0) ? params.count : 10;
+                    LOGGER.debug("Applying count argument. Processing first {} tasks of task list.", taskCount);
+                    tasks = tasks.subList(0, Math.min(tasks.size(), taskCount));
+                }
 
-    return new CommandStatus(status, exception, null);
-  }
+                for (DataWorkflowTask task : tasks) {
+                    LOGGER.debug("Processing of task with id {} .", task.getId());
+                    DataWorkflowTask predecessor = task.getPredecessor();
+                    LOGGER.debug("Checking current workflow task with id {} for predecessor.", task.getId());
+                    if (predecessor != null) {
+                        LOGGER.debug("Task with id {} has a predecessor task with id {}. Checking status.", task.getId(), predecessor.getId());
+                        //predecessor handling
+                        if (DataWorkflowTask.TASK_STATUS.isCleanupPhase(predecessor.getStatus())) {
+                            LOGGER.debug("Predecessor task with id {} is in cleanup phase. Assigning task output to task with id {}.", predecessor.getId(), task.getId());
+                            //execution sucessfully finished, proceed.
+                            IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+                            mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
+                            try {
+                                Properties ingestedObjects = predecessor.getObjectTransferMapAsObject();
+                                LOGGER.debug("Assigning {} output object(s) to task with id {}", ingestedObjects.size(), task.getId());
+                                Set<Object> keys = ingestedObjects.keySet();
+                                for (Object o : keys) {
+                                    LOGGER.debug("Adding 'default' view of output object {} of predecessor task {} to task {}.", o, predecessor.getId(), task.getId());
+                                    task.getObjectViewMapAsObject().put(o, Constants.DEFAULT_VIEW);
+                                }
+                                //finished...task can start
+                                LOGGER.debug("Output objects successfully assigned. Persisting updated task with id {}.", task.getId());
+                                task = mdm.save(task);
+                                LOGGER.debug("Task successfully persisted. Continuing execution.");
+                            } catch (IOException ex) {
+                                LOGGER.error("Failed to obtain output objects of predecessor task with id " + predecessor.getId() + ". Task with id " + task.getId() + " cannot continue.", ex);
+                            } finally {
+                                mdm.close();
+                            }
+                        } else if (DataWorkflowTask.TASK_STATUS.isErrorState(predecessor.getStatus())) {
+                            //execution of predecessor has failed...warn and break.
+                            LOGGER.warn("Predecessor task with id {} has failed with status {}. The task with id {} will not continue until the predecessor has finished.", predecessor.getId(), predecessor.getStatus(), task.getId());
+                            continue;
+                        } else {
+                            //execution not yet finished, break.
+                            LOGGER.debug("Predecessor task with id {} is not finished, yet. The current status is {}. As soon as the task enters the cleanup phase, the task with id {} will continue.", predecessor.getId(), predecessor.getStatus(), task.getId());
+                            continue;
+                        }
+                    } else {
+                        LOGGER.debug("Task with id {} has no predecessor task. Continuing task execution.", task.getId());
+                    }
+
+                    //do processing
+                    try {
+                        LOGGER.debug("Processing task with id {}", task.getId());
+                        //DataWorkflowTask.TASK_STATUS statusBefore = task.getStatus();
+                        DataWorkflowTask.TASK_STATUS statusBefore = task.getStatus();
+                        DataWorkflowTask.TASK_STATUS statusAfter;
+
+                        if (DataWorkflowTask.TASK_STATUS.STAGING_FINISHED.equals(statusBefore)) {
+                            //next step would be submission...check environment first
+                            LOGGER.debug("Checking whether task can be scheduled by ExecutionEnvironment.");
+                            if (!DataWorkflowHelper.canScheduleTask(task.getExecutionEnvironment())) {
+                                LOGGER.info("ExecutionEnvironment with id {} cannot schedule another task. Submission of task with id {} is postponed.", task.getExecutionEnvironment().getId(), task.getId());
+                                statusAfter = statusBefore;
+                            } else {
+                                LOGGER.debug("ExecutionEnvironment is capable of another task execution. Submitting task.");
+                                statusAfter = GenericExecutionEnvironment.processTask(task);
+                            }
+                        } else {
+                            //normal step will follow, no checks needed.
+                            statusAfter = GenericExecutionEnvironment.processTask(task);
+                        }
+                        LOGGER.debug("Task processing returned with status {}", statusAfter);
+                    } catch (ConfigurationException ex) {
+                        LOGGER.error("Failed to configure task execution.", ex);
+                        exception = ex;
+                    } catch (DataWorkflowException | UnsupportedTaskException ex) {
+                        LOGGER.error("Failed to execute DataWorkflow task.", ex);
+                        exception = ex;
+                    }
+                }
+            }
+            //status might be SUCCESS even if no task has succeeded...'exception' holds the last exception.
+        } catch (UnauthorizedAccessAttemptException ex) {
+            LOGGER.error("Failed to obtain DataWorkflow tasks.", ex);
+            //result is FAILED as no task could be accessed.
+            status = Status.FAILED;
+            exception = ex;
+        }
+
+        return new CommandStatus(status, exception, null);
+    }
 
 //
 //  /**

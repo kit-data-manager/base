@@ -1,21 +1,18 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
@@ -186,6 +183,13 @@ public class TransferUI extends javax.swing.JFrame implements DropTargetListener
    root.addAppender(fa);
    fa.start();
    }*/
+  /**
+   * Handle (log) the provided exception.
+   *
+   * @param tname The thread name.
+   * @param thrown The exception to handle/log.
+   *
+   */
   public void handleException(String tname, Throwable thrown) {
     JOptionPane.showMessageDialog(this, StackTraceUtil.getStackTrace(thrown), "Uncaught Exception in Thread " + tname, JOptionPane.ERROR_MESSAGE);
   }

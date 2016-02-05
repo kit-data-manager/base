@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,66 +17,71 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <parent>
+    <parent>
+        <groupId>edu.kit.dama</groupId>
+        <artifactId>KITDM</artifactId>
+        <version>1.2</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
     <groupId>edu.kit.dama</groupId>
-    <artifactId>KITDM</artifactId>
-    <version>1.1</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>edu.kit.dama</groupId>
-  <artifactId>DataOrganization</artifactId>
-  <name>DataOrganization</name>
-  <packaging>jar</packaging>
-  <version>1.1</version>
+    <artifactId>DataOrganization</artifactId>
+    <name>DataOrganization</name>
+    <packaging>jar</packaging>
+    <version>1.2</version>
   
-  <description>This module contains the implementation of DataOrganization components of KIT Data Manager. The DataOrganization is a representation of the data structure
-    associated with a DigitalObject. The default implementation reflects a file-based structure supporting different representations (views) of the same data. Other 
-    implementations might be based on other data entities like records or streams.</description>
+    <description>This module contains the implementation of DataOrganization components of KIT Data Manager. The DataOrganization is a representation of the data structure
+        associated with a DigitalObject. The default implementation reflects a file-based structure supporting different representations (views) of the same data. Other 
+        implementations might be based on other data entities like records or streams.</description>
   
-  <properties>
-    <projectName>DataOrganization</projectName>
-    <firstName>Halil</firstName>
-    <lastName>Pasic</lastName>
-    <nameId>pasic</nameId>
-  </properties>
+    <properties>
+        <projectName>DataOrganization</projectName>
+        <firstName>Halil</firstName>
+        <lastName>Pasic</lastName>
+        <nameId>pasic</nameId>
+    </properties>
   
-  <developers>
-    <developer>
-      <id>${nameId}</id>
-      <name>${firstName} ${lastName}</name>
-      <email>${firstName}.${lastName}@kit.edu</email>
-      <organization>Karlsruhe Institute of Technology (KIT)</organization>
-      <roles>
-        <role>Developer</role>
-      </roles>
-    </developer>
-    <developer>    
-      <id>mf6319</id>
-      <name>Thomas Jejkal</name>
-      <email>support@kitdatamanager.net</email>
-      <organization>Karlsruhe Institute of Technology (KIT)</organization>
-      <roles>
-        <role>Manager</role>
-      </roles>
-    </developer>
-  </developers>
+    <developers>
+        <developer>
+            <id>${nameId}</id>
+            <name>${firstName} ${lastName}</name>
+            <email>${firstName}.${lastName}@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+        <developer>    
+            <id>mf6319</id>
+            <name>Thomas Jejkal</name>
+            <email>support@kitdatamanager.net</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Manager</role>
+            </roles>
+        </developer>
+    </developers>
   
-  <dependencies>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>Authorization</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>MDM-Core</artifactId>
-      <version>1.1</version>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>Commons</artifactId>
-      <version>1.1</version>
-    </dependency>
-  </dependencies> 
+    <dependencies>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>Authorization</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>MDM-Core</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>Commons</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.qmino</groupId>
+            <artifactId>miredot-annotations</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+    </dependencies> 
 </project>

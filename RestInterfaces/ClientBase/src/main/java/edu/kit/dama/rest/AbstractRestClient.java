@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -205,6 +205,7 @@ public abstract class AbstractRestClient {
     boolean result = false;
     try {
       ClientResponse response = getWebResource("/checkService").get(ClientResponse.class);
+      
       LOGGER.debug("Response: " + response);
       result = response != null && response.getStatus() == 200;
     } catch (Throwable t) {

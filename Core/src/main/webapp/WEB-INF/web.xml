@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -125,4 +125,23 @@
     <servlet-name>DataWorkflowServiceAdapter</servlet-name>
     <url-pattern>/rest/dataworkflow/*</url-pattern>
   </servlet-mapping> 
+   <!--Job Scheduler REST interface-->
+    <servlet>
+        <servlet-name>SchedulerServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.scheduler.service.impl</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SchedulerServiceAdapter</servlet-name>
+        <url-pattern>/rest/scheduler/*</url-pattern>
+    </servlet-mapping>
+	
+	<!-- Job-Scheduler initialization -->
+    <listener>
+        <listener-class>edu.kit.dama.scheduler.servlet.JobSchedulerInitializerListener</listener-class>
+    </listener>
 </web-app>

@@ -337,7 +337,7 @@ public class MigrationObject {
    *
    * A null valued primary key or a null valued metadata schema set are not allowed.
    *
-   * @param relations set of metadata schemas.
+   * @param metadataschemas set of metadata schemas.
    * @param primaryKey to search the metadata schema.
    *
    * @return a metadata schema with the given primary key or null if not found.
@@ -363,7 +363,7 @@ public class MigrationObject {
    *
    * A null valued primary key or a null valued participant set are not allowed.
    *
-   * @param relations set of participant.
+   * @param participants set of participant.
    * @param primaryKey to search the participant.
    *
    * @return a participant with the given primary key or null if not found.

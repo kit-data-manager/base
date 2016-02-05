@@ -24,32 +24,30 @@ import java.util.List;
  */
 public class FulltextElasticSearchProvider extends BaseElasticSearchProvider {
 
-  private List<BaseSearchTerm> terms;
+    private List<BaseSearchTerm> terms;
 
-  public FulltextElasticSearchProvider() {
-    super(null, null, null);
-  }
+    public FulltextElasticSearchProvider() {
+        super(null, null, null);
+    }
 
-  public FulltextElasticSearchProvider(String pHostName, String pIndex, String pObjectType) {
-    super(pHostName, pIndex, pObjectType);
-  }
+    public FulltextElasticSearchProvider(String pHostName, String pIndex, String pObjectType) {
+        super(pHostName, pIndex, pObjectType);
+    }
 
-  public FulltextElasticSearchProvider(String pCluster, String pHostName, String pIndex, String pObjectType) {
-    super(pCluster, pHostName, pIndex, pObjectType);
-  }
+    public FulltextElasticSearchProvider(String pCluster, String pHostName, String pIndex, String pObjectType) {
+        super(pCluster, pHostName, pIndex, pObjectType);
+    }
 
-  @Override
-  public final void initialize() {
-    terms = new LinkedList<>();
-     terms.add(new TextTerm("All", "_all"));
-    //terms.add(new TextTerm("Fulltext", KITDataManagerSettings.getSingleton().getStringProperty(KITDataManagerSettings.ELASTIC_SEARCH_FULLTEXT_SEARCH_KEY_ID, "es.fulltext")));
-    //terms.add(new TextTerm("abstract", "abstract"));
-  }
+    @Override
+    public final void initialize() {
+        terms = new LinkedList<>();
+        terms.add(new TextTerm("All", "_all"));
+    }
 
-  @Override
-  public List<BaseSearchTerm> getSearchTerms() {
-    return terms;
-  }
+    @Override
+    public List<BaseSearchTerm> getSearchTerms() {
+        return terms;
+    }
 
 //  public static void main(String[] args) {
 //    FulltextElasticSearchProvider pro = new FulltextElasticSearchProvider("KITDataManager", "localhost", "kitdatamanager", "bibtex");

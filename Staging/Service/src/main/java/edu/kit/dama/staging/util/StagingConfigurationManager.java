@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,21 +44,13 @@ import org.slf4j.LoggerFactory;
  * This class represents the configuration of a staging service. The
  * configuration is realized via XML. The content should look as follows:
  *
- * <pre>
- * <staging>
- *<adapters>
- * <dataOrganizationAdapter
- * class="edu.kit.dama.rest.staging.impl.DefaultDataOrganizationServiceAdapter"
- * target="LOCAL"/>
- * <ingestInformationServiceAdapter
- * class="edu.kit.dama.rest.staging.ingest.impl.DefaultIngestInformationServiceAdapter"
- * target="LOCAL"/>
- * <storageVirtualizationAdapter
- * class="edu.kit.dama.rest.staging.impl.DefaultDataVirtualizationAdapter"
- * target="LOCAL"/>
- * </adapters>
- * </staging>
- * </pre>
+ * &lt;staging&gt;
+ * &lt;adapters&gt;
+ * &lt;dataOrganizationAdapter class="edu.kit.dama.rest.staging.impl.DefaultDataOrganizationServiceAdapter"  target="LOCAL"/&gt;
+ * &lt;ingestInformationServiceAdapter class="edu.kit.dama.rest.staging.ingest.impl.DefaultIngestInformationServiceAdapter" target="LOCAL"/&gt;
+ * &lt;storageVirtualizationAdapter class="edu.kit.dama.rest.staging.impl.DefaultDataVirtualizationAdapter" target="LOCAL"/&gt;
+ * &lt;/adapters&gt;
+ * &lt;/staging&gt;
  *
  * What you see is the definition of several adapters. Each adapter is
  * responsible for accessing one service needed for staging operations. The
@@ -69,13 +61,9 @@ import org.slf4j.LoggerFactory;
  * For custom configuration of single adapters, additional XML entries may be
  * added after each adapter entry, e.g.:
  *
- * <pre>
- * <dataOrganizationAdapter
- * class="edu.kit.dama.rest.staging.impl.DefaultDataOrganizationServiveAdapter"
- * target="LOCAL">
- * <myCustomTag>myCustomValue</myCustomTag>
- * </dataOrganizationAdapter>
- * </pre>
+ * &lt;dataOrganizationAdapter class="edu.kit.dama.rest.staging.impl.DefaultDataOrganizationServiveAdapter"  target="LOCAL"&gt;
+ * &lt;myCustomTag&gt;myCustomValue&lt;/myCustomTag&gt;
+ * &lt;/dataOrganizationAdapter&gt;
  *
  * Be aware, the the adapter attributes 'class' and 'target' are mandatory, even
  * for custom configuration.
@@ -120,8 +108,6 @@ public final class StagingConfigurationManager {
   private IDownloadInformationServiceAdapter downloadInformationAdapter = null;
   private IStorageVirtualizationServiceAdapter storageVirtualizationAdapter = null;
   private String restUrl;
-  /*private File tracBasePath;
-   private String tracBaseUrl;*/
 
   static {
     java.net.URLStreamHandlerFactory myFactory = new java.net.URLStreamHandlerFactory() {
@@ -357,7 +343,7 @@ public final class StagingConfigurationManager {
       downloadInformationAdapter = createAdapterInstance(pConfig, DOWNLOAD_INFORMATION_SERVICE_ADAPTER_ID);
       storageVirtualizationAdapter = createAdapterInstance(pConfig, STORAGE_VIRTUALIZATION_ADAPTER_ID);
     } catch (ConfigurationException ce) {
-      throw new StagingIntitializationException("Failed to initialize staging. Configuration of at least one adapter failed", ce);
+      throw new StagingIntitializationException("Failed to initialize staging. Configuration of at least one adapter failed.", ce);
     }
   }
 
@@ -656,12 +642,8 @@ public final class StagingConfigurationManager {
       return (T) instance;
     } catch (ClassNotFoundException cnfe) {
       throw new ConfigurationException("Failed to locate adapter class for ID '" + pAdapterId + "'", cnfe);
-    } catch (InstantiationException ie) {
+    } catch (InstantiationException | IllegalAccessException | InvocationTargetException ie) {
       throw new ConfigurationException("Failed to instantiate and configure adapter for ID '" + pAdapterId + "'", ie);
-    } catch (IllegalAccessException iae) {
-      throw new ConfigurationException("Failed to instantiate and configure adapter for ID '" + pAdapterId + "'", iae);
-    } catch (InvocationTargetException ite) {
-      throw new ConfigurationException("Failed to instantiate and configure adapter for ID '" + pAdapterId + "'", ite);
     } catch (NoSuchMethodException nsme) {
       throw new ConfigurationException("Invalid adapter class for ID '" + pAdapterId + "'", nsme);
     } catch (ClassCastException cce) {

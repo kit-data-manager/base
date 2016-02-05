@@ -29,79 +29,86 @@ import java.util.List;
  */
 public class DataWorkflowClient {
 
-  /**
-   * List holding all commands available by jCommander.
-   */
-  static final List<CommandLineParameters> commands = new ArrayList<>();
+    /**
+     * List holding all commands available by jCommander.
+     */
+    static final List<CommandLineParameters> commands = new ArrayList<>();
 
-  static {
-    commands.add(new ProcessParameters());
-  }
+    static {
+        commands.add(new ProcessParameters());
+    }
 
-  public static void main(String[] args) throws Exception {
-    int returnValue = 0;
-    JCommander jCommander = registerCommands();
-    jCommander.setProgramName("DataWorkflowClient");
+    /**
+     * Main method.
+     *
+     * @param args The argument array.
+     *
+     * @throws Exception If triggering the workflow execution fails.
+     */
+    public static void main(String[] args) throws Exception {
+        int returnValue = 0;
+        JCommander jCommander = registerCommands();
+        jCommander.setProgramName("DataWorkflowClient");
 
-    if (args.length == 0) {
-      jCommander.usage();
-    } else {
-      try {
-        jCommander.parse(args);
-
-        String command = jCommander.getParsedCommand();
-        CommandLineParameters clp = (CommandLineParameters) jCommander.getCommands().get(command).getObjects().get(0);
-
-        if (clp.isHelp()) {
-          printUsage(jCommander);
+        if (args.length == 0) {
+            jCommander.usage();
         } else {
-          CommandStatus status = clp.executeCommand();
-          returnValue = status.getStatusCode();
-          System.out.println(status.getStatusMessage());
-          if (!status.getStatus().isSuccess()) {
-            Exception exception = status.getException();
-            if (exception != null) {
-              String message = exception.getMessage();
-              if (message != null) {
-                System.out.println(message);
-              }
+            try {
+                jCommander.parse(args);
+
+                String command = jCommander.getParsedCommand();
+                CommandLineParameters clp = (CommandLineParameters) jCommander.getCommands().get(command).getObjects().get(0);
+
+                if (clp.isHelp()) {
+                    printUsage(jCommander);
+                } else {
+                    CommandStatus status = clp.executeCommand();
+                    returnValue = status.getStatusCode();
+                    System.out.println(status.getStatusMessage());
+                    if (!status.getStatus().isSuccess()) {
+                        Exception exception = status.getException();
+                        if (exception != null) {
+                            String message = exception.getMessage();
+                            if (message != null) {
+                                System.out.println(message);
+                            }
+                        }
+                    }
+
+                }
+            } catch (ParameterException pe) {
+                System.err.println("Error parsing parameters!\nERROR -> " + pe.getMessage());
+                printUsage(jCommander);
             }
-          }
-
         }
-      } catch (ParameterException pe) {
-        System.err.println("Error parsing parameters!\nERROR -> " + pe.getMessage());
-        printUsage(jCommander);
-      }
-    }
-    System.exit(returnValue);
-  }
-
-  /**
-   * Register all commands.
-   *
-   * @return Instance holding all commands.
-   */
-  private static JCommander registerCommands() {
-    JCommander jCommander = new JCommander();
-    for (CommandLineParameters clp : commands) {
-      jCommander.addCommand(clp.getCommandName(), clp);
+        System.exit(returnValue);
     }
 
-    return jCommander;
-  }
+    /**
+     * Register all commands.
+     *
+     * @return Instance holding all commands.
+     */
+    private static JCommander registerCommands() {
+        JCommander jCommander = new JCommander();
+        for (CommandLineParameters clp : commands) {
+            jCommander.addCommand(clp.getCommandName(), clp);
+        }
 
-  /**
-   * Print usage on STDOUT.
-   *
-   * @param jCommander instance holding parameters and descriptions.
-   */
-  private static void printUsage(JCommander jCommander) {
-    String command = jCommander.getParsedCommand();
-    if (command != null) {
-      jCommander.usage(command);
-    } else {
-      jCommander.usage();
+        return jCommander;
     }
-  }
+
+    /**
+     * Print usage on STDOUT.
+     *
+     * @param jCommander instance holding parameters and descriptions.
+     */
+    private static void printUsage(JCommander jCommander) {
+        String command = jCommander.getParsedCommand();
+        if (command != null) {
+            jCommander.usage(command);
+        } else {
+            jCommander.usage();
+        }
+    }
 }

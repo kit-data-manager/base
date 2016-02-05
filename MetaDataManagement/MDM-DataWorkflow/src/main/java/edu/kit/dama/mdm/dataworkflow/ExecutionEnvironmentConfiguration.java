@@ -15,23 +15,33 @@
  */
 package edu.kit.dama.mdm.dataworkflow;
 
+import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultEnvironmentProperty;
+import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultExecutionEnvironment;
 import edu.kit.dama.mdm.dataworkflow.properties.ExecutionEnvironmentProperty;
 import edu.kit.dama.util.PropertiesUtil;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedAttributeNode;
+import javax.persistence.NamedEntityGraph;
+import javax.persistence.NamedEntityGraphs;
 import javax.persistence.OneToMany;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
+import org.eclipse.persistence.queries.FetchGroupTracker;
+import org.eclipse.persistence.sessions.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,387 +59,491 @@ import org.slf4j.LoggerFactory;
  * </ul>
  *
  * Furthermore, the ExecutionEnvironmentConfiguration defined the implementation
- * class of an AbstractExecutionEnvironmentHandler capable of submitting DataWorkflow
- * tasks using this configuration.
+ * class of an AbstractExecutionEnvironmentHandler capable of submitting
+ * DataWorkflow tasks using this configuration.
  *
  * @author mf6319
  */
 @Entity
 @XmlNamedObjectGraphs({
-  @XmlNamedObjectGraph(
-          name = "simple",
-          attributeNodes = {
-            @XmlNamedAttributeNode("id")
-          }),
-  @XmlNamedObjectGraph(
-          name = "default",
-          attributeNodes = {
-            @XmlNamedAttributeNode("id"),
-            @XmlNamedAttributeNode("name"),
-            @XmlNamedAttributeNode("description"),
-            @XmlNamedAttributeNode("customProperties"),
-            @XmlNamedAttributeNode("groupId"),
-            @XmlNamedAttributeNode("handlerImplementationClass"),
-            @XmlNamedAttributeNode("stagingAccessPointId"),
-            @XmlNamedAttributeNode("accessPointLocalBasePath"),
-            @XmlNamedAttributeNode("maxParallelTasks"),
-            @XmlNamedAttributeNode("defaultEnvironment"),
-            @XmlNamedAttributeNode("disabled")
-          })})
-public class ExecutionEnvironmentConfiguration {
+    @XmlNamedObjectGraph(
+            name = "simple",
+            attributeNodes = {
+                @XmlNamedAttributeNode("id"),
+                @XmlNamedAttributeNode("uniqueIdentifier")
+            }),
+    @XmlNamedObjectGraph(
+            name = "default",
+            attributeNodes = {
+                @XmlNamedAttributeNode("id"),
+                @XmlNamedAttributeNode("uniqueIdentifier"),
+                @XmlNamedAttributeNode("name"),
+                @XmlNamedAttributeNode("description"),
+                @XmlNamedAttributeNode("customProperties"),
+                @XmlNamedAttributeNode("groupId"),
+                @XmlNamedAttributeNode("handlerImplementationClass"),
+                @XmlNamedAttributeNode("stagingAccessPointId"),
+                @XmlNamedAttributeNode("accessPointLocalBasePath"),
+                @XmlNamedAttributeNode("maxParallelTasks"),
+                @XmlNamedAttributeNode("defaultEnvironment"),
+                @XmlNamedAttributeNode("disabled")
+            })})
+@NamedEntityGraphs({
+    @NamedEntityGraph(
+            name = "ExecutionEnvironmentConfiguration.simple",
+            includeAllAttributes = false,
+            attributeNodes = {
+                @NamedAttributeNode("id"),
+                @NamedAttributeNode("uniqueIdentifier")
+            }),
+    @NamedEntityGraph(
+            name = "ExecutionEnvironmentConfiguration.default",
+            includeAllAttributes = false,
+            attributeNodes = {
+                @NamedAttributeNode("id"),
+                @NamedAttributeNode("uniqueIdentifier"),
+                @NamedAttributeNode("name"),
+                @NamedAttributeNode("description"),
+                @NamedAttributeNode("customProperties"),
+                @NamedAttributeNode("groupId"),
+                @NamedAttributeNode("handlerImplementationClass"),
+                @NamedAttributeNode("stagingAccessPointId"),
+                @NamedAttributeNode("accessPointLocalBasePath"),
+                @NamedAttributeNode("maxParallelTasks"),
+                @NamedAttributeNode("defaultEnvironment"),
+                @NamedAttributeNode("disabled")}
+    )
+})
+public class ExecutionEnvironmentConfiguration implements IDefaultExecutionEnvironment, FetchGroupTracker {
 
-  /**
-   * For logging purposes.
-   */
-  private static final Logger LOGGER = LoggerFactory.getLogger(ExecutionEnvironmentConfiguration.class);
-  /**
-   * Id of the environment. Has to be unique.
-   */
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-  /**
-   * Human readable name.
-   */
-  private String name = null;
-  /**
-   * Human readable description.
-   */
-  @Column(length = 10240)
-  private String decription = null;
-  /**
-   * The serialized custom properties used to configure the execution
-   * environment handler.
-   */
-  @Column(length = 10240)
-  private String customProperties = null;
+    /**
+     * For logging purposes.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExecutionEnvironmentConfiguration.class);
+    /**
+     * Id of the environment. Has to be unique.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  /**
-   * The groupId for which this environment is intended to be used.
-   */
-  private String groupId = null;
+    @Column(nullable = false, unique = true)
+    private String uniqueIdentifier = null;
+    /**
+     * Human readable name.
+     */
+    private String name = null;
+    /**
+     * Human readable description.
+     */
+    @Column(length = 10240)
+    private String description = null;
+    /**
+     * The serialized custom properties used to configure the execution
+     * environment handler.
+     */
+    @Column(length = 10240)
+    private String customProperties = null;
 
-  /**
-   * The implementation class of the execution environment handler.
-   */
-  private String handlerImplementationClass = null;
+    /**
+     * The groupId for which this environment is intended to be used.
+     */
+    private String groupId = null;
 
-  /**
-   * Staging access point configuration used to stage data in and out the
-   * computing environment. Inside the computing environment, the path of the
-   * access point is reachable via {@link #accessPointLocalBasePath} which can
-   * but must not be equal to the access point's local base path.
-   */
-  private String stagingAccessPointId = null;
+    /**
+     * The implementation class of the execution environment handler.
+     */
+    private String handlerImplementationClass = null;
 
-  /**
-   * The local base path where the location accessed via
-   * {@link #stagingAccessPointId} is made available. Basically, this path
-   * contains the absolute file path where the staging location is reachable for
-   * all computing nodes/processes, e.g. via mount point.
-   */
-  private String accessPointLocalBasePath = null;
+    /**
+     * Staging access point configuration used to stage data in and out the
+     * computing environment. Inside the computing environment, the path of the
+     * access point is reachable via {@link #accessPointLocalBasePath} which can
+     * but must not be equal to the access point's local base path.
+     */
+    private String stagingAccessPointId = null;
 
-  /**
-   * The number of max. parallel DataWorkflow tasks running on this execution
-   * environment at the same time in parallel.
-   */
-  private int maxParallelTasks = 10;
-  /**
-   * Flag which indicates if this environment is the default one.
-   */
-  private boolean defaultEnvironment = false;
+    /**
+     * The local base path where the location accessed via
+     * {@link #stagingAccessPointId} is made available. Basically, this path
+     * contains the absolute file path where the staging location is reachable
+     * for all computing nodes/processes, e.g. via mount point.
+     */
+    private String accessPointLocalBasePath = null;
 
-  /**
-   * Flag which indicates if this environment is disabled or not.
-   */
-  private boolean disabled = false;
+    /**
+     * The number of max. parallel DataWorkflow tasks running on this execution
+     * environment at the same time in parallel.
+     */
+    private Integer maxParallelTasks = 10;
+    /**
+     * Flag which indicates if this environment is the default one.
+     */
+    private Boolean defaultEnvironment = false;
 
-  @OneToMany(fetch = FetchType.EAGER)
-  private Set<ExecutionEnvironmentProperty> providedEnvironmentProperties = new HashSet<>();
+    /**
+     * Flag which indicates if this environment is disabled or not.
+     */
+    private Boolean disabled = false;
 
-  /**
-   * Set custom properties as object.
-   *
-   * @param pProperties The properties object.
-   *
-   * @throws IOException If the serialization failed.
-   */
-  public void setPropertiesAsObject(Properties pProperties) throws IOException {
-    String serialized = PropertiesUtil.propertiesToString(pProperties);
-    if (serialized != null && serialized.length() > 10 * FileUtils.ONE_KB) {
-      throw new IOException("Failed to store custom properties from object. Serialized content exceeds max. size of database field (10 KB).");
+    @OneToMany(fetch = FetchType.EAGER)
+    private Set<ExecutionEnvironmentProperty> providedEnvironmentProperties = new HashSet<>();
+
+    /**
+     * Factory a new ExecutionEnvironmentConfiguration with the provided
+     * identifier.
+     *
+     * @param pIdentifier The unique ExecutionEnvironmentConfiguration
+     * identifier.
+     *
+     * @return The new ExecutionEnvironmentConfiguration.
+     */
+    public static ExecutionEnvironmentConfiguration factoryNewExecutionEnvironmentConfiguration(String pIdentifier) {
+        if (pIdentifier == null) {
+            throw new IllegalArgumentException("Argument 'pIdentifier' must not be 'null'");
+        }
+        ExecutionEnvironmentConfiguration result = new ExecutionEnvironmentConfiguration();
+        result.setUniqueIdentifier(pIdentifier);
+        return result;
     }
 
-    this.setCustomProperties(serialized);
-  }
-
-  /**
-   * Get the custom properties as object.
-   *
-   * @return The properties object.
-   *
-   * @throws IOException If the deserialization failed.
-   */
-  public Properties getPropertiesAsObject() throws IOException {
-    return PropertiesUtil.propertiesFromString(getCustomProperties());
-  }
-
-  /**
-   * Check whether this execution environment is applicable for executing the
-   * provided task. This method internally maps to {@link #canExecute(edu.kit.dama.dataworkflow.DataWorkflowTaskConfiguration)
-   * } by using {@link DataWorkflowTask#getConfiguration() }.
-   *
-   * @param pTask The task to check.
-   *
-   * @return TRUE if all required properties are provided.
-   */
-  public boolean canExecute(DataWorkflowTask pTask) {
-    return canExecute(pTask.getConfiguration());
-  }
-
-  /**
-   * Check whether this execution environment is applicable for executing the
-   * provided configuration. The check will compare the provided
-   * ExecutionEnvironmentProperties with the required ones defined in the
-   * DataWorkflowConfiguration. True is returned, if the environment provides all
-   * required properties.
-   *
-   * @param pConfiguration The configuration to check.
-   *
-   * @return TRUE if all required properties are provided.
-   */
-  public boolean canExecute(DataWorkflowTaskConfiguration pConfiguration) {
-    Set<ExecutionEnvironmentProperty> required = pConfiguration.getRequiredEnvironmentProperties();
-    boolean result = true;
-    for (ExecutionEnvironmentProperty property : required) {
-      if (!providedEnvironmentProperties.contains(property)) {
-        //not applicable ... Log this
-        LOGGER.error("Execution environment with id {} cannot handle task configuration with id {}. Property {} not supported.", getId(), pConfiguration.getId(), property);
-        result = false;
-        break;
-      }
+    /**
+     * Factory a new ExecutionEnvironmentConfiguration with an auto-generated
+     * identifier. The identifier is generated using
+     * {@link java.util.UUID#randomUUID()}
+     *
+     * @return The new ExecutionEnvironmentConfiguration.
+     */
+    public static ExecutionEnvironmentConfiguration factoryNewExecutionEnvironmentConfiguration() {
+        return factoryNewExecutionEnvironmentConfiguration(UUID.randomUUID().toString());
     }
-    //all available
-    return result;
-  }
 
-  /**
-   * @return the id
-   */
-  public Long getId() {
-    return id;
-  }
+    /**
+     * Default constructor.
+     */
+    public ExecutionEnvironmentConfiguration() {
+    }
 
-  /**
-   * @param id the id to set
-   */
-  public void setId(Long id) {
-    this.id = id;
-  }
+    /**
+     * Set custom properties as object.
+     *
+     * @param pProperties The properties object.
+     *
+     * @throws IOException If the serialization failed.
+     */
+    public void setPropertiesAsObject(Properties pProperties) throws IOException {
+        String serialized = PropertiesUtil.propertiesToString(pProperties);
+        if (serialized != null && serialized.length() > 10 * FileUtils.ONE_KB) {
+            throw new IOException("Failed to store custom properties from object. Serialized content exceeds max. size of database field (10 KB).");
+        }
 
-  /**
-   * @return the name
-   */
-  public String getName() {
-    return name;
-  }
+        this.setCustomProperties(serialized);
+    }
 
-  /**
-   * @param name the name to set
-   */
-  public void setName(String name) {
-    this.name = name;
-  }
+    /**
+     * Get the custom properties as object.
+     *
+     * @return The properties object.
+     *
+     * @throws IOException If the deserialization failed.
+     */
+    public Properties getPropertiesAsObject() throws IOException {
+        return PropertiesUtil.propertiesFromString(getCustomProperties());
+    }
 
-  /**
-   * @return the decription
-   */
-  public String getDecription() {
-    return decription;
-  }
+    /**
+     * Check whether this execution environment is applicable for executing the
+     * provided task. This method internally maps to {@link #canExecute(edu.kit.dama.mdm.dataworkflow.DataWorkflowTaskConfiguration)
+     * }
+     * by using {@link DataWorkflowTask#getConfiguration() }.
+     *
+     * @param pTask The task to check.
+     *
+     * @return TRUE if all required properties are provided.
+     */
+    public boolean canExecute(DataWorkflowTask pTask) {
+        return canExecute(pTask.getConfiguration());
+    }
 
-  /**
-   * @param decription the decription to set
-   */
-  public void setDecription(String decription) {
-    this.decription = decription;
-  }
+    /**
+     * Check whether this execution environment is applicable for executing the
+     * provided configuration. The check will compare the provided
+     * ExecutionEnvironmentProperties with the required ones defined in the
+     * DataWorkflowConfiguration. True is returned, if the environment provides
+     * all required properties.
+     *
+     * @param pConfiguration The configuration to check.
+     *
+     * @return TRUE if all required properties are provided.
+     */
+    public boolean canExecute(DataWorkflowTaskConfiguration pConfiguration) {
+        Set<? extends IDefaultEnvironmentProperty> required = pConfiguration.getRequiredEnvironmentProperties();
+        boolean result = true;
+        for (final IDefaultEnvironmentProperty property : required) {
 
-  /**
-   * @return the customProperties
-   */
-  public String getCustomProperties() {
-    return customProperties;
-  }
+            IDefaultEnvironmentProperty providedProperty = (IDefaultEnvironmentProperty) CollectionUtils.find(providedEnvironmentProperties, new Predicate() {
+                @Override
+                public boolean evaluate(Object o) {
+                    return Long.compare(((IDefaultEnvironmentProperty) o).getId(), property.getId()) == 0;
+                }
+            });
 
-  /**
-   * @param customProperties the customProperties to set
-   */
-  public void setCustomProperties(String customProperties) {
-    this.customProperties = customProperties;
-  }
+            if (providedProperty == null) {
+                //not applicable ... Log this
+                LOGGER.error("Execution environment with id {} cannot handle task configuration with id {}. Property {} not supported.", getId(), pConfiguration.getId(), property);
+                result = false;
+                break;
+            }
+        }
+        //all available
+        return result;
+    }
 
-  /**
-   * @return the groupId
-   */
-  public String getGroupId() {
-    return groupId;
-  }
+    @Override
+    public Long getId() {
+        return id;
+    }
 
-  /**
-   * @param groupId the groupId to set
-   */
-  public void setGroupId(String groupId) {
-    this.groupId = groupId;
-  }
+    /**
+     * @param id the id to set
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-  /**
-   * @return the handlerImplementationClass
-   */
-  public String getHandlerImplementationClass() {
-    return handlerImplementationClass;
-  }
+    /**
+     * Set the unique identifier.
+     *
+     * @param uniqueIdentifier A unique identifier.
+     */
+    protected void setUniqueIdentifier(String uniqueIdentifier) {
+        this.uniqueIdentifier = uniqueIdentifier;
+    }
 
-  /**
-   * @param handlerImplementationClass the handlerImplementationClass to set
-   */
-  public void setHandlerImplementationClass(String handlerImplementationClass) {
-    this.handlerImplementationClass = handlerImplementationClass;
-  }
+    @Override
+    public String getUniqueIdentifier() {
+        return uniqueIdentifier;
+    }
 
-  /**
-   * Get the id of the StagingAccessPoint that will be used to provide/obtain
-   * data to/from task executions.
-   *
-   * @return the stagingAccessPointId
-   */
-  public String getStagingAccessPointId() {
-    return stagingAccessPointId;
-  }
+    @Override
+    public String getName() {
+        return name;
+    }
 
-  /**
-   * Set the id of the StagingAccessPoint that will be used to provide/obtain
-   * data to/from task executions.
-   *
-   * @param stagingAccessPointId The stagingAccessPointId to set.
-   */
-  public void setStagingAccessPointId(String stagingAccessPointId) {
-    this.stagingAccessPointId = stagingAccessPointId;
-  }
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  /**
-   * Get the local path used by the AccessPoint of this
-   * EnvironmentConfiguration.
-   *
-   * @return The accessPointLocalBasePath.
-   */
-  public String getAccessPointLocalBasePath() {
-    return accessPointLocalBasePath;
-  }
+    @Override
+    public String getDescription() {
+        return description;
+    }
 
-  /**
-   * Set the local path used by the AccessPoint of this
-   * EnvironmentConfiguration.
-   *
-   * @param accessPointLocalBasePath The accessPointLocalBasePath to set.
-   */
-  public void setAccessPointLocalBasePath(String accessPointLocalBasePath) {
-    this.accessPointLocalBasePath = accessPointLocalBasePath;
-  }
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-  /**
-   * Get the number of max. parallel tasks running in this execution
-   * environment.
-   *
-   * @return The number of max. parallel tasks.
-   */
-  public int getMaxParallelTasks() {
-    return maxParallelTasks;
-  }
+    @Override
+    public String getCustomProperties() {
+        return customProperties;
+    }
 
-  /**
-   * Set the number of max. parallel tasks running in this execution
-   * environment.
-   *
-   * @param maxParallelTasks The number of max. parallel tasks.
-   */
-  public void setMaxParallelTasks(int maxParallelTasks) {
-    this.maxParallelTasks = maxParallelTasks;
-  }
+    /**
+     * @param customProperties the customProperties to set
+     */
+    public void setCustomProperties(String customProperties) {
+        this.customProperties = customProperties;
+    }
 
-  /**
-   * Get whether this ExecutionEnvironment is the default one for the group it
-   * is associated with.
-   *
-   * @return TRUE = This is the default ExecutionEnvironment.
-   */
-  public boolean isDefaultEnvironment() {
-    return defaultEnvironment;
-  }
+    @Override
+    public String getGroupId() {
+        return groupId;
+    }
 
-  /**
-   * Set whether this ExecutionEnvironment is the default one for the group it
-   * is associated with.
-   *
-   * @param defaultEnvironment TRUE = This is the default ExecutionEnvironment.
-   */
-  public void setDefaultEnvironment(boolean defaultEnvironment) {
-    this.defaultEnvironment = defaultEnvironment;
-  }
+    /**
+     * @param groupId the groupId to set
+     */
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+    }
 
-  /**
-   * Check whether this ExecutionEnvironment is disabled or not.
-   *
-   * @return TRUE = This ExecutionEnvironment is disabled.
-   */
-  public boolean isDisabled() {
-    return disabled;
-  }
+    @Override
+    public String getHandlerImplementationClass() {
+        return handlerImplementationClass;
+    }
 
-  /**
-   * Set whether this ExecutionEnvironment is disabled or not.
-   *
-   * @param disabled TRUE = This ExecutionEnvironment is disabled.
-   */
-  public void setDisabled(boolean disabled) {
-    this.disabled = disabled;
-  }
+    /**
+     * @param handlerImplementationClass the handlerImplementationClass to set
+     */
+    public void setHandlerImplementationClass(String handlerImplementationClass) {
+        this.handlerImplementationClass = handlerImplementationClass;
+    }
 
-  /**
-   * Get the list of provided environment properties.
-   *
-   * @return The list of provided environment properties.
-   */
-  public Set<ExecutionEnvironmentProperty> getProvidedEnvironmentProperties() {
-    return providedEnvironmentProperties;
-  }
+    @Override
+    public String getStagingAccessPointId() {
+        return stagingAccessPointId;
+    }
 
-  /**
-   * Set the list of provided environment properties.
-   *
-   * @param providedEnvironmentProperties The list of provided environment
-   * properties.
-   */
-  public void setProvidedEnvironmentProperties(Set<ExecutionEnvironmentProperty> providedEnvironmentProperties) {
-    this.providedEnvironmentProperties = providedEnvironmentProperties;
-  }
+    /**
+     * Set the id of the StagingAccessPoint that will be used to provide/obtain
+     * data to/from task executions.
+     *
+     * @param stagingAccessPointId The stagingAccessPointId to set.
+     */
+    public void setStagingAccessPointId(String stagingAccessPointId) {
+        this.stagingAccessPointId = stagingAccessPointId;
+    }
 
-  /**
-   * Add a provided environment property.
-   *
-   * @param pProperty The property to add.
-   */
-  public void addProvidedEnvironmentProperty(ExecutionEnvironmentProperty pProperty) {
-    providedEnvironmentProperties.add(pProperty);
-  }
+    @Override
+    public String getAccessPointLocalBasePath() {
+        return accessPointLocalBasePath;
+    }
 
-  /**
-   * Remove a provided environment property.
-   *
-   * @param pProperty The property to remove.
-   */
-  public void removeProvidedEnvironmentProperty(ExecutionEnvironmentProperty pProperty) {
-    providedEnvironmentProperties.remove(pProperty);
-  }
+    /**
+     * Set the local path used by the AccessPoint of this
+     * EnvironmentConfiguration.
+     *
+     * @param accessPointLocalBasePath The accessPointLocalBasePath to set.
+     */
+    public void setAccessPointLocalBasePath(String accessPointLocalBasePath) {
+        this.accessPointLocalBasePath = accessPointLocalBasePath;
+    }
+
+    @Override
+    public Integer getMaxParallelTasks() {
+        return this.maxParallelTasks;
+    }
+
+    /**
+     * Set the number of max. parallel tasks running in this execution
+     * environment.
+     *
+     * @param maxParallelTasks The number of max. parallel tasks.
+     */
+    public void setMaxParallelTasks(Integer maxParallelTasks) {
+        this.maxParallelTasks = maxParallelTasks;
+    }
+
+    @Override
+    public Boolean isDefaultEnvironment() {
+        return defaultEnvironment;
+    }
+
+    /**
+     * Set whether this ExecutionEnvironment is the default one for the group it
+     * is associated with.
+     *
+     * @param defaultEnvironment TRUE = This is the default
+     * ExecutionEnvironment.
+     */
+    public void setDefaultEnvironment(Boolean defaultEnvironment) {
+        this.defaultEnvironment = defaultEnvironment;
+    }
+
+    @Override
+    public Boolean isDisabled() {
+        return disabled;
+    }
+
+    /**
+     * Set whether this ExecutionEnvironment is disabled or not.
+     *
+     * @param disabled TRUE = This ExecutionEnvironment is disabled.
+     */
+    public void setDisabled(Boolean disabled) {
+        this.disabled = disabled;
+    }
+
+    /**
+     * Get the list of provided environment properties.
+     *
+     * @return The list of provided environment properties.
+     */
+    public Set<ExecutionEnvironmentProperty> getProvidedEnvironmentProperties() {
+        return providedEnvironmentProperties;
+    }
+
+    /**
+     * Set the list of provided environment properties.
+     *
+     * @param providedEnvironmentProperties The list of provided environment
+     * properties.
+     */
+    public void setProvidedEnvironmentProperties(Set<ExecutionEnvironmentProperty> providedEnvironmentProperties) {
+        this.providedEnvironmentProperties = providedEnvironmentProperties;
+    }
+
+    /**
+     * Add a provided environment property.
+     *
+     * @param pProperty The property to add.
+     */
+    public void addProvidedEnvironmentProperty(ExecutionEnvironmentProperty pProperty) {
+        providedEnvironmentProperties.add(pProperty);
+    }
+
+    /**
+     * Remove a provided environment property.
+     *
+     * @param pProperty The property to remove.
+     */
+    public void removeProvidedEnvironmentProperty(ExecutionEnvironmentProperty pProperty) {
+        providedEnvironmentProperties.remove(pProperty);
+    }
+
+    /**
+     * Remove all provided environment properties.
+     */
+    public void removeProvidedEnvironmentProperties() {
+        providedEnvironmentProperties.clear();
+    }
+    private transient org.eclipse.persistence.queries.FetchGroup fg;
+    private transient Session sn;
+
+    @Override
+    public org.eclipse.persistence.queries.FetchGroup _persistence_getFetchGroup() {
+        return this.fg;
+    }
+
+    @Override
+    public void _persistence_setFetchGroup(org.eclipse.persistence.queries.FetchGroup fg) {
+        this.fg = fg;
+    }
+
+    @Override
+    public boolean _persistence_isAttributeFetched(String string) {
+        return true;
+    }
+
+    @Override
+    public void _persistence_resetFetchGroup() {
+    }
+
+    @Override
+    public boolean _persistence_shouldRefreshFetchGroup() {
+        return false;
+    }
+
+    @Override
+    public void _persistence_setShouldRefreshFetchGroup(boolean bln) {
+
+    }
+
+    @Override
+    public Session _persistence_getSession() {
+
+        return sn;
+    }
+
+    @Override
+    public void _persistence_setSession(Session sn) {
+        this.sn = sn;
+
+    }
 }

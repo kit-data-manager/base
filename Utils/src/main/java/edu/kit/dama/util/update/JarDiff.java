@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
  * <li>Obtain library names and versions by the following pattern:
  * &lt;LIBRARY_NAME&gt;-&lt;VERSION&gt;.jar</li>
  * <li>Compare both lists and...</li>
+ * <li>
  * <ul>
  * <li>...skip identical libraries with same version.</li>
  * <li>...copy new libraries (not in list A) to directory C (final output
@@ -57,6 +58,7 @@ import org.slf4j.LoggerFactory;
  * <li>...copy updated libraries (in list A and B) to directory C (final output
  * folder) and plan removal of previous version(s).</li>
  * </ul>
+ * </li>
  * <li>Write the cleanup script containing all planned removals.</li>
  * </ul>
  *
@@ -171,7 +173,6 @@ public class JarDiff {
     File libsPreviousVersion = params.currentDirectory;
     File libsNextVersion = params.newDirectory;
     File scriptFolder = params.scriptDestination;
-    System.out.println("SC " + scriptFolder);
     LOGGER.debug("Obtaining library information.");
     LibraryDiffInformation diffInfo = new LibraryDiffInformation();
     Map<String, JavaLibrary> currentVersionLibMap = obtainLibraries(libsPreviousVersion);
@@ -198,6 +199,8 @@ public class JarDiff {
       LOGGER.debug("No script output folder provided. Just printing changes to stdout.");
       System.out.println(diffInfo);
       return new CommandStatus(Status.SUCCESSFUL);
+    }else{
+        LOGGER.debug("Writing update script 'update.sh' to output folder '{}'.", scriptFolder);
     }
 
     try {

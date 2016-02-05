@@ -164,7 +164,7 @@ public class RegistrationFormView extends CustomComponent {
 
     //save authorization information
     try {
-      UserServiceLocal.getSingleton().register(userScreenName, Role.MEMBER, ctx);
+      UserServiceLocal.getSingleton().register(userScreenName, Role.MANAGER, ctx);
       GroupServiceLocal.getSingleton().addUser(new GroupId(Constants.USERS_GROUP_ID), userScreenName, Role.MEMBER, ctx);
     } catch (UnauthorizedAccessAttemptException e) {
       throw new UserRegistrationException("Failed to register new user for screenName " + screenName + ".", e);

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C)2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C)2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,198 +17,213 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <parent>
+    <parent>
+        <groupId>edu.kit.dama</groupId>
+        <artifactId>KITDM</artifactId>
+        <version>1.2</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
     <groupId>edu.kit.dama</groupId>
-    <artifactId>KITDM</artifactId>
+    <artifactId>Utils</artifactId>
+    <name>Utils</name>
+    <packaging>jar</packaging>
     <version>1.1</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>edu.kit.dama</groupId>
-  <artifactId>Utils</artifactId>
-  <name>Utils</name>
-  <packaging>jar</packaging>
-  <version>1.0</version>
   
-  <description>Utility classes and helper tools useful for KIT Data Manager. This module is intended to be used for tools using (many) different KIT Data Manager modules in order to
-    avoid cyclic dependencies. Tools only relying on functionalities of one specific module should be part of the according module.</description>
+    <description>Utility classes and helper tools useful for KIT Data Manager. This module is intended to be used for tools using (many) different KIT Data Manager modules in order to
+        avoid cyclic dependencies. Tools only relying on functionalities of one specific module should be part of the according module.</description>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <projectName>Utils</projectName>
-    <firstName>Thomas</firstName>
-    <lastName>Jejkal</lastName>
-    <nameId>jejkal</nameId>
-  </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <projectName>Utils</projectName>
+        <firstName>Thomas</firstName>
+        <lastName>Jejkal</lastName>
+        <nameId>jejkal</nameId>
+        <!--The typical scope for dependencies in the Util module should be 'provided' as this module is intended for testing and tooling. 
+        If a dependency is mandatory it should be included somewhere else, e.g. the pom.xml of the parent project.-->
+        <scope>provided</scope>
+    </properties>
   
-  <developers>
-    <developer>
-      <id>${nameId}</id>
-      <name>${firstName} ${lastName}</name>
-      <email>${firstName}.${lastName}@kit.edu</email>
-      <organization>Karlsruhe Institute of Technology (KIT)</organization>
-      <roles>
-        <role>Project manager</role>
-      </roles>
-      <timezone>1</timezone>
-    </developer>
-  </developers>
+    <developers>
+        <developer>
+            <id>${nameId}</id>
+            <name>${firstName} ${lastName}</name>
+            <email>${firstName}.${lastName}@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Project manager</role>
+            </roles>
+            <timezone>1</timezone>
+        </developer>
+    </developers>
   
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>appassembler-maven-plugin</artifactId>
-        <version>1.8</version>
-        <configuration>
-          <!-- set alternative assemble directory -->
-          <assembleDirectory>${project.build.directory}</assembleDirectory>
-          <!-- alternative name used instead of 'repo' -->
-          <repositoryName>jars</repositoryName>
-          <!-- add the root dir to the classpath which is
-          useful to find some files (but not the logging config
-          file!?) -->
-          <configurationDirectory>.</configurationDirectory>
-          <!-- allows the project jar to be placed first in classpath.
-          This is important due to configuration files which may
-          occur more than once. -->
-          <endorsedDir>lib</endorsedDir>
-          <!-- This solved my problem configuring the logback. -->
-          <extraJvmArguments>-Dlogback.configurationFile=@BASEDIR@/logback.xml
-            -Ddatamanager.config=@BASEDIR@/datamanager.xml</extraJvmArguments>
-          <platforms>
-            <platform>windows</platform>
-            <platform>unix</platform>
-          </platforms>
-          <repositoryLayout>flat</repositoryLayout>
-          <useWildcardClassPath>true</useWildcardClassPath>
-          <programs>
-            <program>
-              <mainClass>edu.kit.dama.util.LocalAccessTest</mainClass>
-              <id>utils</id>
-            </program>
-          </programs>
-        </configuration>
-        <executions>
-          <execution>
-            <id>package-executable</id>
-            <goals>
-              <goal>assemble</goal>
-            </goals>
-            <phase>package</phase>
-          </execution>
-        </executions>
-      </plugin>
-      <!--plugin>
-        <groupId>de.empulse.eclipselink</groupId>
-        <artifactId>staticweave-maven-plugin</artifactId>
-        <version>1.0.0</version>
-        <executions>
-          <execution>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>weave</goal>
-            </goals>
-            <configuration>
-              <persistenceXMLLocation>META-INF/persistence.xml</persistenceXMLLocation>
-              <logLevel>FINE</logLevel>
-            </configuration>
-          </execution>
-        </executions>
-        <dependencies>
-          <dependency>
-            <groupId>org.eclipse.persistence</groupId>
-            <artifactId>org.eclipse.persistence.jpa</artifactId>
-            <version>2.6.0</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
-        <configuration>
-          <debug>false</debug>
-        </configuration>
-      </plugin-->
-    </plugins>
-  </build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>appassembler-maven-plugin</artifactId>
+                <version>1.8</version>
+                <configuration>
+                    <!-- set alternative assemble directory -->
+                    <assembleDirectory>${project.build.directory}</assembleDirectory>
+                    <!-- alternative name used instead of 'repo' -->
+                    <repositoryName>jars</repositoryName>
+                    <!-- add the root dir to the classpath which is
+                    useful to find some files (but not the logging config
+                    file!?) -->
+                    <configurationDirectory>.</configurationDirectory>
+                    <!-- allows the project jar to be placed first in classpath.
+                    This is important due to configuration files which may
+                    occur more than once. -->
+                    <endorsedDir>lib</endorsedDir>
+                    <!-- This solved my problem configuring the logback. -->
+                    <extraJvmArguments>-Dlogback.configurationFile=@BASEDIR@/logback.xml
+                        -Ddatamanager.config=@BASEDIR@/datamanager.xml</extraJvmArguments>
+                    <platforms>
+                        <platform>windows</platform>
+                        <platform>unix</platform>
+                    </platforms>
+                    <repositoryLayout>flat</repositoryLayout>
+                    <useWildcardClassPath>true</useWildcardClassPath>
+                    <programs>
+                        <program>
+                            <mainClass>edu.kit.dama.util.LocalAccessTest</mainClass>
+                            <id>utils</id>
+                        </program>
+                    </programs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>package-executable</id>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--plugin>
+              <groupId>de.empulse.eclipselink</groupId>
+              <artifactId>staticweave-maven-plugin</artifactId>
+              <version>1.0.0</version>
+              <executions>
+                <execution>
+                  <phase>process-classes</phase>
+                  <goals>
+                    <goal>weave</goal>
+                  </goals>
+                  <configuration>
+                    <persistenceXMLLocation>META-INF/persistence.xml</persistenceXMLLocation>
+                    <logLevel>FINE</logLevel>
+                  </configuration>
+                </execution>
+              </executions>
+              <dependencies>
+                <dependency>
+                  <groupId>org.eclipse.persistence</groupId>
+                  <artifactId>org.eclipse.persistence.jpa</artifactId>
+                  <version>2.6.0</version>
+                </dependency>
+              </dependencies>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>2.3.2</version>
+              <configuration>
+                <debug>false</debug>
+              </configuration>
+            </plugin-->
+        </plugins>
+    </build>
   
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>MDM-BaseMetaData</artifactId>
-      <version>1.1</version>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>MDM-DataWorkflow</artifactId>
-      <version>1.0</version>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>DataOrganization</artifactId>
-      <version>1.1</version>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama.rest</groupId>
-      <artifactId>BaseMetaDataRestInterface</artifactId>
-      <version>1.1</version>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama.rest</groupId>
-      <artifactId>DataOrganizationRestInterface</artifactId>
-      <version>1.1</version>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>Commons</artifactId>
-      <version>1.1</version>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama.rest</groupId>
-      <artifactId>ServiceBase</artifactId>
-      <version>1.1</version>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>StagingService</artifactId>
-      <version>1.1</version>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>MDM-Content</artifactId>
-      <version>1.1</version>
-      <type>jar</type>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>edu.kit.cmdline</groupId>
-      <artifactId>CommandlineTools</artifactId>
-      <version>1.1</version>
-      <scope>provided</scope>
-    </dependency>
-  </dependencies> 
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>MDM-BaseMetaData</artifactId>
+            <version>1.2</version>
+            <type>jar</type>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>MDM-DataWorkflow</artifactId>
+            <version>1.1</version>
+            <type>jar</type>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>DataOrganization</artifactId>
+            <version>1.2</version>
+            <type>jar</type>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama.rest</groupId>
+            <artifactId>BaseMetaDataRestInterface</artifactId>
+            <version>1.2</version>
+            <type>jar</type>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama.rest</groupId>
+            <artifactId>DataOrganizationRestInterface</artifactId>
+            <version>1.2</version>
+            <type>jar</type>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>Commons</artifactId>
+            <version>1.2</version>
+            <type>jar</type>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>uk.co.jemos.podam</groupId>
+            <artifactId>podam</artifactId>
+            <version>6.0.1.RELEASE</version>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.3</version>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama.rest</groupId>
+            <artifactId>ServiceBase</artifactId>
+            <version>1.2</version>
+            <type>jar</type>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>StagingService</artifactId>
+            <version>1.2</version>
+            <type>jar</type>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>MDM-Content</artifactId>
+            <version>1.2</version>
+            <type>jar</type>
+            <scope>${scope}</scope>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.cmdline</groupId>
+            <artifactId>CommandlineTools</artifactId>
+            <version>1.1</version>
+            <scope>${scope}</scope>
+        </dependency>
+    </dependencies> 
 </project>

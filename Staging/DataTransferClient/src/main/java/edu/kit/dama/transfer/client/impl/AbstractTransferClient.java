@@ -1,5 +1,6 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -570,10 +571,12 @@ public abstract class AbstractTransferClient extends Thread implements ITransfer
 
   /**
    * Returns the current transfer status. During transfer, the status should be
-   * TRANSFER_STATUS.RUNNING<br/> If the transfer has finished, the status is
-   * either TRANSFER_STATUS.SUCCEEDED or or it represents the phase, where the
-   * transfer has failed. If TRANSFER_STATUS.FAILED is returned, some unknown
-   * error has occured.
+   * TRANSFER_STATUS.RUNNING
+   *
+   * If the transfer has finished, the status is either
+   * TRANSFER_STATUS.SUCCEEDED or or it represents the phase, where the transfer
+   * has failed. If TRANSFER_STATUS.FAILED is returned, some unknown error has
+   * occured.
    *
    * @return The current status of the transfer.
    */

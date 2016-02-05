@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -287,7 +287,7 @@ public final class IngestInformationServiceLocal implements IIngestInformationSe
       existingEntity.setStatusEnum(INGEST_STATUS.PREPARING);
       existingEntity.setErrorMessage(null);
       existingEntity.setExpiresAt(System.currentTimeMillis() + IngestInformation.DEFAULT_LIFETIME);
-      existingEntity.setClientAccessURL(null);
+      existingEntity.setClientAccessUrl(null);
       existingEntity.setAccessPointId(props.getStagingAccessPointId());
 
       List<StagingProcessor> merged = mergeStagingProcessors(existingEntity.getStagingProcessors(), enabledProcessors);

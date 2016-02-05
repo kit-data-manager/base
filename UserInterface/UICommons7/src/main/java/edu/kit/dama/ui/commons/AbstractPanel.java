@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -295,7 +295,7 @@ public abstract class AbstractPanel extends VerticalLayout implements IUserChang
       Set<DigitalObject> digitalObjects = pInvestigation.getDataSets();
       if (digitalObjects != null && !digitalObjects.isEmpty()) {
         for (DigitalObject o : digitalObjects) {
-          if (o.getVisible()) {
+          if (o.isVisible()) {
             update((DigitalObjectId) o.getDigitalObjectId());
             return;
           }

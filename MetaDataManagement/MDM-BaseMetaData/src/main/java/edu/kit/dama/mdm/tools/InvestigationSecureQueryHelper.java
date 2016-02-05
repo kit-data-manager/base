@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import edu.kit.dama.authorization.util.AuthorizationUtil;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.base.Investigation;
 import edu.kit.dama.mdm.base.Study;
+import edu.kit.dama.mdm.core.jpa.MetaDataManagerJpa;
 import edu.kit.dama.mdm.core.tools.AbstractSecureQueryHelper;
 import java.util.List;
 
@@ -34,73 +35,91 @@ import java.util.List;
  */
 public final class InvestigationSecureQueryHelper extends AbstractSecureQueryHelper<Investigation> {
 
-  /**
-   * Get the number of readable investigations.
-   *
-   * @param pMetaDataManager The MetaDataManager used to perform the query.
-   * @param pContext The security context.
-   *
-   * @return The number of investigations.
-   *
-   * @throws UnauthorizedAccessAttemptException If the provided context is not
-   * allowed to access this method or any investigation.
-   */
-  @SecuredMethod(roleRequired = Role.GUEST)
-  public Number getInvestigationCount(IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
-    return getReadableResourceCount(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? null : "o.visible='TRUE'", pContext);
-  }
+    /**
+     * Get the number of readable investigations.
+     *
+     * @param pMetaDataManager The MetaDataManager used to perform the query.
+     * @param pContext The security context.
+     *
+     * @return The number of investigations.
+     *
+     * @throws UnauthorizedAccessAttemptException If the provided context is not
+     * allowed to access this method or any investigation.
+     */
+    @SecuredMethod(roleRequired = Role.GUEST)
+    public Number getInvestigationCount(IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
+        return getReadableResourceCount(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? null : "o.visible='TRUE'", pContext);
+    }
 
-  /**
-   * Get a list of readable investigations.
-   *
-   * @param pMetaDataManager The MetaDataManager used to perform the query.
-   * @param pFirstIdx The index of the first result.
-   * @param pMaxEntries The max. number of results.
-   * @param pContext The security context.
-   *
-   * @return A list of investigations.
-   *
-   * @throws UnauthorizedAccessAttemptException If the provided context is not
-   * allowed to access this method or any investigation.
-   */
-  @SecuredMethod(roleRequired = Role.GUEST)
-  public List<Investigation> getReadableInvestigations(IMetaDataManager pMetaDataManager, int pFirstIdx, int pMaxEntries, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
-    return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? null : "o.visible='TRUE'", pFirstIdx, pMaxEntries, pContext);
-  }
+    /**
+     * Get a list of readable investigations. The result is obtained using the
+     * Investigation.simple fetchgraph.
+     *
+     * @param pMetaDataManager The MetaDataManager used to perform the query.
+     * @param pFirstIdx The index of the first result.
+     * @param pMaxEntries The max. number of results.
+     * @param pContext The security context.
+     *
+     * @return A list of investigations.
+     *
+     * @throws UnauthorizedAccessAttemptException If the provided context is not
+     * allowed to access this method or any investigation.
+     */
+    @SecuredMethod(roleRequired = Role.GUEST)
+    public List<Investigation> getReadableInvestigations(IMetaDataManager pMetaDataManager, int pFirstIdx, int pMaxEntries, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
+        pMetaDataManager.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
+        try {
+            return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? null : "o.visible='TRUE'", pFirstIdx, pMaxEntries, pContext);
+        } finally {
+            pMetaDataManager.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
+        }
+    }
 
-  /**
-   * Get a list of readable investigations which belong to to provided study.
-   *
-   * @param pStudy The study the investigations should belong to.
-   * @param pMetaDataManager The MetaDataManager used to perform the query.
-   * @param pFirstIdx The index of the first result.
-   * @param pMaxEntries The max. number of results.
-   * @param pContext The security context.
-   *
-   * @return A list of investigations.
-   *
-   * @throws UnauthorizedAccessAttemptException If the provided context is not
-   * allowed to access this method or any investigation.
-   */
-  @SecuredMethod(roleRequired = Role.GUEST)
-  public List<Investigation> getInvestigationsInStudy(Study pStudy, IMetaDataManager pMetaDataManager, int pFirstIdx, int pMaxEntries, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
-    return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? "o.study.studyId='" + pStudy.getStudyId() + "'" : "o.visible='TRUE' AND o.study.studyId='" + pStudy.getStudyId() + "'", pFirstIdx, pMaxEntries, pContext);
-  }
+    /**
+     * Get a list of readable investigations which belong to to provided study.
+     * The result is obtained using the Investigation.simple fetchgraph.
+     *
+     * @param pStudy The study the investigations should belong to.
+     * @param pMetaDataManager The MetaDataManager used to perform the query.
+     * @param pFirstIdx The index of the first result.
+     * @param pMaxEntries The max. number of results.
+     * @param pContext The security context.
+     *
+     * @return A list of investigations.
+     *
+     * @throws UnauthorizedAccessAttemptException If the provided context is not
+     * allowed to access this method or any investigation.
+     */
+    @SecuredMethod(roleRequired = Role.GUEST)
+    public List<Investigation> getInvestigationsInStudy(Study pStudy, IMetaDataManager pMetaDataManager, int pFirstIdx, int pMaxEntries, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
+        pMetaDataManager.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
+        try {
+            return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? "o.study.studyId='" + pStudy.getStudyId() + "'" : "o.visible='TRUE' AND o.study.studyId='" + pStudy.getStudyId() + "'", pFirstIdx, pMaxEntries, pContext);
+        } finally {
+            pMetaDataManager.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
+        }
+    }
 
-  /**
-   * Check if the investigation with the provided id is readable or not.
-   *
-   * @param pInvestigationId The investigation id.
-   * @param pContext The security context.
-   *
-   * @return TRUE if the investigation is readable, FALSE otherwise..
-   *
-   * @throws UnauthorizedAccessAttemptException If the provided context is not
-   * allowed to access this method or any investigation.
-   */
-  @SecuredMethod(roleRequired = Role.GUEST)
-  public boolean isInvestigationReadable(long pInvestigationId, IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
-    return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? "o.investigationId=" + pInvestigationId : "o.visible='TRUE' AND o.investigationId=" + pInvestigationId, 0, 1, pContext).size() == 1;
-  }
+    /**
+     * Check if the investigation with the provided id is readable or not.
+     *
+     * @param pInvestigationId The investigation id.
+     * @param pMetaDataManager The metadata manager used for the query.
+     * @param pContext The security context.
+     *
+     * @return TRUE if the investigation is readable, FALSE otherwise..
+     *
+     * @throws UnauthorizedAccessAttemptException If the provided context is not
+     * allowed to access this method or any investigation.
+     */
+    @SecuredMethod(roleRequired = Role.GUEST)
+    public boolean isInvestigationReadable(long pInvestigationId, IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
+        pMetaDataManager.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
+        try {
+            return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? "o.investigationId=" + pInvestigationId : "o.visible='TRUE' AND o.investigationId=" + pInvestigationId, 0, 1, pContext).size() == 1;
+        } finally {
+            pMetaDataManager.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
+        }
+    }
 
 }

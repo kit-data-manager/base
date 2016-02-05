@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,11 +34,11 @@ public class Membership implements Serializable {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
-  @ManyToOne//(cascade = CascadeType.PERSIST)
+  @ManyToOne
   @JoinColumn(nullable = false)
   @BatchFetch(BatchFetchType.EXISTS)
   private User user;
-  @ManyToOne//(cascade = CascadeType.PERSIST)
+  @ManyToOne
   @JoinColumn(nullable = false)
   private Group group;
   @Column(name = "membersRole")

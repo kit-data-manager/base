@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,67 +32,67 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
  * @author mf6319
  */
 @XmlNamedObjectGraphs({
-  @XmlNamedObjectGraph(
-          name = "simple",
-          attributeNodes = {
-            @XmlNamedAttributeNode(value = "count"),
-            @XmlNamedAttributeNode(value = "entities", subgraph = "simple")
-          }),
-  @XmlNamedObjectGraph(
-          name = "default",
-          attributeNodes = {
-            @XmlNamedAttributeNode(value = "count"),
-            @XmlNamedAttributeNode(value = "entities", subgraph = "default")
-          })})
+    @XmlNamedObjectGraph(
+            name = "simple",
+            attributeNodes = {
+                @XmlNamedAttributeNode(value = "count"),
+                @XmlNamedAttributeNode(value = "entities", subgraph = "simple")
+            }),
+    @XmlNamedObjectGraph(
+            name = "default",
+            attributeNodes = {
+                @XmlNamedAttributeNode(value = "count"),
+                @XmlNamedAttributeNode(value = "entities", subgraph = "default")
+            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 public final class DataWorkflowTaskConfigurationWrapper extends AbstractEntityWrapper<DataWorkflowTaskConfiguration> {
 
-  @XmlElementWrapper
-  @XmlElement(name = "entity", type = DataWorkflowTaskConfiguration.class, namespace = "http://ipe.kit.edu/2014/KITDataManager/DataWorkflow")
-  private List<DataWorkflowTaskConfiguration> entities;
+    @XmlElementWrapper
+    @XmlElement(name = "entity", type = DataWorkflowTaskConfiguration.class, namespace = "http://ipe.kit.edu/2014/KITDataManager/DataWorkflow")
+    private List<DataWorkflowTaskConfiguration> entities;
 
-  /**
-   * Default constructor.
-   */
-  public DataWorkflowTaskConfigurationWrapper() {
-    super();
-  }
+    /**
+     * Default constructor.
+     */
+    public DataWorkflowTaskConfigurationWrapper() {
+        super();
+    }
 
-  /**
-   * Default constructor.
-   *
-   * @param pEntities An array of wrapped entities.
-   */
-  public DataWorkflowTaskConfigurationWrapper(DataWorkflowTaskConfiguration... pEntities) {
-    super(pEntities);
-  }
+    /**
+     * Default constructor.
+     *
+     * @param pEntities An array of wrapped entities.
+     */
+    public DataWorkflowTaskConfigurationWrapper(DataWorkflowTaskConfiguration... pEntities) {
+        super(pEntities);
+    }
 
-  /**
-   * Default constructor.
-   *
-   * @param pEntities A list of wrapped entities.
-   */
-  public DataWorkflowTaskConfigurationWrapper(List<DataWorkflowTaskConfiguration> pEntities) {
-    super(pEntities);
-  }
+    /**
+     * Default constructor.
+     *
+     * @param pEntities A list of wrapped entities.
+     */
+    public DataWorkflowTaskConfigurationWrapper(List<DataWorkflowTaskConfiguration> pEntities) {
+        super(pEntities);
+    }
 
-  /**
-   * Default constructor.
-   *
-   * @param pCount The number of modified rows.
-   */
-  public DataWorkflowTaskConfigurationWrapper(Integer pCount) {
-    super(pCount);
-  }
+    /**
+     * Default constructor.
+     *
+     * @param pCount The number of modified rows.
+     */
+    public DataWorkflowTaskConfigurationWrapper(Integer pCount) {
+        super(pCount);
+    }
 
-  @Override
-  public void setEntities(List<DataWorkflowTaskConfiguration> pEntities) {
-    entities = pEntities;
-  }
+    @Override
+    public void setEntities(List<DataWorkflowTaskConfiguration> pEntities) {
+        entities = pEntities;
+    }
 
-  @Override
-  public List<DataWorkflowTaskConfiguration> getEntities() {
-    return entities;
-  }
+    @Override
+    public List<DataWorkflowTaskConfiguration> getEntities() {
+        return entities;
+    }
 }

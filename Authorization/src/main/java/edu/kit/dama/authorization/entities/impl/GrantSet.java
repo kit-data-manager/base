@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package edu.kit.dama.authorization.entities.impl;
 
+import edu.kit.dama.authorization.entities.IDefaultGrantSet;
 import edu.kit.dama.authorization.entities.Role;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -38,129 +39,111 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
  *
  * @author mf6319
  */
-
 //XML simple -> Grant.id
 //XML default -> all grant
-
 @XmlNamedObjectGraphs({
-  @XmlNamedObjectGraph(
-          name = "simple",
-          attributeNodes = {
-            @XmlNamedAttributeNode("id")
-          }),
-  @XmlNamedObjectGraph(
-          name = "default",
-          attributeNodes = {
-            @XmlNamedAttributeNode("id"),
-            @XmlNamedAttributeNode("resource"),
-            @XmlNamedAttributeNode("roleRestriction"),
-            @XmlNamedAttributeNode(value = "grants", subgraph = "simple")
-          })})
+    @XmlNamedObjectGraph(
+            name = "simple",
+            attributeNodes = {
+                @XmlNamedAttributeNode("id")
+            }),
+    @XmlNamedObjectGraph(
+            name = "default",
+            attributeNodes = {
+                @XmlNamedAttributeNode("id"),
+                @XmlNamedAttributeNode("resource"),
+                @XmlNamedAttributeNode("roleRestriction"),
+                @XmlNamedAttributeNode(value = "grants", subgraph = "simple")
+            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @Entity(name = "GrantSets")
 @Table(name = "GrantSets")
-public class GrantSet implements Serializable {
+public class GrantSet implements IDefaultGrantSet, Serializable {
 
-  private static final long serialVersionUID = 1L;
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private long id;
-  @OneToOne(/*orphanRemoval = true*/)
-  private SecurableResource resource;
-  private Role roleRestriction;
-  @OneToMany(mappedBy = "grants", orphanRemoval = true)
-  @XmlElementWrapper(name = "grants")
-  @XmlElement(name = "grant")
-  private List<Grant> grants = new ArrayList<Grant>();
+    private static final long serialVersionUID = 1L;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @OneToOne
+    private SecurableResource resource;
+    private Role roleRestriction;
+    @OneToMany(mappedBy = "grants", orphanRemoval = true)
+    @XmlElementWrapper(name = "grants")
+    @XmlElement(name = "grant")
+    private List<Grant> grants = new ArrayList<>();
 
-  /**
-   * Default constructor.
-   */
-  public GrantSet() {
-  }
+    /**
+     * Default constructor.
+     */
+    public GrantSet() {
+    }
 
-  /**
-   * Default constructor.
-   *
-   * @param resource The resource.
-   * @param roleRestriction The role restriction of this grant.
-   */
-  public GrantSet(SecurableResource resource, Role roleRestriction) {
-    this.resource = resource;
-    this.roleRestriction = roleRestriction;
-  }
+    /**
+     * Default constructor.
+     *
+     * @param resource The resource.
+     * @param roleRestriction The role restriction of this grant.
+     */
+    public GrantSet(SecurableResource resource, Role roleRestriction) {
+        this.resource = resource;
+        this.roleRestriction = roleRestriction;
+    }
 
-  /**
-   * Get the id.
-   *
-   * @return The id.
-   */
-  public long getId() {
-    return id;
-  }
+    @Override
+    public Long getId() {
+        return id;
+    }
 
-  /**
-   * Set the id.
-   *
-   * @param id The id.
-   */
-  public void setId(long id) {
-    this.id = id;
-  }
+    /**
+     * Set the id.
+     *
+     * @param id The id.
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-  /**
-   * Get the resource.
-   *
-   * @return The resource.
-   */
-  public SecurableResource getResource() {
-    return resource;
-  }
+    @Override
+    public SecurableResource getResource() {
+        return resource;
+    }
 
-  /**
-   * Set the resource.
-   *
-   * @param resource The resource.
-   */
-  public void setResource(SecurableResource resource) {
-    this.resource = resource;
-  }
+    /**
+     * Set the resource.
+     *
+     * @param resource The resource.
+     */
+    public void setResource(SecurableResource resource) {
+        this.resource = resource;
+    }
 
-  /**
-   * Get the role restriction.
-   *
-   * @return The role restriction.
-   */
-  public Role getRoleRestriction() {
-    return roleRestriction;
-  }
+    @Override
+    public Role getRoleRestriction() {
+        return roleRestriction;
+    }
 
-  /**
-   * Set the role restriction.
-   *
-   * @param roleRestriction The role restriction.
-   */
-  public void setRoleRestriction(Role roleRestriction) {
-    this.roleRestriction = roleRestriction;
-  }
+    /**
+     * Set the role restriction.
+     *
+     * @param roleRestriction The role restriction.
+     */
+    public void setRoleRestriction(Role roleRestriction) {
+        this.roleRestriction = roleRestriction;
+    }
 
-  /**
-   * Get all grants.
-   *
-   * @return All grants.
-   */
-  public List<Grant> getGrants() {
-    return grants;
-  }
+    @Override
+    public List<Grant> getGrants() {
+        return grants;
+    }
 
-  /**
-   * Set a list of grants.
-   *
-   * @param grants A list of grants.
-   */
-  public void setGrants(List<Grant> grants) {
-    this.grants = grants;
-  }
+    /**
+     * Set a list of grants.
+     *
+     * @param grants A list of grants.
+     */
+    public void setGrants(List<Grant> grants) {
+        this.grants = grants;
+    }
 //
 //    public static GrantSet getGrantSetByResource(SecurableResource resource) {
 //        EntityManager em = PU.entityManager();
@@ -191,8 +174,8 @@ public class GrantSet implements Serializable {
 //
 //        return resultGrantSet;
 //    }
-  @Override
-  public String toString() {
-    return "GrantSet{" + "id=" + id + '}';
-  }
+    @Override
+    public String toString() {
+        return "GrantSet{" + "id=" + id + '}';
+    }
 }

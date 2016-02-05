@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package edu.kit.dama.staging.interfaces;
 
+import edu.kit.dama.staging.entities.interfaces.ISimpleTransferInformation;
 import java.net.URL;
 
 /**
@@ -27,16 +28,9 @@ import java.net.URL;
  *
  * @author jejkal
  */
-public interface ITransferInformation<C extends ITransferStatus> {
+public interface ITransferInformation<C extends ITransferStatus> extends ISimpleTransferInformation {
 
-  /**
-   * Returns the id used as database index.
-   *
-   * @return The id.
-   */
-  long getId();
-
-  /**
+   /**
    * Returns the internal transfer id. Currently, the string representation of
    * the id is returned and is expected by many related implementations, e.g.
    * the transfer client.
@@ -94,7 +88,7 @@ public interface ITransferInformation<C extends ITransferStatus> {
    *
    * @return The URL of this transfer.
    */
-  String getClientAccessURL();
+  String getClientAccessUrl();
 
   /**
    * Set the client access URL for this transfer. This URL may point to a
@@ -103,7 +97,7 @@ public interface ITransferInformation<C extends ITransferStatus> {
    *
    * @param pUrl The URL of this transfer.
    */
-  void setClientAccessURL(String pUrl);
+  void setClientAccessUrl(String pUrl);
 
   /**
    * Get the staging URL for this transfer. This method is intended to be used
@@ -131,7 +125,7 @@ public interface ITransferInformation<C extends ITransferStatus> {
    *
    * @return The storage URL of this transfer.
    */
-  String getStorageURL();
+  String getStorageUrl();
 
   /**
    * Set the storage URL for this transfer. This URL points to the location at
@@ -140,7 +134,7 @@ public interface ITransferInformation<C extends ITransferStatus> {
    *
    * @param pUrl The storage URL of this transfer.
    */
-  void setStorageURL(String pUrl);
+  void setStorageUrl(String pUrl);
 
   /**
    * Get the status of this transfer.
@@ -213,7 +207,7 @@ public interface ITransferInformation<C extends ITransferStatus> {
    *
    * @return The URL to the remote 'data' folder.
    */
-  URL getDataFolderURL();
+  URL getDataFolderUrl();
 
   /**
    * Returns the URL to the remote folder which a used to put all transfer
@@ -221,7 +215,7 @@ public interface ITransferInformation<C extends ITransferStatus> {
    *
    * @return The URL to the remote 'settings' folder.
    */
-  URL getSettingsFolderURL();
+  URL getSettingsFolderUrl();
 
   /**
    * Returns the URL to the remote folder which a used to put all generated
@@ -229,25 +223,9 @@ public interface ITransferInformation<C extends ITransferStatus> {
    *
    * @return The URL to the remote 'generated' folder.
    */
-  URL getGeneratedFolderURL();
+  URL getGeneratedFolderUrl();
 
-  /**
-   * Set the Id of the access provider used to perform this transfer. This Id is
-   * used later for cleanup as it allows the mapping of the staging URL to a
-   * local folder.
-   *
-   * @param pAccessProviderId The id of the access provider.
-   */
-  void setAccessProviderId(String pAccessProviderId);
-
-  /**
-   * Returns the Id of the used access provider.
-   *
-   * @return The Id of the access provider.
-   */
-  String getAccessProviderId();
-
-  /**
+   /**
    * Set the Id of the access point used to perform this transfer. This Id is
    * used later for cleanup as it allows the mapping of the staging URL to a
    * local folder.

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,14 +20,14 @@
   <parent>
     <groupId>edu.kit.dama</groupId>
     <artifactId>KITDM</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.kit.dama</groupId>
   <artifactId>Core</artifactId>
   <packaging>war</packaging>
-  <version>1.1</version>
+  <version>1.2</version>
   <name>Core</name>
         
   <properties>
@@ -50,7 +50,7 @@
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>Commons</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
       <exclusions>
         <exclusion>
           <artifactId>xml-apis</artifactId>
@@ -81,22 +81,28 @@
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>Utils</artifactId>
-      <version>1.0</version>
+      <version>1.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>log4j-slf4j-impl</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>MDM-Core</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>MDM-BaseMetaData</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>StagingClient</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
       <exclusions>
         <exclusion>
           <artifactId>servlet-api-2.5</artifactId>
@@ -141,32 +147,32 @@
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>StagingService</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama.rest</groupId>
       <artifactId>REST-UserGroupManagement</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama.rest</groupId>
       <artifactId>REST-BaseMetaData</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama.rest</groupId>
       <artifactId>REST-DataOrganization</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama.rest</groupId>
       <artifactId>REST-Sharing</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama.rest</groupId>
       <artifactId>REST-DataWorkflow</artifactId>
-      <version>1.0</version>
+      <version>1.1</version>
     </dependency>
     <!--Direct dependency to allow to remove icu4j dependency-->
     <dependency>
@@ -204,6 +210,21 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
       <version>1.5</version>
+    </dependency>
+    <dependency>
+      <groupId>edu.kit.dama</groupId>
+      <artifactId>SchedulerManager</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>edu.kit.dama</groupId>
+      <artifactId>SchedulerJobs</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>edu.kit.dama.rest</groupId>
+      <artifactId>REST-SchedulerService</artifactId>
+      <version>1.0</version>
     </dependency>
   </dependencies>
   

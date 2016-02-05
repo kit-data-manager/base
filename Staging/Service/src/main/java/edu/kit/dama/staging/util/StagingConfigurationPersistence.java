@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -324,9 +324,9 @@ public final class StagingConfigurationPersistence {
   }
 
   /**
-   * Get a list of all StagingProcessors.
+   * Get a list of all StagingProcessorConfigurations.
    *
-   * @return A list of all StagingProcessors.
+   * @return A list of all StagingProcessorConfigurations.
    */
   public List<StagingProcessor> findAllStagingProcessors() {
     List<StagingProcessor> result = new LinkedList<>();
@@ -334,7 +334,7 @@ public final class StagingConfigurationPersistence {
     try {
       result = mdm.find(StagingProcessor.class);
     } catch (UnauthorizedAccessAttemptException ex) {
-      LOGGER.error("Failed to obtain available staging processors", ex);
+      LOGGER.error("Failed to obtain available staging processor configurations", ex);
     } finally {
       mdm.close();
     }
@@ -342,14 +342,14 @@ public final class StagingConfigurationPersistence {
   }
 
   /**
-   * Get a list of all StagingProcessors for the provided group or where no
+   * Get a list of all StagingProcessorConfigurations for the provided group or where no
    * specific group is defined. If pGroupId is 'null', an empty group string
-   * will be used. If pGroupId is the system group, all processors are returned.
+   * will be used. If pGroupId is the system group, all StagingProcessorConfigurations are returned.
    *
-   * @param pGroupId The group for which the staging processors will be
+   * @param pGroupId The group for which the StagingProcessorConfigurations will be
    * obtained.
    *
-   * @return A list of all StagingProcessors for the provided group.
+   * @return A list of all StagingProcessorConfigurations for the provided group.
    */
   public List<StagingProcessor> findStagingProcessorsForGroup(String pGroupId) {
     List<StagingProcessor> result = new LinkedList<>();
@@ -360,14 +360,14 @@ public final class StagingConfigurationPersistence {
     }
 
     if (groupId.equals(Constants.SYSTEM_GROUP)) {
-      LOGGER.info("Returning all staging processors for group SYSTEM_GROUP");
+      LOGGER.info("Returning all staging processor configurations for group SYSTEM_GROUP");
       return findAllStagingProcessors();
     }
     IMetaDataManager mdm = getMetaDataManager();
     try {
       result = mdm.findResultList("SELECT p FROM StagingProcessor p WHERE p.groupId='" + groupId + "' OR p.groupId IS NULL", StagingProcessor.class);
     } catch (UnauthorizedAccessAttemptException ex) {
-      LOGGER.error("Failed to obtain available staging processors", ex);
+      LOGGER.error("Failed to obtain available staging processor configurations", ex);
     } finally {
       mdm.close();
     }
@@ -376,9 +376,9 @@ public final class StagingConfigurationPersistence {
 
   /**
    * Find a StagingProcessor by its name. If no processor was found, 'null' is
-   * returned. If more than one processor was found, the first processor is
-   * returned and a warning is logged as there should be only one processor per
-   * name. By default, only one processor is obtained and will be returned.
+ returned. If more than one StagingProcessor was found, the first StagingProcessor is
+ returned and a warning is logged as there should be only one StagingProcessor per
+ name. By default, only one StagingProcessor is obtained and will be returned.
    *
    * @param pName The name of the StagingProcessor.
    *
@@ -390,18 +390,18 @@ public final class StagingConfigurationPersistence {
     try {
       result = mdm.findResultList("SELECT p FROM StagingProcessor p WHERE p.name='" + pName + "'", StagingProcessor.class);
     } catch (UnauthorizedAccessAttemptException ex) {
-      LOGGER.error("Failed to obtain staging processor by name '" + pName + "'", ex);
+      LOGGER.error("Failed to obtain staging processor configuration by name '" + pName + "'", ex);
     } finally {
       mdm.close();
     }
 
     if (result.isEmpty()) {
-      LOGGER.warn("No staging processor found for name '{}'", pName);
+      LOGGER.warn("No staging processor configuration found for name '{}'", pName);
       return null;
     } else if (result.size() == 1) {
       return result.get(0);
     } else {
-      LOGGER.warn("Possible misconfiguration. More than one staging processor found for name '{}'. Returning first value.", pName);
+      LOGGER.warn("Possible misconfiguration. More than one staging processor configuration found for name '{}'. Returning first value.", pName);
       return result.get(0);
     }
   }
@@ -419,7 +419,7 @@ public final class StagingConfigurationPersistence {
     try {
       result = mdm.findSingleResult("SELECT p FROM StagingProcessor p WHERE p.uniqueIdentifier='" + pUniqueIdentifier + "'", StagingProcessor.class);
     } catch (UnauthorizedAccessAttemptException ex) {
-      LOGGER.error("Failed to obtain staging processor by identifier '" + pUniqueIdentifier + "'", ex);
+      LOGGER.error("Failed to obtain staging processor configuration by identifier '" + pUniqueIdentifier + "'", ex);
     } finally {
       mdm.close();
     }

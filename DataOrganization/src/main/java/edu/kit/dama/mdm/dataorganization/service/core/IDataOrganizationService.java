@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -97,7 +97,7 @@ public interface IDataOrganizationService<C extends IAuthorizationContext> {
 
   /**
    * Get a subtree with relativeRoot as root containing all descendants up to
-   * relativeDepth if relativeDepth >= 0 and all descendants if relativeDepth =
+   * relativeDepth if relativeDepth &gt;= 0 and all descendants if relativeDepth =
    * -1 the whole subtree.
    *
    * @param relativeRoot The root of the subtree.
@@ -121,7 +121,7 @@ public interface IDataOrganizationService<C extends IAuthorizationContext> {
    * invalid handle are safe and result in exception
    *
    * @param digitalObjectId The digital object id.
-   * @param viewName
+   * @param viewName The name of the view.
    * @param ctx The security context.
    *
    * @return The node id.

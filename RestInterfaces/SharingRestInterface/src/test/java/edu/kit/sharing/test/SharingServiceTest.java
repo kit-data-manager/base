@@ -34,73 +34,73 @@ import org.junit.Test;
  */
 public class SharingServiceTest extends JerseyTest {
 
-  private static SharingRestClient client;
-  private final SimpleRESTContext ctx;
+    private static SharingRestClient client;
+    private final SimpleRESTContext ctx;
 
-  public SharingServiceTest() throws TestContainerException {
-    super("edu.kit.sharing.test");
-    ctx = new SimpleRESTContext("secret", "secret");
-    client = new SharingRestClient("http://localhost:9998/SharingTest", ctx);
+    public SharingServiceTest() throws TestContainerException {
+        super("edu.kit.sharing.test");
+        ctx = new SimpleRESTContext("secret", "secret");
+        client = new SharingRestClient("http://localhost:9998/SharingTest", ctx);
 
-    SharingTestService.factoryGrant();
-  }
+        SharingTestService.factoryGrant();
+    }
 
-  @Override
-  protected int getPort(int defaultPort) {
-    ServerSocket server = null;
-    int port = -1;
-    try {
-      server = new ServerSocket(defaultPort);
-      port = server.getLocalPort();
-    } catch (IOException e) {
-      // ignore
-    } finally {
-      if (server != null) {
+    @Override
+    protected int getPort(int defaultPort) {
+        ServerSocket server = null;
+        int port = -1;
         try {
-          server.close();
+            server = new ServerSocket(defaultPort);
+            port = server.getLocalPort();
         } catch (IOException e) {
-          // ignore
+            // ignore
+        } finally {
+            if (server != null) {
+                try {
+                    server.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
         }
-      }
+        if ((port != -1) || (defaultPort == 0)) {
+            return port;
+        }
+        return getPort(0);
     }
-    if ((port != -1) || (defaultPort == 0)) {
-      return port;
+
+    @Test
+    public void testGetGrantById() {
+        GrantWrapper gw = client.getGrantById(200l, null, ctx);
+
+        assertEquals(gw.getWrappedEntities().get(0).getId(), Long.valueOf(200l));
     }
-    return getPort(0);
-  }
 
-  @Test
-  public void testGetGrantById() {
-    GrantWrapper gw = client.getGrantById(200l, null, ctx);
+    @Test
+    public void testCreateGrant() {
 
-    assertEquals(gw.getWrappedEntities().get(0).getId(), 200l);
-  }
+        String testDom = "testDomain";
+        String resId = "resourceId1";
+        String testGroup = "testGroup";
+        String uid = "testUser";
+        Group kg;
+        GroupIdWrapper kiw;
 
-  @Test
-  public void testCreateGrant() {
+        GrantWrapper gw = client.createGrant(testDom, resId, uid, testGroup,
+                Role.GUEST, ctx);
 
-    String testDom = "testDomain";
-    String resId = "resourceId1";
-    String testGroup = "testGroup";
-    String uid = "testUser";
-    Group kg;
-    GroupIdWrapper kiw;
+        assertEquals(1l, gw.getCount().longValue());
+    }
 
-    GrantWrapper gw = client.createGrant(testDom, resId, uid, testGroup,
-            Role.GUEST, ctx);
+    @Test
+    public void testCreateAndGetGrant() {
+        testCreateGrant();
+        GrantWrapper gw = client.getGrantById(300l, null, ctx);
 
-    assertEquals(1l, gw.getCount().longValue());
-  }
+        assertEquals(Long.valueOf(300l), gw.getWrappedEntities().get(0).getId());
+    }
 
-  @Test
-  public void testCreateAndGetGrant() {
-    testCreateGrant();
-    GrantWrapper gw = client.getGrantById(300l, null, ctx);
-
-    assertEquals(300l, gw.getWrappedEntities().get(0).getId());
-  }
-
-  @Test
-  public void test111() {
-  }
+    @Test
+    public void test111() {
+    }
 }

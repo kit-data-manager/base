@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ public final class MailNotificationHelper {
     StringBuilder builder = new StringBuilder();
 
     builder.append("Your download with the transfer ID ").append(pInformation.getTransferId()).append(" is now ready.\n");
-    builder.append("You can access the data via:\n\n").append("  ").append(pInformation.getClientAccessURL()).append("\n\n");
+    builder.append("You can access the data via:\n\n").append("  ").append(pInformation.getClientAccessUrl()).append("\n\n");
     builder.append("This mail is generated automatically. Please do not reply.");
 
     LOGGER.debug(" - Sending mail via mail server {} as {}", new Object[]{mailServer, sender});

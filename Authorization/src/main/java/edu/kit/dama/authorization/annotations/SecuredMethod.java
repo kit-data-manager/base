@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,14 +35,14 @@ import java.lang.annotation.Target;
  * The method must throw UnauthorizedAccessAttemptException.
  * </li>
  * </ul>
- * <br/>
+ * 
  * All methods annotated with SecuredMethod are protected by this authorization
  * module. This means before starting to execute the method body the
  * authorization service specified by the service (see
  * {@link IAuthorizationService}) property will perform an authorization check
  * and throw an UnauthorizedAccessAttemptException if the authorization is
  * unsuccessful (otherwise the execution of the body will start).
- * <br/>
+ * 
  * The connection between the annotated method and its arguments and the
  * authorization service is the following.
  * <ul>
@@ -63,7 +63,6 @@ import java.lang.annotation.Target;
  * </ul> 
  * @author pasic
  * @see SecuredArgument
- * @see AuthorizationService
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

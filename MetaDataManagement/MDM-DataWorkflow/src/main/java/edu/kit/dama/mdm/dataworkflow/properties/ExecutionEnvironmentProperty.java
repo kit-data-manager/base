@@ -15,6 +15,7 @@
  */
 package edu.kit.dama.mdm.dataworkflow.properties;
 
+import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultEnvironmentProperty;
 import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -37,85 +38,81 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 @Inheritance
 @DiscriminatorColumn(name = "PROPERTY_TYPE")
 @XmlNamedObjectGraphs({
-  @XmlNamedObjectGraph(
-          name = "simple",
-          attributeNodes = {
-            @XmlNamedAttributeNode("id")
-          }),
-  @XmlNamedObjectGraph(
-          name = "default",
-          attributeNodes = {
-            @XmlNamedAttributeNode("id"),
-            @XmlNamedAttributeNode("name"),
-            @XmlNamedAttributeNode("description")
-          })})
+    @XmlNamedObjectGraph(
+            name = "simple",
+            attributeNodes = {
+                @XmlNamedAttributeNode("id")
+            }),
+    @XmlNamedObjectGraph(
+            name = "default",
+            attributeNodes = {
+                @XmlNamedAttributeNode("id"),
+                @XmlNamedAttributeNode("name"),
+                @XmlNamedAttributeNode("description")
+            })})
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ExecutionEnvironmentProperty implements Serializable {
 
-  private static final long serialVersionUID = -194821298359755361L;
 
-  /**
-   * Id of the property. Has to be unique.
-   */
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-  /**
-   * Human readable name.
-   */
-  private String name = null;
+public class ExecutionEnvironmentProperty implements IDefaultEnvironmentProperty, Serializable {
 
-  /**
-   * Human readable description.
-   */
-  @Column(length = 1024)
-  private String decription = null;
+    private static final long serialVersionUID = -194821298359755361L;
 
-  /**
-   * @return the id
-   */
-  public Long getId() {
-    return id;
-  }
+    /**
+     * Id of the property. Has to be unique.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    /**
+     * Human readable name.
+     */
+    private String name = null;
 
-  /**
-   * @param id the id to set
-   */
-  public void setId(Long id) {
-    this.id = id;
-  }
+    /**
+     * Human readable description.
+     */
+    @Column(length = 1024)
+    private String description = null;
 
-  /**
-   * @return the name
-   */
-  public String getName() {
-    return name;
-  }
+    @Override
+    public Long getId() {
+        return id;
+    }
 
-  /**
-   * @param name the name to set
-   */
-  public void setName(String name) {
-    this.name = name;
-  }
+    /**
+     * @param id the id to set
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-  /**
-   * @return the decription
-   */
-  public String getDecription() {
-    return decription;
-  }
+   @Override
+    public String getName() {
+        return name;
+    }
 
-  /**
-   * @param decription the decription to set
-   */
-  public void setDecription(String decription) {
-    this.decription = decription;
-  }
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  @Override
-  public String toString() {
-    return getId() + "#" + getName();
-  }
+   @Override
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return getId() + "#" + getName();
+    }
 
 }

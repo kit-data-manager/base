@@ -19,13 +19,13 @@ limitations under the License.
 	<parent>
     <artifactId>UserInterface</artifactId>
     <groupId>edu.kit.dama</groupId>
-    <version>1.1</version>
+    <version>1.2</version>
   </parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>edu.kit.dama</groupId>
 	<artifactId>SimpleMonitoringPortlet</artifactId>
 	<packaging>jar</packaging>
-	<version>1.1</version>
+	<version>1.2</version>
 	<name>SimpleMonitoringPortlet</name>
 
 	<properties>
@@ -120,12 +120,12 @@ limitations under the License.
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>UICommons7</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>Authorization</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>

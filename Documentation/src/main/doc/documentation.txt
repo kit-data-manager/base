@@ -7,9 +7,9 @@ Contact <support@kitdatamanager.net>
 :max-width: 90em
 :author:    KIT Data Manager Dev Team
 :email:     support@kitdatamanager.net
-:revdate:   August 28, 2015
-:revnumber: 1.1.0
-:website: http://kitdatamanager.net/index.php/nav-pro-projects/nav-pro-act-kdm
+:revdate:   February 04, 2016
+:revnumber: 1.2.0
+:website: http://kitdatamanager.net
 
 About this documentation
 ------------------------
@@ -27,3 +27,4 @@ include::coding.txt[]
 include::administration.txt[]
 
 include::extensions.txt[]
+

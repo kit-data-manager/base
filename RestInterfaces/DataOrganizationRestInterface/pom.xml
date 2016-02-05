@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama.rest</groupId>
         <artifactId>RestInterfaces</artifactId>
-        <version>1.1</version>
+        <version>1.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
     <artifactId>DataOrganizationRestInterface</artifactId>
     <name>DataOrganizationRestInterface</name>
     <packaging>jar</packaging>
-    <version>1.1</version>
+    <version>1.2</version>
 
     <description>REST interface definition for accessing the DataOrganization of digital objects.</description>
 
@@ -62,92 +62,19 @@
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>StagingClient</artifactId>
-            <version>1.1</version>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>ServiceBase</artifactId>
-            <version>1.1</version>
+            <version>1.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>DataOrganization</artifactId>
-            <version>1.1</version>
+            <version>1.2</version>
         </dependency>
-    </dependencies>
-    
-    
-  <profiles>
-    <profile>
-      <id>generate-doc</id>
-      <activation>
-        <property>
-          <name>assembleMode</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <!--Create Rest documentation-->
-          <plugin>
-            <groupId>com.qmino</groupId>
-            <artifactId>miredot-maven-plugin</artifactId>
-            <version>1.4.1</version>
-            <executions>
-              <execution>
-                <id>miredot</id>
-                <phase>package</phase> 
-                <goals>
-                  <goal>restdoc</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <licence>
-              UHJvamVjdHxlZHUua2l0LmRhbWEucmVzdC5EYXRhT3JnYW5pemF0aW9uUmVzdEludGVyZmFjZXwyMDE3LTAzLTAyfHRydWUjTUMwQ0ZEMk5NbHQ0dTV5S1RGb3czSVpVSjBNNUF1dnZBaFVBaGZWMURpOEMzeDhPVFlaQmpDTnFiamhmMFVFPQ==
-              </licence> 
-              <statusCodes>
-                <statusCode>
-                  <httpCode>200</httpCode>
-                  <document>always</document>
-                  <defaultMessage>The service call has completed successfully.</defaultMessage>
-                </statusCode>
-                <statusCode>
-                  <httpCode>403</httpCode>
-                  <document>always</document>
-                  <defaultMessage>The user is not allowed to perform this operation.</defaultMessage>
-                </statusCode>
-                <statusCode>
-                  <httpCode>404</httpCode>
-                  <document>always</document>
-                  <defaultMessage>The requested resource was not found.</defaultMessage>
-                </statusCode>
-                <statusCode>
-                  <httpCode>412</httpCode>
-                  <document>put,post</document>
-                  <defaultMessage>Invalid JSON/XML input.</defaultMessage>
-                </statusCode>
-                <statusCode>
-                  <httpCode>500</httpCode>
-                  <document>always</document>
-                  <defaultMessage>The service call has not succeeded.</defaultMessage>
-                </statusCode>
-              </statusCodes>
-              <visibility>
-                <ALL>NONE</ALL>
-                <FIELD>ANY</FIELD>
-              </visibility>
-              <title>
-                <strategy>tag: summary</strategy>
-                <strategy>tag: title</strategy>
-                <strategy>firstsentence</strategy>
-              </title>
-            </configuration>
-          </plugin>	
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-  
+    </dependencies>  
   
 </project>

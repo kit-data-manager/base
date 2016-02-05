@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
   <parent>
     <groupId>edu.kit.dama</groupId>
     <artifactId>KITDM</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
   <artifactId>Staging</artifactId>
   <name>Staging</name>
   <packaging>pom</packaging>
-  <version>1.1</version>
+  <version>1.2</version>
   
   <description>This module collection contains all components for KIT Data Manager Staging operations (ingest and download). 
     The three sub-modules contain classes used by clients, the server-side implementation and a generic data transfer client.</description>

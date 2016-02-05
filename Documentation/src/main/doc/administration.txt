@@ -1,7 +1,7 @@
 Administration UI
 -----------------
 
-The Administration UI, shortly *AdminUI*, is a straightforward web application 
+The Administration UI, shortly *AdminUI*, is a straightforward Web application 
 for administrating users and user groups, registered at KIT Data Manager. 
 It further allows an effortless configuration of all required staging components.
 
@@ -86,7 +86,7 @@ divided into three parts:
 image::AdminUIMainStructure.png[AdminUIMainStructure, align="center"]
 
 [horizontal]
-`HEADER`:: The header, the unchanging frame within the whole web application, 
+`HEADER`:: The header, the unchanging frame within the whole Web application, 
 displays only a clickable label representing the title of this application. A 
 click on it leads back to the AdminUI's welcome-panel.
 
@@ -594,7 +594,7 @@ one are both provided by the staging-access-point-configuration-tab selectable
 from a tab collection in the <<ChapterSettings,settings-view>>:
 
 Create New Access Point:: For creating a new access point, select the item
-`NEW` from the left-hand container `AVAILABLE ACCESS PONTS`. The selection enables 
+`NEW` from the left-hand container `AVAILABLE ELEMENTS`. The selection enables 
 both, the upper text field `ACCESS POINT IMPLEMENTATION CLASS` and the button 
 image:ImplementationClass_Button.png[ImplementationClass_Button]; contemporary 
 the lower part of the form, designed for declaring the properties of an access point,
@@ -625,7 +625,7 @@ the check box `Disabled`.
 
 View/Modify Existing Access Point:: For viewing or modifying the configuration
 of an already declared access point, select the corresponding access point
-from the left-hand container `AVAILABLE ACCESS POINTS`. A valid selection enables
+from the left-hand container `AVAILABLE ELEMENTS`. A valid selection enables
 all components of changeable access-point-properties. Finalize your changes by
 clicking the button `Commit Changes`.
 
@@ -633,7 +633,7 @@ clicking the button `Commit Changes`.
 image::StagingAccessPointConfiguration_Selection.png[StagingAccessPointConfiguration, align="center"]
 
 [horizontal]
-`AVAILABLE_ACCESS_POINTS`:: Container listing all defined access points.
+`AVAILABLE_ELEMENTS`:: Container listing all defined access points.
 
 `ACCESS_POINT_IMPLEMENTATION_CLASS`:: Text field declaring the implementation 
 class on which the selected access point footnoteref:[nPointSelection, access point selected from the left-hand container of the staging-access-point-configuration-tab] 
@@ -644,7 +644,7 @@ creating an access point with the implementation class declared in the text
 field `ACCESS_POINT_IMPLEMENTATION_CLASS`
 
 `ACCESS_POINT_NAME`:: Text field displaying the name of the selected access point 
-footnoteref:[nPointSelection]
+footnoteref:[nPointSelection].
 
 `REMOTE_BASE_URL`:: Text field declaring the base URL for accessing the repository system via this access point. 
 Once declared, it is highly recommended NOT to change the `REMOTE_BASE_URL` without any valid reason. Otherwise, 
@@ -659,15 +659,15 @@ file system as `LOCAL BASE PATH`.
 
 `ACCESSIBLE_BY`:: Combo box listing all registered user groups. By selecting a
 group, the selected access point footnoteref:[nPointSelection] is accessible
-by all group members
+by all group members.
 
 `Default`:: Check box for setting the selected access point footnoteref:[nPointSelection] 
-as default staging access point for the user group this access point is associated with
+as default staging access point for the user group this access point is associated with.
 
-`Disabled`:: Check box for disabling the selected access point footnoteref:[nPointSelection]
+`Disabled`:: Check box for disabling the selected access point footnoteref:[nPointSelection].
 
 `DESCRIPTION`:: Text area displaying additional information with respect to the 
-selected access point footnoteref:[nPointSelection]
+selected access point footnoteref:[nPointSelection].
 
 image:RightNavigation_Button.png[RightNavigation_Button]:: Icon-button switch to the
 next available properties view.
@@ -676,7 +676,7 @@ image:GreyBullet_Button.png[GreyBullet_Button]:: Icon-button switching to a spec
 properties view. A bullet is green in case it has been selected.
 
 `Commit Changes`:: Button for committing the changed configuration of the selected 
-access point footnoteref:[nPointSelection]
+access point footnoteref:[nPointSelection].
 
 [[ChapterStagingProcessorConfiguration]]
 Staging Processor Configuration
@@ -688,11 +688,11 @@ may cover data validation, checksumming or metadata extraction. For more details
 chapter <<ChapterStagingProcessorCoding, Coding: Staging Processor>>.
 
 The definition of a new staging processor and the modification of an already existing 
-one are both provided by the staging-processor-configuration-tab selectable a
-from tab collection in the <<ChapterSettings,settings-view>>:
+one are both provided by the staging-processor-configuration-tab selectable 
+from a tab collection in the <<ChapterSettings,settings-view>>:
 
 Create New Staging Processor:: For creating a new staging processor, select the item
-`NEW` from the left-hand container `AVAILABLE STAGING PROCESSORS`. The selection enables 
+`NEW` from the left-hand container `AVAILABLE ELEMENTS`. The selection enables 
 both, the upper text field `STAGING PROCESSOR IMPLEMENTATION CLASS` and the button 
 image:ImplementationClass_Button.png[ImplementationClass_Button]; contemporary 
 the lower part of the form, designed for declaring the properties of an staging processor,
@@ -723,7 +723,7 @@ the check box `Disabled`.
 
 View/Modify Existing Staging Processor:: For viewing or modifying the configuration
 of an already declared staging processor, select the corresponding staging processor
-from the left-hand container `AVAILABLE STAGING PROCESSORS`. A valid selection 
+from the left-hand container `AVAILABLE ELEMENTS`. A valid selection 
 enables all components of changeable processor-properties. Finalize your changes 
 by clicking the button `Commit Changes`.
 
@@ -731,7 +731,7 @@ by clicking the button `Commit Changes`.
 image::StagingProcessorConfiguration_Selection.png[StagingProcessorConfiguration, align="center"]
 
 [horizontal]
-`AVAILABLE_PROCESSORS`:: Container listing all defined staging processors.
+`AVAILABLE_ELEMENTS`:: Container listing all defined staging processors.
 
 `PROCESSOR_IMPLEMENTATION_CLASS`:: Text field declaring the implementation 
 class on which the selected staging processor footnoteref:[nProcessorSelection, staging processor selected from the left-hand container of the staging-processor-configuration-tab] 
@@ -756,12 +756,12 @@ are executed as soon as an upload by the user is finished whereas POST_ARCHIVING
 if the data was stored successfully in the repository.
 
 `Default`:: Check box for setting the selected staging processor footnoteref:[nProcessorSelection] 
-as default staging processor
+as default staging processor.
 
-`Disabled`:: Check box for disabling the selected staging processor footnoteref:[nProcessorSelection]
+`Disabled`:: Check box for disabling the selected staging processor footnoteref:[nProcessorSelection].
 
 `DESCRIPTION`:: Text area displaying additional information with respect to the 
-selected staging processor footnoteref:[nProcessorSelection]
+selected staging processor footnoteref:[nProcessorSelection].
 
 image:RightNavigation_Button.png[RightNavigation_Button]:: Icon-button switch to the
 next available properties view.
@@ -770,7 +770,228 @@ image:GreyBullet_Button.png[GreyBullet_Button]:: Icon-button switching to a spec
 properties view. A bullet is green in case it has been selected.
 
 `Commit Changes`:: Button for committing the changed configuration of the selected 
-access processor footnoteref:[nProcessorSelection] 
+access processor footnoteref:[nProcessorSelection].
+
+[[ChapterExecutionEnvironments]]
+Execution Environments
+^^^^^^^^^^^^^^^^^^^^^^
+
+In the execution environment tab of the <<ChapterSettings,settings-view>> so called execution environments for data workflow tasks 
+can be defined and configured. Basically, an execution environment is defined by a handler class taking care of task execution and 
+monitoring. To allow providing data for the task execution each execution environment is linked to an access point that can be 
+used by the repository system to stage data into the computing environment and out of it. Therefor, repository system and computing 
+environment must share a storage resource which they both can access locally, e.g. via mount point.
+
+Creating new execution environment is done using the execution-environment-tab 
+selectable in the <<ChapterSettings,settings-view>>:
+
+Create New Execution Environment:: For creating a new execution environment, select the item
+`NEW` from the left-hand container `AVAILABLE ELEMENTS`. The selection enables 
+both, the upper text field `ENVIRONMENT HANDLER IMPLEMENTATION CLASS` and the button 
+image:ImplementationClass_Button.png[ImplementationClass_Button]; contemporary 
+the lower part of the form, designed for declaring the properties of a execution environment,
+is disabled. For proceeding, enter the fully qualified class name of the implementation class that 
+shall be used for creating the new execution environment before clicking 
+image:ImplementationClass_Button.png[ImplementationClass_Button].
++
+In case of a successfully created execution environment, the remaining form is enabled, 
+permitting the further configuration of the newly created execution environment. Now, declare 
+all remaining properties and commit the changes to the execution environment by clicking the button `Commit Changes`. 
+In addition, `ENVIRONMENT PROPERTIES` can be defined allowing a more detailed description of the execution environment. 
+These properties can be used later on to decide whether a workflow task, which requires a set of `ENVIRONMENT PROPERTIES` 
+from a common pool of properties, can be executed using a particular execution environment or not. However, there is currently 
+no mechanism to validate whether these properties contain any meaningful value or if e.g. a `Software-Map-Property` describes a 
+software which is physically available in the execution environment the property is assigned to.
++
+--
+'''
+
+[NOTE]
+The properties panel offers two different views between which you can switch by
+clicking the icon-button image:RightNavigation_Button.png[RightNavigation_Button]
+or by selecting one of the bullets embedded right below the properties panel.
+
+'''
+--
+
+View/Modify Existing Execution Environment:: For viewing or modifying the configuration
+of an already declared execution environment, select the corresponding execution environment
+from the left-hand container `AVAILABLE ELEMENTS`. A valid selection 
+enables all components of changeable execution-environment-properties. Finalize your changes 
+by clicking the button `Commit Changes`.
+
+[[ExecutionEnvironmentConfiguration]]
+image::ExecutionEnvironmentConfiguration_Selection.png[ExecutionEnvironmentConfiguration, align="center"]
+
+[horizontal]
+`AVAILABLE_ELEMENTS`:: Container listing all defined execution environments.
+
+`ENVIRONMENT_HANDLER_IMPLEMENTATION_CLASS`:: Text field declaring the implementation 
+class on which the selected execution environment is based.
+
+image:ImplementationClass_Button.png[ImplementationClass_Button]:: Button for
+creating an execution environment with the implementation class declared in the text 
+fiel `JOB_IMPLEMENTATION_CLASS`
+
+`ACCESS_POINT`:: Combobox allowing to select the access point that can be used to stage data in and out the execution environment.
+
+`ACCESS_POINT_BASE_PATH`:: Text field displaying the base path at which the access point is available within the execution environment.
+
+`MAX_PARALLEL_TASKS`:: Text field displaying the max. number of parallel workflow tasks that should be handled by the environment.
+
+`DESCRIPTION`:: Text area displaying additional information with respect to the 
+selected execution environment.
+
+`Default`:: Check box for setting the selected execution environment as default environment.
+
+`Disabled`:: Check box for disabling the selected execution environment.
+
+`ENVIRONMENT_PROPERTIES`:: A twin columns list allowing to select environment properties provided by the execution environment. A button next to the list allows to add new properties.
+
+`Commit Changes`:: Button for committing the changed configuration of the selected execution environment. 
+
+[[ChapterDataWorkflowTasks]]
+Data Workflow Tasks
+^^^^^^^^^^^^^^^^^^^
+
+A data workflow task describes a single task that can be executed alone or in a chain of multiple tasks. In contrast to other elements configured in the settings-view, 
+a basic versioning is applied to data workflow tasks. Changing the `TASK NAME`, the `PACKAGE URL`
+or the `ARGUMENTS` will result in a new workflow task (in case of changing the name) or to a new task version (in case of changing the package url or arguments). 
+All other fields can be changed without any effect to the task version.
+
+Creating data workflow task is done using the data-workflow-tasks-tab selectable in the <<ChapterSettings,settings-view>>:
+
+Create New Data Workflow Task:: For creating a new data workflow task, select the item
+`NEW` from the left-hand container `AVAILABLE ELEMENTS`. Fill all fields according to your task properties and requirements. `PACKAGE_URL` should be in the form
+`file://<ZIP_LOCATION_ON_LOCAL_FILESYSTEM>`. Optionally, you can provide `ENVIRONMENT PROPERTIES` that have to be provided by an execution environment in order 
+to execute the task. Please refer to the <<ChapterExecutionEnvironments,according section>> for more details. Finally, after committing the changed, the workflow task is 
+registered and can be linked to digital objects using the according REST service or Java API.
+
+View/Modify Existing Data Workflow Tasks:: For viewing or modifying the configuration
+of an already declared data workflow task, select the corresponding data workflow task
+from the left-hand container `AVAILABLE ELEMENTS`. A valid selection 
+enables all components of changeable data-workflow-task-properties. Finalize your changes 
+by clicking the button `Commit Changes`.
+
+[[DataWorkflowTaskConfiguration]]
+image::DataWorkflowTaskConfiguration_Selection.png[DataWorkflowTaskConfiguration, align="center"]
+
+[horizontal]
+`AVAILABLE_ELEMENTS`:: Container listing all defined data workflow tasks.
+
+`TASK_NAME`:: Text field to display the unique task name. Changing the name of an existing task will result in creating a new task in version 1 with the same properties as the existing task.
+
+`VERSION`:: Text field to display the version number of the task. The version number increases if any of the unchangeable field of a task, e.g. application URL or arguments, is changed. 
+It is not allowed to modify the version number manually.
+
+`CONTACT_USERID`:: Text field displaying the userId of the contact user of the workflow task, e.g. for application support. This userId must be a valid userId registered in the repository system.
+
+`PACKAGE_URL`:: Text field displaying the package URL where the application zip archive is located. This URL must be in the format `file://<LOCAL_PATH>`, e.g. `file:///usr/share/apps/MyApp-1.0.zip`.
+
+`ARGUMENTS`:: Text field displaying the application arguments which are appended to each application execution. Beware that these arguments cannot be changed for a workflow task. Changing the arguments
+results in creating a new version of the task.
+
+`KEYWORDS`:: Text area displaying a set of space separated keywords that might be used to search for a particular workflow task.
+
+`DESCRIPTION`:: Text area displaying additional information with respect to the selected workflow task.
+
+`Default`:: Check box for setting the selected workflow task as default task, e.g. to be applied by default to ingested digital objects. Currently, this flag is not actively used.
+
+`Disabled`:: Check box for disabling the selected workflow task.
+
+`ENVIRONMENT_PROPERTIES`:: A twin columns list allowing to select environment properties required by the workflow task. A button next to the list allows to add new properties.
+
+`Commit Changes`:: Button for committing the changed configuration of the selected workflow task or to create a new task/a new version of the task if unchangeable fields have changed. 
+
+[[ChapterJobScheduling]]
+Job Scheduling
+^^^^^^^^^^^^^^
+
+The job scheduling is a new feature introduced in KIT Data Manager 1.2 allowing to 
+configure and execute recurring jobs in a seamlessly integrated, platform independent
+way. Basically, the job scheduling is a replacement for setting up Cron jobs for jobs
+like data staging, metadata indexing or workflow execution.
+
+Creating new job and scheduling their execution is provided by the job-scheduling-tab 
+selectable in the <<ChapterSettings,settings-view>>:
+
+Create New Job Schedule:: For creating a new job schedule, select the item
+`NEW` from the left-hand container `AVAILABLE ELEMENTS`. The selection enables 
+both, the upper text field `ENVIRONMENT HANDLER IMPLEMENTATION CLASS` and the button 
+image:ImplementationClass_Button.png[ImplementationClass_Button]; contemporary 
+the lower part of the form, designed for declaring the properties of a job schedule,
+is disabled. For proceeding, enter the fully qualified class name of the implementation class that 
+shall be used for creating the new job schedule before clicking 
+image:ImplementationClass_Button.png[ImplementationClass_Button].
+
+In case of a successfully created job schedule, the remaining form is enabled, 
+permitting the further configuration of the newly created job schedule. Declare 
+all remaining properties (except `TRIGGERS`) and persist the job schedule by clicking the button `Commit Changes`. 
+Finally, in order to trigger the job execution, one or more triggers have to be assigned to the job. Click the 
+add button next to the trigger table. In the popup which opens there are four different triggers available:
+
+[cols="m,n", options="header"]
+|============================================================================================================================
+|Trigger|Description
+|'Now' Trigger|Triggers a immediate, single-time job execution. After the execution, the trigger is removed again.
+|'At' Trigger|Triggers a single-time job execution at a specific time. After the execution, the trigger is removed again.
+|'Expression' Trigger|Triggers a repeated job execution specified in a Cron-like syntax.
+|'Interval' Trigger|Triggers a repreated job execution in a specific interval in seconds and with an optional number of times.
+|============================================================================================================================
+
+For typical use cases it is recommended to use either 'Expression' or 'Interval' triggers as they typically run as long as they are not removed manually.
+'Now' and 'At' triggers are bound to a specific time, would disappear afterwards and the according job won't be triggered any longer.
+
+--
+'''
+
+[NOTE]
+The properties panel offers two different views between which you can switch by clicking the icon-button image:RightNavigation_Button.png[RightNavigation_Button]
+or by selecting one of the bullets embedded right below the properties panel.
+
+'''
+
+[WARNING]
+Newly created job schedules will have the job id `UNSCHEDULED`. Such jobs are not persisted, yet, and will disappear if the settings tab is changed. 
+After completing all mandatory fields, job schedules have to be persisted using the `Commit` button before triggers can be assigned. 
+
+'''
+--
+
+View/Modify Existing Job Schedules:: For viewing or modifying the configuration
+of an already declared job schedule, select the corresponding job schedule
+from the left-hand container `AVAILABLE ELEMENTS`. A valid selection 
+enables all components of changeable job-schedule-properties. Finalize your changes 
+by clicking the button `Commit Changes`.
+
+[[JobScheduleConfiguration]]
+image::JobScheduleConfiguration_Selection.png[JobScheduleConfiguration, align="center"]
+
+[horizontal]
+`AVAILABLE_ELEMENTS`:: Container listing all defined staging processors.
+
+`JOB_IMPLEMENTATION_CLASS`:: Text field declaring the implementation 
+class on which the selected job schedule is based.
+
+image:ImplementationClass_Button.png[ImplementationClass_Button]:: Button for
+creating a job schedule with the implementation class declared in the text 
+fiel `JOB_IMPLEMENTATION_CLASS`.
+
+`JOB_ID`:: Text field displaying the unique id of the selected job schedule.
+
+`JOB_GROUP`:: Text field displaying the group name of the selected job schedule.
+
+`JOB_NAME`:: Text field displaying the name of the selected job schedule.
+
+
+`DESCRIPTION`:: Text area displaying additional information with respect to the 
+selected job schedule.
+
+`TRIGGERS`:: A table showing all triggers assigned to the selected job. Triggers can be added, refreshed or removing using the accoding button next to the table. 
+The refresh button is provided to allow a manual update as triggers might be removed automatically after a single execution.
+
+`Commit Changes`:: Button for committing the changed configuration of the selected 
+job schedule. 
 
 [[ChapterLogout]]
 Logout

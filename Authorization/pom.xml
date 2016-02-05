@@ -1,6 +1,6 @@
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
   <parent>
     <groupId>edu.kit.dama</groupId>
     <artifactId>KITDM</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
     
@@ -29,7 +29,7 @@
   <groupId>edu.kit.dama</groupId>
   <artifactId>Authorization</artifactId>
   <packaging>jar</packaging>
-  <version>1.1</version>
+  <version>1.2</version>
   <name>Authorization</name>
   <properties>
     <org.aspectj-version>1.8.2</org.aspectj-version>
@@ -120,7 +120,7 @@
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>Commons</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>com.liferay.portal</groupId>

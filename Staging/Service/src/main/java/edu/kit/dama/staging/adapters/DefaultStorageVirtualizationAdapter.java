@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,309 +54,291 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultStorageVirtualizationAdapter implements IStorageVirtualizationServiceAdapter, IStagingCallback {
 
-  /**
-   * The logger instance
-   */
-  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultStorageVirtualizationAdapter.class);
-  private final static String TMP_DIR_PATTERN = "$tmp";
-  private final static String YEAR_PATTERN = "$year";
-  private final static String MONTH_PATTERN = "$month";
-  private final static String DAY_PATTERN = "$day";
-  private final static String OWNER_PATTERN = "$owner";
-  private final static String GROUP_PATTERN = "$group";
-  private URL archiveUrl = null;
-  private String pathPattern = null;
+    /**
+     * The logger instance
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultStorageVirtualizationAdapter.class);
+    private final static String TMP_DIR_PATTERN = "$tmp";
+    private final static String YEAR_PATTERN = "$year";
+    private final static String MONTH_PATTERN = "$month";
+    private final static String DAY_PATTERN = "$day";
+    private final static String OWNER_PATTERN = "$owner";
+    private final static String GROUP_PATTERN = "$group";
+    private URL archiveUrl = null;
+    private String pathPattern = null;
 
-  /**
-   * Default constructor.
-   */
-  public DefaultStorageVirtualizationAdapter() {
-  }
-
-  /**
-   * Default contructor for this storage virtualization adapter. The destination
-   * URL provided as argument will be used to store a file/directory via
-   * {@link #store(edu.kit.dama.staging.entities.TransferTaskContainer, edu.kit.authorization.entities.IAuthorizationContext) }
-   * For the actual transfer the class
-   * {@link edu.kit.​dama.transfer.client.impl.InProcStagingClient} is used.
-   * Therefore, the destination URL must be a valid URL containing a valid
-   * transfer protocol. As staging typically takes place internally (from cache
-   * to archive), there should be used a protocol which does not need any
-   * sophisticated security. For special use cases (e.g. staging to some
-   * external location) an appropriate security initialization has to be
-   * performed externally.
-   *
-   * @param pDestinationUrl The destination URL for this data virtualization
-   * adapter
-   */
-  public DefaultStorageVirtualizationAdapter(URL pDestinationUrl) {
-    //
-  }
-
-  @Override
-  public String calculateChecksum(StagingFile pFile, HASH_TYPE type) {
-    //implement this if required...currently, no checksumming is supported
-    return "";
-  }
-
-  @Override
-  public IFileTree store(TransferTaskContainer pContainer, IAuthorizationContext pContext) {
-    String transferId = pContainer.getTransferInformation().getTransferId();
-    AbstractFile destination = createDestination(transferId, pContext);
-    if (destination == null) {
-      LOGGER.error("Failed to obtain destination for transfer id '{}'. Aborting!", transferId);
-      return null;
-    }
-    LOGGER.debug("Setting staging destination to {}", destination);
-    pContainer.setDestination(destination.getUrl());
-
-    AbstractFile source = new AbstractFile(pContainer.getDataUrl());
-    LOGGER.debug("Storing object with transfer ID '{}'", pContainer.getUniqueTransferIdentifier());
-    //udpate storage URL in ingest information entity and commit changes
-    ((IngestInformation) pContainer.getTransferInformation()).setStorageURL(destination.getUrl().toString());
-    try {
-      LOGGER.debug("Updating storage URL for ingest with id '{}'", transferId);
-      StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().updateIngestInformation((IngestInformation) pContainer.getTransferInformation(), pContext);
-      LOGGER.debug("Storage URL successfully updated");
-    } catch (ServiceAdapterException sae) {
-      LOGGER.error("Failed to update storage URL for ingest with id '" + transferId + "'", sae);
-      return null;
-    }
-    //--> destination = Base Service URL, single path elements obtained by some generator class specified within the settings?
-    LOGGER.info("Perform staging from {} to {}", new Object[]{source.getUrl(), destination.getUrl()});
-    //TransferTaskContainer container = TransferTaskContainer.factoryIngestContainer(pIngest, tree, StagingConfigurationManager.getSingleton().getRestServiceUrl());
-    LOGGER.info("Disabling ADALAPI overwrite checks");
-    AbstractFile.OVERWRITE_PERMISSION permission = AbstractFile.getOverwritePermission();
-    AbstractFile.setOverwritePermission(AbstractFile.OVERWRITE_PERMISSION.ALLOWED);
-    InProcStagingClient isc = new InProcStagingClient(pContainer, destination);
-    isc.addStagingCallbackListener(this);
-    isc.start();
-
-    //perform the storage operation in a blocking fashion
-    while (isc.isTransferRunning()) {
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException ie) {
-      }
+    /**
+     * Default constructor.
+     */
+    public DefaultStorageVirtualizationAdapter() {
     }
 
-    LOGGER.info("Reset ADALAPI overwrite checks");
-    AbstractFile.setOverwritePermission(permission);
-
-    //build file tree
-    IFileTree tree;
-    // if (stagingResult) {
-    LOGGER.debug("Building file tree for data organization");
-    try {
-      tree = DataOrganizationUtils.createTreeFromFile(pContainer.getTransferInformation().getDigitalObjectId(), source, true);
-    } catch (IOException ex) {
-      LOGGER.error("Failed to get local file for path '" + source + "'", ex);
-      tree = null;
-    }
-    return tree;
-  }
-
-  /**
-   * Create the destination folder for the ingest. This folder will be located
-   * withing the storage virtualization system. For this very basic adapter it
-   * will be a folder with some components telling when the object was uploaded
-   * by whom and which transfer id it had. The folder will be generated as
-   * follows:
-   *
-   * <i>archiveURL</i>/<i>pathPattern</i>/SHA1(pTransferId) where
-   * <i>pathPattern</i> allows the use or variables like $year, $month, $day and
-   * $owner
-   *
-   * @param pTransferId The transfer id as it comes from the ingest information
-   * entity.
-   * @param pOwner The owner who ingested the object.
-   *
-   * @return An AbstractFile representing the destination for the final ingest.
-   *
-   */
-  private AbstractFile createDestination(String pTransferId, IAuthorizationContext pContext) {
-    if (pTransferId == null) {//transfer id is part of the destination, so it must not be null
-      throw new IllegalArgumentException("Argument 'pTransferId' must not be 'null'");
+    @Override
+    public String calculateChecksum(StagingFile pFile, HASH_TYPE type) {
+        //implement this if required...currently, no checksumming is supported
+        return "";
     }
 
-    String sUrl = archiveUrl.toString();
-    if (pathPattern != null) {
-      Calendar c = Calendar.getInstance();
-      int year = c.get(Calendar.YEAR);
-      int month = c.get(Calendar.MONTH);
-      int day = c.get(Calendar.DAY_OF_MONTH);
-      String dynPath = pathPattern;
-      dynPath = dynPath.
-              replaceAll(Pattern.quote(YEAR_PATTERN), Integer.toString(year)).
-              replaceAll(Pattern.quote(MONTH_PATTERN), Integer.toString(month)).
-              replaceAll(Pattern.quote(DAY_PATTERN), Integer.toString(day));
-      if (dynPath.contains(OWNER_PATTERN) || dynPath.contains(GROUP_PATTERN)) {//owner/group should be replaced by pattern definition
-        if (pContext == null) {//uploader is 'null' but we need it for replacement
-          throw new IllegalArgumentException("Argument 'pOwner' must not be 'null' if pattern contains element '" + OWNER_PATTERN + "' or '" + GROUP_PATTERN + "'");
-        } else {//everything is fine
-
-          LOGGER.debug("Replacing owner/group pattern with values from context '{}'", pContext);
-          dynPath = dynPath.
-                  replaceAll(Pattern.quote(OWNER_PATTERN), Matcher.quoteReplacement(pContext.getUserId().getStringRepresentation())).
-                  replaceAll(Pattern.quote(GROUP_PATTERN), Matcher.quoteReplacement(pContext.getGroupId().getStringRepresentation()));
+    @Override
+    public IFileTree store(TransferTaskContainer pContainer, IAuthorizationContext pContext) {
+        String transferId = pContainer.getTransferInformation().getTransferId();
+        AbstractFile destination = createDestination(transferId, pContext);
+        if (destination == null) {
+            LOGGER.error("Failed to obtain destination for transfer id '{}'. Aborting!", transferId);
+            return null;
         }
-      }
-      LOGGER.debug("Appending pattern-based path '{}' to base destination '{}'", new Object[]{dynPath, sUrl});
-      sUrl += "/" + dynPath;
+        LOGGER.debug("Setting staging destination to {}", destination);
+        pContainer.setDestination(destination.getUrl());
+
+        LOGGER.debug("Storing object with transfer ID '{}'", pContainer.getUniqueTransferIdentifier());
+        //udpate storage URL in ingest information entity and commit changes
+        ((IngestInformation) pContainer.getTransferInformation()).setStorageUrl(destination.getUrl().toString());
+        try {
+            LOGGER.debug("Updating storage URL for ingest with id '{}'", transferId);
+            StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().updateIngestInformation((IngestInformation) pContainer.getTransferInformation(), pContext);
+            LOGGER.debug("Storage URL successfully updated");
+        } catch (ServiceAdapterException sae) {
+            LOGGER.error("Failed to update storage URL for ingest with id '" + transferId + "'", sae);
+            return null;
+        }
+        //--> destination = Base Service URL, single path elements obtained by some generator class specified within the settings?
+        LOGGER.info("Perform staging to {}", destination.getUrl());
+        //TransferTaskContainer container = TransferTaskContainer.factoryIngestContainer(pIngest, tree, StagingConfigurationManager.getSingleton().getRestServiceUrl());
+        LOGGER.info("Disabling ADALAPI overwrite checks");
+        AbstractFile.OVERWRITE_PERMISSION permission = AbstractFile.getOverwritePermission();
+        AbstractFile.setOverwritePermission(AbstractFile.OVERWRITE_PERMISSION.ALLOWED);
+        InProcStagingClient isc = new InProcStagingClient(pContainer, destination);
+        isc.addStagingCallbackListener(this);
+        isc.start();
+
+        //perform the storage operation in a blocking fashion
+        while (isc.isTransferRunning()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+            }
+        }
+
+        LOGGER.info("Reset ADALAPI overwrite checks");
+        AbstractFile.setOverwritePermission(permission);
+
+        //build file tree
+        IFileTree tree;
+        LOGGER.debug("Building file tree for data organization");
+        try {
+            tree = DataOrganizationUtils.createTreeFromFile(pContainer.getTransferInformation().getDigitalObjectId(), destination, true);
+        } catch (IOException ex) {
+            LOGGER.error("Failed to get local file for path '" + destination + "'", ex);
+            tree = null;
+        }
+        return tree;
     }
 
-    //finally, create abstract file and return
-    AbstractFile result;
-    try {
-      if (!sUrl.endsWith("/")) {
-        sUrl += "/";
-      }
-      LOGGER.debug("Appending SHA1-hashed transfer ID '{}' to current destination '{}'.", new Object[]{pTransferId, sUrl});
-      sUrl += CryptUtil.stringToSHA1(pTransferId);
-      LOGGER.debug("Preparing destination at {}.", sUrl);
+    /**
+     * Create the destination folder for the ingest. This folder is located
+     * withing the storage virtualization system. For this very basic adapter it
+     * will be a folder with with a fixed scheme telling when the object was
+     * uploaded by whom and which transfer id it had. The folder will be
+     * generated as follows:
+     *
+     * <i>archiveURL</i>/<i>pathPattern</i>/SHA1(pTransferId) where
+     * <i>pathPattern</i> allows the use or variables like $year, $month, $day
+     * and $owner and pTransferId is the numeric id of the transfer.
+     *
+     * @param pTransferId The transfer id as it comes from the ingest
+     * information entity.
+     * @param pOwner The owner who ingested the object.
+     *
+     * @return An AbstractFile representing the destination for the final
+     * ingest.
+     *
+     */
+    private AbstractFile createDestination(String pTransferId, IAuthorizationContext pContext) {
+        if (pTransferId == null) {//transfer id is part of the destination, so it must not be null
+            throw new IllegalArgumentException("Argument 'pTransferId' must not be 'null'");
+        }
 
-      result = new AbstractFile(new URL(sUrl));
-      //check if destination exists and create it if required
-      if (result.exists()) {
-        LOGGER.info("Destination at '{}' already exists.", sUrl);
-      } else {//try to create destination
-        result = AbstractFile.createDirectory(result);
-      }
+        String sUrl = archiveUrl.toString();
+        if (pathPattern != null) {
+            Calendar c = Calendar.getInstance();
+            int year = c.get(Calendar.YEAR);
+            int month = c.get(Calendar.MONTH);
+            int day = c.get(Calendar.DAY_OF_MONTH);
+            String dynPath = pathPattern;
+            dynPath = dynPath.
+                    replaceAll(Pattern.quote(YEAR_PATTERN), Integer.toString(year)).
+                    replaceAll(Pattern.quote(MONTH_PATTERN), Integer.toString(month)).
+                    replaceAll(Pattern.quote(DAY_PATTERN), Integer.toString(day));
+            if (dynPath.contains(OWNER_PATTERN) || dynPath.contains(GROUP_PATTERN)) {//owner/group should be replaced by pattern definition
+                if (pContext == null) {//uploader is 'null' but we need it for replacement
+                    throw new IllegalArgumentException("Argument 'pOwner' must not be 'null' if pattern contains element '" + OWNER_PATTERN + "' or '" + GROUP_PATTERN + "'");
+                } else {//everything is fine
 
-      //check destination
-      if (result != null) {//destination could be obtained
-        result.clearCachedValues();
-        if (result.isReadable() && result.isWriteable()) {
-          //everything is fine...return result
-          return result;
+                    LOGGER.debug("Replacing owner/group pattern with values from context '{}'", pContext);
+                    dynPath = dynPath.
+                            replaceAll(Pattern.quote(OWNER_PATTERN), Matcher.quoteReplacement(pContext.getUserId().getStringRepresentation())).
+                            replaceAll(Pattern.quote(GROUP_PATTERN), Matcher.quoteReplacement(pContext.getGroupId().getStringRepresentation()));
+                }
+            }
+            LOGGER.debug("Appending pattern-based path '{}' to base destination '{}'", new Object[]{dynPath, sUrl});
+            sUrl += "/" + dynPath;
+        }
+
+        //finally, create abstract file and return
+        AbstractFile result;
+        try {
+            if (!sUrl.endsWith("/")) {
+                sUrl += "/";
+            }
+            LOGGER.debug("Appending SHA1-hashed transfer ID '{}' to current destination '{}'.", new Object[]{pTransferId, sUrl});
+            sUrl += CryptUtil.stringToSHA1(pTransferId);
+            LOGGER.debug("Preparing destination at {}.", sUrl);
+
+            result = new AbstractFile(new URL(sUrl));
+            //check if destination exists and create it if required
+            if (result.exists()) {
+                LOGGER.info("Destination at '{}' already exists.", sUrl);
+            } else {//try to create destination
+                result = AbstractFile.createDirectory(result);
+            }
+
+            //check destination
+            if (result != null) {//destination could be obtained
+                result.clearCachedValues();
+                if (result.isReadable() && result.isWriteable()) {
+                    //everything is fine...return result
+                    return result;
+                } else {
+                    //destination cannot be accessed
+                    LOGGER.error("Destination '{}' exists but is not read- or writeable", sUrl);
+                    result = null;
+                }
+            } else {
+                LOGGER.warn("No result obtained from directory creation.");
+            }
+        } catch (MalformedURLException mue) {
+            LOGGER.error("Failed to create valid destination URL for '" + sUrl + "' and transferId " + pTransferId, mue);
+            result = null;
+        } catch (AdalapiException ae) {
+            LOGGER.error("Failed to check/create destination for '" + sUrl + "'", ae);
+            result = null;
+        }
+        return result;
+    }
+
+    @Override
+    public boolean restore(DownloadInformation pDownloadInformation, IFileTree pArchivedTree, StagingFile pDownloadDestination) {
+        boolean result;
+        IFileTree tree = TransferTaskContainer.createCompatibleTree(pDownloadInformation, pArchivedTree.getRootNode());
+        TransferTaskContainer container = TransferTaskContainer.factoryDownloadContainer(pDownloadInformation.getId(), tree, StagingConfigurationManager.getSingleton().getRestServiceUrl());
+        container.setTransferInformation(pDownloadInformation);
+        InProcStagingClient isc = new InProcStagingClient(container, pDownloadDestination.getAbstractFile());
+        isc.addStagingCallbackListener(this);
+        isc.start();
+
+        //perform the storage operation in a blocking fashion
+        while (isc.isTransferRunning()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+            }
+        }
+        return isc.getStatus().equals(AbstractTransferClient.TRANSFER_STATUS.SUCCEEDED);
+    }
+
+    @Override
+    public boolean isHashTypeSupported(HASH_TYPE type) {
+        return false;
+    }
+
+    @Override
+    public boolean configure(Configuration pConfig) throws ConfigurationException {
+        pathPattern = pConfig.getString("pathPattern");
+        String archiveUrlProperty = pConfig.getString("archiveUrl");
+        if (archiveUrlProperty == null) {
+            throw new ConfigurationException("Property 'archiveUrl' is missing");
+        }
+
+        //replace TMP_DIR_PATTERN in target URL
+        LOGGER.debug("Looking for replacements in archive location");
+        String tmp = System.getProperty("java.io.tmpdir");
+        if (!tmp.startsWith("/")) {
+            tmp = "/" + tmp;
+        }
+        archiveUrlProperty = archiveUrlProperty.replaceAll(Pattern.quote(TMP_DIR_PATTERN), Matcher.quoteReplacement(tmp));
+        LOGGER.debug("Using archive Url {}", archiveUrlProperty);
+        //set baseDestinationURL property
+
+        try {
+            archiveUrl = new URL(archiveUrlProperty);
+        } catch (MalformedURLException mue) {
+            throw new ConfigurationException("archiveUrl property (" + archiveUrlProperty + ") is not a valid URL", mue);
+        }
+
+        AbstractFile destination = new AbstractFile(archiveUrl);
+        //if caching location is local, check accessibility
+        if (destination.isLocal()) {
+            LOGGER.debug("Archive URL is local. Checking accessibility.");
+            URI uri = null;
+
+            try {
+                uri = destination.getUrl().toURI();
+            } catch (IllegalArgumentException ex) {
+                //provided archive URL is no URI (e.g. file://folder/ -> third slash is missing after file:)
+                throw new StagingIntitializationException("Archive location " + destination.getUrl().toString() + " has an invalid URI syntax", ex);
+            } catch (URISyntaxException ex) {
+                LOGGER.warn("Failed to check local archive URL. URL " + destination.getUrl() + " seems not to be a valid URI.", ex);
+            }
+            File localFile = null;
+            try {
+                localFile = new File(uri);
+            } catch (IllegalArgumentException ex) {
+                throw new ConfigurationException("Archive URI " + uri + " seems not to be a supported file URI. This storage virtualization implementation only supports URLs in the format file:///<path>/", ex);
+            }
+
+            if (!FileUtils.isAccessible(localFile)) {
+                throw new StagingIntitializationException("Archive location seems to be offline: '" + destination.getUrl().toString() + "'");
+            }
+        }
+
+        try {
+            if (!destination.exists()) {
+                LOGGER.debug("Archive location does not exists, trying to create it...");
+                destination = AbstractFile.createDirectory(destination);
+                LOGGER.debug("Archive location successfully created ");
+            } else {
+                LOGGER.debug("Archive location already exists");
+            }
+            //clear cached values, e.g. for isReadable() and isWriteable()
+            destination.clearCachedValues();
+            //check access
+            if (destination.isReadable() && destination.isWriteable()) {
+                LOGGER.debug("Archive location '{}' is valid", destination.getUrl());
+            } else {
+                throw new StagingIntitializationException("Archive location '" + destination.getUrl().toString() + "' is not accessible");
+            }
+        } catch (AdalapiException ae) {
+            throw new StagingIntitializationException("Failed to setup archive location '" + destination.getUrl().toString() + "'", ae);
+        }
+        return true;
+    }
+
+    @Override
+    public void stagingStarted(String pId) {
+        LOGGER.info("Staging started for object with ID '{}'", pId);
+    }
+
+    @Override
+    public void stagingRunning(String pId) {
+        LOGGER.debug("Staging for object with ID '{}' is still running", pId);
+    }
+
+    @Override
+    public void stagingFinished(String pId, boolean pSuccess) {
+        if (pSuccess) {
+            LOGGER.info("Staging successfully finished for object with ID '{}'", pId);
         } else {
-          //destination cannot be accessed
-          LOGGER.error("Destination '{}' exists but is not read- or writeable", sUrl);
-          result = null;
+            LOGGER.error("Staging failed for object with ID '{}'", pId);
         }
-      } else {
-        LOGGER.warn("No result obtained from directory creation.");
-      }
-    } catch (MalformedURLException mue) {
-      LOGGER.error("Failed to create valid destination URL for '" + sUrl + "' and transferId " + pTransferId, mue);
-      result = null;
-    } catch (AdalapiException ae) {
-      LOGGER.error("Failed to check/create destination for '" + sUrl + "'", ae);
-      result = null;
     }
-    return result;
-  }
-
-  @Override
-  public boolean restore(DownloadInformation pDownloadInformation, IFileTree pStagedTree, StagingFile pDownloadDestination) {
-    boolean result;
-    IFileTree tree = TransferTaskContainer.createCompatibleTree(pDownloadInformation, pStagedTree.getRootNode());
-    TransferTaskContainer container = TransferTaskContainer.factoryDownloadContainer(pDownloadInformation.getId(), tree, StagingConfigurationManager.getSingleton().getRestServiceUrl());
-    container.setTransferInformation(pDownloadInformation);
-    InProcStagingClient isc = new InProcStagingClient(container, pDownloadDestination.getAbstractFile());
-    isc.addStagingCallbackListener(this);
-    isc.start();
-
-    //perform the storage operation in a blocking fashion
-    while (isc.isTransferRunning()) {
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException ie) {
-      }
-    }
-    result = isc.getStatus().equals(AbstractTransferClient.TRANSFER_STATUS.SUCCEEDED);
-
-    return result;
-  }
-
-  @Override
-  public boolean isHashTypeSupported(HASH_TYPE type) {
-    return false;
-  }
-
-  @Override
-  public boolean configure(Configuration pConfig) throws ConfigurationException {
-    pathPattern = pConfig.getString("pathPattern");
-    String archiveUrlProperty = pConfig.getString("archiveUrl");
-    if (archiveUrlProperty == null) {
-      throw new ConfigurationException("Property 'archiveUrl' is missing");
-    }
-
-    //replace TMP_DIR_PATTERN in target URL
-    LOGGER.debug("Looking for replacements in archive location");
-    String tmp = System.getProperty("java.io.tmpdir");
-    if (!tmp.startsWith("/")) {
-      tmp = "/" + tmp;
-    }
-    archiveUrlProperty = archiveUrlProperty.replaceAll(Pattern.quote(TMP_DIR_PATTERN), Matcher.quoteReplacement(tmp));
-    LOGGER.debug("Using archive Url {}", archiveUrlProperty);
-    //set baseDestinationURL property
-    try {
-      archiveUrl = new URL(archiveUrlProperty);
-    } catch (MalformedURLException mue) {
-      throw new ConfigurationException("archiveUrl property (" + archiveUrlProperty + ") is not a valid URL", mue);
-    }
-
-    AbstractFile destination = new AbstractFile(archiveUrl);
-    //if caching location is local, check accessibility
-    if (destination.isLocal()) {
-      LOGGER.debug("Archive URL is local. Checking accessibility.");
-      URI uri = null;
-
-      try {
-        uri = destination.getUrl().toURI();
-      } catch (IllegalArgumentException ex) {
-        //provided archive URL is no URI (e.g. file://folder/)
-        throw new StagingIntitializationException("Archive location " + destination.getUrl().toString() + " has an invalid URI syntax", ex);
-      } catch (URISyntaxException ex) {
-        LOGGER.warn("Failed to check local archive URL. URL " + destination.getUrl() + " seems not to be a valid URI.", ex);
-      }
-
-      File localFile = new File(uri);
-      if (!FileUtils.isAccessible(localFile)) {
-        throw new StagingIntitializationException("Archive location seems to be offline: '" + destination.getUrl().toString() + "'");
-      }
-    }
-
-    try {
-      if (!destination.exists()) {
-        LOGGER.debug("Archive location does not exists, trying to create it...");
-        destination = AbstractFile.createDirectory(destination);
-        LOGGER.debug("Archive location successfully created ");
-      } else {
-        LOGGER.debug("Archive location already exists");
-      }
-      //clear cached values, e.g. for isReadable() and isWriteable()
-      destination.clearCachedValues();
-      //check access
-      if (destination.isReadable() && destination.isWriteable()) {
-        LOGGER.debug("Archive location '{}' is valid", destination.getUrl());
-      } else {
-        throw new StagingIntitializationException("Archive location '" + destination.getUrl().toString() + "' is not accessible");
-      }
-    } catch (AdalapiException ae) {
-      throw new StagingIntitializationException("Failed to setup archive location '" + destination.getUrl().toString() + "'", ae);
-    }
-    return true;
-  }
-
-  @Override
-  public void stagingStarted(String pId) {
-    LOGGER.info("Staging started for object with ID '{}'", pId);
-  }
-
-  @Override
-  public void stagingRunning(String pId) {
-    LOGGER.debug("Staging for object with ID '{}' is still running", pId);
-  }
-
-  @Override
-  public void stagingFinished(String pId, boolean pSuccess) {
-    if (pSuccess) {
-      LOGGER.info("Staging successfully finished for object with ID '{}'", pId);
-    } else {
-      LOGGER.error("Staging failed for object with ID '{}'", pId);
-    }
-    //   stagingResult = pSuccess;
-  }
 }

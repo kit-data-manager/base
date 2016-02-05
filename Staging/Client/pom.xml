@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
   <parent>
     <groupId>edu.kit.dama</groupId>
     <artifactId>Staging</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
   <artifactId>StagingClient</artifactId>
   <name>StagingClient</name>
   <packaging>jar</packaging>
-  <version>1.1</version>
+  <version>1.2</version>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <projectName>StagingClient</projectName>
@@ -89,25 +89,25 @@
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>Commons</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
       <type>jar</type>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>DataOrganization</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
       <type>jar</type>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>MDM-Core</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
       <type>jar</type>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>MDM-Admin</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
       <type>jar</type>
     </dependency>
     <dependency>
@@ -118,12 +118,12 @@
     <dependency>
       <groupId>edu.kit.dama.rest</groupId>
       <artifactId>ClientBase</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama.rest</groupId>
       <artifactId>UserGroupRestInterface</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

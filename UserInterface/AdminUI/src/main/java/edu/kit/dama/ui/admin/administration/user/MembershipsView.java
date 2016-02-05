@@ -53,6 +53,7 @@ import edu.kit.dama.mdm.admin.UserGroup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import javax.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -206,7 +207,9 @@ public final class MembershipsView extends Window implements TwinColSelect.Value
                 cellContent.setValue("?");
                 cellContent.setDescription("Validation of member roles failed. " + NoteBuilder.CONTACT);
                 try {
-                    User user = FindUtil.findUser(PU.entityManager(), userId);
+                    EntityManager em = PU.entityManager();
+                    User user = FindUtil.findUser(em, userId);
+                    em.close();
                     if (!role.moreThan(user.getMaximumRole())) {
                         return null;
                     }
@@ -694,7 +697,9 @@ public final class MembershipsView extends Window implements TwinColSelect.Value
     public void reloadMembershipsTable() {
         getMembershipsTable().removeAllItems();
         try {
+            EntityManager em = PU.entityManager();
             User user = FindUtil.findUser(PU.entityManager(), userId);
+            em.close();
             for (Membership membership : user.getMemberships()) {
                 getMembershipsTable().addItem(membership);
             }

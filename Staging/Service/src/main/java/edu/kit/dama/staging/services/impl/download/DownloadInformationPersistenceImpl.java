@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * Implementation of the TransferInformationPersistence interface for data
  * ingest.
  *
- * @see TransferInformationPersistence
+ * @see edu.kit.dama.staging.interfaces.ITransferInformationPersistence
  * @author jejkal
  */
 public final class DownloadInformationPersistenceImpl implements ITransferInformationPersistence<DOWNLOAD_STATUS, DownloadInformation> {

@@ -20,6 +20,7 @@ import com.beust.jcommander.Parameters;
 import edu.kit.dama.client.status.CommandStatus;
 import edu.kit.dama.cmdline.generic.parameter.CommandLineParameters;
 import edu.kit.dama.dataworkflow.client.GenericSubmissionClient;
+import edu.kit.dama.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,42 +31,48 @@ import java.util.List;
 @Parameters(commandNames = "process", commandDescription = "Process open DataWorkflow tasks.")
 public class ProcessParameters extends CommandLineParameters {
 
-  /**
-   * List of task ids to handle. If none are provided all open tasks are
-   * handled.
-   */
-  @Parameter(names = {"-t", "--taskIds"}, description = "One or more task ids that should be processed.", validateWith = TaskIdParameterValidator.class, variableArity = true, required = false)
-  public List<Long> taskIds = new ArrayList<>();
+    /**
+     * List of task ids to handle. If none are provided all open tasks are
+     * handled.
+     */
+    @Parameter(names = {"-t", "--taskIds"}, description = "One or more task ids that should be processed.", validateWith = TaskIdParameterValidator.class, variableArity = true, required = false)
+    public List<Long> taskIds = new ArrayList<>();
 
-  /**
-   * Maximum number of task that will be processed within one call.
-   */
-  @Parameter(names = {"-c", "--count"}, description = "Maximum number of processed tasks. This option has no impact if option --taskIds is provided. (default: 10)", required = false)
-  public int count = 10;
+    /**
+     * GroupId whose tasks should be processed.
+     */
+    @Parameter(names = {"-g", "--group"}, description = "The group whose tasks should be processed. This option has no impact if option --taskIds is provided. (default: all)", required = false)
+    public String group = null;
 
-  /**
-   * List open tasks without any processing.
-   */
-  @Parameter(names = {"-l", "--listOnly"}, description = "Only list open tasks and their current status by their processing order.", required = false)
-  public boolean listOnly = false;
+    /**
+     * Maximum number of task that will be processed within one call.
+     */
+    @Parameter(names = {"-c", "--count"}, description = "Maximum number of processed tasks. This option has no impact if option --taskIds is provided. (default: 10)", required = false)
+    public int count = 10;
 
-  /**
-   * Parameter for output messages.
-   */
-  @Parameter(names = {"-v", "--verbose"}, description = "Show detailed output in listOnly mode.", required = false)
-  public boolean verbose = false;
+    /**
+     * List open tasks without any processing.
+     */
+    @Parameter(names = {"-l", "--listOnly"}, description = "Only list open tasks and their current status by their processing order.", required = false)
+    public boolean listOnly = false;
 
-  /**
-   * Default constructor.
-   */
-  public ProcessParameters() {
-    super("process");
-    this.listOnly = false;
-  }
+    /**
+     * Parameter for output messages.
+     */
+    @Parameter(names = {"-v", "--verbose"}, description = "Show detailed output in listOnly mode.", required = false)
+    public boolean verbose = false;
 
-  @Override
-  public CommandStatus executeCommand() {
-    return GenericSubmissionClient.processTasks(this);
-  }
+    /**
+     * Default constructor.
+     */
+    public ProcessParameters() {
+        super("process");
+        this.listOnly = false;
+    }
+
+    @Override
+    public CommandStatus executeCommand() {
+        return GenericSubmissionClient.processTasks(this);
+    }
 
 }

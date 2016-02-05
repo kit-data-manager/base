@@ -17,6 +17,11 @@ package edu.kit.sharing.test;
 
 import com.sun.jersey.api.core.HttpContext;
 import edu.kit.dama.authorization.entities.GroupId;
+import edu.kit.dama.authorization.entities.IDefaultGrant;
+import edu.kit.dama.authorization.entities.IDefaultReferenceId;
+import edu.kit.dama.authorization.entities.ISimpleGrantSet;
+import edu.kit.dama.authorization.entities.ISimpleGroupId;
+import edu.kit.dama.authorization.entities.ISimpleUserId;
 import edu.kit.dama.authorization.entities.ReferenceId;
 import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.authorization.entities.SecurableResourceId;
@@ -24,6 +29,7 @@ import edu.kit.dama.authorization.entities.impl.Grant;
 import edu.kit.dama.authorization.entities.impl.GrantSet;
 import edu.kit.dama.authorization.entities.impl.SecurableResource;
 import edu.kit.dama.authorization.entities.impl.User;
+import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.base.types.CheckServiceResponse;
 import edu.kit.dama.rest.base.types.ServiceStatus;
 import edu.kit.dama.rest.sharing.services.interfaces.ISharingService;
@@ -31,15 +37,13 @@ import edu.kit.dama.rest.sharing.types.GrantSetWrapper;
 import edu.kit.dama.rest.sharing.types.GrantWrapper;
 import edu.kit.dama.rest.sharing.types.GroupIdWrapper;
 import edu.kit.dama.rest.sharing.types.ReferenceIdWrapper;
-import static edu.kit.dama.rest.util.RestUtils.createObjectGraphStream;
-import edu.kit.dama.util.Constants;
 import java.util.HashMap;
 import java.util.List;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Objects;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 
@@ -50,195 +54,172 @@ import org.apache.commons.collections.Predicate;
 @Path("/SharingTest")
 public class SharingTestService implements ISharingService {
 
-  static List<SecurableResourceId> resources = new LinkedList<>();
-  static HashMap<SecurableResourceId, GrantSet> resourceGrants = new HashMap<>();
-  static List<ReferenceId> references = new LinkedList<>();
+    static List<SecurableResourceId> resources = new LinkedList<>();
+    static HashMap<SecurableResourceId, GrantSet> resourceGrants = new HashMap<>();
+    static List<ReferenceId> references = new LinkedList<>();
 
-  protected static void factoryGrant() {
+    protected static void factoryGrant() {
 
-    SecurableResource sr = new SecurableResource();
-    sr.setId(100l);
-    Grant g = new Grant();
-    GrantSet gs = new GrantSet();
-    g.setId(200l);
-    g.setGrantedRole(Role.MEMBER);
-    g.setGrantee(new User("testuser", Role.ADMINISTRATOR));
-    gs.getGrants().add(g);
-    resourceGrants.put(sr.getSecurableResourceId(), gs);
-  }
+        SecurableResource sr = new SecurableResource();
+        sr.setId(100l);
+        Grant g = new Grant();
+        GrantSet gs = new GrantSet();
+        g.setId(200l);
+        g.setGrantedRole(Role.MEMBER);
+        g.setGrantee(new User("testuser", Role.ADMINISTRATOR));
+        gs.getGrants().add(g);
+        resourceGrants.put(sr.getSecurableResourceId(), gs);
+    }
 
-  @Override
-  public StreamingOutput createReference(String pDomain,
-          String pDomainUniqueId, String pReferenceGroupId, String pRole, String pGroupId, HttpContext hc) {
+    @Override
+    public IEntityWrapper<? extends IDefaultReferenceId> createReference(String pDomain, String pDomainUniqueId, String pReferenceGroupId, String pRole, String pGroupId, HttpContext hc) {
+        SecurableResourceId resId = new SecurableResourceId(pDomain, pDomainUniqueId);
 
-    SecurableResourceId resId = new SecurableResourceId(pDomain, pDomainUniqueId);
+        CollectionUtils.find(references, new Predicate() {
 
-    CollectionUtils.find(references, new Predicate() {
+            @Override
+            public boolean evaluate(Object o) {
+                return false;
+            }
+        });
 
-      @Override
-      public boolean evaluate(Object o) {
-        return false;
-      }
-    });
+        ReferenceId rid = new ReferenceId(resId, new GroupId(pReferenceGroupId));
+        references.add(rid);
 
-    ReferenceId rid = new ReferenceId(resId, new GroupId(pReferenceGroupId));
-    references.add(rid);
+        return new ReferenceIdWrapper(rid);
+    }
 
-    return createObjectGraphStream(ReferenceIdWrapper.class,
-            Constants.REST_DEFAULT_OBJECT_GRAPH, new ReferenceIdWrapper(rid));
-  }
+    @Override
+    public IEntityWrapper<? extends IDefaultReferenceId> getReferences(String pDomain, String pDomainUniqueId, String pGroupId, HttpContext hc) {
+        final GroupId gid = new GroupId(pGroupId);
 
-  @Override
-  public StreamingOutput getReferences(String pDomain, String pDomainUniqueId,
-          String pGroupId, HttpContext hc) {
+        Collection rs = CollectionUtils.select(references, new Predicate() {
 
-    final GroupId gid = new GroupId(pGroupId);
+            @Override
+            public boolean evaluate(Object o) {
+                return ((ReferenceId) o).getGroupId().equals(gid);
+            }
+        });
+        
+        List<ReferenceId> referenceIds = new LinkedList<>();
+        for (Object r : rs) {
+            referenceIds.add(((ReferenceId) r));
+        }
+        return new ReferenceIdWrapper(referenceIds);
+    }
 
-    Collection rs = CollectionUtils.select(references, new Predicate() {
+    @Override
+    public IEntityWrapper<? extends ISimpleGroupId> getReferencedGroups(String pDomain, String pDomainUniqueId, String pRole, String pGroupId, HttpContext hc) {
+        final SecurableResourceId rid = new SecurableResourceId(pDomain, pDomainUniqueId);
 
-      @Override
-      public boolean evaluate(Object o) {
-        return ((ReferenceId) o).getGroupId().equals(gid);
-      }
-    });
+        Collection gs = CollectionUtils.select(references, new Predicate() {
 
-    List<ReferenceId> rl = new LinkedList<>(rs);
+            @Override
+            public boolean evaluate(Object o) {
+                return ((ReferenceId) o).getResourceId().equals(rid);
+            }
+        });
 
-    return createObjectGraphStream(ReferenceIdWrapper.class,
-            Constants.REST_DEFAULT_OBJECT_GRAPH, new ReferenceIdWrapper(rl));
-  }
+        List<GroupId> groupIds = new LinkedList<>();
+        for (Object r : gs) {
+            groupIds.add(((ReferenceId) r).getGroupId());
+        }
 
-  @Override
-  public StreamingOutput getReferencedGroups(String pDomain,
-          String pDomainUniqueId, String pRole, String pGroupId, HttpContext hc) {
+        return new GroupIdWrapper(groupIds);
+    }
 
-    final SecurableResourceId rid = new SecurableResourceId(pDomain,
-            pDomainUniqueId);
+    @Override
+    public Response deleteReference(String pDomain, String pDomainUniqueId,
+            String pGroupId, HttpContext hc) {
 
-    Collection gs = CollectionUtils.select(references, new Predicate() {
+        final SecurableResourceId rid = new SecurableResourceId(pDomain,
+                pDomainUniqueId);
+        final GroupId gid = new GroupId(pGroupId);
 
-      @Override
-      public boolean evaluate(Object o) {
-        return ((ReferenceId) o).getResourceId().equals(rid);
-      }
-    });
+        ReferenceId rr = (ReferenceId) CollectionUtils.find(references,
+                new Predicate() {
 
-    List<GroupId> gl = new LinkedList<>(gs);
-
-    return createObjectGraphStream(GroupIdWrapper.class,
-            Constants.REST_DEFAULT_OBJECT_GRAPH, new GroupIdWrapper(gl));
-  }
-
-  @Override
-  public Response deleteReference(String pDomain, String pDomainUniqueId,
-          String pGroupId, HttpContext hc) {
-
-    final SecurableResourceId rid = new SecurableResourceId(pDomain,
-            pDomainUniqueId);
-    final GroupId gid = new GroupId(pGroupId);
-
-    ReferenceId rr = (ReferenceId) CollectionUtils.find(references,
-            new Predicate() {
-
-              @Override
-              public boolean evaluate(Object o) {
+            @Override
+            public boolean evaluate(Object o) {
                 ReferenceId r = (ReferenceId) o;
                 return r.getSecurableResourceId() == rid
-                && r.getGroupId() == gid;
-              }
-            });
-
-    if (rr != null) {
-      references.remove(rr);
+                        && r.getGroupId() == gid;
+            }
+        });
+        references.remove(rr);
+        return Response.ok().build();
     }
 
-    return Response.ok().build();
-  }
+    @Override
+    public IEntityWrapper<? extends ISimpleGrantSet> getGrantSetForResource(String pDomain, String pDomainUniqueId, String pGroupId, HttpContext hc) {
+        SecurableResourceId rid = new SecurableResourceId(pDomain,
+                pDomainUniqueId);
 
-  @Override
-  public StreamingOutput getGrantSetForResource(String pDomain,
-          String pDomainUniqueId, String pGroupId, HttpContext hc) {
+        return new GrantSetWrapper(resourceGrants.get(rid));
+    }
 
-    SecurableResourceId rid = new SecurableResourceId(pDomain,
-            pDomainUniqueId);
+    @Override
+    public IEntityWrapper<? extends IDefaultGrant> getGrantById(Long pId, String pGroupId, HttpContext hc) {
 
-    GrantSet grs = resourceGrants.get(rid);
-
-    return createObjectGraphStream(GrantSetWrapper.class,
-            Constants.REST_DEFAULT_OBJECT_GRAPH, new GrantSetWrapper(grs));
-  }
-
-  @Override
-  public StreamingOutput getGrantById(final Long pId, String pGroupId,
-          HttpContext hc) {
-
-    for (GrantSet gg : resourceGrants.values()) {
-      for (Grant g : gg.getGrants()) {
-        if (g.getId() == pId) {
-          return createObjectGraphStream(GrantWrapper.class,
-                  Constants.REST_SIMPLE_OBJECT_GRAPH, new GrantWrapper(g));
+        for (GrantSet gg : resourceGrants.values()) {
+            for (Grant g : gg.getGrants()) {
+                if (Objects.equals(g.getId(), pId)) {
+                    return new GrantWrapper(g);
+                }
+            }
         }
-      }
+
+        return new GrantWrapper(0);
     }
 
-    return createObjectGraphStream(GrantWrapper.class,
-            Constants.REST_DEFAULT_OBJECT_GRAPH, new GrantWrapper(0));
-  }
+    @Override
+    public IEntityWrapper<? extends IDefaultGrant> createGrant(String pDomain, String pDomainUniqueId, String pUserId, String pGroupId, String pRole, HttpContext hc) {
+        SecurableResourceId rid = new SecurableResourceId(pDomain,
+                pDomainUniqueId);
 
-  @Override
-  public StreamingOutput createGrant(String pDomain, String pDomainUniqueId,
-          String pUserId, String pGroupId, String pRole, HttpContext hc) {
+        GrantSet grs = new GrantSet(new SecurableResource(rid), Role.MEMBER);
+        Grant gr = new Grant(new User(pUserId, Role.valueOf(pRole)), Role.
+                valueOf(pRole), grs);
+        gr.setId(300l);
+        grs.getGrants().add(gr);
+        resourceGrants.put(rid, grs);
 
-    SecurableResourceId rid = new SecurableResourceId(pDomain,
-            pDomainUniqueId);
+        return new GrantWrapper(gr);
+    }
 
-    GrantSet grs = new GrantSet(new SecurableResource(rid), Role.MEMBER);
-    Grant gr = new Grant(new User(pUserId, Role.valueOf(pRole)), Role.
-            valueOf(pRole), grs);
-    gr.setId(300l);
-    grs.getGrants().add(gr);
-    resourceGrants.put(rid, grs);
-
-    return createObjectGraphStream(GrantWrapper.class,
-            Constants.REST_DEFAULT_OBJECT_GRAPH, new GrantWrapper(gr));
-  }
-
-  @Override
-  public Response revokeGrant(final Long pId, String pGroupId, HttpContext hc) {
-
-    for (GrantSet gg : resourceGrants.values()) {
-      for (Grant g : gg.getGrants()) {
-        if (g.getId() == pId) {
-          gg.getGrants().remove(g);
+    @Override
+    public Response revokeGrant(final Long pId, String pGroupId, HttpContext hc) {
+        for (GrantSet gg : resourceGrants.values()) {
+            for (Grant g : gg.getGrants()) {
+                if (Objects.equals(g.getId(), pId)) {
+                    gg.getGrants().remove(g);
+                }
+            }
         }
-      }
+
+        return Response.ok().build();
     }
 
-    return Response.ok().build();
-  }
+    @Override
+    public Response revokeAllGrants(String pDomain, String pDomainUniqueId,
+            String pGroupId, HttpContext hc) {
 
-  @Override
-  public Response revokeAllGrants(String pDomain, String pDomainUniqueId,
-          String pGroupId, HttpContext hc) {
+        return Response.ok().build();
+    }
 
-    return Response.ok().build();
-  }
+    @Override
+    public IEntityWrapper<? extends IDefaultGrant> updateGrant(Long pId, String pGroupId, String pRole, HttpContext hc) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
-  @Override
-  public StreamingOutput updateGrant(Long pId, String pGroupId, String pRole,
-          HttpContext hc) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
+    @Override
+    public IEntityWrapper<? extends ISimpleUserId> getAuthorizedUsers(String pDomain, String pDomainUniqueId, String pRole, String pGroupId, HttpContext hc) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
-  @Override
-  public StreamingOutput getAuthorizedUsers(String pDomain,
-          String pDomainUniqueId, String pRole, String pGroupId, HttpContext hc) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
-  @Override
-  public Response checkService() {
-    return Response.status(200).entity(new CheckServiceResponse("SharingTest", ServiceStatus.OK)).build();
-  }
+    @Override
+    public Response checkService() {
+        return Response.status(200).entity(new CheckServiceResponse("SharingTest", ServiceStatus.OK)).build();
+    }
 
 }

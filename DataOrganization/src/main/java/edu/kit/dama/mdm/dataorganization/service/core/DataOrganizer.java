@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,7 @@ public interface DataOrganizer {
    * persisted.
    *
    * @param digitalObjectId the identifier of the digital object
-   * @param viewName
+   * @param viewName The name of the view that should be loaded.
    *
    * @return a persistent {@link IFileTree} instance.
    *
@@ -129,7 +129,7 @@ public interface DataOrganizer {
    * invalid handle are safe and result in an exception.
    *
    * @param digitalObjectId The object id.
-   * @param viewName
+   * @param viewName The name of the view the node is associated with.
    *
    * @return The root node id.
    *

@@ -32,6 +32,10 @@
         filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b9b9b9', endColorstr='#00e6e6e6',GradientType=0 ); /* IE6-9 */
     }
 
+    .v-popupview-popup-toback{
+        z-index: 10000!important;
+    }
+
     .v-label-invisible {
         display:none!important;
     }
@@ -86,7 +90,7 @@
     .mynavigationmargin{
         margin-left: 6px;
     }
-    
+
     .myclickablecomponent {
         cursor: pointer;
     }

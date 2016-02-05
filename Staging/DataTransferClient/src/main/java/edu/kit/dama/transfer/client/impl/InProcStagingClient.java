@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -138,26 +138,6 @@ public class InProcStagingClient extends AbstractTransferClient {
 
   @Override
   public boolean prepareTransfer() throws PrepareTransferException {
-    //The following block is not needed here as it is covered by AbstractTransferClient.prepare()
-   /* boolean result = true;
-     try {
-     LOGGER.debug("Restoring tree structure");
-     DataOrganizationUtils.restoreTreeStructure(getTransferTaskContainer().getFileTree(), getDestination(), transfers);
-     } catch (MalformedURLException ex) {
-     LOGGER.error("Failed to prepare transfer. File tree could not be restored.", ex);
-     result = false;
-     } catch (IOException ex) {
-     LOGGER.error("Failed to prepare transfer. File tree could not be restored.", ex);
-     result = false;
-     }
-
-     Set<Map.Entry<StagingFile, StagingFile>> entries = transfers.entrySet();
-     for (Map.Entry<StagingFile, StagingFile> entry : entries) {
-     LOGGER.debug("Adding transfer task from {} to {}", new Object[]{entry.getKey().getAbstractFile(), entry.getValue().getAbstractFile()});
-     addTransferTask(new TransferTask(entry.getKey().getAbstractFile(), entry.getValue().getAbstractFile()));
-     }
-
-     return result;*/
     return true;
   }
 
@@ -231,9 +211,9 @@ public class InProcStagingClient extends AbstractTransferClient {
   public boolean performStagingProcessors() throws StagingProcessorException {
     if (getStagingProcessors().length > 0) {
       throw new StagingProcessorException("Staging processors are currently not supported for this implementation.");
-    } else {
+    } /*else {
       LOGGER.info("Staging processors are currently not supported for this implementation. As there are no processors registered, I'll return 'TRUE'.");
-    }
+    }*/
     return true;
   }
 }

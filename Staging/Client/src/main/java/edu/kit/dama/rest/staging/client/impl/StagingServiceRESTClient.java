@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,10 +23,10 @@ import edu.kit.dama.rest.staging.types.DownloadInformationWrapper;
 import edu.kit.dama.rest.staging.types.IngestInformationWrapper;
 import edu.kit.dama.rest.SimpleRESTContext;
 import edu.kit.dama.rest.util.RestClientUtils;
-import edu.kit.dama.staging.entities.AttributeImpl;
-import edu.kit.dama.staging.entities.DataOrganizationNodeImpl;
-import edu.kit.dama.staging.entities.FileNodeImpl;
-import edu.kit.dama.staging.entities.LFNImpl;
+import edu.kit.dama.mdm.dataorganization.impl.staging.AttributeImpl;
+import edu.kit.dama.mdm.dataorganization.impl.staging.DataOrganizationNodeImpl;
+import edu.kit.dama.mdm.dataorganization.impl.staging.FileNodeImpl;
+import edu.kit.dama.mdm.dataorganization.impl.staging.LFNImpl;
 import edu.kit.dama.rest.staging.types.StagingAccessPointConfigurationWrapper;
 import edu.kit.dama.util.Constants;
 import java.net.URL;

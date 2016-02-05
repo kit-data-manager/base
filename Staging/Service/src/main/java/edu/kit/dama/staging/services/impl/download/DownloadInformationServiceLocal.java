@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -313,7 +313,7 @@ public final class DownloadInformationServiceLocal implements IDownloadInformati
       //reset status and error message
       existingEntity.setStatusEnum(DOWNLOAD_STATUS.SCHEDULED);
       existingEntity.setErrorMessage(null);
-      existingEntity.setClientAccessURL(null);
+      existingEntity.setClientAccessUrl(null);
       //reset expire timer
       existingEntity.setExpiresAt(System.currentTimeMillis() + DownloadInformation.DEFAULT_LIFETIME);
       existingEntity.setAccessPointId(props.getStagingAccessPointId());

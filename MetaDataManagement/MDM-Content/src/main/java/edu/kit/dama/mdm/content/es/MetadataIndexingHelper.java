@@ -136,8 +136,7 @@ public final class MetadataIndexingHelper {
   /**
    * Schedule a new indexing task for the provided digital object id and the
    * metadata document stored in the provided argument pIndexDocument. In
-   * contrast to {@link MetadataIndexingHelper#scheduleIndexingTask(edu.kit.dama.commons.types.DigitalObjectId, edu.kit.lsdf.adalapi.AbstractFile, edu.kit.authorization.entities.IAuthorizationContext)
-   * } the owning groupId is not obtained from the context but is provided
+   * contrast to {@link MetadataIndexingHelper#scheduleIndexingTask(edu.kit.dama.commons.types.DigitalObjectId, edu.kit.lsdf.adalapi.AbstractFile, edu.kit.dama.mdm.base.MetaDataSchema, edu.kit.dama.authorization.entities.UserId, edu.kit.dama.authorization.entities.GroupId, edu.kit.dama.authorization.entities.IAuthorizationContext) } the owning groupId is not obtained from the context but is provided
    * separately.
    *
    * @param pDigitalObjectId The digital object id the metadata document is
@@ -157,8 +156,7 @@ public final class MetadataIndexingHelper {
   /**
    * Schedule a new indexing task for the provided digital object id and the
    * metadata document stored in the provided argument pIndexDocument. In
-   * contrast to {@link MetadataIndexingHelper#scheduleIndexingTask(edu.kit.dama.commons.types.DigitalObjectId, edu.kit.lsdf.adalapi.AbstractFile, edu.kit.authorization.entities.IAuthorizationContext)
-   * } the owning groupId and userId is not obtained from the context but is
+   * contrast to {@link MetadataIndexingHelper#scheduleIndexingTask(edu.kit.dama.commons.types.DigitalObjectId, edu.kit.lsdf.adalapi.AbstractFile, edu.kit.dama.mdm.base.MetaDataSchema, edu.kit.dama.authorization.entities.UserId, edu.kit.dama.authorization.entities.GroupId, edu.kit.dama.authorization.entities.IAuthorizationContext) } the owning groupId and userId is not obtained from the context but is
    * provided separately.
    *
    * @param pDigitalObjectId The digital object id the metadata document is

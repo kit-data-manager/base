@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,22 +36,22 @@ import javax.tools.Diagnostic;
  *
  * <ul>
  *
- * <li>The annotation is applied to a field -> ERROR if not</li>
+ * <li>The annotation is applied to a field -&gt; ERROR if not</li>
  *
- * <li>The field is of type java.lang.String -> ERROR if not</li>
+ * <li>The field is of type java.lang.String -&gt; ERROR if not</li>
  *
- * <li>The annotation occurs once per class -> WARNING if not</li>
+ * <li>The annotation occurs once per class -&gt; WARNING if not</li>
  *
  * <li>The field is also annotated by
  *
- * @Column(nullable=false, unique=true) -> WARNING if not</li>
+ * &#64;Column(nullable=false, unique=true) -&gt; WARNING if not</li>
  *
  * </ul>
  *
  * The last point is only relevant/recommended when using JPA (if the processed
  * class is annotated by <i>@Entity</i>).
  *
- * @see https://github.com/pellaton/spring-configuration-validation-processor
+ * (see https://github.com/pellaton/spring-configuration-validation-processor)
  * @author jejkal
  */
 @SupportedAnnotationTypes(value = "edu.dama.kit.authorization.annotations.SecurableResourceIdField")

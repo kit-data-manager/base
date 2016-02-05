@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,7 @@ import edu.kit.dama.staging.exceptions.StagingProcessorException;
  * Currently, transfer processors are only supported for ingests. Typically,
  * staging processors will be only executed on the server side, e.g. for
  * metadata extraction or ingest validation. They are executed before the data
- * is copied to the archive, so processor-generated data can be archived,
- * too.<br/>
+ * is copied to the archive, so processor-generated data can be archived, too. *
  * Each processor consists of several phases:
  * <ul>
  * <li>Configuration: In this phase the processor is instantiated and configured
@@ -37,7 +36,8 @@ import edu.kit.dama.staging.exceptions.StagingProcessorException;
  * and is carried out on the client side before the data transfer is started. It
  * is available for staging processors of type PROCESSOR_TYPE.CLIENT_SIDE_ONLY
  * or PROCESSOR_TYPE.CLIENT_AND_SERVER_SIDE. Pre-transfer processing requires a
- * special client implementation capable of executing staging processors. At first,
+ * special client implementation capable of executing staging processors. At
+ * first,
  * <i>performPreTransferProcessing()</i> is called doing the actual processing,
  * afterwards <i>finalizePreTransferProcessing</i>
  * is called for finalization.</li>
@@ -49,7 +49,6 @@ import edu.kit.dama.staging.exceptions.StagingProcessorException;
  * <i>finalizePostTransferProcessing</i> is called for finalization.</li>
  * </ul>
  *
- * <br/>
  * A typical use case is the transfer validation using checksums (see
  * edu.kit.dama.rest.staging.client.processor.impl.InputHashOP). At first, the
  * hash method is configured before the transfer is scheduled. This

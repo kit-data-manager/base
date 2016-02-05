@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,7 +48,7 @@ public final class SecurableEntityHelper {
    * <tt> @ISecurableResourceIdField(domainName =
    * "edu.kit.dama.mdm.base.DigitalObject")
    *
-   * @Column(nullable = false, unique = true) private String
+   * &#64;Column(nullable = false, unique = true) private String
    * digitalObjectIdentifier;</tt>
    *
    * @param pEntity The entity of which the securable resource id should be

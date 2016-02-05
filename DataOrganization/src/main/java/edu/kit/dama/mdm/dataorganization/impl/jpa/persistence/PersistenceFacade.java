@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -132,8 +132,8 @@ final public class PersistenceFacade {
   /**
    * Queries the db and gets all the the nodes of a tree.
    *
-   * @param digitalObjectID
-   * @param viewName
+   * @param digitalObjectID The id of the object to load all nodes for.
+   * @param viewName The name of the view that should be loaded.
    *
    * @return All nodes of the tree.
    */
@@ -366,7 +366,7 @@ final public class PersistenceFacade {
    *
    * @param digitalObjectId The object id.
    * @param em The entityManager used to search.
-   * @param viewName
+   * @param viewName The name of the view.
    *
    * @return The root node.
    */

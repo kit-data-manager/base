@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,10 +37,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the AbstractExecutionEnvironmentHandler base class for
- * executing a DataWorkflow application locally on the machine where the repository
- * system is located. Compared to other EnvironmentHandler implementations the
- * LocalExecutionHandler executes the user application in a blocking way. This
- * means, as soon as {@link #startUserApplication(edu.kit.dama.dataworkflow.DataWorkflowTask)
+ * executing a DataWorkflow application locally on the machine where the
+ * repository system is located. Compared to other EnvironmentHandler
+ * implementations the LocalExecutionHandler executes the user application in a
+ * blocking way. This means, as soon as {@link #startUserApplication(edu.kit.dama.mdm.dataworkflow.DataWorkflowTask)
  * } returns, the execution has finished. For asynchronous monitoring a file
  * named .RUNNING is created withing the temp directory of the task. This file
  * is removed as soon as the task execution has finished, successful or not.
@@ -62,14 +62,15 @@ public class LocalExecutionHandler extends AbstractExecutionEnvironmentHandler {
    * Execute the user application. This method will start a new process running
    * the prepared user application locally. The method will return as soon as
    * the application has terminated. An asnychronous monitoring task my check
-   * whether the process is still running or not via {@link #isProcessingFinished(edu.kit.dama.dataworkflow.DataWorkflowTask)
+   * whether the process is still running or not via {@link #getTaskStatus(edu.kit.dama.mdm.dataworkflow.DataWorkflowTask)
    * } This method will check the runningIndicator file '.RUNNING', which only
    * exists as long as the application is running.
    *
    * @param pTask The task whose application should be executed.
    *
-   * @throws DataWorkflowProcessingException If either the startup or the processing
-   * fails for any reason, or if the user application returns an exit code != 0.
+   * @throws DataWorkflowProcessingException If either the startup or the
+   * processing fails for any reason, or if the user application returns an exit
+   * code != 0.
    */
   @Override
   public void startUserApplication(DataWorkflowTask pTask) throws DataWorkflowProcessingException {

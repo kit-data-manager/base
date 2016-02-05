@@ -1,5 +1,6 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,23 +28,27 @@ import edu.kit.dama.rest.staging.types.TransferTaskContainer;
  * directory structure from some caching location to the final storage location.
  * Normally, this should be an site-internal process without security but with
  * high-performance. For special use cases requiering security measures external
- * initialization of security is necessary.<br/> This interface basically
- * defines two main features: storing a directory structure and restoring it.
- * For storing a directory, the ingest entity, the source folder and the owner
- * have to be provided. The destination will be chosen by the implementation as
- * it depends on the structure of the underlaying storage infrastructure and its
- * organization.<br/> For restoring a directory tree within the cache, the
- * restore functionality is used. There the actual file tree is provided
- * including the user who requested the download. The location where the file
- * structure is restored is again chosen by the adapter implementation. The
- * digital object ID is extracted from the provided file tree. However, the file
- * tree does not have to represent the entire file structure of a digital
- * object. It can also contains a selection of the object. However, the
- * selection itself has to be managed by higher level implementations.<br/> The
- * final feature provided by this interface is the validation by hashing the
+ * initialization of security is necessary.
+ *
+ * This interface basically defines two main features: storing a directory
+ * structure and restoring it. For storing a directory, the ingest entity, the
+ * source folder and the owner have to be provided. The destination will be
+ * chosen by the implementation as it depends on the structure of the
+ * underlaying storage infrastructure and its organization.
+ *
+ * For restoring a directory tree within the cache, the restore functionality is
+ * used. There the actual file tree is provided including the user who requested
+ * the download. The location where the file structure is restored is again
+ * chosen by the adapter implementation. The digital object ID is extracted from
+ * the provided file tree. However, the file tree does not have to represent the
+ * entire file structure of a digital object. It can also contains a selection
+ * of the object. However, the selection itself has to be managed by higher
+ * level implementations.
+ *
+ * The final feature provided by this interface is the validation by hashing the
  * content of files. The availability of this feature highly depends on the
  * implementation of this adapter interface and on the storage technology. To
- * check whether a hash type is supported or not,
+ * check whether a hash type is supported or not, *
  * isHashTypeSupported(IStorageVirtualizationServiceAdapter.HASH_TYPE type) can
  * be used.
  *

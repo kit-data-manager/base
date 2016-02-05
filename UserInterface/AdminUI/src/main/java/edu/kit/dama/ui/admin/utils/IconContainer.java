@@ -20,7 +20,11 @@ package edu.kit.dama.ui.admin.utils;
  * @author dx6468
  */
 public class IconContainer {
+
     public final static String FIND = "img/find.png";
+    public final static String ADD = "img/add.png";
+    public final static String REFRESH = "img/recycle.png";
+    public final static String DELETE = "img/delete.png";
     public final static String FILTER_ADD = "img/funnel_add.png";
     public final static String FILTER_DELETE = "img/funnel_delete.png";
     public final static String GROUP_ADD = "img/users3_add.png";
@@ -32,6 +36,11 @@ public class IconContainer {
     public final static String NAVIGATE_RIGHT = "img/navigate_right.png";
     public final static String NAVIGATE_LEFT = "img/navigate_left.png";
     public final static String GEARS = "img/gears.png";
+    public final static String DATA_WORKFLOW = "img/branch.png";
+    public final static String STAGING_PROCESSOR = "img/gear_run.png";
+    public final static String JOB_SCHEDULE = "img/gear_time.png";
+    public final static String ACCESS_POINT = "img/server_into.png";
+    public final static String EXECUTION_ENVIRONMENT = "img/server_add.png";
     public final static String BULLET_GREEN = "img/bullet_ball_green.png";
     public final static String BULLET_GREY = "img/bullet_ball_grey.png";
     public final static String NO_ICON = "img/no_icon.png";

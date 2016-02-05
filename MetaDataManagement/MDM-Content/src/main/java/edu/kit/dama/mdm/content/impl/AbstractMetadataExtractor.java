@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,13 +64,16 @@ import org.w3c.dom.Element;
  * Extract the metadata from a dataset. This class has to be the parent class of
  * all metadata extractors of all communities. It obtains the BaseMetadata which
  * contains the administrative metadata available for all datasets. The
- * extracted metadata is stored in a file next to the data.<br/>
+ * extracted metadata is stored in a file next to the data.
+ * 
  * <b>Structure:</b>
  * <ul><li>staging directory</li>
+ * <li>
  * <ul> <li>data/ - holding raw data of dataset</li>
  * <li>generated/metadata/&lt;metadataSchemaIdentifier&gt;_&lt;DigitalObjectIdentifier&gt;.xml
  * - holding metadata of the dataset obtained by an according extractor</li>
  * </ul>
+ * </li>
  * </ul>
  *
  * By default this extractor used the standard KIT Data Manager extraction
@@ -229,15 +232,15 @@ public abstract class AbstractMetadataExtractor extends AbstractStagingProcessor
    * comes from, e.g. on the ingest machine for ingests or on the server machine
    * for downloads. In case of metadata extraction typically the extraction is
    * done only for ingests and on the server side during post transfer
-   * processing.
+   * processing. (see
+   * {@link AbstractStagingProcessor#performPostTransferProcessing(edu.kit.dama.rest.staging.types.TransferTaskContainer)})
+   *
    *
    * @param pContainer The transfer task container which contains the file tree
    * on the transfer source machine. This should be locally and all files in the
    * tree should be accessible in a posix-like way.
    *
    * @throws StagingProcessorException If the processor fails.
-   * @see
-   * StagingProcessor#performPreTransferProcessing(edu.kit.dama.staging.entities.TransferTaskContainer)
    */
   protected abstract void performPreTransferExtraction(TransferTaskContainer pContainer) throws StagingProcessorException;
 
@@ -249,18 +252,17 @@ public abstract class AbstractMetadataExtractor extends AbstractStagingProcessor
   /**
    * Create XML element containing community specific metadata. This element
    * will be inserted in the metadata xml. This method will be called inside the
-   * method finalizePostTransferProcessing
+   * method finalizePostTransferProcessing. (see
+   * {@link AbstractStagingProcessor#finalizePostTransferProcessing(edu.kit.dama.rest.staging.types.TransferTaskContainer)})
    *
    * @param pContainer The transfer task container which contains the file tree
    * on the transfer source machine. This should be locally and all files in the
    * tree should be accessible in a posix-like way. This is necessary as some
-   * metadata might be extracted from uploaded files.
+   * metadata might be extracted from uploaded files. 
    *
    * @return community specific metadata as XML element.
    *
    * @throws MetaDataExtractionException Error during extraction.
-   * @see
-   * StagingProcessor#performPreTransferProcessing(edu.kit.dama.staging.entities.TransferTaskContainer)
    */
   protected abstract Element createCommunitySpecificElement(TransferTaskContainer pContainer) throws MetaDataExtractionException;
 
@@ -281,8 +283,6 @@ public abstract class AbstractMetadataExtractor extends AbstractStagingProcessor
    * in the tree should be accessible in a posix-like way.
    *
    * @throws StagingProcessorException If the processor fails.
-   * @see
-   * StagingProcessor#performPreTransferProcessing(edu.kit.dama.staging.entities.TransferTaskContainer)
    */
   private void performPostTransferExtraction(TransferTaskContainer pContainer) throws StagingProcessorException {
     digitalObjectIdentifier = pContainer.getTransferInformation().getDigitalObjectId();

@@ -15,27 +15,21 @@
  */
 package edu.kit.dama.ui.admin.staging.processors;
 
-import com.vaadin.data.Property;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
-import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.GridLayout;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
-import com.vaadin.ui.ListSelect;
 import com.vaadin.ui.NativeButton;
-import com.vaadin.ui.Panel;
-import com.vaadin.ui.TextField;
 import com.vaadin.ui.themes.BaseTheme;
-import com.vaadin.ui.themes.LiferayTheme;
-import edu.kit.dama.authorization.entities.Role;
+import com.zybnet.autocomplete.server.AutocompleteField;
+import com.zybnet.autocomplete.server.AutocompleteQueryListener;
+import com.zybnet.autocomplete.server.AutocompleteSuggestionPickedListener;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.ui.admin.AdminUIMainView;
 import edu.kit.dama.ui.admin.exception.MsgBuilder;
-import edu.kit.dama.ui.admin.exception.NoteBuilder;
-import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.IconContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
@@ -44,11 +38,14 @@ import edu.kit.dama.commons.exceptions.ConfigurationException;
 import edu.kit.dama.commons.exceptions.PropertyValidationException;
 import edu.kit.dama.staging.util.StagingConfigurationPersistence;
 import edu.kit.dama.staging.processor.AbstractStagingProcessor;
+import edu.kit.dama.ui.admin.AbstractConfigurationTab;
+import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.commons.util.UIUtils7;
-import static edu.kit.dama.util.Constants.USERS_GROUP_ID;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Set;
+import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,71 +53,27 @@ import org.slf4j.LoggerFactory;
  *
  * @author dx6468
  */
-public class StagingProcessorConfigurationTab extends CustomComponent {
+public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<StagingProcessor> {
 
-    private static final Logger LOGGER
-            = LoggerFactory.getLogger(StagingProcessorConfigurationTab.class);
-    private static final String DEBUG_ID_PREFIX
-            = StagingProcessorConfigurationTab.class.getName() + "_";
+    private static final Logger LOGGER = LoggerFactory.getLogger(StagingProcessorConfigurationTab.class);
+    private String DEBUG_ID_PREFIX = StagingProcessorConfigurationTab.class.getName() + "_";
 
-    public static final String NEW_PROCESSOR_CAPTION = "NEW";
-    public static final String NEW_PROCESSOR_UNIQUE_ID = "MINUS_ONE_PROCESSOR";
-
-    private final AdminUIMainView parentApp;
     private GridLayout mainLayout;
-    private ListSelect processorLister;
-    private TextField implementationClassField;
+    private AutocompleteField<String> implementationClassField;
     private NativeButton loadImplementationClassButton;
-    private Panel propertiesPanel;
-    private NativeButton navigationButton;
-    private HorizontalLayout bulletLineLayout;
-    private BasicPropertiesLayout basicPropertiesLayout;
-    private SpecificPropertiesLayout specificPropertiesLayout;
-    private NativeButton commitChangesButton;
-    private StagingProcessor selectedProcessor = StagingProcessor.factoryNewStagingProcessor();
-    private PropertiesLayout propertiesLayout;
-    private NativeButton bulletBasic;
-    private NativeButton bulletSpecific;
-
-    public enum PropertiesLayout {
-
-        BASIC,
-        SPECIFIC;
-    }
-
-    public enum ListSelection {
-
-        NO,
-        NEW,
-        VALID,
-        INVALID;
-    }
+    private StagingProcessorBasePropertiesLayout basicPropertiesLayout;
 
     public StagingProcessorConfigurationTab(AdminUIMainView pParentApp) {
-        parentApp = pParentApp;
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + " ...");
-
-        setId(DEBUG_ID_PREFIX.substring(0, DEBUG_ID_PREFIX.length() - 1));
-
-        setCompositionRoot(getMainLayout());
-        update();
+        super(pParentApp);
+        DEBUG_ID_PREFIX += hashCode() + "_";
     }
 
     /**
      *
      * @return
      */
-    private GridLayout getMainLayout() {
-        if (mainLayout == null) {
-            buildMainLayout();
-        }
-        return mainLayout;
-    }
-
-    /**
-     *
-     */
-    private void buildMainLayout() {
+    @Override
+    public GridLayout buildMainLayout() {
         String id = "mainLayout";
         LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
@@ -132,207 +85,84 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
         mainLayout.setMargin(true);
 
         // Add components to mainLayout
-        mainLayout.addComponent(getProcessorLister(), 0, 0, 0, 5);
+        mainLayout.addComponent(getElementList(), 0, 0, 0, 5);
         mainLayout.addComponent(getImplementationClassField(), 1, 0);
         mainLayout.addComponent(getLoadImplementationClassButton(), 2, 0);
         mainLayout.addComponent(new Label("<p> <hr/>", ContentMode.HTML), 1, 1, 2, 1);
-        mainLayout.addComponent(getPropertiesPanel(), 1, 2);
+        //mainLayout.addComponent(getPropertiesPanel(), 1, 2);
+        HorizontalLayout coreLayout = new HorizontalLayout(getNavigateLeftButton(), getPropertiesPanel(), getNavigateRightButton());
+        coreLayout.setSizeFull();
+        coreLayout.setExpandRatio(getNavigateLeftButton(), .05f);
+        coreLayout.setComponentAlignment(getNavigateLeftButton(), Alignment.MIDDLE_LEFT);
+        coreLayout.setExpandRatio(getPropertiesPanel(), .9f);
+        coreLayout.setExpandRatio(getNavigateRightButton(), .05f);
+        coreLayout.setComponentAlignment(getNavigateRightButton(), Alignment.MIDDLE_RIGHT);
+        mainLayout.addComponent(coreLayout, 1, 2, 2, 2);
         mainLayout.addComponent(new Label("<hr/>", ContentMode.HTML), 1, 3, 2, 3);
-        mainLayout.addComponent(getNavigationButton(), 2, 2);
+        // mainLayout.addComponent(getNavigationButton(), 2, 2);
         mainLayout.addComponent(getBulletLineLayout(), 1, 4, 2, 4);
         mainLayout.addComponent(getCommitChangesButton(), 1, 5, 2, 5);
 
-        mainLayout.setComponentAlignment(
-                getImplementationClassField(), Alignment.BOTTOM_LEFT);
-        mainLayout.setComponentAlignment(
-                getLoadImplementationClassButton(), Alignment.BOTTOM_RIGHT);
-        mainLayout.setComponentAlignment(
-                getNavigationButton(), Alignment.MIDDLE_RIGHT);
-        mainLayout.setComponentAlignment(
-                getBulletLineLayout(), Alignment.TOP_CENTER);
-        mainLayout.setComponentAlignment(
-                getCommitChangesButton(), Alignment.BOTTOM_RIGHT);
+        mainLayout.setComponentAlignment(getImplementationClassField(), Alignment.BOTTOM_LEFT);
+        mainLayout.setComponentAlignment(getLoadImplementationClassButton(), Alignment.BOTTOM_RIGHT);
+        // mainLayout.setComponentAlignment(getNavigationButton(), Alignment.MIDDLE_RIGHT);
+        mainLayout.setComponentAlignment(getBulletLineLayout(), Alignment.TOP_CENTER);
+        mainLayout.setComponentAlignment(getCommitChangesButton(), Alignment.BOTTOM_RIGHT);
 
         mainLayout.setColumnExpandRatio(0, 0.3f);
         mainLayout.setColumnExpandRatio(1, 0.69f);
         mainLayout.setColumnExpandRatio(2, 0.01f);
+        return mainLayout;
     }
 
-    /**
-     *
-     * @return
-     */
-    public final ListSelect getProcessorLister() {
-        if (processorLister == null) {
-            buildProcessorLister();
-        }
-        return processorLister;
-    }
-
-    /**
-     *
-     */
-    private void buildProcessorLister() {
-        String id = "processorLister";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-        processorLister = new ListSelect("AVAILABLE PROCESSORS");
-        processorLister.setId(DEBUG_ID_PREFIX + id);
-        processorLister.setWidth("95%");
-        processorLister.setHeight("100%");
-        processorLister.setImmediate(true);
-        processorLister.setNullSelectionAllowed(false);
-        processorLister.addStyleName(CSSTokenContainer.BOLD_CAPTION);
-
-        processorLister.addValueChangeListener(new Property.ValueChangeListener() {
-
-            @Override
-            public void valueChange(Property.ValueChangeEvent event) {
-                ListSelection listSelection = validateListSelection();
-                switch (validateListSelection()) {
-                    case NO:
-                        fireNoListEntrySelected();
-                        break;
-                    case NEW:
-                        fireNewInstanceSelected();
-                        break;
-                    case VALID:
-                        fireValidListEntrySelected();
-                        break;
-                    case INVALID:
-                        fireInvalidListEntrySelected();
-                        break;
-                    default:
-                        UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
-                                + "'Staging Access Point'. " + NoteBuilder.CONTACT, -1);
-                        LOGGER.error("Failed to update " + this.getClass().getSimpleName()
-                                + ". Cause: Undefined enum constant detected, namely '"
-                                + listSelection.name() + "'.");
-                        break;
-                }
-            }
-        });
-    }
-
-    /**
-     *
-     */
-    private ListSelection validateListSelection() {
-        // Get selected list entry
-        String processorUniqueId = (String) getProcessorLister().getValue();
-
-        // Validate selection
-        if (processorUniqueId == null) {
-            return ListSelection.NO;
-        }
-
-        if (NEW_PROCESSOR_UNIQUE_ID.equals(processorUniqueId)) {
-            selectedProcessor = StagingProcessor.factoryNewStagingProcessor();
-            return ListSelection.NEW;
-        }
-
-        // Find selected processor in the database
-        selectedProcessor = StagingConfigurationPersistence
-                .getSingleton(null).findStagingProcessorById(processorUniqueId);
-
-        if (selectedProcessor == null) {
-            selectedProcessor = StagingProcessor.factoryNewStagingProcessor();
-            return ListSelection.INVALID;
+    @Override
+    public void resetComponents() {
+        getImplementationClassField().setReadOnly(false);
+        StagingProcessor selection = loadElementById(getSelectedElementId());
+        if (selection == null || selection.getImplementationClass() == null) {
+            getImplementationClassField().clearChoices();
         } else {
-            return ListSelection.VALID;
+            getImplementationClassField().setText(selection.getImplementationClass());
         }
-    }
-
-    /**
-     *
-     */
-    private void fireNewInstanceSelected() {
-        resetConfigurationComponents();
-        setEnabledComponents(ListSelection.NEW);
-    }
-
-    /**
-     *
-     */
-    private void fireValidListEntrySelected() {
-        getImplementationClassField().setReadOnly(false);
-        getImplementationClassField().setValue(selectedProcessor.getImplementationClass());
-        try {
-            AbstractStagingProcessor processorInstance = createProcessorInstance(
-                    selectedProcessor.getImplementationClass());
-            getBasicPropertiesLayout().updateComponents(selectedProcessor);
-            getSpecificPropertiesLayout().updateComponents(processorInstance,
-                    selectedProcessor.getPropertiesAsObject());
-            setEnabledComponents(ListSelection.VALID);
-        } catch (ConfigurationException ex) {
-            parentApp.showError("Update of 'Staging Processor' not possible! Cause: " + ex.getMessage());
-            LOGGER.error("Failed to update '" + StagingProcessorConfigurationTab.class.getSimpleName()
-                    + "'. Cause: " + ex.getMessage(), ex);
-            resetConfigurationComponents();
-            setEnabledComponents(ListSelection.INVALID);
-        } catch (UIComponentUpdateException | IOException ex) {
-            parentApp.showError("Update of 'Staging Processor' not possible! Cause: " + ex.getMessage());
-            LOGGER.error(MsgBuilder.updateFailed(getPropertiesPanel().getId()) + "Cause: " + ex.getMessage(), ex);
-            setEnabledComponents(ListSelection.INVALID);
-        }
-    }
-
-    /**
-     *
-     */
-    private void fireInvalidListEntrySelected() {
-        parentApp.showWarning("Processor not found in database.");
-        resetConfigurationComponents();
-        setEnabledComponents(ListSelection.INVALID);
-    }
-
-    /**
-     *
-     */
-    private void fireNoListEntrySelected() {
-        resetConfigurationComponents();
-        setEnabledComponents(ListSelection.NO);
-    }
-
-    /**
-     *
-     */
-    private void resetConfigurationComponents() {
-        getImplementationClassField().setReadOnly(false);
-        getImplementationClassField().setValue(
-                selectedProcessor.getImplementationClass());
-        getBasicPropertiesLayout().reset();
-        getSpecificPropertiesLayout().reset();
-        setPropertiesLayout(PropertiesLayout.BASIC);
     }
 
     /**
      *
      * @return
      */
-    public TextField getImplementationClassField() {
+    public AutocompleteField<String> getImplementationClassField() {
         if (implementationClassField == null) {
-            buildImplementationClassField();
+            String id = "implementationClassField";
+            LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
+
+            implementationClassField = new AutocompleteField<>();
+            implementationClassField.setCaption("PROCESSOR IMPLEMENTATION CLASS");
+            implementationClassField.setId(DEBUG_ID_PREFIX + id);
+            implementationClassField.setImmediate(true);
+            implementationClassField.setWidth("100%");
+            implementationClassField.setRequired(true);
+            implementationClassField.addStyleName(CSSTokenContainer.BOLD_CAPTION);
+            implementationClassField.setMinimumQueryCharacters(3);
+            implementationClassField.setQueryListener(new AutocompleteQueryListener<String>() {
+                @Override
+                public void handleUserQuery(AutocompleteField<String> field, String query) {
+                    Reflections reflections = new Reflections(query);
+                    Set<Class<? extends AbstractStagingProcessor>> jobs = reflections.getSubTypesOf(AbstractStagingProcessor.class);
+                    for (Class c : jobs) {
+                        field.addSuggestion(c.getCanonicalName(), c.getCanonicalName());
+                    }
+                }
+            });
+
+            implementationClassField.setSuggestionPickedListener(new AutocompleteSuggestionPickedListener<String>() {
+                @Override
+                public void onSuggestionPicked(String page) {
+                    implementationClassField.setText(page);
+                }
+            });
+
         }
         return implementationClassField;
-    }
-
-    /**
-     *
-     */
-    private void buildImplementationClassField() {
-        String id = "implementationClassField";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-        implementationClassField = new TextField("PROCESSOR IMPLEMENTATION CLASS");
-        implementationClassField.setId(DEBUG_ID_PREFIX + id);
-        implementationClassField.setImmediate(true);
-        implementationClassField.setWidth("100%");
-        implementationClassField.setRequired(true);
-        implementationClassField.setNullRepresentation("");
-        implementationClassField.addStyleName(CSSTokenContainer.BOLD_CAPTION);
-        implementationClassField.setInputPrompt(
-                "Enter (Java) classpath of processor implementation ...");
     }
 
     /**
@@ -341,44 +171,37 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
      */
     public NativeButton getLoadImplementationClassButton() {
         if (loadImplementationClassButton == null) {
-            buildLoadImplementationClassButton();
+            String id = "loadImplementationClassField";
+            LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
+
+            loadImplementationClassButton = new NativeButton();
+            loadImplementationClassButton.setId(DEBUG_ID_PREFIX + id);
+            loadImplementationClassButton.setIcon(
+                    new ThemeResource(IconContainer.TEXT_CODE_JAVA_INPUT));
+            loadImplementationClassButton.setStyleName(BaseTheme.BUTTON_LINK);
+            loadImplementationClassButton.setImmediate(true);
+            loadImplementationClassButton.setDescription("Load the entered implementation "
+                    + "class for setting the configuration of the requested processor");
+
+            loadImplementationClassButton.addClickListener(new Button.ClickListener() {
+
+                @Override
+                public void buttonClick(Button.ClickEvent event) {
+                    try {
+                        StagingProcessor newProcessor = createProcessor();
+                        commitProcessor(newProcessor);
+                        addNewElementInstance(newProcessor);
+                        setEnabledComponents(ListSelection.VALID);
+                        getParentApp().showNotification("Staging processor successfully created.");
+                    } catch (ConfigurationException ex) {
+                        getParentApp().showError("Implementation class not loadable! Cause: " + ex.getMessage());
+                        LOGGER.error("Failed to load requested implementation class. Cause: "
+                                + ex.getMessage(), ex);
+                    }
+                }
+            });
         }
         return loadImplementationClassButton;
-    }
-
-    /**
-     *
-     */
-    private void buildLoadImplementationClassButton() {
-        String id = "loadImplementationClassField";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-        loadImplementationClassButton = new NativeButton();
-        loadImplementationClassButton.setId(DEBUG_ID_PREFIX + id);
-        loadImplementationClassButton.setIcon(
-                new ThemeResource(IconContainer.TEXT_CODE_JAVA_INPUT));
-        loadImplementationClassButton.setStyleName(BaseTheme.BUTTON_LINK);
-        loadImplementationClassButton.setImmediate(true);
-        loadImplementationClassButton.setDescription("Load the entered implementation "
-                + "class for setting the configuration of the requested processor");
-
-        loadImplementationClassButton.addClickListener(new Button.ClickListener() {
-
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                try {
-                    StagingProcessor newProcessor = createProcessor();
-                    commitProcessor(newProcessor);
-                    addProcessorListerItem(newProcessor);
-                    setEnabledComponents(ListSelection.VALID);
-                    parentApp.showNotification("Staging processor successfully created.");
-                } catch (ConfigurationException ex) {
-                    parentApp.showError("Implementation class not loadable! Cause: " + ex.getMessage());
-                    LOGGER.error("Failed to load requested implementation class. Cause: "
-                            + ex.getMessage(), ex);
-                }
-            }
-        });
     }
 
     /**
@@ -393,12 +216,12 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
         }
 
         // Valid implementation class name => Create new processor
-        String implClassName = getImplementationClassField().getValue();
+        String implClassName = getImplementationClassField().getText();
         try {
             // Build instance of implementation class
             createProcessorInstance(implClassName);
         } catch (ConfigurationException ex) {
-            setPropertiesLayout(PropertiesLayout.BASIC);
+            setPropertiesLayout(PropertiesLayoutType.BASIC);
             throw new ConfigurationException("Failed to create access provider instance. ", ex);
         }
         // Create new processor
@@ -421,20 +244,18 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
     }
 
     /**
+     * Create a new processor instance.
      *
      * @param implClassName
      * @return
      * @throws ConfigurationException
      */
-    private AbstractStagingProcessor createProcessorInstance(String implClassName,
-            StagingProcessor processor) throws ConfigurationException {
+    private AbstractStagingProcessor createProcessorInstance(String implClassName, StagingProcessor processor) throws ConfigurationException {
         try {
             if (processor == null) {
-                return (AbstractStagingProcessor) Class.forName(implClassName)
-                        .getConstructor(String.class).newInstance("123");
+                return (AbstractStagingProcessor) Class.forName(implClassName).getConstructor(String.class).newInstance("123");
             }
-            return (AbstractStagingProcessor) Class.forName(implClassName)
-                    .getConstructor(String.class).newInstance(processor.getName());
+            return (AbstractStagingProcessor) Class.forName(implClassName).getConstructor(String.class).newInstance(processor.getName());
         } catch (ClassNotFoundException ex) {
             String msg = "Implementation class '" + implClassName + "' not found.";
             throw new ConfigurationException(msg, ex);
@@ -460,278 +281,90 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
         }
     }
 
-    /**
-     *
-     * @return
-     */
-    public Panel getPropertiesPanel() {
-        if (propertiesPanel == null) {
-            buildPropertiesPanel();
-        }
-        return propertiesPanel;
-    }
-
-    /**
-     *
-     */
-    private void buildPropertiesPanel() {
-        String id = "propertiesPanel";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-        propertiesPanel = new Panel();
-        propertiesPanel.setId(DEBUG_ID_PREFIX + id);
-        propertiesPanel.setHeight("300px");
-        propertiesPanel.setStyleName(LiferayTheme.PANEL_LIGHT);
-        propertiesPanel.setImmediate(true);
-
-        setPropertiesLayout(PropertiesLayout.BASIC);
-    }
-
-    /**
-     *
-     * @return
-     */
-    public BasicPropertiesLayout getBasicPropertiesLayout() {
+    @Override
+    public StagingProcessorBasePropertiesLayout getBasicPropertiesLayout() {
         if (basicPropertiesLayout == null) {
-            basicPropertiesLayout = new BasicPropertiesLayout(parentApp);
+            basicPropertiesLayout = new StagingProcessorBasePropertiesLayout(getParentApp());
         }
         return basicPropertiesLayout;
     }
 
-    /**
-     *
-     * @return
-     */
-    public SpecificPropertiesLayout getSpecificPropertiesLayout() {
-        if (specificPropertiesLayout == null) {
-            specificPropertiesLayout = new SpecificPropertiesLayout();
+    @Override
+    public void commitChanges() {
+        StagingProcessor selectedElement = loadElementById(getSelectedElementId());
+        try {
+            validateRequiredComponentValues();
+            StagingProcessor changedProcessor = changeProcessor(selectedElement);
+            checkProcessorConfigurability(changedProcessor);
+            commitProcessor(changedProcessor);
+            updateElementInstance(changedProcessor);
+            getParentApp().showNotification("Changes successfully committed.");
+        } catch (ConfigurationException ex) {
+            getParentApp().showError("Staging processor not modifiable! Cause: " + ex.getMessage());
+            String object = "the changed processor '" + selectedElement.getUniqueIdentifier() + "'";
+            LOGGER.error(MsgBuilder.commitFailed(object) + "Cause: " + ex.getMessage(), ex);
         }
-        return specificPropertiesLayout;
     }
 
-    /**
-     *
-     * @return
-     */
-    public NativeButton getNavigationButton() {
-        if (navigationButton == null) {
-            buildNavigationButton();
-        }
-        return navigationButton;
+    @Override
+    public void addNewElementInstance(StagingProcessor pElementToAdd) {
+        getElementList().addItem(pElementToAdd.getUniqueIdentifier());
+        getElementList().setItemCaption(pElementToAdd.getUniqueIdentifier(),
+                getProcessorItemCaption(pElementToAdd));
+        getElementList().select(pElementToAdd.getUniqueIdentifier());
     }
 
-    /**
-     *
-     */
-    private void buildNavigationButton() {
-        String id = "navigationButton";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
+    @Override
+    public void updateElementInstance(StagingProcessor pElementToUpdate) {
+        getElementList().removeItem(pElementToUpdate.getUniqueIdentifier());
+        addNewElementInstance(pElementToUpdate);
+    }
 
-        navigationButton = new NativeButton();
-        navigationButton.setId(DEBUG_ID_PREFIX + id);
-        navigationButton.setIcon(new ThemeResource(IconContainer.NAVIGATE_RIGHT));
-        navigationButton.setStyleName(BaseTheme.BUTTON_LINK);
-        navigationButton.setImmediate(true);
+    @Override
+    public void enableComponents(boolean pValue) {
+        getImplementationClassField().setReadOnly(!pValue);
+        getLoadImplementationClassButton().setEnabled(pValue);
+    }
 
-        navigationButton.addClickListener(new Button.ClickListener() {
+    @Override
+    public boolean elementWithIdExists(String pId) {
+        return (StagingConfigurationPersistence.getSingleton().findStagingProcessorById(pId) != null);
+    }
 
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                switch (getPropertiesLayout()) {
-                    case BASIC:
-                        setPropertiesLayout(PropertiesLayout.SPECIFIC);
-                        break;
-                    case SPECIFIC:
-                        setPropertiesLayout(PropertiesLayout.BASIC);
-                        break;
-                    default:
-                        UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
-                                + "'Staging Access Point'. " + NoteBuilder.CONTACT, -1);
-                        LOGGER.error("Failed to update " + getPropertiesPanel().getId()
-                                + ". Cause: Undefined enum constant detected, namely '"
-                                + getPropertiesLayout().name() + "'.");
-                        break;
-                }
+    @Override
+    public StagingProcessor loadElementById(String pId) {
+        if (NEW_UNIQUE_ID.equals(pId)) {
+            return StagingProcessor.factoryNewStagingProcessor();
+        }
+        return StagingConfigurationPersistence.getSingleton().findStagingProcessorById(pId);
+    }
+
+    @Override
+    public void selectElement(StagingProcessor pSelectedElement) throws ConfigurationException, UIComponentUpdateException {
+        implementationClassField.setReadOnly(false);
+        if (pSelectedElement != null && pSelectedElement.getImplementationClass() != null) {
+            getImplementationClassField().setText(pSelectedElement.getImplementationClass());
+            AbstractStagingProcessor processorInstance = createProcessorInstance(pSelectedElement.getImplementationClass());
+            try {
+                getSpecificPropertiesLayout().updateComponents(processorInstance, pSelectedElement.getPropertiesAsObject());
+            } catch (IOException ex) {
+                throw new ConfigurationException("Failed to read properties from provided staging processor.", ex);
             }
-        });
-    }
-
-    /**
-     *
-     * @return
-     */
-    public HorizontalLayout getBulletLineLayout() {
-        if (bulletLineLayout == null) {
-            buildBulletLineLayout();
+        } else {
+            getImplementationClassField().clearChoices();
+            getSpecificPropertiesLayout().reset();
         }
-        return bulletLineLayout;
     }
 
-    /**
-     *
-     */
-    private void buildBulletLineLayout() {
-        String id = "bulletLineLayout";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-        bulletLineLayout = new HorizontalLayout();
-        bulletLineLayout.setId(DEBUG_ID_PREFIX + id);
-        bulletLineLayout.setImmediate(true);
-
-        bulletLineLayout.addComponent(getBulletBasic());
-        bulletLineLayout.addComponent(getBulletSpecific());
-    }
-
-    /**
-     * @return the bulletBasic
-     */
-    public NativeButton getBulletBasic() {
-        if (bulletBasic == null) {
-            buildBulletBasic();
+    @Override
+    public void fillElementList() {
+        List<StagingProcessor> processors = StagingConfigurationPersistence
+                .getSingleton(null).findAllStagingProcessors();
+        for (StagingProcessor processor : processors) {
+            getElementList().addItem(processor.getUniqueIdentifier());
+            getElementList().setItemCaption(processor.getUniqueIdentifier(),
+                    getProcessorItemCaption(processor));
         }
-        return bulletBasic;
-    }
-
-    /**
-     *
-     */
-    private void buildBulletBasic() {
-        String id = "bulletBasic";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-        bulletBasic = new NativeButton();
-        bulletBasic.setId(DEBUG_ID_PREFIX + id);
-        bulletBasic.setIcon(new ThemeResource(IconContainer.BULLET_GREEN));
-        bulletBasic.setStyleName(BaseTheme.BUTTON_LINK);
-        bulletBasic.setWidth("17px");
-
-        bulletBasic.addClickListener(new Button.ClickListener() {
-
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                switch (getPropertiesLayout()) {
-                    case BASIC:
-                        break;
-                    case SPECIFIC:
-                        setPropertiesLayout(PropertiesLayout.BASIC);
-                        break;
-                    default:
-                        UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
-                                + "'Staging Access Point'. " + NoteBuilder.CONTACT, -1);
-                        LOGGER.error("Failed to update " + getPropertiesPanel().getId()
-                                + ". Cause: Undefined enum constant detected, namely '"
-                                + getPropertiesLayout().name() + "'.");
-                        break;
-                }
-            }
-        });
-    }
-
-    /**
-     * @return the bulletSpecific
-     */
-    public NativeButton getBulletSpecific() {
-        if (bulletSpecific == null) {
-            buildBulletSpecific();
-        }
-        return bulletSpecific;
-    }
-
-    /**
-     *
-     */
-    private void buildBulletSpecific() {
-        String id = "bulletSpecific";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-        bulletSpecific = new NativeButton();
-        bulletSpecific.setId(DEBUG_ID_PREFIX + id);
-        bulletSpecific.setIcon(new ThemeResource(IconContainer.BULLET_GREY));
-        bulletSpecific.setStyleName(BaseTheme.BUTTON_LINK);
-        bulletSpecific.setWidth("17px");
-
-        bulletSpecific.addClickListener(new Button.ClickListener() {
-
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                switch (getPropertiesLayout()) {
-                    case BASIC:
-                        setPropertiesLayout(PropertiesLayout.SPECIFIC);
-                        break;
-                    case SPECIFIC:
-                        break;
-                    default:
-                        UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
-                                + "'Staging Access Point'. " + NoteBuilder.CONTACT, -1);
-                        LOGGER.error("Failed to update " + getPropertiesPanel().getId()
-                                + ". Cause: Undefined enum constant detected, namely '"
-                                + getPropertiesLayout().name() + "'.");
-                        break;
-                }
-            }
-        });
-    }
-
-    /**
-     *
-     * @return
-     */
-    public NativeButton getCommitChangesButton() {
-        if (commitChangesButton == null) {
-            buildCommitChangesButton();
-        }
-        return commitChangesButton;
-    }
-
-    /**
-     *
-     */
-    private void buildCommitChangesButton() {
-        String id = "commitChangesButton";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-        commitChangesButton = new NativeButton("Commit Changes");
-        commitChangesButton.setId(DEBUG_ID_PREFIX + id);
-        commitChangesButton.setImmediate(true);
-
-        commitChangesButton.addClickListener(new Button.ClickListener() {
-
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                try {
-                    validateRequiredComponentValues();
-                    StagingProcessor changedProcessor = changeProcessor(selectedProcessor);
-                    checkProcessorConfigurability(changedProcessor);
-                    commitProcessor(changedProcessor);
-                    updateProcessorListerItem(changedProcessor);
-                    parentApp.showNotification("Changes successfully committed.");
-                } catch (ConfigurationException ex) {
-                    parentApp.showError("Staging processor not modifiable! Cause: " + ex.getMessage());
-                    String object = "the changed processor '" + selectedProcessor.getUniqueIdentifier() + "'";
-                    LOGGER.error(MsgBuilder.commitFailed(object) + "Cause: " + ex.getMessage(), ex);
-                }
-            }
-        });
-    }
-
-    /**
-     *
-     * @param processor
-     */
-    public void addProcessorListerItem(StagingProcessor processor) {
-        getProcessorLister().addItem(processor.getUniqueIdentifier());
-        getProcessorLister().setItemCaption(processor.getUniqueIdentifier(),
-                getProcessorItemCaption(processor));
-        getProcessorLister().select(processor.getUniqueIdentifier());
-    }
-
-    /**
-     *
-     * @param processor
-     */
-    public void updateProcessorListerItem(StagingProcessor processor) {
-        getProcessorLister().removeItem(processor.getUniqueIdentifier());
-        addProcessorListerItem(processor);
     }
 
     /**
@@ -739,11 +372,7 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
      * properties will be validated. For some minor issues, warnings are
      * generated, which are returned as result. For major issues, an exception
      * is thrown. If 'null' is returned, an internal error which is indicated in
-     * an own way (e.g. validation of a text field has failed) has occured. If
-     * the staging processor is valid, an empty string is returned.
-     *
-     * @return En empty string in case of success, a string which contains all
-     * warnings or 'null' in case of an internal validation error.
+     * an own way (e.g. validation of a text field has failed) has occured.
      *
      * @throws ConfigurationException in case of a major configuration error.
      */
@@ -757,9 +386,9 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
      * @throws ConfigurationException
      */
     private void checkImplementationClassField() throws ConfigurationException {
-        if (UIComponentTools.isEmpty(getImplementationClassField())
+        if (getImplementationClassField().getText() == null || getImplementationClassField().getText().isEmpty()
                 || !UIUtils7.validate(getImplementationClassField())) {
-            setPropertiesLayout(PropertiesLayout.BASIC);
+            setPropertiesLayout(PropertiesLayoutType.BASIC);
             throw new ConfigurationException("Implementation class is invalid.");
         }
     }
@@ -771,7 +400,7 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
     private void checkNameField() throws ConfigurationException {
         if (UIComponentTools.isEmpty(getBasicPropertiesLayout().getNameField())
                 || !UIUtils7.validate(getBasicPropertiesLayout().getNameField())) {
-            setPropertiesLayout(PropertiesLayout.BASIC);
+            setPropertiesLayout(PropertiesLayoutType.BASIC);
             throw new ConfigurationException("Processor name is invalid.");
         }
 
@@ -779,8 +408,8 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
                 findStagingProcessorByName(getBasicPropertiesLayout().getNameField().getValue());
 
         if (existingProcessor != null && !existingProcessor.getUniqueIdentifier()
-                .equals(selectedProcessor.getUniqueIdentifier())) {
-            setPropertiesLayout(PropertiesLayout.BASIC);
+                .equals(getSelectedElementId())) {
+            setPropertiesLayout(PropertiesLayoutType.BASIC);
             throw new ConfigurationException("There is already a staging processor named '"
                     + existingProcessor.getName() + "'.");
         }
@@ -793,12 +422,12 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
     private void checkProcessorConfigurability(StagingProcessor processor)
             throws ConfigurationException {
         checkImplementationClassField();
-        String implClass = getImplementationClassField().getValue();
+        String implClass = getImplementationClassField().getText();
         AbstractStagingProcessor processorInstance = createProcessorInstance(implClass, processor);
         try {
             processorInstance.validateProperties(getSpecificPropertiesLayout().getProperties());
         } catch (PropertyValidationException ex) {
-            setPropertiesLayout(PropertiesLayout.SPECIFIC);
+            setPropertiesLayout(PropertiesLayoutType.SPECIFIC);
             throw new ConfigurationException("Failed to validate the staging processor properties. ", ex);
         }
     }
@@ -816,15 +445,14 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
         processor.setName(getBasicPropertiesLayout().getNameField().getValue());
         processor.setDefaultOn(getBasicPropertiesLayout().getDefaultBox().getValue());
         processor.setDisabled(getBasicPropertiesLayout().getDisabledBox().getValue());
-        processor.setDescription(
-                (String) getBasicPropertiesLayout().getDescriptionArea().getValue());
+        processor.setDescription((String) getBasicPropertiesLayout().getDescriptionArea().getValue());
         processor.setGroupId((String) getBasicPropertiesLayout().getGroupBox().getValue());
         processor.setType((StagingProcessor.PROCESSOR_TYPE) getBasicPropertiesLayout()
                 .getProcessorTypeBox().getValue());
         try {
             processor.setPropertiesFromObject(getSpecificPropertiesLayout().getProperties());
         } catch (IOException ex) {
-            setPropertiesLayout(PropertiesLayout.SPECIFIC);
+            setPropertiesLayout(PropertiesLayoutType.SPECIFIC);
             throw new ConfigurationException("Failed to obtain properties from UI.", ex);
         }
 
@@ -838,29 +466,9 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
         try {
             StagingConfigurationPersistence.getSingleton(null).saveStagingProcessor(processor);
         } catch (UnauthorizedAccessAttemptException ex) {
-            setPropertiesLayout(PropertiesLayout.BASIC);
+            setPropertiesLayout(PropertiesLayoutType.BASIC);
             String object = "processor '" + processor.getName() + "'";
             throw new ConfigurationException(MsgBuilder.unauthorizedSaveRequest(object), ex);
-        }
-    }
-
-    /**
-     *
-     * @param processorId
-     */
-    private void reloadProcessorLister() {
-        getProcessorLister().removeAllItems();
-
-        getProcessorLister().addItem(NEW_PROCESSOR_UNIQUE_ID);
-        getProcessorLister().setItemCaption(NEW_PROCESSOR_UNIQUE_ID,
-                NEW_PROCESSOR_CAPTION);
-
-        List<StagingProcessor> processors = StagingConfigurationPersistence
-                .getSingleton(null).findAllStagingProcessors();
-        for (StagingProcessor processor : processors) {
-            getProcessorLister().addItem(processor.getUniqueIdentifier());
-            getProcessorLister().setItemCaption(processor.getUniqueIdentifier(),
-                    getProcessorItemCaption(processor));
         }
     }
 
@@ -873,142 +481,4 @@ public class StagingProcessorConfigurationTab extends CustomComponent {
         return processor.getName() + " (" + processor.getId() + ")";
     }
 
-    /**
-     *
-     * @param listSelection
-     */
-    private void setEnabledComponents(ListSelection listSelection) {
-        switch (listSelection) {
-            case NO:
-                getImplementationClassField().setReadOnly(true);
-                getLoadImplementationClassButton().setEnabled(false);
-                getPropertiesPanel().setEnabled(false);
-                getCommitChangesButton().setEnabled(false);
-                break;
-            case NEW:
-                getImplementationClassField().setReadOnly(false);
-                getLoadImplementationClassButton().setEnabled(true);
-                getPropertiesPanel().setEnabled(false);
-                getCommitChangesButton().setEnabled(false);
-                break;
-            case VALID:
-                getImplementationClassField().setReadOnly(true);
-                getLoadImplementationClassButton().setEnabled(false);
-                getPropertiesPanel().setEnabled(true);
-                getCommitChangesButton().setEnabled(true);
-                break;
-            case INVALID:
-                getImplementationClassField().setReadOnly(true);
-                getLoadImplementationClassButton().setEnabled(false);
-                getPropertiesPanel().setEnabled(false);
-                getCommitChangesButton().setEnabled(false);
-                break;
-            default:
-                UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
-                        + "'Staging Access Point'. " + NoteBuilder.CONTACT, -1);
-                LOGGER.error("Failed to update " + getPropertiesPanel().getId()
-                        + ". Cause: Undefined enum constant detected, namely '"
-                        + listSelection.name() + "'.");
-                break;
-        }
-    }
-
-    /**
-     *
-     * @return
-     */
-    private PropertiesLayout getPropertiesLayout() {
-        return propertiesLayout;
-    }
-
-    /**
-     *
-     * @param propertiesLayout
-     */
-    private void setPropertiesLayout(PropertiesLayout propertiesLayout) {
-        this.propertiesLayout = propertiesLayout;
-        switch (propertiesLayout) {
-            case BASIC:
-                fireBasicPropertiesLayoutSelected();
-                break;
-            case SPECIFIC:
-                fireSpecificPropertiesLayoutSelected();
-                break;
-            default:
-                UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
-                        + "'Staging Access Point'. " + NoteBuilder.CONTACT, -1);
-                LOGGER.error("Failed to update " + getPropertiesPanel().getId()
-                        + ". Cause: Undefined enum constant detected, namely '"
-                        + propertiesLayout.name() + "'.");
-                break;
-        }
-    }
-
-    /**
-     *
-     */
-    private void fireBasicPropertiesLayoutSelected() {
-        getPropertiesPanel().setContent(getBasicPropertiesLayout());
-        getBulletBasic().setIcon(new ThemeResource(IconContainer.BULLET_GREEN));
-        getBulletSpecific().setIcon(new ThemeResource(IconContainer.BULLET_GREY));
-    }
-
-    /**
-     *
-     */
-    private void fireSpecificPropertiesLayoutSelected() {
-        getPropertiesPanel().setContent(getSpecificPropertiesLayout());
-        getBulletSpecific().setIcon(new ThemeResource(IconContainer.BULLET_GREEN));
-        getBulletBasic().setIcon(new ThemeResource(IconContainer.BULLET_GREY));
-    }
-
-    /**
-     *
-     */
-    public void reload() {
-        reloadProcessorLister();
-        getProcessorLister().select(NEW_PROCESSOR_UNIQUE_ID);
-        getBasicPropertiesLayout().reloadGroupBox();
-        getBasicPropertiesLayout().getGroupBox().select(USERS_GROUP_ID);
-    }
-
-    /**
-     *
-     */
-    public void disable() {
-        getProcessorLister().removeAllItems();
-        getBasicPropertiesLayout().getGroupBox().removeAllItems();
-        setEnabled(false);
-    }
-
-    /**
-     *
-     */
-    public void enable() {
-        reload();
-        setEnabled(true);
-    }
-
-    /**
-     *
-     */
-    public final void update() {
-        Role loggedInUserRole = parentApp.getLoggedInUser().getCurrentRole();
-        switch (loggedInUserRole) {
-            case ADMINISTRATOR:
-            case MANAGER:
-                if (!isEnabled()) {
-                    enable();
-                }
-                break;
-            default:
-                if (isEnabled()) {
-                    disable();
-                }
-                UIComponentTools.showWarning("WARNING", "Unauthorized access attempt! " + NoteBuilder.CONTACT, -1);
-                LOGGER.error("Failed to update " + this.getId() + ". Cause: Unauthorized access attempt!");
-                break;
-        }
-        reload();
-    }
 }

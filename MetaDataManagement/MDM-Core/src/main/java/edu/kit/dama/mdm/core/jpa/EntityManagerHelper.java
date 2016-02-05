@@ -81,6 +81,7 @@ public final class EntityManagerHelper {
    * UnauthorizedAccessAttemptException is thrown.
    *
    * @param <T> Generic type.
+   * @param pEntityManager The entity manager used to perform the query.
    * @param pUnmanagedEntity The unmanaged entity.
    *
    * @return The managed entity.

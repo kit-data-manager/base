@@ -46,7 +46,7 @@ public class UpdateParameters extends CommandLineParameters {
    * The destingation folder where an update script is stored. If this argument
    * is not provided, the results are only print to stdout.
    */
-  @Parameter(names = {"-s", "--scriptDestination"}, description = "The output folder for the update script if 'printOnly' is not set.", required = false)
+  @Parameter(names = {"-s", "--scriptDestination"}, description = "The output folder for the update script. If this argument is not provided, the results are written to StdOut.", required = false)
   public File scriptDestination;
 
   /**

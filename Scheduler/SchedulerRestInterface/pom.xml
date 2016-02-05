@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2015 Karlsruhe Institute of Technology 
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>edu.kit.dama</groupId>
+        <artifactId>Scheduler</artifactId>
+        <version>1.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    
+    <modelVersion>4.0.0</modelVersion>    
+    <groupId>edu.kit.dama.rest</groupId>
+    <artifactId>SchedulerRestInterface</artifactId>
+    <name>SchedulerRestInterface</name>
+    <packaging>jar</packaging>
+    <version>1.0</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+    </properties>
+   
+    <dependencies>
+        <dependency>
+            <groupId>com.sun.jersey.jersey-test-framework</groupId>
+            <artifactId>jersey-test-framework-core</artifactId>
+            <version>1.8</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey.jersey-test-framework</groupId>
+            <artifactId>jersey-test-framework-grizzly2</artifactId>
+            <version>1.8</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>1.1.0.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama.rest</groupId>
+            <artifactId>ServiceBase</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama.rest</groupId>
+            <artifactId>ClientBase</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>SchedulerManager</artifactId>
+            <version>1.0</version>
+        </dependency>
+  
+        <dependency>
+            <groupId>com.qmino</groupId>
+            <artifactId>miredot-annotations</artifactId>
+            <version>1.2</version>
+        </dependency>
+    </dependencies>
+    
+    <profiles>
+        <profile>
+            <id>generate-doc</id>
+            <activation>
+                <property>
+                    <name>assembleMode</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <!--Create Rest documentation-->
+                    <plugin>
+                        <groupId>com.qmino</groupId>
+                        <artifactId>miredot-plugin</artifactId>
+                        <version>1.6.2</version>
+                        <executions>
+                            <execution>
+                                <id>miredot</id>
+                                <phase>package</phase> 
+                                <goals>
+                                    <goal>restdoc</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <licence>
+                                UHJvamVjdHxlZHUua2l0LmRhbWEucmVzdC5TY2hlZHVsZXJSZXN0SW50ZXJmYWNlfDIwMTYtMTItMDh8dHJ1ZSNNQ3dDRkRDa25zL2ZwT0p1NDJoV3ZrSVRVcFIxVHVCYUFoUndzSTRyb0pyblRDMlh1Y0tBc2NXSm81UGJZQT09
+                            </licence> 
+                            <statusCodes>
+                                <statusCode>
+                                    <httpCode>200</httpCode>
+                                    <document>always</document>
+                                    <defaultMessage>The service call has completed successfully.</defaultMessage>
+                                </statusCode>
+                                <statusCode>
+                                    <httpCode>403</httpCode>
+                                    <document>always</document>
+                                    <defaultMessage>The user is not allowed to perform this operation.</defaultMessage>
+                                </statusCode>
+                                <statusCode>
+                                    <httpCode>404</httpCode>
+                                    <document>always</document>
+                                    <defaultMessage>The requested resource was not found.</defaultMessage>
+                                </statusCode>
+                                <statusCode>
+                                    <httpCode>412</httpCode>
+                                    <document>put,post</document>
+                                    <defaultMessage>Invalid JSON/XML input.</defaultMessage>
+                                </statusCode>
+                                <statusCode>
+                                    <httpCode>500</httpCode>
+                                    <document>always</document>
+                                    <defaultMessage>The service call has not succeeded.</defaultMessage>
+                                </statusCode>
+                            </statusCodes>
+                            <visibility>
+                                <ALL>NONE</ALL>
+                                <FIELD>ANY</FIELD>
+                            </visibility>
+                            <title>
+                                <strategy>tag: summary</strategy>
+                                <strategy>tag: title</strategy>
+                                <strategy>firstsentence</strategy>
+                            </title>
+                        </configuration>
+                    </plugin>	
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+    
+</project>

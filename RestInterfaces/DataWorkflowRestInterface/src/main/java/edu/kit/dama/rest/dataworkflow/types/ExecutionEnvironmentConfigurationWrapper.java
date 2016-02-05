@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology 
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,67 +32,67 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
  * @author mf6319
  */
 @XmlNamedObjectGraphs({
-  @XmlNamedObjectGraph(
-          name = "simple",
-          attributeNodes = {
-            @XmlNamedAttributeNode(value = "count"),
-            @XmlNamedAttributeNode(value = "entities", subgraph = "simple")
-          }),
-  @XmlNamedObjectGraph(
-          name = "default",
-          attributeNodes = {
-            @XmlNamedAttributeNode(value = "count"),
-            @XmlNamedAttributeNode(value = "entities", subgraph = "default")
-          })})
+    @XmlNamedObjectGraph(
+            name = "simple",
+            attributeNodes = {
+                @XmlNamedAttributeNode(value = "count"),
+                @XmlNamedAttributeNode(value = "entities", subgraph = "simple")
+            }),
+    @XmlNamedObjectGraph(
+            name = "default",
+            attributeNodes = {
+                @XmlNamedAttributeNode(value = "count"),
+                @XmlNamedAttributeNode(value = "entities", subgraph = "default")
+            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 public final class ExecutionEnvironmentConfigurationWrapper extends AbstractEntityWrapper<ExecutionEnvironmentConfiguration> {
 
-  @XmlElementWrapper
-  @XmlElement(name = "entity", type = ExecutionEnvironmentConfiguration.class, namespace = "http://ipe.kit.edu/2014/KITDataManager/DataWorkflow")
-  private List<ExecutionEnvironmentConfiguration> entities;
+    @XmlElementWrapper
+    @XmlElement(name = "entity", type = ExecutionEnvironmentConfiguration.class, namespace = "http://ipe.kit.edu/2014/KITDataManager/DataWorkflow")
+    private List<ExecutionEnvironmentConfiguration> entities;
 
-  /**
-   * Default constructor.
-   */
-  public ExecutionEnvironmentConfigurationWrapper() {
-    super();
-  }
+    /**
+     * Default constructor.
+     */
+    public ExecutionEnvironmentConfigurationWrapper() {
+        super();
+    }
 
-  /**
-   * Default constructor.
-   *
-   * @param pEntities An array of wrapped entities.
-   */
-  public ExecutionEnvironmentConfigurationWrapper(ExecutionEnvironmentConfiguration... pEntities) {
-    super(pEntities);
-  }
+    /**
+     * Default constructor.
+     *
+     * @param pEntities An array of wrapped entities.
+     */
+    public ExecutionEnvironmentConfigurationWrapper(ExecutionEnvironmentConfiguration... pEntities) {
+        super(pEntities);
+    }
 
-  /**
-   * Default constructor.
-   *
-   * @param pEntities A list of wrapped entities.
-   */
-  public ExecutionEnvironmentConfigurationWrapper(List<ExecutionEnvironmentConfiguration> pEntities) {
-    super(pEntities);
-  }
+    /**
+     * Default constructor.
+     *
+     * @param pEntities A list of wrapped entities.
+     */
+    public ExecutionEnvironmentConfigurationWrapper(List<ExecutionEnvironmentConfiguration> pEntities) {
+        super(pEntities);
+    }
 
-  /**
-   * Default constructor.
-   *
-   * @param pCount The number of modified rows.
-   */
-  public ExecutionEnvironmentConfigurationWrapper(Integer pCount) {
-    super(pCount);
-  }
+    /**
+     * Default constructor.
+     *
+     * @param pCount The number of modified rows.
+     */
+    public ExecutionEnvironmentConfigurationWrapper(Integer pCount) {
+        super(pCount);
+    }
 
-  @Override
-  public void setEntities(List<ExecutionEnvironmentConfiguration> pEntities) {
-    entities = pEntities;
-  }
+    @Override
+    public void setEntities(List<ExecutionEnvironmentConfiguration> pEntities) {
+        entities = pEntities;
+    }
 
-  @Override
-  public List<ExecutionEnvironmentConfiguration> getEntities() {
-    return entities;
-  }
+    @Override
+    public List<ExecutionEnvironmentConfiguration> getEntities() {
+        return entities;
+    }
 }

@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2014 Karlsruhe Institute of Technology
- * (support@kitdatamanager.net)
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,7 +67,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author jejkal
  * @param <C> Class extending ITransferStatus.
- * @param <D> Class extending ITransferInformation&lt;C&gt>
+ * @param <D> Class extending ITransferInformation&lt;C&gt;
  */
 public abstract class AbstractTransferPreparationHandler<C extends ITransferStatus, D extends ITransferInformation<C>> {
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@
   <parent>
     <groupId>edu.kit.dama</groupId>
     <artifactId>MetaDataManagement</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>edu.kit.dama.rest</groupId>
   <artifactId>REST-DataWorkflow</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
+  <version>1.1</version>
   <name>REST-DataWorkflow</name>
   
   <description>Implementation of the DataWorkflow REST interface.</description>
@@ -57,17 +57,17 @@
     <dependency>
       <groupId>edu.kit.dama.rest</groupId>
       <artifactId>ServiceBase</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>edu.kit.dama.rest</groupId>
       <artifactId>DataWorkflowRestInterface</artifactId>
-      <version>1.0</version>
+      <version>1.1</version>
     </dependency>
      <dependency>
       <groupId>edu.kit.dama</groupId>
       <artifactId>DataWorkflow</artifactId>
-      <version>1.0</version>
+      <version>1.1</version>
     </dependency>
   </dependencies>
 </project>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,118 +17,47 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <parent>
+    <parent>
+        <groupId>edu.kit.dama.rest</groupId>
+        <artifactId>RestInterfaces</artifactId>
+        <version>1.2</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
     <groupId>edu.kit.dama.rest</groupId>
-    <artifactId>RestInterfaces</artifactId>
-    <version>1.1</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>edu.kit.dama.rest</groupId>
-  <artifactId>StagingRestInterface</artifactId>
-  <name>StagingRestInterface</name>
-  <packaging>jar</packaging>
-  <version>1.1</version>
+    <artifactId>StagingRestInterface</artifactId>
+    <name>StagingRestInterface</name>
+    <packaging>jar</packaging>
+    <version>1.2</version>
   
-  <description>REST interface definition for performing staging operation (ingest, download and transfer monitoring).</description>
+    <description>REST interface definition for performing staging operation (ingest, download and transfer monitoring).</description>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <projectName>StagingRestInterface</projectName>
-    <firstName>Thomas</firstName>
-    <lastName>Jejkal</lastName>
-    <nameId>jejkal</nameId>
-  </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <projectName>StagingRestInterface</projectName>
+        <firstName>Thomas</firstName>
+        <lastName>Jejkal</lastName>
+        <nameId>jejkal</nameId>
+    </properties>
           
-  <developers>
-    <developer>
-      <id>${nameId}</id>
-      <name>${firstName} ${lastName}</name>
-      <email>${firstName}.${lastName}@kit.edu</email>
-      <organization>Karlsruhe Institute of Technology (KIT)</organization>
-      <roles>
-        <role>Project manager</role>
-      </roles>
-    </developer>
-  </developers>
+    <developers>
+        <developer>
+            <id>${nameId}</id>
+            <name>${firstName} ${lastName}</name>
+            <email>${firstName}.${lastName}@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Project manager</role>
+            </roles>
+        </developer>
+    </developers>
   
-  <dependencies>
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>StagingClient</artifactId>
-      <version>1.1</version>
-    </dependency>
-  </dependencies>
-  
-   
-  <profiles>
-    <profile>
-      <id>generate-doc</id>
-      <activation>
-        <property>
-          <name>assembleMode</name>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <!--Create Rest documentation-->
-          <plugin>
-            <groupId>com.qmino</groupId>
-            <artifactId>miredot-maven-plugin</artifactId>
-            <version>1.4.1</version>
-            <executions>
-              <execution>
-                <id>miredot</id>
-                <phase>package</phase> 
-                <goals>
-                  <goal>restdoc</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <licence>
-                UHJvamVjdHxlZHUua2l0LmRhbWEucmVzdC5TdGFnaW5nUmVzdEludGVyZmFjZXwyMDE3LTAzLTAyfHRydWUjTUN3Q0ZEWEU2cWkzeWxncVhjbXd6UW5NeXhjSVhlMElBaFJwbDduc2V6dEh3a0YrYWRYcGt2ZzcrKzc1SUE9PQ==
-              </licence> 
-              <statusCodes>
-                <statusCode>
-                  <httpCode>200</httpCode>
-                  <document>always</document>
-                  <defaultMessage>The service call has completed successfully.</defaultMessage>
-                </statusCode>
-                <statusCode>
-                  <httpCode>403</httpCode>
-                  <document>always</document>
-                  <defaultMessage>The user is not allowed to perform this operation.</defaultMessage>
-                </statusCode>
-                <statusCode>
-                  <httpCode>404</httpCode>
-                  <document>always</document>
-                  <defaultMessage>The requested resource was not found.</defaultMessage>
-                </statusCode>
-                <statusCode>
-                  <httpCode>412</httpCode>
-                  <document>put,post</document>
-                  <defaultMessage>Invalid JSON/XML input.</defaultMessage>
-                </statusCode>
-                <statusCode>
-                  <httpCode>500</httpCode>
-                  <document>always</document>
-                  <defaultMessage>The service call has not succeeded.</defaultMessage>
-                </statusCode>
-              </statusCodes>
-              <visibility>
-                <ALL>NONE</ALL>
-                <FIELD>ANY</FIELD>
-              </visibility>
-              <title>
-                <strategy>tag: summary</strategy>
-                <strategy>tag: title</strategy>
-                <strategy>firstsentence</strategy>
-              </title>
-            </configuration>
-          </plugin>	
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
+    <dependencies>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>StagingClient</artifactId>
+            <version>1.2</version>
+        </dependency>
+    </dependencies>
+
 </project>

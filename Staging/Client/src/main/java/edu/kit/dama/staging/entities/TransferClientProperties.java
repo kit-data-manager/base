@@ -1,5 +1,6 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,22 +23,30 @@ import java.util.Map;
 
 /**
  * This entity contains all properties needed to setup a transfer client access
- * to staging disk space. The main parts are: <ul> <li>clientHandlerId: The ID
- * of the handler responsible for setting up client access. Available IDs can be
- * obtained via
+ * to staging disk space. The main parts are:
+ *
+ * <ul>
+ *
+ * <li>clientHandlerId: The ID of the handler responsible for setting up client
+ * access. Available IDs can be obtained via
  * StagingConfigurationManager.getSingleton().getAccessHandlerIDs()</li>
+ *
  * <li>transferClientUrl: The final URL needed to access the transfer client
  * (NOT the transfer destination!) This might be for example a link to a Java
- * Webstart application accessible via Web application. </li> <li>stagingUrl:
- * The URL to the staging location, which is the actual destination of the
- * transfer</li> <li> stagingAccessPoint: AccessPoint used to access the
- * staging disk space. Basically, this method will influence how 'stagingUrl' is
- * build up. Available AccessPoints can be obtained by calling
+ * Webstart application accessible via Web application. </li>
+ *
+ * <li>stagingUrl: The URL to the staging location, which is the actual
+ * destination of the transfer</li>
+ *
+ * <li> stagingAccessPoint: AccessPoint used to access the staging disk space.
+ * Basically, this method will influence how 'stagingUrl' is build up. Available
+ * AccessPoints can be obtained by calling
  * StagingConfigurationManager.getSingleton().getAccessPointNames()</li>
+ *
  * <li>customProperties: This map can be used to add additional properties which
  * are only relevant for specific transfer client handlers.</li>
  *
- * @see StagingConfigurationManager.getSingleton().getAccessPointNames()
+ * </ul>
  *
  * @author jejkal
  */
@@ -115,7 +124,6 @@ public class TransferClientProperties {
   public String[] getPropertyKeys() {
     return customProperties.keySet().toArray(new String[customProperties.size()]);
   }
-
 
   /**
    * Get the transfer client URL

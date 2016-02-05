@@ -32,40 +32,66 @@ import org.slf4j.LoggerFactory;
  */
 public final class CheckServiceHelper {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(CheckServiceHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CheckServiceHelper.class);
 
-  public static List<ModuleInformation> getModuleInformation() {
-    LOGGER.debug("Obtaining module information.");
-    List<ModuleInformation> info = new ArrayList<>();
-    try {
-      LOGGER.debug("Getting MANIFEST.MF entries from class loader.");
-      Enumeration<URL> resources = CheckServiceHelper.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
+    private static ModuleInformation getModuleInformationFromResource(URL pManifestResource) {
+        ModuleInformation result = null;
+        try {
+            LOGGER.debug("Checking manifest entry {}", pManifestResource);
+            Manifest parent = new Manifest(pManifestResource.openStream());
+            Attributes mainAttributes = parent.getMainAttributes();
+            String vendorId = mainAttributes.getValue("Implementation-Vendor-Id");
+            LOGGER.debug("Checking vendor id '{}'", vendorId);
+            if (vendorId != null && vendorId.startsWith("edu.kit.dama")) {
+                LOGGER.debug("Extracting module information from MANIFEST.");
+                result = new ModuleInformation(
+                        mainAttributes.getValue("Implementation-Title"),
+                        mainAttributes.getValue("Implementation-Version"),
+                        mainAttributes.getValue("Implementation-Build"),
+                        mainAttributes.getValue("Build-Time"));
 
-      LOGGER.debug("Obtained resources. Start iteration.");
-      while (resources.hasMoreElements()) {
-        LOGGER.debug("Checking new MANIFEST.MF");
-        Manifest manifest = new Manifest(resources.nextElement().openStream());
-        Attributes mainAttributes = manifest.getMainAttributes();
-        String vendorId = mainAttributes.getValue("Implementation-Vendor-Id");
-        LOGGER.debug("Checking vendor id '{}'", vendorId);
-        if (vendorId != null && vendorId.startsWith("edu.kit.dama")) {
-          LOGGER.debug("Extracting module information from MANIFEST.");
-          ModuleInformation moduleInfo = new ModuleInformation(
-                  mainAttributes.getValue("Implementation-Title"),
-                  mainAttributes.getValue("Implementation-Version"),
-                  mainAttributes.getValue("Implementation-Build"),
-                  mainAttributes.getValue("Build-Time"));
-          info.add(moduleInfo);
-          LOGGER.debug("Added new module information {} to result list.", moduleInfo);
-        } else {
-          LOGGER.debug("Vendor id is not usable. Ignoring MANIFEST entry.");
+                LOGGER.debug("Added new module information {} to result list.", result);
+            } else {
+                LOGGER.debug("Vendor id is not usable. Ignoring MANIFEST entry.");
+            }
+        } catch (IOException ex) {
+            LOGGER.warn("Failed to extract module information from MANIFEST Url " + pManifestResource, ex);
         }
-      }
-    } catch (IOException ex) {
-      //failed to obtain module information
-      LOGGER.error("Failed to obtain module information", ex);
+        return result;
     }
-    return info;
-  }
+
+    public static List<ModuleInformation> getModuleInformation(Enumeration<URL> pAdditionalResources) {
+        LOGGER.debug("Obtaining module information.");
+        List<ModuleInformation> info = new ArrayList<>();
+        try {
+            LOGGER.debug("Getting MANIFEST.MF from additionally provided resources.");
+            if (pAdditionalResources != null) {
+                while (pAdditionalResources.hasMoreElements()) {
+                    ModuleInformation result = getModuleInformationFromResource(pAdditionalResources.nextElement());
+                    if (result != null) {
+                        info.add(result);
+                    }
+                }
+            }
+
+            LOGGER.debug("Getting MANIFEST.MF entries from class loader.");
+            Enumeration<URL> resources = CheckServiceHelper.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
+            while (resources.hasMoreElements()) {
+                URL resourceUrl = resources.nextElement();
+                ModuleInformation result = getModuleInformationFromResource(resourceUrl);
+                if (result != null) {
+                    info.add(result);
+                }
+            }
+        } catch (IOException ex) {
+            //failed to obtain module information
+            LOGGER.error("Failed to obtain module information", ex);
+        }
+        return info;
+    }
+
+    public static List<ModuleInformation> getModuleInformation() {
+        return getModuleInformation(null);
+    }
 
 }

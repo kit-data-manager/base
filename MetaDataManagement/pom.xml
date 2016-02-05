@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (C) 2014 Karlsruhe Institute of Technology (support@kitdatamanager.net)
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,73 +17,73 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <parent>
+    <parent>
+        <groupId>edu.kit.dama</groupId>
+        <artifactId>KITDM</artifactId>
+        <version>1.2</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
     <groupId>edu.kit.dama</groupId>
-    <artifactId>KITDM</artifactId>
-    <version>1.1</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>edu.kit.dama</groupId>
-  <artifactId>MetaDataManagement</artifactId>
-  <name>MetaDataManagement</name>
-  <packaging>pom</packaging>
-  <version>1.1</version>
+    <artifactId>MetaDataManagement</artifactId>
+    <name>MetaDataManagement</name>
+    <packaging>pom</packaging>
+    <version>1.2</version>
     
-  <description>This module collection contains all metadata management- and access-related sub-modules.
-    The main module (MDM-Core) contains core functionalities for metadata access including the MetaDataManagement implementation.
-    All sub-modules starting with MDM contain metadata entities from different categories. All sub-modules beginning with REST contain
-    REST-related datatypes and clients except the StagingRESTService-related types and client as they are part of the StagingClient sub-module 
-    of the Staging module.	
-  </description>
+    <description>This module collection contains all metadata management- and access-related sub-modules.
+        The main module (MDM-Core) contains core functionalities for metadata access including the MetaDataManagement implementation.
+        All sub-modules starting with MDM contain metadata entities from different categories. All sub-modules beginning with REST contain
+        REST-related datatypes and clients except the StagingRESTService-related types and client as they are part of the StagingClient sub-module 
+        of the Staging module.	
+    </description>
   
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>  
-    <projectName>MetaDataManagement</projectName>
-    <firstName>Volker</firstName>
-    <lastName>Hartmann</lastName>
-    <nameId>hartmann-v</nameId>
-  </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>  
+        <projectName>MetaDataManagement</projectName>
+        <firstName>Volker</firstName>
+        <lastName>Hartmann</lastName>
+        <nameId>hartmann-v</nameId>
+    </properties>
 
-  <developers>
-    <developer>
-      <id>${nameId}</id>
-      <name>${firstName} ${lastName}</name>
-      <email>${firstName}.${lastName}@kit.edu</email>
-      <organization>Karlsruhe Institute of Technology (KIT)</organization>
-      <roles>
-        <role>Project manager</role>
-      </roles>
-    </developer>
-    <developer>
-      <id>jejkal</id>
-      <name>Thomas Jejkal</name>
-      <email>support@kitdatamanager.net</email>
-      <organization>Karlsruhe Institute of Technology (KIT)</organization>
-      <roles>
-        <role>Developer</role>
-      </roles>
-    </developer>
-  </developers>
+    <developers>
+        <developer>
+            <id>${nameId}</id>
+            <name>${firstName} ${lastName}</name>
+            <email>${firstName}.${lastName}@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Project manager</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>jejkal</id>
+            <name>Thomas Jejkal</name>
+            <email>support@kitdatamanager.net</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
   
-  <dependencies>        
-    <dependency>
-      <groupId>edu.kit.dama</groupId>
-      <artifactId>Commons</artifactId>
-      <version>1.1</version>
-    </dependency>
-  </dependencies>
+    <dependencies>        
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>Commons</artifactId>
+            <version>1.2</version>
+        </dependency>
+    </dependencies>
   
-  <modules>
-    <module>MDM-Core</module>
-    <module>MDM-BaseMetaData</module>
-    <module>MDM-Admin</module>
-    <module>MDM-DataWorkflow</module>
-    <module>REST-BaseMetaData</module>
-    <module>REST-DataOrganization</module>
-    <module>REST-UserGroupManagement</module>
-    <module>REST-Sharing</module>
-	<module>REST-DataWorkflow</module>
-    <module>MDM-Content</module>
-  </modules>
+    <modules>
+        <module>MDM-Core</module>
+        <module>MDM-BaseMetaData</module>
+        <module>MDM-Admin</module>
+        <module>MDM-DataWorkflow</module>
+        <module>REST-BaseMetaData</module>
+        <module>REST-DataOrganization</module>
+        <module>REST-UserGroupManagement</module>
+        <module>REST-Sharing</module>
+        <module>REST-DataWorkflow</module>
+        <module>MDM-Content</module>
+    </modules>
 </project>
