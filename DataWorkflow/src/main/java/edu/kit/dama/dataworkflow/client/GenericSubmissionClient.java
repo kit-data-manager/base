@@ -18,8 +18,6 @@ package edu.kit.dama.dataworkflow.client;
 
 import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
-import edu.kit.dama.client.status.CommandStatus;
-import edu.kit.dama.client.status.Status;
 import edu.kit.dama.commons.exceptions.ConfigurationException;
 import edu.kit.dama.mdm.dataworkflow.DataWorkflowTask;
 import edu.kit.dama.dataworkflow.client.parameters.ProcessParameters;
@@ -31,6 +29,8 @@ import edu.kit.dama.dataworkflow.util.DataWorkflowTaskUtils;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.util.Constants;
+import edu.kit.jcommander.generic.status.CommandStatus;
+import edu.kit.jcommander.generic.status.Status;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;

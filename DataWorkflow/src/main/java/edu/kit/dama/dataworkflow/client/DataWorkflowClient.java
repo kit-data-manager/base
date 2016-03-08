@@ -17,9 +17,9 @@ package edu.kit.dama.dataworkflow.client;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import edu.kit.dama.client.status.CommandStatus;
-import edu.kit.dama.cmdline.generic.parameter.CommandLineParameters;
 import edu.kit.dama.dataworkflow.client.parameters.ProcessParameters;
+import edu.kit.jcommander.generic.parameter.CommandLineParameters;
+import edu.kit.jcommander.generic.status.CommandStatus;
 import java.util.ArrayList;
 import java.util.List;
 
