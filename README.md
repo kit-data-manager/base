@@ -41,9 +41,9 @@ After a couple of minutes everything is done. The skipTests flag is required as 
 
 ## More Information
 
-* [Project homepage](http://kitdatamanager.net/index.php/kit-data-manager)
-* [Manual](http://kitdatamanager.net/dama/manual/index.html)
-* [Bugtracker](http://kitdatamanager.net/bugtracker/thebuggenie/)
+* [Project homepage](http://datamanager.kit.edu/)
+* [Manual](http://datamanager.kit.edu/dama/manual/index.html)
+* [Bugtracker](http://datamanager.kit.edu/bugtracker/thebuggenie/)
 
 ## License
 
