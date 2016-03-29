@@ -28,7 +28,7 @@ Afterwards, you'll find the extension module at assembly/MDM-Content-1.2-default
 * [Manual](http://datamanager.kit.edu/dama/manual/index.html)
 * [Bugtracker](http://datamanager.kit.edu/bugtracker/thebuggenie/)
 
-For examples on how to work with the Enhanced Metadata Module please refer to the sample metadata extractors that can be found at [here](https://github.com/kit-data-manager/base/tree/master/MetaDataManagement/MDM-Content/src/main/java/edu/kit/dama/mdm/content/impl).
+For examples on how to work with the Enhanced Metadata Module please refer to the sample metadata extractors that can be found [here](https://github.com/kit-data-manager/base/tree/master/MetaDataManagement/MDM-Content/src/main/java/edu/kit/dama/mdm/content/impl).
 
 ## License
 
