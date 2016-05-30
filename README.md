@@ -14,8 +14,8 @@ KIT Data Manager. If you like to contribute please don't hesitate to contact us.
 
 In order to build KIT Data Manager you'll need:
 
-* Java SE Development Kit 7 or higher
-* Apache Maven 3
+* Java SE Development Kit 8 or higher
+* Apache Maven 3.3+
 
 After obtaining the sources change to the folder where the sources are located and just call:
 
