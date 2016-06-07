@@ -34,18 +34,92 @@ Associate the Staging Processor with an Ingest::
 Publish Extracted Metadata::
     This final workflow step defines how and where extracted metadata is published. For this, the XML file written in the previous step has to be read, transformed if required and registered
     in an external metadata store, index or any other location. In case of the reference implementation of the Enhanced Metadata Module the XML file is read, transformed to a JSON structure and then sent to a local 
-    elasticsearch index. Now, the only open question is how the link to the Digital Object stored in KIT Data Manager is achieved. As mentioned before content metadata is linked via the OID of a 
-    Digital Object. For our reference implementation this means that the document id in elasticsearch is equal to the OID in the repository system, which makes the mapping between both 
+    Elasticsearch index. Now, the only open question is how the link to the Digital Object stored in KIT Data Manager is achieved. As mentioned before content metadata is linked via the OID of a 
+    Digital Object. For our reference implementation this means that the document id in Elasticsearch is equal to the OID in the repository system, which makes the mapping between both 
     systems rather easy. In other cases it is imaginable that the OID is stored as part of the metadata, if there is an appropriate field available, or the mapping has to be realized by 
     some custom service or tool.
     
-Summarizing, the concept of handling content metadata in KIT Data Manager offeres a lot of flexibility. However, implementing content metadata handling for a concrete use case 
-based on an example might be helpful to understand how the concept works. Therefor, please refer to the <<ChapterEnhancedMetadataCoding,according section>>.
+Summarizing, the concept of handling content metadata in KIT Data Manager offeres a lot of flexibility. For examples how to use the Enhanced Metadata Module please refer to 
+the source code repository of the according sub-module of KIT Data Manager at https://github.com/kit-data-manager/base/tree/master/MetaDataManagement/MDM-Content
+
 
 [[ChapterEnhancedMetadataInstallation]]
-Intallation
-^^^^^^^^^^^
-The following section describes how to install and configure the Enhanced Metadata Module. After downloading the Enhanced Metadata Module to `$KITDM_LOCATION` it has to be extracted. 
+Installation
+^^^^^^^^^^^^
+
+The following sections describe the basic installation and configuration steps of Enhanced Metadata Module which is an extension of the KIT Data Manager.
+In principal it is possible to install KIT Data Manager and Elasticsearch on every operating system. For simplicity, this documentation only covers the installation on a Unix-based system 
+(namely Ubuntu 14.04 LTS) in detail. After following the installation instructions it will be possible to index the metadata
+with Elasticsearch which allows sophisticated searches for Digital Objects. 
+
+Prerequisites
+^^^^^^^^^^^^^
+
+* KIT Data Manager (>= 1.2)
+* Elasticsearch 1.X (>= 1.6)
+
+Elasticsearch
+^^^^^^^^^^^^^
+If Elasticsearch is already installed this section might be skipped. 
+
+[NOTE]
+*_Cluster name_* and *_hostname_* needed to be known during further installation steps.
+
+
+*Step1:* Download newest Version (1.X) of Elasticsearch (Tested with version 1.7.5).
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ wget https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-1.7.5.deb
+--------------------------------------
+
+*Step 2:* Install Elasticsearch
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo dpkg -i elasticsearch-1.7.5.deb
+--------------------------------------
+
+*Step 3:* Configuring Elasticsearch
+The Elasticsearch configuration file (elasticsearch.yml) in the _/etc/elasticsearch_ directory
+has to be modified:
+To avoid conflicts with other installations a unique clustername has to be chosen.
+Look for the corresponding line remove the leading # and change the value:
+
+cluster.name: KITDataManager@\`hostname`
+
+As long you are using a single installation also remove leading # at the following
+lines:
+
+index.number_of_shards: 1
+
+index.number_of_replicas: 0
+
+*Step 4:* Configure Elasticsearch as daemon and start service
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo /bin/systemctl daemon-reload
+user@localhost:/home/user$ sudo /bin/systemctl enable elasticsearch.service
+user@localhost:/home/user$ sudo /bin/systemctl start elasticsearch.service
+--------------------------------------
+That's it. Now setup the KIT Data Manager to index metadata to Elasticsearch. 
+
+[IMPORTANT]
+The ports (9200 and 9300) for talking to Elasticsearch should only be accessible in local network as everyone who
+is able to access Elasticsearch has all privileges, e.g. also deleting the index. 
+For production environments further security measures are recommended.
+
+External Links
+++++++++++++++
+For more detailed information on how to setup Elasticsearch on Ubuntu please refer to the following
+links.
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-elasticsearch-on-ubuntu-14-04[Installation and configuration of Elasticsearch]
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/setup-service.html[Run Elasticsearch as service]
+
+Add Enhanced Metadata Module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Download Enhanced Metadata Module (Section Downloads -> Extensions).
+After downloading the Enhanced Metadata Module to `$KITDM_LOCATION` it has to be extracted. 
 This can be done using the following commands: 
 
 [source,sh]
@@ -57,8 +131,112 @@ user@localhost:/home/user$
 
 Please ensure, that the current directory is `$KITDM_LOCATION`. Otherwise, the extracted files won't be placed at the proper location. After extraction, additional libraries are added to 
 `$KITDM_LOCATION/KITDM/WEB-INF/lib/`. They are available after restarting the KIT Data Manager Web application or the Tomcat container. 
-The Enhanced Metadata Module also provides a new script named 'MetadataIndexer.sh' placed at `$KITDM_LOCATION/scripts/`.
-This script is responsible for executing a metadata indexing tool publishing extracted metadata to a elasticsearch index as decribed under `Publish Extracted Metadata` 
+Before restarting tomcat the files `$KITDM_LOCATION/KITDM/WEB-INF/classes/META-INF/persistence.xml` and `$KITDM_LOCATION/KITDM/WEB-INF/classes/datamanager.xml`has to be modified. 
+
+*datamanager.xml:*
+
+Change settings in the section elasticsearch (~line 30) according to the settings of Elasticsearch. 
+[source,xml]
+--------------------------------------
+[...]
+  <elasticsearch>
+        <!--The cluster name used by KIT Data Manager to publish metadata. (default: KITDataManager)-->
+        <cluster>KITDataManager@`hostname`</cluster>
+        <!--The hostname of the node where metadata should be published to. (default: localhost)-->
+        <host>`hostname`</host>
+        <!--The port of the Elasticsearch instance. (default: 9300)-->
+        <port>9300</port>
+        <!--The default index that is access for metadata publishing/querying. 
+        The index to which metadata is published depends on the published metadata schema. (default: kitdatamanager)
+        -->
+        <index>kitdatamanager</index>
+        <!--The Elasticsearch document key which contains the fulltext representation of an entire document. 
+        The availability of this key depends on the metadata stored in the document. 
+        The default value is 'es.fulltext', this property should not be changed, 
+        -->
+        <!--fulltextKey>es.fulltext</fulltextKey-->
+  </elasticsearch>   
+[...]
+--------------------------------------
+*persistence.xml:*
+
+Finally, the file `$KITDM_LOCATION/KITDM/WEB-INF/classes/META-INF/persistence.xml` has to be modified. Around line 100 there are the following lines: 
+
+[source,xml]
+--------------------------------------
+[...]
+  <class>edu.kit.dama.mdm.admin.UserPropertyCollection</class>
+  <!--class>edu.kit.dama.mdm.content.MetadataIndexingTask</class-->
+  <properties>
+[...]
+--------------------------------------
+
+Uncommenting the MetadataIndexingTask entity allows the registration of metadata indexing tasks in the database. Afterwards, the enhanced metadata handling is ready to be used after restarting
+the KIT Data Manager Web application or Tomcat. 
+
+[NOTE]
+For publishing extracted metadata into a system which is not a local Elasticsearch index a custom metadata indexer tool has to be implemented. However, for executing this 
+custom tool the 'MetadataIndexer.sh' script can be re-used after changing main class and command line arguments.
+
+Configuring Metadata Extraction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Now, a new staging processor can be registered using the administration backend of KIT Data Manager. For this purpose please browse to
+`http://localhost:8080/KITDM` in the browser of your KIT Data Manager machine and login. By default the administrator email is `dama@kit.edu` and the password is `dama14`. 
+Open the settings page using the button with the gears image:Settings_Button.png[Settings_Button, width="30"] and select the tab `Staging Processors`, which looks as follows:
+
+[[AdminUI_SP]]
+.Staging processors configuration tab in the administration backend.
+image::AdminUI_SP.png[AdminUI_SP]
+
+At first, insert `edu.kit.dama.mdm.content.impl.DublinCoreMetadataExtractor` as access point Implementation Class. Clicking the button next to the input fields will create
+a new staging processor. Now, please insert all values as shown in the screenshot in order to configure the staging processor properly. 
+[[AdminUI_SP_2]]
+.Staging processors configuration tab in the administration backend. (second page)
+image::AdminUI_SP_2.png[AdminUI_SP_2]
+
+Pay special attention to the *METADATA_SCHEMA_IDENTIFIER*
+on the second page, which has to be a unique identifier. This identifier will be used as the type
+while indexing to Elasticsearch.
+
+Finally, commit all changes using the Commit button on the lower right. 
+Now, all new Digital Objects should be indexed during ingest.
+
+[NOTE]
+There are two extractors available: +
+ - *_edu.kit.dama.mdm.content.impl.DublinCoreMetadataExtractor_* +
+ - *_edu.kit.dama.mdm.content.impl.GenericMetadataExtractor_* +
+The GenericMetadataExtractor extract the metadata of all files of the Digital Object,
+
+Configuring Metadata Indexing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+It's recommended to use the internal job scheduler for indexing metadata which can be configured using the administration backend of KIT Data Manager. 
+Please refer to the <<ChapterJobScheduling,according section>> for details.
+
+The following settings for the scheduler are recommended 
+[cols="m,n", options="header"]
+|===============================================================================================================================
+|Attributes|Value
+|`JOB_IMPLEMENTATION_CLASS`|edu.kit.dama.mdm.content.scheduler.jobs.MetadataIndexerJob
+|`JOB_GROUP`|Metadata
+|`JOB_NAME`|MetadataIndexer
+|`DESCRIPTION`|Indexing metadata to an Elasticsearch instance.
+|`TRIGGERS`|(Should be added after changes are committed)
+|===============================================================================================================================
+On the second page there are some important settings used during indexing.
+[cols="m,n", options="header"]
+|===============================================================================================================================
+|Attributes|Value
+|`groupid`| e.g.: USERS
+|`cluster`|cluster name of the Elasticsearch instance. e.g.: KITDataManager@\`hostname`
+|`index`|kitdatamanager (this value should be identical to the `elasticsearch.index entry` of the datamanager.xml configuration)
+|===============================================================================================================================
+
+[NOTE]
+Please be aware that the Cron-based execution of recurring tasks described in the following section is a deprecated feature which will disappear in one of the next versions of KIT Data Manager. 
+Therefore, you should consider to use the internal job scheduler.
+
+Alternatively, the Enhanced Metadata Module also provides a script named 'MetadataIndexer.sh' placed at `$KITDM_LOCATION/scripts/`.
+This script is responsible for executing a metadata indexing tool publishing extracted metadata to a Elasticsearch index as described under `Publish Extracted Metadata` 
 in the previous chapter. It is intended to be used with the reference implementation of the metadata extraction workflow. 
 As the script has to check regularly for new metadata indexing tasks its execution should be registered as a Cron job, which can be done as follows: 
 
@@ -74,7 +252,7 @@ user@localhost:/home/user$ sudo -u tomcat7 crontab -e
 user@localhost:/home/user$
 --------------------------------------
 
-Optionally, this script supports different arguments, e.g. for specifying hostname and port of the elasticsearch node and the max. number of processed indexing entries. 
+Optionally, this script supports different arguments, e.g. for specifying hostname and port of the Elasticsearch node and the max. number of processed indexing entries. 
 For more details please execute:
 
 [source,sh]
@@ -89,24 +267,6 @@ usage: MetadataIndexer.sh [-c <arg>] [-g <arg>] [-h] [-i <arg>] [-n <arg>] [-p <
 user@localhost:/home/user$
 --------------------------------------
 
-Finally, the file `$KITDM_LOCATION/KITDM/WEB-INF/classes/META-INF/persistence.xml` has to be modified. Around line 100 there are the following lines: 
-
-[source,xml]
---------------------------------------
-[...]
-  <class>edu.kit.dama.mdm.admin.UserPropertyCollection</class>
-  <!--class>edu.kit.dama.mdm.content.MetadataIndexingTask</class-->
-  <properties>
-[...]
---------------------------------------
-
-Uncommenting the MetadataIndexingTask entity allows the registration of metadata indexing tasks in the database. Afterwards, the enhanced metadata handling is ready to be used after restarting
-the KIT Data Manager Web application or Tomcat. Details on how to use it can be found the following section.
-
-[NOTE]
-For publishing extracted metadata into a system which is not a local elasticsearch index a custom metadata indexer tool has to be implemented. However, for executing this 
-custom tool the 'MetadataIndexer.sh' script can be re-used after changing main class and command line arguments.
-
 [[ChapterEnhancedMetadataHandling]]
 Implement Metadata Extraction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -115,16 +275,16 @@ For details about Staging Processors and their anatomy please refer to <<Chapter
 metadata extraction extend 'AbstractMetadataExtractor' instead of 'AbstractStagingProcessor'. The differences are the following: 
 
 Link to Metadata Schema::
-    Each implemented 'AbstractMetadataExtractor' is associated with a metadata schema using an internal property with the key 'METADATA_SCHEMA_IDENTIFIER'. The value will be the unique identifier of a metadata 
+    Each implemented 'AbstractMetadataExtractor' must be associated with a metadata schema using an internal property with the key 'METADATA_SCHEMA_IDENTIFIER'. The value will be the unique identifier of a metadata 
     schema previously defined (for more information, please refer to `Register a Metadata Schema` in section <<Enhanced Metadata Module, Enhanced Metadata Module>>). 
 Custom Configuration::
     As the internal properties of the Staging Processor base class are used to associate a metadata schema with an implemented 'AbstractMetadataExtractor', metadata extractors are using an alternative way for
     providing custom properties. For this purpose the methods `getExtractorPropertyKeys()`, `getExtractorPropertyDescription()`, `validateExtractorProperties(Properties pProperties)` 
-    and `configureExtractor(Properties pProperties)` are the equivalents for the according methods having the term `Internal` instead of `Extractor` in their signature. During runtime the 
+    and `configureExtractor(Properties pProperties)` are the equivalents for the according methods having the term `Internal` instead of `Extractor` in their method signature. At runtime the 
     'AbstractMetadataExtractor' base implementation takes care of merging both property lists together.  
 Metadata Extraction Workflow::
     The base class 'AbstractMetadataExtractor' realizes a basic workflow for metadata extraction. The first workflow phase is triggered as soon as 'performPostTransferProcessing(TransferTaskContainer pContainer)'
-    is called. In this call the digital object belonging to the associated ingest in obtained and internally stored. In the second phase triggered by 'finalizePostTransferProcessing(TransferTaskContainer pContainer)' 
+    is called. In this call the Digital Object belonging to the associated ingest in obtained and internally stored. In the second phase triggered by 'finalizePostTransferProcessing(TransferTaskContainer pContainer)' 
     the actual metadata extraction takes place. 
 
 By default, the resulting XML metadata document fulfills a standard schema, which looks as follows: 
@@ -151,7 +311,7 @@ is also the part to which the metadata schema linked to the metadata extractor s
 Even if putting all Base Metadata in the resulting XML document is part of the standard workflow this is not mandatory. Overwriting 'createMetadataDocument(TransferTaskContainer pContainer)' 
 is also a legitimate way to provide the content metadata XML document in a custom way.
 
-Finally, the resulting document is written to a file named `<SID>_<OID>.xml` where <SID> is the unique identifier of the associated metadata schema and <OID> the digital object identifier. 
+Finally, the resulting document is written to a file named `<SID>_<OID>.xml` where <SID> is the unique identifier of the associated metadata schema and <OID> the Digital Object identifier. 
 The file is stored in the `generated` folder of the associated ingest. Finally, a new metadata indexing task for indexing the previously created XML file is scheduled by creating a new indexing task entry in the database.
 
 In the publishing phase the previously configured script 'MetadataIndexer.sh' performs the following workflow: 
@@ -160,23 +320,25 @@ In the publishing phase the previously configured script 'MetadataIndexer.sh' pe
 - Check the database for new metadata indexing task entries
 - Take the next unprocessed entry and read the associated XML file
 - Convert the XML file into a JSON structure
-- Publish the JSON structure to an elasticsearch node running on localhost:9300 (default elasticsearch settings) belonging to cluster and index stated in the paramters (default cluster is 'KITDataManager', default index 'dc').
+- Publish the JSON structure to an Elasticsearch node running on localhost:9300 (default Elasticsearch settings) belonging to cluster and index stated in the paramters (default cluster is 'KITDataManager', default index 'dc').
 - Update the indexing entry in the database to a success/error state
 
-Querying the elasticsearch index can then be done using the elasticseach APIs that can be found at https://www.elastic.co/. 
+Querying the Elasticsearch index can then be done using the Elasticseach APIs that can be found at https://www.elastic.co/. 
 
 In order to facilitate the implementation of metadata extractors following the described schema there are plenty examples located in the following packages: 
 
 [cols="m,n", options="header"]
 |============================================================================================================================
 |Package|Description
-|edu.kit.dama.mdm.content.util|Contains the implementation of the MetadataIndexer publishing the generated XML documents to 
-a local elasticsearch index.
+|edu.kit.dama.mdm.content.scheduler.jobs|Contains the implementation of the MetadataIndexer job publishing the generated XML documents to 
+a local Elasticsearch index.
 |edu.kit.dama.mdm.content.impl|This package contains sample implementations of metadata extractors. Available examples are 
 extractors for Dublin Core, Base Metadata and a custom extractor to obtain information from the files uploaded by the user
 using Apache Tika.
-|edu.kit.dama.mdm.content.search.impl|Helper classes for performing generic search queries to an elasticsearch index. 
+|edu.kit.dama.mdm.content.search.impl|Helper classes for performing generic search queries to an Elasticsearch index. 
 There are default providers for Dublin Core and fulltext search available.
 |============================================================================================================================
 
 After installing the Enhanced Metadata Module, the sources including all examples can be found at `$KITDM_LOCATION/KITDM/WEB-INF/src/`.
+
+Furthermore, the examples are available at GitHub at https://github.com/kit-data-manager/base/tree/master/MetaDataManagement/MDM-Content .

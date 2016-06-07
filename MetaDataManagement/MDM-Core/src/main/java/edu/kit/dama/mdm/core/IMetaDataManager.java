@@ -360,6 +360,10 @@ public interface IMetaDataManager {
      * The type of the returned entities is undefined and has to be determined
      * later by 'instanceof' check or by an appropriate typecast.
      *
+     * <b>Attention</b>: It is recommended to use the typed version of this
+     * method where possible as the untyped query has huge disadvantages
+     * regarding performance.
+     *
      * @param queryString The plain SQL query string
      *
      * @return The result list which may be empty if no entity fits the query.
@@ -381,6 +385,10 @@ public interface IMetaDataManager {
      * first parameter in the parameter array replaces the variable named
      * <b>?1</b> in the query.
      *
+     * <b>Attention</b>: It is recommended to use the typed version of this
+     * method where possible as the untyped query has huge disadvantages
+     * regarding performance.
+     *
      * @param queryString The plain SQL query string
      * @param pParameters The parameter array used to replace parameters in the
      * query string.
@@ -397,6 +405,10 @@ public interface IMetaDataManager {
      * The type of the returned entities is undefined and has to be determined
      * later by 'instanceof' check or by an appropriate typecast. The result
      * list has a fixed maximum size defined by pFirstIdx and pResultCount.
+     *
+     * <b>Attention</b>: It is recommended to use the typed version of this
+     * method where possible as the untyped query has huge disadvantages
+     * regarding performance.
      *
      * @param queryString The plain SQL query string
      * @param pFirstIdx The first entity index withing the result list. This
@@ -428,6 +440,10 @@ public interface IMetaDataManager {
      * their position in the parameters array beginning with 1. Therefore, the
      * first parameter in the parameter array replaces the variable named
      * <b>?1</b> in the query.
+     *
+     * <b>Attention</b>: It is recommended to use the typed version of this
+     * method where possible as the untyped query has huge disadvantages
+     * regarding performance.
      *
      * @param queryString The plain SQL query string
      * @param pParameters The parameter array used to replace parameters in the

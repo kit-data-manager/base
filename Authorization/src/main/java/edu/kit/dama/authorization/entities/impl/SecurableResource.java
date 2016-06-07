@@ -64,8 +64,8 @@ public class SecurableResource implements IDefaultSecurableResource, ISecurableR
     @Column(nullable = false)
     private String domainId;
     @OneToMany(mappedBy = "resource")
-    @XmlElementWrapper(name = "references")
-    @XmlElement(name = "reference")
+    @XmlElementWrapper(name = "resourceReferences")
+    @XmlElement(name = "resourceReference")
     private List<ResourceReference> resourceReferences;
     @OneToOne(orphanRemoval = true)
     @XmlTransient

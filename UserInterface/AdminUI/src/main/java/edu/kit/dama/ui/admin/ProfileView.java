@@ -218,7 +218,7 @@ public class ProfileView extends CustomComponent {
     String sNewPassword2 = newRetypePassword.getValue();
 
     try {
-      ServiceAccessToken token = ServiceAccessUtil.getAccessToken(parent.getMetaDataManager(), parent.getLoggedInUser().getEmail(), AdminUIMainView.MAIN_LOGIN_TOKEN_KEY);
+      ServiceAccessToken token = ServiceAccessUtil.getAccessToken(parent.getMetaDataManager(), parent.getLoggedInUser().getEmail(), Constants.MAIN_LOGIN_SERVICE_ID);
       if (token != null) {
         if (!sCurrentPassword.equals(token.getSecret())) {
           currentPassword.setComponentError(new UserError("Wrong password."));

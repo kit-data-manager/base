@@ -50,9 +50,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.eclipse.persistence.annotations.BatchFetch;
 import org.eclipse.persistence.annotations.BatchFetchType;
-import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 import org.eclipse.persistence.queries.FetchGroupTracker;
 import org.eclipse.persistence.sessions.Session;
 
@@ -62,27 +59,27 @@ import org.eclipse.persistence.sessions.Session;
  * @author hartmann-v
  */
 @Entity
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("investigationId")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                @XmlNamedAttributeNode("investigationId"),
-                @XmlNamedAttributeNode("uniqueIdentifier"),
-                @XmlNamedAttributeNode("topic"),
-                @XmlNamedAttributeNode("note"),
-                @XmlNamedAttributeNode("description"),
-                @XmlNamedAttributeNode(value = "study", subgraph = "simple"),
-                @XmlNamedAttributeNode(value = "metaDataSchema", subgraph = "simple"),
-                @XmlNamedAttributeNode(value = "participants", subgraph = "simple"),
-                @XmlNamedAttributeNode(value = "dataSets", subgraph = "simple"),
-                @XmlNamedAttributeNode("startDate"),
-                @XmlNamedAttributeNode("endDate")
-            })})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("investigationId")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("investigationId"),
+//                @XmlNamedAttributeNode("uniqueIdentifier"),
+//                @XmlNamedAttributeNode("topic"),
+//                @XmlNamedAttributeNode("note"),
+//                @XmlNamedAttributeNode("description"),
+//                @XmlNamedAttributeNode(value = "study", subgraph = "simple"),
+//                @XmlNamedAttributeNode(value = "metaDataSchema", subgraph = "simple"),
+//                @XmlNamedAttributeNode(value = "participants", subgraph = "simple"),
+//                @XmlNamedAttributeNode(value = "dataSets", subgraph = "simple"),
+//                @XmlNamedAttributeNode("startDate"),
+//                @XmlNamedAttributeNode("endDate")
+//            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @NamedEntityGraphs({

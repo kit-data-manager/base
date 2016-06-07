@@ -15,8 +15,6 @@
  */
 package edu.kit.dama.authorization.annotations;
 
-import edu.kit.dama.authorization.annotations.Context;
-import edu.kit.dama.authorization.annotations.FilterOutput;
 import edu.kit.dama.authorization.annotations.resources.SecurityTestEntity;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.Role;
@@ -117,7 +115,6 @@ public class FilterResourceUserTest extends SecurityUtil {
   public static void prepareClass() {
     prepare();
     initResources();
-
   }
 
     /**
@@ -185,7 +182,7 @@ public class FilterResourceUserTest extends SecurityUtil {
   public List<SecurityTestEntity> getAllEntities(@Context AuthorizationContext act) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
     List<SecurityTestEntity> copyList = new ArrayList<SecurityTestEntity>();
     copyList.addAll(allEntities);
-
+  
     return copyList;
   }
 }

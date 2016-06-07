@@ -16,6 +16,7 @@
  */
 package edu.kit.dama.authorization.entities.impl;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.kit.dama.authorization.entities.IDefaultGrant;
 import edu.kit.dama.authorization.entities.Role;
 import java.io.Serializable;
@@ -61,6 +62,7 @@ public class Grant implements IDefaultGrant, Serializable {
     private Role grantedRole;
     @ManyToOne
     @XmlTransient
+    @JsonIgnore
     private GrantSet grants;
 
     /**

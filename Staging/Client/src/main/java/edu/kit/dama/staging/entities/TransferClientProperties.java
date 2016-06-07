@@ -81,7 +81,7 @@ public class TransferClientProperties {
    */
   private String apiSecret = null;
   //registered staging processors
-  private final List<StagingProcessor> processors = new LinkedList<StagingProcessor>();
+  private final List<StagingProcessor> processors = new LinkedList<>();
   /**
    * Custom properties which might be used by 'handlerClass'
    */

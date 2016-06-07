@@ -72,7 +72,7 @@ public class DefaultIngestInformationServiceAdapter implements IIngestInformatio
     @Override
     public void removeIngestInformation(Long pId, IAuthorizationContext pContext) throws ServiceAdapterException {
         LOGGER.debug("Removing ingest with id '{}'", pId);
-        Integer queryResult = IngestInformationServiceLocal.getSingleton().removeEntity(pId, null);
+        Integer queryResult = IngestInformationServiceLocal.getSingleton().removeEntity(pId, pContext);
         if (queryResult == 1) {
             LOGGER.debug("Ingest successfully removed");
         }
@@ -82,7 +82,7 @@ public class DefaultIngestInformationServiceAdapter implements IIngestInformatio
     public List<IngestInformation> getIngestsForArchiving(IAuthorizationContext pContext) throws ServiceAdapterException {
         LOGGER.debug("Getting all ingests ready for staging");
         List<IngestInformation> result = new LinkedList<IngestInformation>();
-        List<IngestInformation> queryResult = IngestInformationServiceLocal.getSingleton().getIngestInformationByStatus(INGEST_STATUS.PRE_INGEST_FINISHED.getId(), -1, -1, null);
+        List<IngestInformation> queryResult = IngestInformationServiceLocal.getSingleton().getIngestInformationByStatus(INGEST_STATUS.PRE_INGEST_FINISHED.getId(), 0, Integer.MAX_VALUE, pContext);
         if (queryResult != null) {
             LOGGER.debug("Query for archivable ingests returned '{}' results", queryResult.size());
             Collections.addAll(result, queryResult.toArray(new IngestInformation[queryResult.size()]));
@@ -98,19 +98,19 @@ public class DefaultIngestInformationServiceAdapter implements IIngestInformatio
         String storageUrl = pInformation.getStorageUrl();
         if (storageUrl != null) {
             LOGGER.debug("Updating storage URL for entity with id {} to value {}", new Object[]{pInformation.getId(), storageUrl});
-            IngestInformationServiceLocal.getSingleton().updateStorageUrl(pInformation.getId(), storageUrl, null);
+            IngestInformationServiceLocal.getSingleton().updateStorageUrl(pInformation.getId(), storageUrl, pContext);
         }
 
         LOGGER.debug("Updating status for entity with id {}", pInformation.getId());
         //update information (staging URL?)
-        IngestInformationServiceLocal.getSingleton().updateStatus(pInformation.getId(), pInformation.getStatus(), pInformation.getErrorMessage(), null);
+        IngestInformationServiceLocal.getSingleton().updateStatus(pInformation.getId(), pInformation.getStatus(), pInformation.getErrorMessage(), pContext);
     }
 
     @Override
     public List<IngestInformation> getIngestsByStatus(INGEST_STATUS pStatus, IAuthorizationContext pContext) throws ServiceAdapterException {
         LOGGER.debug("Getting all ingests by status {}", pStatus);
-        List<IngestInformation> result = new LinkedList<IngestInformation>();
-        List<IngestInformation> queryResult = IngestInformationServiceLocal.getSingleton().getIngestInformationByStatus(pStatus.getId(), -1, -1, null);
+        List<IngestInformation> result = new LinkedList<>();
+        List<IngestInformation> queryResult = IngestInformationServiceLocal.getSingleton().getIngestInformationByStatus(pStatus.getId(), 0, Integer.MAX_VALUE, pContext);
         if (queryResult != null) {
             LOGGER.debug("Query for ingests by status {} returned '{}' results", pStatus, queryResult.size());
             Collections.addAll(result, queryResult.toArray(new IngestInformation[queryResult.size()]));

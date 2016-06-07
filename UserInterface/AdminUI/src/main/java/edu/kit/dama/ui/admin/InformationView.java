@@ -129,18 +129,12 @@ public class InformationView extends CustomComponent {
         table.setWidth("600px");
         table.setHeight("400px");
         table.setColumnExpandRatio("Identifier", 1);
-        table.setColumnWidth("You", 100);
-        table.setColumnWidth("Global", 100);
-        table.setColumnWidth("Percentage", 100);
+        table.setColumnWidth("Value", 100);
 
-        table.setColumnAlignment("You", Align.CENTER);
-        table.setColumnAlignment("Global", Align.CENTER);
-        table.setColumnAlignment("Percentage", Align.CENTER);
+        table.setColumnAlignment("Value", Align.CENTER);
 
         table.setColumnHeader("Identifier", "");
-        table.setColumnHeader("You", "Your Share");
-        table.setColumnHeader("Global", "Global Amount");
-        table.setColumnHeader("Percentage", "Percentage");
+        table.setColumnHeader("Value", "Amount");
 
         Button reloadButton = new Button("Reload");
         reloadButton.addClickListener(new Button.ClickListener() {
@@ -167,24 +161,20 @@ public class InformationView extends CustomComponent {
             IAuthorizationContext ctx = parent.getAuthorizationContext();
             mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
             mdm.setAuthorizationContext(ctx);
-            LOGGER.debug("Getting all digital objects.");
-            List<DigitalObject> results = new DigitalObjectSecureQueryHelper().getReadableResources(mdm, 0, Integer.MAX_VALUE, ctx);
-            LOGGER.debug("Obtained {} result(s).", results.size());
-
-            /*  StringBuilder b = new StringBuilder();
-       b.append("{\"name\":\"Studies\",\n"
-       + "\"children\":[");
-       for(Study s : studies){
-       b.append("{\"name\":\"").append(s.getTopic()).append("\"")
-       }  
-       b.append("]}");*/
-            LOGGER.debug("Obtaining group memberships.");
-            List<GroupId> groupMemberships = GroupServiceLocal.getSingleton().membershipsOf(ctx.getUserId(), 0, Integer.MAX_VALUE, AuthorizationContext.factorySystemContext());
-            LOGGER.debug("Obtained {} result(s). Obtaining groups.", groupMemberships.size());
+            
+            
+           // LOGGER.debug("Getting all digital objects.");
+            //@TODO Use Admin context and reduce table...this might not scale for huge numbers of objects.
+          //  List<DigitalObject> results = new DigitalObjectSecureQueryHelper().getReadableResources(mdm, 0, Integer.MAX_VALUE, ctx);
+            //LOGGER.debug("Obtained {} result(s).", results.size());
+            
+           // LOGGER.debug("Obtaining group memberships.");
+           // List<GroupId> groupMemberships = GroupServiceLocal.getSingleton().membershipsOf(ctx.getUserId(), 0, Integer.MAX_VALUE, AuthorizationContext.factorySystemContext());
+            LOGGER.debug("Obtaining groups.");
             List<GroupId> allGroups = GroupServiceLocal.getSingleton().getAllGroupsIds(0, Integer.MAX_VALUE, AuthorizationContext.factorySystemContext());
             LOGGER.debug("Obtained {} result(s). Obtaining DataOrganization information.", allGroups.size());
 
-            long userFileSize = 0l;
+          /*  long userFileSize = 0l;
             long userFiles = 0l;
             for (DigitalObject result : results) {
                 userFileSize += DataOrganizationUtils.getAssociatedDataSize(result.getDigitalObjectId());
@@ -192,17 +182,20 @@ public class InformationView extends CustomComponent {
             }
             LOGGER.debug("Obtained {} user file(s) with a size of {} bytes. Getting global DataOrganiazation information.", userFiles, userFileSize);
             int userDigitalObjectCount = results.size();
+            */
+            
+            LOGGER.debug("Getting global digital object information.");
             int globalDigitalObjectCount = ((Number) mdm.findSingleResult("SELECT COUNT(d) FROM DigitalObject d")).intValue();
             long globalFileSize = DataOrganizationUtils.getAssociatedDataSize();
             long globalFiles = DataOrganizationUtils.getAssociatedFileCount();
+            
+            
             LOGGER.debug("Obtained {} global file(s) with a size of {} bytes.", globalFiles, globalFileSize);
 
             LOGGER.debug("Setting up table data source.");
             HierarchicalContainer container = new HierarchicalContainer();
             container.addContainerProperty("Identifier", String.class, "");
-            container.addContainerProperty("You", String.class, "");
-            container.addContainerProperty("Global", String.class, "");
-            container.addContainerProperty("Percentage", String.class, "");
+            container.addContainerProperty("Value", String.class, "");
 
             NumberFormat nf = NumberFormat.getInstance();
             nf.setMinimumFractionDigits(0);
@@ -210,46 +203,23 @@ public class InformationView extends CustomComponent {
             NumberFormat nfp = NumberFormat.getPercentInstance();
 
             Item i = container.addItemAt(0, 0);
-            i.getItemProperty("Identifier").setValue("Group Memberships");
-            i.getItemProperty("You").setValue(nf.format(groupMemberships.size()));
-            i.getItemProperty("Global").setValue(nf.format(allGroups.size()));
-            double percent = (double) groupMemberships.size() / (double) allGroups.size();
-            if (Double.isNaN(percent)) {
-                percent = 0.0;
-            }
-            i.getItemProperty("Percentage").setValue(nfp.format(percent));
-
+            i.getItemProperty("Identifier").setValue("Groups");
+            i.getItemProperty("Value").setValue(nf.format(allGroups.size()));
+            
             i = container.addItemAt(1, 1);
-            i.getItemProperty("Identifier").setValue("Accessible Digital Objects");
-            i.getItemProperty("You").setValue(nf.format(userDigitalObjectCount));
-            i.getItemProperty("Global").setValue(nf.format(globalDigitalObjectCount));
-            percent = (double) userDigitalObjectCount / (double) globalDigitalObjectCount;
-            if (Double.isNaN(percent)) {
-                percent = 0.0;
-            }
-            i.getItemProperty("Percentage").setValue(nfp.format(percent));
-
+            i.getItemProperty("Identifier").setValue("Digital Objects");
+            i.getItemProperty("Value").setValue(nf.format(globalDigitalObjectCount));
+           
             i = container.addItemAt(2, 2);
-            i.getItemProperty("Identifier").setValue("Single Files");
-            i.getItemProperty("You").setValue(nf.format(userFiles));
-            i.getItemProperty("Global").setValue(nf.format(globalFiles));
-            percent = (double) userFiles / (double) globalFiles;
-            if (Double.isNaN(percent)) {
-                percent = 0.0;
-            }
-            i.getItemProperty("Percentage").setValue(nfp.format(percent));
-
+            i.getItemProperty("Identifier").setValue("Files");
+            i.getItemProperty("Value").setValue(nf.format(globalFiles));
+           
             nf.setMinimumFractionDigits(2);
             nf.setMaximumFractionDigits(2);
             i = container.addItemAt(3, 3);
             i.getItemProperty("Identifier").setValue("Occupied Diskspace");
-            i.getItemProperty("You").setValue(AbstractFile.formatSize(userFileSize));
-            i.getItemProperty("Global").setValue(AbstractFile.formatSize(globalFileSize));
-            percent = (double) userFileSize / (double) globalFileSize;
-            if (Double.isNaN(percent)) {
-                percent = 0.0;
-            }
-            i.getItemProperty("Percentage").setValue(nfp.format(percent));
+            i.getItemProperty("Value").setValue(AbstractFile.formatSize(globalFileSize));
+            
             LOGGER.debug("Setting table data source.");
             table.setContainerDataSource(container);
         } catch (AuthorizationException ex) {

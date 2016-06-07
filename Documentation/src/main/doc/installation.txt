@@ -10,7 +10,7 @@ Prerequisites
 ~~~~~~~~~~~~~
 In order to be able to provide KIT Data Manager services you'll need at least the following software components installed: 
 
-* Java SE Development Kit 7
+* Java SE Development Kit 8
 * Apache Tomcat 7
 * PostgreSQL 9.1
 * Apache Http Server (for sample WebDAV access to data)
@@ -137,7 +137,7 @@ datamanager.xml::
    Contains all KIT Data Manager settings. Typically, most of them can remain unchanged, except settings containing placeholder variables (e.g. `KITDM_LOCATION`, `HOSTNAME` and `ARCHIVE_STORAGE`). Please refer to the comments
    in the config file for more information.
 logback.xml::
-   The configuration of the logging framework. By default, all warnings and error messages are logged into the Tomcat temp folder located at `/tmp/tomcat7-tomcat7-tmp/`, 
+   The configuration of the logging framework. By default, all warnings and error messages are logged into the Tomcat temp folder located e.g. at `/tmp/tomcat7-tomcat7-tmp/` or `$CATALINA_HOME/temp/`, 
    but you can also set another value instead of `${java.io.tmpdir}/datamanager.log` as log file location at any time.
 
 [NOTE]
@@ -174,7 +174,6 @@ These entries are adding a WebDav role, defined in `$TOMCAT_HOME/webapps/webdav/
 `webdav` and the password `webdav` can be chosen arbitrarily. After restarting the Tomcat server the WebDav servlet should be accessible. 
 
 The final step is now to register a new staging access point using WebDav access. Therefore, please proceed to <<AnchorAPRegistration,the end of the next chapter>> and follow these final instructions.
-
 
 Setting up a WebDav Access Point using an Apache HTTP server
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -272,6 +271,10 @@ The final part of the system-level portion of the setup is the execution of regu
 In order to register and execute these tasks it is recommended to use the internal job scheduler which can be configured using the administration backend of KIT Data Manager. 
 Please refer to the <<ChapterJobScheduling,according section>> for details. 
 
+[NOTE]
+Please be aware that the Cron-based execution of recurring tasks described in the following section is a deprecated feature which will disappear in one of the next versions of KIT Data Manager. 
+Therefore, you should consider to use the internal job scheduler.
+
 An alternative option is creating a Cron job using the provided script called `TransferFinalizer.sh` available at 
 `$KITDM_LOCATION/scripts/`. At first, set the correct value of $KITDM_LOCATION in the script. Then, please pay attention that the scripts are executed by the user running 
 the KIT Data Manager Web application, in our case this should be `tomcat7`. Therefore, the Cron job must be assigned to this user as follows:
@@ -294,7 +297,7 @@ Don't forget to set $KITDM_LOCATION inside the TransferFinalizer.sh script when 
 [[AnchorAPRegistration]]
 Now, a new access point using the created WebDav service can be registered using the administration backend of KIT Data Manager. For this purpose please browse to
 `http://localhost:8080/KITDM` in the browser of your KIT Data Manager machine and login. By default the administrator email is `dama@kit.edu` and the password is `dama14`. 
-Open the settings page using the button on the lower left hand side and select the tab `Staging Access Point Configuration`, which looks as follows:
+Open the settings page using the button with the gears image:Settings_Button.png[Settings_Button, width="30"] and select the tab `Staging Access Point Configuration`, which looks as follows:
 
 [[AdminUI_AP]]
 .Staging access point configuration tab in the administration backend.
@@ -309,6 +312,124 @@ If the Tomcat Servlet-based WebDav access is used the `LOCAL BASE PATH` must be 
 
 Finally, commit all changes using the Commit button on the lower right. 
 Now, you should be able to use KIT Data Manager as a repository system including the ingest and the download of data.
+
+Enhanced Configuration
+~~~~~~~~~~~~~~~~~~~~~~
+
+[[ChapterAuthorizationLessAccess]]
+Authorization-less Access to Data Organization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Section <<SectionRESTBasedDownload,REST-based Data Download>> describes a feature allowing to download data directly via the Data Organization REST endpoint. By default, this feature is disabled in order to avoid 
+open access to repository content by accident. In order to enable the authorization-less access to defined nodes via the Data Organization REST endpoint you have to modify `$KITDM_LOCATION/KITDM/WEB-INF/web.xml`
+and uncomment/change one or more of the following `init-param` nodes. Please refer to the inline documentation or the <<SectionRESTBasedDownload,according section>> in the architecture decription for details.
+
+[source, xml]
+--------------------------------------
+<!--[...]-->
+<!--DataOrganization REST interface-->
+    <servlet>
+        <servlet-name>DataOrganizationServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.dataorganization.services.impl</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <!--Access to all nodes in the listed view(s), multiple views are separated by ';', is allowed without any authorization. (Only recommended for special views) -->
+        <!--init-param>
+            <param-name>public.view.names</param-name>
+            <param-value>public</param-value>
+        </init-param-->
+        <!--Access to all nodes having an attribute with the mentioned key assigned is allowed without any authorization. (Can be used for fine-grained selection) -->
+        <!--init-param>
+            <param-name>public.attribute.key</param-name>
+            <param-value>public</param-value>
+        </init-param-->
+        <!--Access collection nodes (download zipped version of all children) is allowed (Typically not recommended) -->
+        <!--init-param>
+            <param-name>public.collection.node.access.allowed</param-name>
+            <param-value>false</param-value>
+        </init-param-->
+        <!--Access file nodes is allowed if node name matches the provided pattern, e.g. (.*)\.jpg$ for all nodes ending with .jpg
+        Note that special characters are only escaped with one slash, not with two as if the pattern is provided as string!-->
+        <!--init-param>
+            <param-name>public.file.node.filter</param-name>
+            <param-value>(.*)\.jpg$</param-value>
+        </init-param-->
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DataOrganizationServiceAdapter</servlet-name>
+        <url-pattern>/rest/dataorganization/*</url-pattern>
+    </servlet-mapping> 
+<!--[...]-->
+--------------------------------------
+
+[WARNING]
+Keep in mind that enabling authorization-less access affects `ALL` Digital Objects stored in the repository. Therefore, you should consider to configure this feature in a way, that the risk of opening data by accident is minimized, 
+e.g. by using randomly generated view/attribute names or by using very specific name filter for accessing file nodes, e.g. the exact name instead of a too broad filter pattern.
+
+[[ChapterCustomDataOrganization]]
+Support for Ingest of Custom Data Organization Trees
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Basically, the ingest of custom Data Organization trees makes use of the default workflows already available with a basic KIT Data Manager installation. However, enabling this feature requires two configuration steps:
+
+Add a StagingProcessor::
+   Therefor, you can use the AdminUI as described in <<ChapterStagingProcessorConfiguration,this section>>. Add a new StagingProcessor using the implementation class 
+   `edu.kit.dama.staging.processor.impl.ReferenceTreeIngestProcessor`. After adding a new processor select the CheckBoxes `Default`, `INGEST SUPPORTED` and `DOWNLOAD SUPPORTED`. The `PROCESSOR TYPE` must be set to `POST_ARCHIVING`.
+   Finish the configuration by clicking `Commit`. Now, this processor will check for each ingest if there is a custom Data Organization description provided.
+
+Add a custom AdalapiProtocolConfiguration::
+   This step is necessary if you plan to use the Staging Service to access remotely (via HTTP) accessible data provided as part of a custom Data Organization tree. By default, KIT Data Manager assumes that all HTTP URLs are accessible via the 
+   WebDav protocol in with an interactive authentication performed by the user. For automated staging operations this is not useful. Therefore, in order to provide basic read access to HTTP URLs by the staging service, the access protocol as 
+   well as the authentication has to be selected based on the accessed URL. Therefor, the protocol, hostname and port (if available) are used to create the unique identifier of a so called `AdalapiProtocolConfiguration`, which is stored in a 
+   table with the same name and with the following columns: 
+
+[cols="m,n,o,p,q", options="header"]
+|============================================================================================================================
+|id|authenticatorclass|customproperties|identifier|protocolclass
+|1|edu.kit.dama.staging.adalapi.authenticator.KITDMAuthenticator|{"repository.context":"empty"}|http@remotehost|edu.kit.dama.staging.adalapi.protocol.SimpleHttp
+|============================================================================================================================
+
+For the time being the only two ways to add a new `AdalapiProtocolConfiguration` is manually adding a table row via SQL statement or programatically adding an entry via Java APIs. 
+Furthermore, the exact values as shown above must be used. The only fields that change are the `id`, which has to be unique, and the `identifier` which also has to be unique and must be generated based on the URL that should be accessed. 
+For manually adding a configuration via SQL statement, the following table shows some examples of identifiers for specific URLs: 
+
+[cols="m,n", options="header"]
+|============================================================================================================================
+|Remote URL|Identifier
+|`http://www.google.com/[...]`|`http@www.google.com`
+|`https://myDomain:8443/[...]`|`https@myDomain:8443`
+|`http://localhost:8080/webdav/[...]`|`http@localhost:8080`
+|============================================================================================================================
+
+Adding a configuration via Java APIs can be achieved as follows: 
+
+[source,java]
+--------------------------------------
+//Create properties map containing properties that might be needed by the protocol and the authenticator implementation
+Map<String, Object> properties = new HashMap<>();
+properties.put("repository.context", "empty");
+//Instantiate a new AdalapiProtocolConfiguration. The configuration identifier is obtained using the provided sample URL.
+AdalapiProtocolConfiguration config = AdalapiProtocolConfiguration.factoryConfiguration(new URL("http://remotehost/"), edu.kit.dama.staging.adalapi.protocol.SimpleHttp.class.getCanonicalName(), edu.kit.dama.staging.adalapi.authenticator.KITDMAuthenticator.class.getCanonicalName(), properties);
+
+//Persist the configuration using the MetadataManagement of KIT Data Manager
+IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
+try {
+   mdm.save(config);
+} finally {
+   mdm.close();
+}
+--------------------------------------
+
+Now, while processing a download operation the Staging Service can check for each LFN obtained from a Data Organization node whether the protocol-host-port combination fits one of the registered identifiers or not.
+If this is the case, the URL is accessed using the configured `protocol class` and authenticated using the provided `authenticator class`. This also means, that for each different protocol-host-port combination one table entry is needed.
+In the sample row in the table above all URLs starting with `http://remotehost/` will be accessed using protocol class `edu.kit.dama.staging.adalapi.protocol.SimpleHttp` and authenticator class `edu.kit.dama.staging.adalapi.authenticator.KITDMAuthenticator`
+by the Staging Service while preparing a data download. 
 
 Updating KIT Data Manager
 -------------------------
@@ -413,6 +534,7 @@ in `$KITDM_LOCATION/KITDM/WEB-INF/classes/datamanager.xml` The default value is 
 |Type|Optional|Todo|Side Effects
 |image:data.png[DatabaseUpdate]|No|Apply script `sql/update.1.1-1.2.sql`|This script adds the Quartz scheduler related tables to the database. Furthermore, a typo was fixed and an additional column to the table 'ExecutionEnvironmentConfiguration' was introduced. As the worklflow service was not publicly available before version 1.2 this table should not exists, yet. Therefor, error related to changing this table can be safely ignored.
 |image:gear_preferences.png[ConfigurationUpdate]|No|Add a new section *scheduler* containing setting for the internal scheduler feature.|None.
+|image:gear_preferences.png[ConfigurationUpdate]|No|Update entity list in persistence.xml, persistence unit MDM-Core according to the list below. |None.
 |============================================================================================================================
 
 Additional section that has to be added to datamanger.xml in order to configure the Quartz scheduler. The values of the job store have to be changed according to your local configuration:
@@ -439,4 +561,132 @@ Additional section that has to be added to datamanger.xml in order to configure 
      <addDefaultSchedules>true</addDefaultSchedules>
    </scheduler>
 </config>
+--------------------------------------
+
+Current list of entities (KIT DM 1.2) that has to be registered in the persistence.xml for persistence unit MDM-Core:
+
+[source, xml]
+--------------------------------------
+ <!-- ********************************************************************
+    ***                           MDM-Core                                ***
+    *************************************************************************-->
+<persistence-unit name="MDM-Core" transaction-type="RESOURCE_LOCAL">
+<!--[...]-->
+    <class>edu.kit.dama.authorization.entities.impl.Group</class>
+    <class>edu.kit.dama.authorization.entities.impl.User</class>
+    <class>edu.kit.dama.authorization.entities.impl.Membership</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.Grant</class>
+    <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+    <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
+    <class>edu.kit.dama.mdm.base.OrganizationUnit</class>
+    <class>edu.kit.dama.mdm.base.Study</class>
+    <class>edu.kit.dama.mdm.base.Investigation</class>
+    <class>edu.kit.dama.mdm.base.DigitalObject</class>
+    <class>edu.kit.dama.mdm.base.Participant</class>
+    <class>edu.kit.dama.mdm.base.Relation</class>
+    <class>edu.kit.dama.mdm.base.Task</class>
+    <class>edu.kit.dama.mdm.base.UserData</class>
+    <class>edu.kit.dama.mdm.base.MetaDataSchema</class>
+    <class>edu.kit.dama.mdm.base.DigitalObjectType</class>
+    <class>edu.kit.dama.mdm.base.ObjectTypeMapping</class>
+    <class>edu.kit.dama.mdm.base.DigitalObjectTransition</class>
+    <class>edu.kit.dama.mdm.base.ObjectViewMapping</class>
+    <class>edu.kit.dama.mdm.dataworkflow.ExecutionEnvironmentConfiguration</class>
+    <class>edu.kit.dama.mdm.dataworkflow.properties.ExecutionEnvironmentProperty</class>
+    <class>edu.kit.dama.mdm.dataworkflow.DataWorkflowTask</class>
+    <class>edu.kit.dama.mdm.dataworkflow.DataWorkflowTaskConfiguration</class>
+    <class>edu.kit.dama.mdm.dataworkflow.DataWorkflowTransition</class>
+    <class>edu.kit.dama.mdm.dataworkflow.properties.StringValueProperty</class>
+    <class>edu.kit.dama.mdm.dataworkflow.properties.LinuxSoftwareMapProperty</class>
+    <class>edu.kit.dama.mdm.admin.ServiceAccessToken</class>
+    <class>edu.kit.dama.mdm.admin.UserGroup</class>
+    <class>edu.kit.dama.mdm.admin.UserProperty</class>
+    <class>edu.kit.dama.mdm.admin.UserPropertyCollection</class>
+    <!--class>edu.kit.dama.mdm.content.MetadataIndexingTask</class-->
+<!--[...]-->
+</persistence-unit>
+--------------------------------------
+
+[underline]*Update 1.2 -> 1.3*
+
+[cols="1,1,6,2", options="header"]
+|============================================================================================================================
+|Type|Optional|Todo|Side Effects
+|image:data.png[DatabaseUpdate]|No|Apply script `sql/update.1.2-1.3.sql`|This script adds two new columns to the StagingProcessor table. Furthermore, the foreign key constraint of the Attribute table has been modified to allow cascading updates. Also the fully qualified class name of LFNImpl has been changed (already in version 1.2). The according database update is now part of this script. Finally, a typo has been fixed.
+|image:gear_preferences.png[ConfigurationUpdate]|No|Add a new section *metadataManagement* containing metadata related setting, e.g. for the new feature of object transition handlers. For more details see below.|None.
+|image:gear_preferences.png[ConfigurationUpdate]|No|Update entity list in persistence.xml, persistence unit MDM-Core according to the list below. |None.
+|============================================================================================================================
+
+
+Additional section that has to be added to datamanger.xml in order to configure the transition type handler of the metadata management:
+
+[source, xml]
+--------------------------------------
+<!--[...]-->
+<metadataManagement>
+ <transitionTypes>
+  <NONE>
+   <handlerClass>edu.kit.dama.mdm.tools.NullTransitionTypeHandler</handlerClass>
+  </NONE>
+ <DATAWORKFLOW>
+   <handlerClass>edu.kit.dama.mdm.dataworkflow.tools.DataWorkflowTransitionTypeHandler</handlerClass>
+  </DATAWORKFLOW>
+  <ELASTICSEARCH>
+   <handlerClass>edu.kit.dama.mdm.content.util.ElasticsearchTransitionTypeHandler</handlerClass>
+  </ELASTICSEARCH>
+ </transitionTypes>
+</metadataManagement>
+<!--[...]-->
+--------------------------------------
+
+Current list of entities (KIT DM 1.2) that has to be registered in the persistence.xml for persistence unit MDM-Core:
+
+[source, xml]
+--------------------------------------
+ <!-- ********************************************************************
+    ***                           MDM-Core                                ***
+    *************************************************************************-->
+<persistence-unit name="MDM-Core" transaction-type="RESOURCE_LOCAL">
+<!--[...]-->
+    <class>edu.kit.dama.authorization.entities.impl.Group</class>
+    <class>edu.kit.dama.authorization.entities.impl.User</class>
+    <class>edu.kit.dama.authorization.entities.impl.Membership</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.Grant</class>
+    <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+    <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
+    <class>edu.kit.dama.mdm.base.OrganizationUnit</class>
+    <class>edu.kit.dama.mdm.base.Study</class>
+    <class>edu.kit.dama.mdm.base.Investigation</class>
+    <class>edu.kit.dama.mdm.base.DigitalObject</class>
+    <class>edu.kit.dama.mdm.base.Participant</class>
+    <class>edu.kit.dama.mdm.base.Relation</class>
+    <class>edu.kit.dama.mdm.base.Task</class>
+    <class>edu.kit.dama.mdm.base.UserData</class>
+    <class>edu.kit.dama.mdm.base.MetaDataSchema</class>
+    <class>edu.kit.dama.mdm.base.DigitalObjectType</class>
+    <class>edu.kit.dama.mdm.base.ObjectTypeMapping</class>
+    <class>edu.kit.dama.mdm.base.DigitalObjectTransition</class>
+    <class>edu.kit.dama.mdm.base.ObjectViewMapping</class>
+    <class>edu.kit.dama.mdm.dataworkflow.ExecutionEnvironmentConfiguration</class>
+    <class>edu.kit.dama.mdm.dataworkflow.properties.ExecutionEnvironmentProperty</class>
+    <class>edu.kit.dama.mdm.dataworkflow.DataWorkflowTask</class>
+    <class>edu.kit.dama.mdm.dataworkflow.DataWorkflowTaskConfiguration</class>
+    <class>edu.kit.dama.mdm.dataworkflow.DataWorkflowTransition</class>
+    <class>edu.kit.dama.mdm.dataworkflow.properties.StringValueProperty</class>
+    <class>edu.kit.dama.mdm.dataworkflow.properties.LinuxSoftwareMapProperty</class>
+    <class>edu.kit.dama.mdm.admin.ServiceAccessToken</class>
+    <class>edu.kit.dama.mdm.admin.UserGroup</class>
+    <class>edu.kit.dama.mdm.admin.UserProperty</class>
+    <class>edu.kit.dama.mdm.admin.UserPropertyCollection</class>
+    <class>edu.kit.dama.mdm.content.ElasticsearchTransition</class>
+    <class>edu.kit.dama.staging.entities.AdalapiProtocolConfiguration</class>
+    <!--class>edu.kit.dama.mdm.content.MetadataIndexingTask</class-->
+<!--[...]-->
+</persistence-unit>
 --------------------------------------

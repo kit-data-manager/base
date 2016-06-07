@@ -46,7 +46,7 @@ public final class TransitionQueryHelper {
      * @param pContext The context used to authorize the access.
      *
      * @return A list of transitions where pInputObject is in the map of input
-     * objects obtained using the DigitalObjectTransition.simple fetch graph.
+     * objects.
      *
      * @throws UnauthorizedAccessAttemptException if pContext is not authorized
      * to perform the query.
@@ -55,7 +55,7 @@ public final class TransitionQueryHelper {
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(pContext);
         try {
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.simple");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.default");
             return mdm.findResultList("SELECT t FROM DigitalObjectTransition t JOIN t.inputObjectViewMappings m WHERE m.digitalObject.baseId = " + pInputObject.getBaseId(), DigitalObjectTransition.class);
         } finally {
             mdm.close();
@@ -72,8 +72,7 @@ public final class TransitionQueryHelper {
      * @param pContext The context used to authorize the access.
      *
      * @return A list of transitions of type pTransitionImplementationClass
-     * where pInputObject is in the map of input objects obtained using the
-     * DigitalObjectTransition.simple fetch graph.
+     * where pInputObject is in the map of input objects.
      *
      * @throws UnauthorizedAccessAttemptException if pContext is not authorized
      * to perform the query.
@@ -82,8 +81,11 @@ public final class TransitionQueryHelper {
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(pContext);
         try {
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.simple");
-            return mdm.findResultList("SELECT t FROM DigitalObjectTransition t JOIN t.inputObjectViewMappings m WHERE TYPE(t) = " + pTransitionImplementationClass.getSimpleName() + " AND m.digitalObject.baseId = " + pInputObject.getBaseId(), DigitalObjectTransition.class);
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.default");
+            return mdm.findResultList("SELECT t FROM DigitalObjectTransition t JOIN t.inputObjectViewMappings m WHERE TYPE(t) = " + 
+                    pTransitionImplementationClass.getSimpleName() + 
+                    " AND m.digitalObject.baseId = " + 
+                    pInputObject.getBaseId(), DigitalObjectTransition.class);
         } finally {
             mdm.close();
         }
@@ -96,8 +98,7 @@ public final class TransitionQueryHelper {
      * @param pContext The context used to authorize the access.
      *
      * @return A list of transitions where pOutputObject is in the list of
-     * output objects obtained using the DigitalObjectTransition.simple fetch
-     * graph.
+     * output objects.
      *
      * @throws UnauthorizedAccessAttemptException if pContext is not authorized
      * to perform the query.
@@ -106,7 +107,7 @@ public final class TransitionQueryHelper {
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(pContext);
         try {
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.simple");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.default");
             return mdm.findResultList("SELECT t FROM DigitalObjectTransition t JOIN t.outputObjects o WHERE o.baseId = " + pOutputObject.getBaseId(), DigitalObjectTransition.class);
         } finally {
             mdm.close();
@@ -123,8 +124,7 @@ public final class TransitionQueryHelper {
      * @param pContext The context used to authorize the access.
      *
      * @return A list of transitions of type pTransitionImplementationClass
-     * where pOutputObject is in the list of outputobjects obtained using the
-     * DigitalObjectTransition.simple fetch graph.
+     * where pOutputObject is in the list of output objects.
      *
      * @throws UnauthorizedAccessAttemptException if pContext is not authorized
      * to perform the query.
@@ -133,8 +133,11 @@ public final class TransitionQueryHelper {
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(pContext);
         try {
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.simple");
-            return mdm.findResultList("SELECT t FROM DigitalObjectTransition t JOIN t.outputObjects o WHERE TYPE(t) = " + pTransitionImplementationClass.getSimpleName() + " AND o.baseId = " + pOutputObject.getBaseId(), DigitalObjectTransition.class);
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.default");
+            return mdm.findResultList("SELECT t FROM DigitalObjectTransition t JOIN t.outputObjects o WHERE TYPE(t) = " + 
+                    pTransitionImplementationClass.getSimpleName() + 
+                    " AND o.baseId = " + 
+                    pOutputObject.getBaseId(), DigitalObjectTransition.class);
         } finally {
             mdm.close();
         }
@@ -152,8 +155,7 @@ public final class TransitionQueryHelper {
      * @param pContext The context used to authorize the access.
      *
      * @return One or no transition for the transition entity Id
-     * pTransitionEntityId obtained using the DigitalObjectTransition.simple
-     * fetch graph.
+     * pTransitionEntityId.
      *
      * @throws UnauthorizedAccessAttemptException if pContext is not authorized
      * to perform the query.
@@ -162,7 +164,7 @@ public final class TransitionQueryHelper {
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(pContext);
         try {
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.simple");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.default");
             return mdm.findSingleResult("SELECT t FROM DigitalObjectTransition t WHERE TYPE(t) = " + pTransitionImplementationClass.getSimpleName() + " AND t.transitionEntityId = '" + pTransitionEntityId + "'", DigitalObjectTransition.class);
         } finally {
             mdm.close();

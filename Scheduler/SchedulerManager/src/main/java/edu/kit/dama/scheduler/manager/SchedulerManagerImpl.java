@@ -193,15 +193,19 @@ public final class SchedulerManagerImpl implements ISchedulerManager {
         org.quartz.Trigger quartzTrigger;
 
         if (trigger instanceof QuartzExpressionTrigger) {
+            LOGGER.debug("Creating expression trigger.");
             quartzTrigger = ((QuartzExpressionTrigger) trigger).build().forJob(jobDetail).build();
             retVal = new QuartzExpressionTrigger((CronTrigger) quartzTrigger);
         } else if (trigger instanceof QuartzIntervalTrigger) {
+            LOGGER.debug("Creating interval trigger.");
             quartzTrigger = ((QuartzIntervalTrigger) trigger).build().forJob(jobDetail).build();
             retVal = new QuartzIntervalTrigger((SimpleTrigger) quartzTrigger);
         } else if (trigger instanceof QuartzAtTrigger) {
+            LOGGER.debug("Creating at trigger.");
             quartzTrigger = ((QuartzAtTrigger) trigger).build().forJob(jobDetail).build();
             retVal = new QuartzAtTrigger((SimpleTrigger) quartzTrigger);
         } else if (trigger instanceof QuartzNowTrigger) {
+            LOGGER.debug("Creating now trigger.");
             quartzTrigger = ((QuartzNowTrigger) trigger).build().forJob(jobDetail).build();
             retVal = new QuartzNowTrigger((SimpleTrigger) quartzTrigger);
         } else {
@@ -209,6 +213,7 @@ public final class SchedulerManagerImpl implements ISchedulerManager {
         }
 
         try {
+            LOGGER.debug("Adding trigger to schedule with id '{}'", scheduleId);
             this.scheduler.scheduleJob(quartzTrigger);
         } catch (SchedulerException ex) {
             throw new SchedulerManagerException("Could not add schedule to the scheduler. Internal scheduler exception occurred.", ex);

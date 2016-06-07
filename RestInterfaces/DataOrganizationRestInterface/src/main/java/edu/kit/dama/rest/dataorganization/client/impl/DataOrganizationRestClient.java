@@ -19,6 +19,8 @@ import com.sun.jersey.api.client.ClientResponse;
 import edu.kit.dama.rest.dataorganization.types.DataOrganizationViewWrapper;
 import edu.kit.dama.rest.dataorganization.types.DataOrganizationNodeWrapper;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
+import edu.kit.dama.mdm.dataorganization.impl.util.Util;
 import edu.kit.dama.rest.AbstractRestClient;
 import edu.kit.dama.rest.SimpleRESTContext;
 import edu.kit.dama.rest.util.RestClientUtils;
@@ -27,7 +29,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.MessageFormat;
 import javax.ws.rs.core.MultivaluedMap;
+import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -39,6 +43,8 @@ public class DataOrganizationRestClient extends AbstractRestClient {
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DataOrganizationRestClient.class);
 
     private static final String QUERY_PARAMETER_VIEW_NAME = "viewName";
+    private static final String FORM_PARAMETER_VIEW_DATA = "viewData";
+    private static final String FORM_PARAMETER_PRESERVE_ATTRIBUTES = "preserveAttributes";
 
     // <editor-fold defaultstate="collapsed" desc="URL components">
     /**
@@ -108,7 +114,7 @@ public class DataOrganizationRestClient extends AbstractRestClient {
 // <editor-fold defaultstate="collapsed" desc="Generic Rest methods (GET, PUT, POST, DELETE)">
 
     /**
-     * Perform a get for DataOrganizationNode.
+     * Perform a GET for DataOrganizationNode.
      *
      * @param pPath url
      * @param pQueryParams url parameters
@@ -119,6 +125,21 @@ public class DataOrganizationRestClient extends AbstractRestClient {
             String pPath, MultivaluedMap pQueryParams) {
         return RestClientUtils.performGet(DataOrganizationNodeWrapper.class,
                 getWebResource(pPath), pQueryParams);
+    }
+
+    /**
+     * Perform a POST for DataOrganizationNode.
+     *
+     * @param pPath url
+     * @param pQueryParams url parameters
+     * @param pFormParams The form params
+     *
+     * @return DataOrganizationNodeWrapper.
+     */
+    private DataOrganizationNodeWrapper performDataOrganizationNodePost(
+            String pPath, MultivaluedMap pQueryParams, MultivaluedMap pFormParams) {
+        return RestClientUtils.performPost(DataOrganizationNodeWrapper.class,
+                getWebResource(pPath), pQueryParams, pFormParams);
     }
 
     /**
@@ -644,13 +665,10 @@ public class DataOrganizationRestClient extends AbstractRestClient {
      * downloaded.
      * @param pDestination The destination folder where to store the downloaded
      * file.
-     * @param pFilename The destination filename. If pFilename is null, the
-     * Content-Disposition header field will be used to obtain the filename. If
-     * this field is not available or cannot be used, an
-     * IllegalArgumentException is thrown.
+     * @param pFilename The destination filename.
      * @param pSecurityContext The security context used to access the REST
      * interface.
-     * 
+     *
      * @throws IOException if downloading the data fails.
      */
     public void downloadData(String pGroupId, Long pId, String pViewName, String pDataOrganizationPath, File pDestination, String pFilename, SimpleRESTContext pSecurityContext) throws IOException {
@@ -714,17 +732,92 @@ public class DataOrganizationRestClient extends AbstractRestClient {
     }
 
     /**
+     * Get the root node of the data organization associated with the provided
+     * object id and the provided view identifier. The arguments pFirst and
+     * pResults could be ignored in most cases as typically only one root node
+     * should be available.
+     *
+     * @param pGroupId The id of the group to which the associated digital
+     * object belongs.
+     * @param pId The id of the digital object.
+     * @param pView The file tree representing the view to create.
+     * @param pPreserveAttributes If TRUE all data organization node attributes
+     * of existing nodes are preserved in the new view.
+     *
+     * @return A DataOrganizationNodeWrapper entity containing the root node of
+     * the new view.
+     */
+    public DataOrganizationNodeWrapper postView(String pGroupId, Long pId,
+            IFileTree pView, Boolean pPreserveAttributes) {
+        return postView(pGroupId, pId, pView, pPreserveAttributes, null);
+    }
+
+    /**
+     * Get the root node of the data organization associated with the provided
+     * object id and the provided view identifier. The arguments pFirst and
+     * pResults could be ignored in most cases as typically only one root node
+     * should be available.
+     *
+     * @param pGroupId The id of the group to which the associated digital
+     * object belongs.
+     * @param pId The id of the digital object.
+     * @param pView The file tree representing the view to create.
+     * @param pPreserveAttributes If TRUE all data organization node attributes
+     * of existing nodes are preserved in the new view.
+     * @param pSecurityContext The security context used to access the REST
+     * interface.
+     *
+     * @return A DataOrganizationNodeWrapper entity containing the root node of
+     * the new view.
+     */
+    public DataOrganizationNodeWrapper postView(String pGroupId, Long pId,
+            IFileTree pView, Boolean pPreserveAttributes, SimpleRESTContext pSecurityContext) {
+
+        MultivaluedMap queryParams;
+        MultivaluedMap formParams;
+        setFilterFromContext(pSecurityContext);
+        queryParams = new MultivaluedMapImpl();
+        formParams = new MultivaluedMapImpl();
+
+        if (pId == null) {
+            throw new IllegalArgumentException(
+                    "Digital object ID must not be null");
+        }
+
+        if (pView == null) {
+            throw new IllegalArgumentException(
+                    "Argument pView must not be null");
+        }
+
+        if (Util.isReservedViewName(pView.getViewName())) {
+            throw new IllegalArgumentException(MessageFormat.format("The name '{0}' of the provided view is a reserved name and my not be used for custom views.", pView.getViewName()));
+        }
+
+        if (pGroupId != null) {
+            queryParams.add(Constants.REST_PARAMETER_GROUP_ID, pGroupId);
+        }
+        JSONObject viewData = Util.fileTreeToJsonView(pView);
+
+        formParams.add(FORM_PARAMETER_VIEW_DATA, viewData.toString());
+        if (pPreserveAttributes != null) {
+            formParams.add(FORM_PARAMETER_PRESERVE_ATTRIBUTES, pPreserveAttributes.toString());
+        }
+        return performDataOrganizationNodePost(RestClientUtils.encodeUrl(
+                ROOT_NODE, pId), queryParams, formParams);
+    }
+
+    /**
      * Simple testing.
      *
      * @param args Command line arguments.
-     * 
+     *
      * @throws Exception If something fails.
      */
     public static void main(String[] args) throws Exception {
         SimpleRESTContext ctx = new SimpleRESTContext("admin", "dama14");
-        DataOrganizationRestClient client = new DataOrganizationRestClient("http://localhost:8080/SimpleRepoUI/rest/dataorganization", ctx);
+        DataOrganizationRestClient client = new DataOrganizationRestClient("http://localhost:8080/KITDM/rest/dataorganization", ctx);
         System.out.println("Getting root node");
-        client.downloadData(Constants.USERS_GROUP_ID, 4l, "default", "/", new File("."), null, ctx);
+        client.downloadData(Constants.USERS_GROUP_ID, 34l, "default", "/", new File("."), null, ctx);
 
         /*System.out.println("Get child count");
          System.out.println(client.getChildCount("USERS", 4l, 100l, "default", ctx).getCount());

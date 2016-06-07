@@ -21,7 +21,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>Scheduler</artifactId>
-        <version>1.0</version>
+        <version>1.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -35,6 +35,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jdk.version>1.7</jdk.version>
         <endorsed.dir>${project.build.directory}/endorsed</endorsed.dir>
+        <root.relative.path>../../</root.relative.path>
     </properties>
     
     <dependencies>
@@ -42,13 +43,13 @@
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>REST-SchedulerService</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
         </dependency>
         
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>SchedulerManager</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
         </dependency>
     
     </dependencies>

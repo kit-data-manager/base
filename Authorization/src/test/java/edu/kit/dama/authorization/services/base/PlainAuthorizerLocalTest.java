@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
  */
 package edu.kit.dama.authorization.services.base;
 
@@ -46,15 +42,15 @@ import static org.junit.Assert.*;
  * @author pasic
  */
 public class PlainAuthorizerLocalTest {
+
     UserId userId = new UserId("User1");
     GroupId groupId = new GroupId("Group1");
     SecurableResourceId resourceId = new SecurableResourceId("mydom", "res1");
     Role roleRestriction = Role.MANAGER;
     IAuthorizationContext sysContext = TestUtil.sysCtx;
     IAuthorizationContext normalContext;
-    Role roleRequired  = Role.MEMBER;
+    Role roleRequired = Role.MEMBER;
 
-    
     /**
      *
      * @throws EntityNotFoundException
@@ -62,7 +58,6 @@ public class PlainAuthorizerLocalTest {
      * @throws UnauthorizedAccessAttemptException
      */
     public PlainAuthorizerLocalTest() throws EntityNotFoundException, EntityAlreadyExistsException, UnauthorizedAccessAttemptException {
-        
         TestUtil.clearDB();
         UserServiceLocal.getSingleton().register(userId, roleRequired, sysContext);
         GroupServiceLocal.getSingleton().create(groupId, userId, sysContext);
@@ -86,14 +81,14 @@ public class PlainAuthorizerLocalTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
     }
-    
+
     /**
      *
      */
     @Before
     public void setUp() {
     }
-    
+
     /**
      *
      */
@@ -103,47 +98,50 @@ public class PlainAuthorizerLocalTest {
 
     /**
      * Test of authorize method, of class PlainAuthorizerLocal.
-     * @throws Exception 
+     *
+     * @throws Exception
      */
     @Test
     public void testAuthorize_IAuthorizationContext_Role() throws Exception {
         System.out.println("authorize");
-        try{
+        try {
             PlainAuthorizerLocal.authorize(sysContext, roleRequired);
-        }catch(UnauthorizedAccessAttemptException e){
+        } catch (UnauthorizedAccessAttemptException e) {
             fail("Supposed to be authorized!");
         }
-        
+
     }
 
     /**
      * Test of authorize method, of class PlainAuthorizerLocal.
-     * @throws Exception 
+     *
+     * @throws Exception
      */
     @Test
     public void testAuthorize_3args_1() throws Exception {
         System.out.println("authorize");
-        try{
+        try {
             PlainAuthorizerLocal.authorize(sysContext, resourceId, roleRequired);
-        }catch(UnauthorizedAccessAttemptException e){
+        } catch (UnauthorizedAccessAttemptException e) {
             fail("Supposed to be authorized!");
         }
     }
 
     /**
      * Test of authorize method, of class PlainAuthorizerLocal.
-     * @throws Exception 
+     *
+     * @throws Exception
      */
     @Test
     public void testAuthorize_3args_2() throws Exception {
         List<SecurableResourceId> resourceIds = null;
-        try{
+        try {
             PlainAuthorizerLocal.authorize(sysContext, resourceIds, roleRequired);
-        }catch(UnauthorizedAccessAttemptException e){
+        } catch (UnauthorizedAccessAttemptException e) {
             fail("Supposed to be authorized!");
         }
     }
-    
+
     /**
      *
      * @throws EntityNotFoundException
@@ -151,21 +149,21 @@ public class PlainAuthorizerLocalTest {
      * @throws EntityAlreadyExistsException
      */
     @Test
-    public void testFilter() throws EntityNotFoundException, UnauthorizedAccessAttemptException, EntityAlreadyExistsException{
+    public void testFilter() throws EntityNotFoundException, UnauthorizedAccessAttemptException, EntityAlreadyExistsException {
         List<SecurableResourceId> resList = new ArrayList<SecurableResourceId>();
         SecurableResourceId current;
         final int count = 15;
-        for(int i = 0; i < count; ++i){
-            current = new SecurableResourceId("mydom", "resource_id"+i);
-            ResourceServiceLocal.getSingleton().registerResource(current, groupId, roleRequired, sysContext);            
+        for (int i = 0; i < count; ++i) {
+            current = new SecurableResourceId("mydom", "resource_id" + i);
+            ResourceServiceLocal.getSingleton().registerResource(current, groupId, roleRequired, sysContext);
             resList.add(current);
         }
         current = new SecurableResourceId("mydom", "resource_id_noref");
-        ResourceServiceLocal.getSingleton().registerResource(current, sysContext);            
+        ResourceServiceLocal.getSingleton().registerResource(current, sysContext);
         resList.add(current);
         List<SecurableResourceId> filteredList = new ArrayList<SecurableResourceId>();
         PlainAuthorizerLocal.filterOnAccessAllowed(normalContext, roleRequired, resList, filteredList);
-        assertEquals(resList.size(), filteredList.size()+1);
-        
+        assertEquals(resList.size(), filteredList.size() + 1);
+
     }
 }

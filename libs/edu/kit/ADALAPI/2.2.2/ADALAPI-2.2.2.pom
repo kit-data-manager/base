@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>edu.kit</groupId>
+    <artifactId>ADALAPI</artifactId>
+    <name>ADALAPI</name>
+    <packaging>jar</packaging>
+    <version>2.2.2</version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <projectName>ADALAPI</projectName>
+        <firstName>Michael</firstName>
+        <lastName>Sutter</lastName>
+        <nameId>sutter-m</nameId>
+    </properties>
+    <repositories>
+        <repository>
+            <id>nexus-releases</id>
+            <name>Nexus Release Repository</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+    </repositories>
+    <developers>
+        <developer>
+            <id>hartmann-v</id>
+            <name>Volker Hartmann</name>
+            <email>volker.hartmann@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Project manager</role>
+            </roles>
+            <timezone>1</timezone>
+        </developer>
+        <developer>
+            <id>${nameId}</id>
+            <name>${firstName} ${lastName}</name>
+            <email>${firstName}.${lastName}@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Project manager</role>
+            </roles>
+            <timezone>1</timezone>
+        </developer>
+        <developer>
+            <id>goetter</id>
+            <name>Michael Goetter</name>
+            <email>michael.goetter@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <timezone>1</timezone>
+        </developer>
+        <developer>
+            <id>neuberger-p</id>
+            <name>Patrick Neuberger</name>
+            <email>patrick.neuberger@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <timezone>1</timezone>
+        </developer>
+        <developer>
+            <id>jejkal</id>
+            <name>Thomas Jejkal</name>
+            <email>thomas.jejkal@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <timezone>1</timezone>
+        </developer>
+    </developers>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.4</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.fzk.ipe</groupId>
+            <artifactId>grid-util</artifactId>
+            <version>2.1</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>xercesImpl</artifactId>
+                    <groupId>xerces</groupId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-codec</groupId>
+                    <artifactId>commons-codec</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+        <dependency>
+            <artifactId>xercesImpl</artifactId>
+            <groupId>xerces</groupId>
+            <type>jar</type>
+            <version>2.9.1</version>
+        </dependency>
+         
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.4</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.1</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.0.11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.fzk.ipe</groupId>
+            <artifactId>Tools</artifactId>
+            <version>1.5</version>
+            <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-codec</groupId>
+                    <artifactId>commons-codec</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.7</version>
+            <type>jar</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!--dependency>
+          <groupId>sshtools.j2ssh-core</groupId>
+          <artifactId>j2ssh-gsi-core</artifactId>
+          <version>0.2.8</version>
+          <exclusions>
+            <exclusion> 
+              <groupId>sshtools</groupId>
+              <artifactId>j2ssh-common</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+        <dependency>
+          <groupId>sshtools</groupId>
+          <artifactId>j2ssh-common</artifactId>
+          <version>0.2.9</version>
+        </dependency-->
+        <dependency>
+            <groupId>com.github.lookfirst</groupId>
+            <artifactId>sardine</artifactId>
+            <version>5.7</version>
+        </dependency>
+    </dependencies>
+    <scm>
+        <connection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/HochdurchsatzMikroskopie/Maven/ADALAPI/tags/ADALAPI-2.2.2</connection>
+        <developerConnection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/HochdurchsatzMikroskopie/Maven/ADALAPI/tags/ADALAPI-2.2.2</developerConnection>
+        <url>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/HochdurchsatzMikroskopie/Maven/ADALAPI/tags/ADALAPI-2.2.2</url>
+    </scm>
+    <build>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>2.6</version>
+            </extension>
+        </extensions>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>appassembler-maven-plugin</artifactId>
+                <version>1.8</version>
+                <configuration>
+                    <!-- set alternative assemble directory -->
+                    <assembleDirectory>${project.build.directory}</assembleDirectory>
+                    <!-- alternative name used instead of 'repo' -->
+                    <repositoryName>jars</repositoryName>
+                    <!-- add the root dir to the classpath which is
+                    useful to find some files (but not the logging config
+                    file!?) -->
+                    <configurationDirectory>.</configurationDirectory>
+                    <!-- allows the project jar to be placed first in classpath.
+                    This is important due to configuration files which may
+                    occur more than once. -->
+                    <endorsedDir>lib</endorsedDir>
+                    <!-- This solved my problem configuring the logback. -->
+                    <extraJvmArguments>-Dlogback.configurationFile=@BASEDIR@/logback.xml
+                        -Ddatamanager.config=@BASEDIR@/datamanager.xml</extraJvmArguments>
+                    <platforms>
+                        <platform>windows</platform>
+                        <platform>unix</platform>
+                    </platforms>
+                    <repositoryLayout>flat</repositoryLayout>
+                    <useWildcardClassPath>true</useWildcardClassPath>
+                    <programs>
+                        <program>
+                            <mainClass>edu.kit.lsdf.adalapi.AbstractFile</mainClass>
+                            <id>AbstractFile</id>
+                        </program>
+                    </programs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>package-executable</id>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.1</version>
+                <configuration>
+                    <mavenExecutorId>forked-path</mavenExecutorId>
+                    <tagBase>svn+ssh://ipepc21.ka.fzk.de/srv/svn/HochdurchsatzMikroskopie/Maven/ADALAPI/tags</tagBase>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>edu.kit.lsdf.adalapi.test.AdalapiVerficationTest</mainClass>
+                    <classpathScope>runtime</classpathScope>
+                    <!-- optional -->
+                    <!--workingDirectory>${basedir}/src/main/java</workingDirectory-->
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+    <reporting>
+        <plugins>
+            <!-- *****************************************
+            ***        Einbinden eigener Seiten         ***
+            ***        in mehreren Sprachen             ***
+            **********************************************-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.0-beta-3</version>
+                <configuration>
+                    <locales>en</locales>
+                </configuration>
+            </plugin>
+            <!-- *****************************************
+            ***        Project Info - Report           ***
+            **********************************************-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.3</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>project-team</report>
+                            <report>scm</report>
+                            <report>dependencies</report>
+                            <report>license</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <!-- *****************************************
+            ***          ChangeLog - Report            ***
+            **********************************************-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-changelog-plugin</artifactId>
+                <version>2.2</version>
+                <reportSets>
+                    <reportSet>
+                        <id>dual-report</id>
+                        <configuration>
+                            <type>range</type>
+                            <range>100</range>
+                        </configuration>
+                        <reports>
+                            <report>changelog</report>
+                            <report>file-activity</report>
+                            <report>dev-activity</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <!-- *****************************************
+            ***           JavaDoc - Report             ***
+            **********************************************-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.7</version>
+                <configuration>
+                    <source>1.6</source>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.2</version>
+            </plugin>
+            <!-- *****************************************
+            ***            JUnit - Report              ***
+            **********************************************-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <!-- Set this to true to ignore a
+                    failure during testing. Its use is NOT RECOMMENDED, but quite convenient on
+                    occasion. -->
+                    <testFailureIgnore>true</testFailureIgnore>
+                </configuration>
+            </plugin>
+            <!-- *****************************************
+            ***          Checksyle - Report            ***
+            **********************************************-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.6</version>
+            </plugin>
+        </plugins>
+    </reporting>
+    <distributionManagement>
+        <!-- *****************************************
+        ***             Repository IPE             ***
+        **********************************************-->
+        <repository>
+            <id>deploymentRepo</id>
+            <name>IPE-KIT Deployment Repository</name>
+            <url>scpexe://ipepc21.ka.fzk.de/srv/archiva/data/repositories/internal</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshotRepo</id>
+            <name>IPE-KIT Snapshot Repository</name>
+            <url>scpexe://ipepc21.ka.fzk.de/srv/archiva/data/repositories/snapshots/</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+    </distributionManagement>
+</project>
+
+
+
+
+

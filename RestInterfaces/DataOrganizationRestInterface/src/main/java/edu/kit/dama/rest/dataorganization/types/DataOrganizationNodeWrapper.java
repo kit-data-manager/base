@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,67 +32,67 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
  * @author mf6319
  */
 @XmlNamedObjectGraphs({
-  @XmlNamedObjectGraph(
-          name = "simple",
-          attributeNodes = {
-            @XmlNamedAttributeNode(value = "count"),
-            @XmlNamedAttributeNode(value = "entities", subgraph = "simple")
-          }),
-  @XmlNamedObjectGraph(
-          name = "default",
-          attributeNodes = {
-            @XmlNamedAttributeNode(value = "count"),
-            @XmlNamedAttributeNode(value = "entities", subgraph = "default")
-          })})
+    @XmlNamedObjectGraph(
+            name = "simple",
+            attributeNodes = {
+                @XmlNamedAttributeNode(value = "count"),
+                @XmlNamedAttributeNode(value = "entities", subgraph = "simple")
+            }),
+    @XmlNamedObjectGraph(
+            name = "default",
+            attributeNodes = {
+                @XmlNamedAttributeNode(value = "count"),
+                @XmlNamedAttributeNode(value = "entities", subgraph = "default")
+            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 public final class DataOrganizationNodeWrapper extends AbstractEntityWrapper<DataOrganizationNodeImpl> {
 
-  @XmlElementWrapper
-  @XmlElement(name = "entity", type = DataOrganizationNodeImpl.class, namespace = "http://ipe.kit.edu/2014/KITDataManager/DataOrganization")
-  private List<DataOrganizationNodeImpl> entities;
+    //@XmlElementWrapper
+    // @XmlElement(name = "entity", type = DataOrganizationNodeImpl.class, namespace = "http://ipe.kit.edu/2014/KITDataManager/DataOrganization")
+    private List<DataOrganizationNodeImpl> entities;
 
-  /**
-   * Default constructor.
-   */
-  public DataOrganizationNodeWrapper() {
-    super();
-  }
+    /**
+     * Default constructor.
+     */
+    public DataOrganizationNodeWrapper() {
+        super();
+    }
 
-  /**
-   * Default constructor.
-   *
-   * @param pEntities An array of wrapped entities.
-   */
-  public DataOrganizationNodeWrapper(DataOrganizationNodeImpl... pEntities) {
-    super(pEntities);
-  }
+    /**
+     * Default constructor.
+     *
+     * @param pEntities An array of wrapped entities.
+     */
+    public DataOrganizationNodeWrapper(DataOrganizationNodeImpl... pEntities) {
+        super(pEntities);
+    }
 
-  /**
-   * Default constructor.
-   *
-   * @param pEntities A list of wrapped entities.
-   */
-  public DataOrganizationNodeWrapper(List<DataOrganizationNodeImpl> pEntities) {
-    super(pEntities);
-  }
+    /**
+     * Default constructor.
+     *
+     * @param pEntities A list of wrapped entities.
+     */
+    public DataOrganizationNodeWrapper(List<DataOrganizationNodeImpl> pEntities) {
+        super(pEntities);
+    }
 
-  /**
-   * Default constructor.
-   *
-   * @param pCount The number of modified rows.
-   */
-  public DataOrganizationNodeWrapper(Integer pCount) {
-    super(pCount);
-  }
+    /**
+     * Default constructor.
+     *
+     * @param pCount The number of modified rows.
+     */
+    public DataOrganizationNodeWrapper(Integer pCount) {
+        super(pCount);
+    }
 
-  @Override
-  public void setEntities(List<DataOrganizationNodeImpl> pEntities) {
-    entities = pEntities;
-  }
+    @Override
+    public void setEntities(List<DataOrganizationNodeImpl> pEntities) {
+        entities = pEntities;
+    }
 
-  @Override
-  public List<DataOrganizationNodeImpl> getEntities() {
-    return entities;
-  }
+    @Override
+    public List<DataOrganizationNodeImpl> getEntities() {
+        return entities;
+    }
 }

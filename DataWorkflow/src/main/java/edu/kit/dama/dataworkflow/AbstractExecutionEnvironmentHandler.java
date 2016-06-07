@@ -609,20 +609,18 @@ public abstract class AbstractExecutionEnvironmentHandler implements IConfigurab
                             LOGGER.error("No download information found for id " + transferId + ". Processing of task " + pTask.getId() + " cannot be continued.");
                             //"stagingFinished" remains 'TRUE' as the staging process itself ends here
                             wasStatusChangedToError = true;
-                        } else {
-                            if (DOWNLOAD_STATUS.DOWNLOAD_READY.equals(result.getStatusEnum())) {
-                                LOGGER.debug("Download for object {} with download id {} is ready.", objectId, transferId);
-                            } else if (DOWNLOAD_STATUS.SCHEDULED.equals(result.getStatusEnum()) || DOWNLOAD_STATUS.PREPARING.equals(result.getStatusEnum())) {
-                                LOGGER.debug("Download for object {} with download id {} is still in preparation with status {}.", objectId, transferId, result.getStatusEnum());
-                                stagingFinished = false;
-                                //cancel loop over downloads
-                                break;
-                            } else {//transfer has failed normally
-                                setTaskStatus(pTask, DataWorkflowTask.TASK_STATUS.STAGING_FAILED);
-                                LOGGER.error("Download for object " + objectId + " with download id " + pTask.getId() + " has failed with status " + result.getStatusEnum());
-                                //"stagingFinished" remains 'TRUE' as the staging process itself ends here
-                                wasStatusChangedToError = true;
-                            }
+                        } else if (DOWNLOAD_STATUS.DOWNLOAD_READY.equals(result.getStatusEnum())) {
+                            LOGGER.debug("Download for object {} with download id {} is ready.", objectId, transferId);
+                        } else if (DOWNLOAD_STATUS.SCHEDULED.equals(result.getStatusEnum()) || DOWNLOAD_STATUS.PREPARING.equals(result.getStatusEnum())) {
+                            LOGGER.debug("Download for object {} with download id {} is still in preparation with status {}.", objectId, transferId, result.getStatusEnum());
+                            stagingFinished = false;
+                            //cancel loop over downloads
+                            break;
+                        } else {//transfer has failed normally
+                            setTaskStatus(pTask, DataWorkflowTask.TASK_STATUS.STAGING_FAILED);
+                            LOGGER.error("Download for object " + objectId + " with download id " + pTask.getId() + " has failed with status " + result.getStatusEnum());
+                            //"stagingFinished" remains 'TRUE' as the staging process itself ends here
+                            wasStatusChangedToError = true;
                         }
                     }
                     if (stagingFinished && !wasStatusChangedToError) {

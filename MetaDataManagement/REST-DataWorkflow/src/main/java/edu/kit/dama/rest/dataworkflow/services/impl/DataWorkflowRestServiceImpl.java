@@ -19,7 +19,9 @@ import com.sun.jersey.api.core.HttpContext;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
+import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
+import edu.kit.dama.commons.types.DigitalObjectId;
 import edu.kit.dama.mdm.base.Investigation;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
@@ -38,18 +40,22 @@ import edu.kit.dama.mdm.core.jpa.MetaDataManagerJpa;
 import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowConfiguration;
 import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowTask;
 import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultExecutionEnvironment;
-import edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleDataWorkflowConfiguration;
-import edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleDataWorkflowTask;
-import edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleExecutionEnvironment;
 import edu.kit.dama.mdm.dataworkflow.tools.DataWorkflowTaskSecureQueryHelper;
+import edu.kit.dama.mdm.tools.DigitalObjectSecureQueryHelper;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.dataworkflow.types.DataWorkflowTaskConfigurationWrapper;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Properties;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,13 +91,13 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataWorkflowTask> getAllTasks(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataWorkflowTask> getAllTasks(String groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(ctx);
         try {
             LOGGER.debug("Getting accessible task list.");
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DataWorkflowTask.simple");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DataWorkflowTask.default");
             return new DataWorkflowTaskWrapper(new DataWorkflowTaskSecureQueryHelper().getAllTasks(null, mdm, first, results, ctx));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Context " + ctx + " is not authorized to get a list of DataWorkflowTasks.", ex);
@@ -102,7 +108,7 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataWorkflowTask> getTaskCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataWorkflowTask> getTaskCount(String groupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(ctx);
@@ -183,6 +189,53 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
                 LOGGER.debug("No predecessor task provided");
             }
 
+            mdm.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
+            Properties inputObjectViewMapping = new Properties();
+            LOGGER.debug("Obtaining input object-view mapping.");
+            try {
+                JSONArray array = new JSONArray(pInputObjectMap);
+                LOGGER.debug("Parsing mappings from JSON array.");
+                for (int i = 0; i < array.length(); i++) {
+                    LOGGER.debug("Getting mapping '{}'", i);
+                    JSONObject objectViewMapping = array.getJSONObject(i);
+                    String objectId = (String) objectViewMapping.keys().next();
+                    String viewName = objectViewMapping.getString(objectId);
+                    LOGGER.debug("Adding mapping {}:{} to properties.", objectId, viewName);
+                    inputObjectViewMapping.put(objectId, viewName);
+                }
+            } catch (JSONException ex) {
+                LOGGER.debug("Parsing mapping from JSON failed. Parsing mapping from serialized properties.");
+                inputObjectViewMapping = PropertiesUtil.propertiesFromString(pInputObjectMap);
+            }
+
+            //this is necessary to support baseId and digitalObjectIdentifier mappings. Later on, digitalObjectIdentifiers must be used, e.g. for download of the input data.
+            LOGGER.debug("Transforming object-view mapping to digitalObjectId-based representation.");
+            Properties fixedInputObjectViewMapping = new Properties();
+            Enumeration<Object> keys = inputObjectViewMapping.keys();
+            while (keys.hasMoreElements()) {
+                String key = (String) keys.nextElement();
+                DigitalObjectId id = getObjectIdentifierForId(key, ctx);
+                fixedInputObjectViewMapping.put(id.getStringRepresentation(), inputObjectViewMapping.get(key));
+            }
+
+            Properties executionSettingsMapping = new Properties();
+            LOGGER.debug("Obtaining execution settings mapping.");
+            try {
+                JSONArray array = new JSONArray(pExecutionSettings);
+                LOGGER.debug("Parsing mappings from JSON array.");
+                for (int i = 0; i < array.length(); i++) {
+                    LOGGER.debug("Getting mapping '{}'", i);
+                    JSONObject objectViewMapping = array.getJSONObject(i);
+                    String objectId = (String) objectViewMapping.keys().next();
+                    String viewName = objectViewMapping.getString(objectId);
+                    LOGGER.debug("Adding mapping {}:{} to properties.", objectId, viewName);
+                    executionSettingsMapping.put(objectId, viewName);
+                }
+            } catch (JSONException ex) {
+                LOGGER.debug("Parsing mapping from JSON failed. Parsing mapping from serialized properties.");
+                executionSettingsMapping = PropertiesUtil.propertiesFromString(pExecutionSettings);
+            }
+
             DataWorkflowTask task = DataWorkflowTask.factoryNewDataWorkflowTask();
             task.setInvestigationId(investigation.getInvestigationId());
             task.setConfiguration(configuration);
@@ -190,8 +243,8 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
             task.setExecutorId(ctx.getUserId().getStringRepresentation());
             task.setExecutorGroupId(pGroupId);
             task.setPredecessor(predecessor);
-            task.setObjectViewMapAsObject(PropertiesUtil.propertiesFromString(pInputObjectMap));
-            task.setExecutionSettingsAsObject(PropertiesUtil.propertiesFromString(pExecutionSettings));
+            task.setObjectViewMapAsObject(inputObjectViewMapping);
+            task.setExecutionSettingsAsObject(executionSettingsMapping);
             task.setApplicationArguments(pApplicationArguments);
             task.setLastUpdate(new Date());
             task.setStatus(DataWorkflowTask.TASK_STATUS.SCHEDULED);
@@ -235,14 +288,14 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataWorkflowConfiguration> getAllTaskConfigurations(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataWorkflowConfiguration> getAllTaskConfigurations(String groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(ctx);
         try {
             LOGGER.debug("Getting all DataWorkflowTaskConfigurations.");
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DataWorkflowTaskConfiguration.simple");
-            return new DataWorkflowTaskConfigurationWrapper(mdm.findResultList("SELECT c FROM DataWorkflowTaskConfiguration c", first, results));
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DataWorkflowTaskConfiguration.default");
+            return new DataWorkflowTaskConfigurationWrapper(mdm.findResultList("SELECT c FROM DataWorkflowTaskConfiguration c", DataWorkflowTaskConfiguration.class, first, results));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Context " + ctx + " is not authorized to list DataWorkflowTaskConfigurations.", ex);
             throw new WebApplicationException(401);
@@ -252,7 +305,7 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataWorkflowConfiguration> getTaskConfigurationCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataWorkflowConfiguration> getTaskConfigurationCount(String groupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(ctx);
@@ -292,14 +345,14 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleExecutionEnvironment> getAllExecutionEnvironmentConfigurations(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultExecutionEnvironment> getAllExecutionEnvironmentConfigurations(String groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(ctx);
         try {
             LOGGER.debug("Getting all ExecutionEnvironmentConfiguration.");
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "ExecutionEnvironmentConfiguration.simple");
-            return new ExecutionEnvironmentConfigurationWrapper(mdm.findResultList("SELECT e FROM ExecutionEnvironmentConfiguration e", first, results));
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "ExecutionEnvironmentConfiguration.default");
+            return new ExecutionEnvironmentConfigurationWrapper(mdm.findResultList("SELECT e FROM ExecutionEnvironmentConfiguration e", ExecutionEnvironmentConfiguration.class, first, results));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Context " + ctx + " is not authorized to list ExecutionEnvironmentConfigurations.", ex);
             throw new WebApplicationException(401);
@@ -309,7 +362,7 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleExecutionEnvironment> getExecutionEnvironmentConfigurationCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultExecutionEnvironment> getExecutionEnvironmentConfigurationCount(String groupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(ctx);
@@ -340,4 +393,45 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
         return Response.status(200).entity(new CheckServiceResponse("DataWorkflow", status)).build();
     }
 
+    /**
+     * Get a digital object for the provided id. The id might be the string
+     * representation of the numeric id or the unique identifier of the digital
+     * object. This helper method will take care of the transformation.
+     */
+    private DigitalObjectId getObjectIdentifierForId(String pId, IAuthorizationContext pCtx) {
+        if (pId == null) {
+            LOGGER.error("Argument pId must not be null.");
+            throw new WebApplicationException(401);
+        }
+        String s_id = pId.trim();
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+        mdm.setAuthorizationContext(pCtx);
+        try {
+            String objectId = s_id;
+            try {
+                LOGGER.debug("Trying to parse provided object id {} as long value", s_id);
+                long id = Long.parseLong(s_id);
+                LOGGER.debug("Parsing to long succeeded. Obtaining string identifier for long id.");
+                s_id = mdm.findSingleResult("SELECT o.digitalObjectIdentifier FROM DigitalObject o WHERE o.baseId=" + id, String.class);
+            } catch (NumberFormatException ex) {
+                LOGGER.debug("Parsing to long failed, expecting string identifier");
+            }
+
+            if (new DigitalObjectSecureQueryHelper().objectByIdentifierExists(objectId, mdm, pCtx)) {
+                LOGGER.debug("Returning digital object id {}", objectId);
+                return new DigitalObjectId(objectId);
+            } else {
+                LOGGER.error("No DigitalObject accessible by context " + pCtx + " found for provided id " + pId + ".");
+                throw new WebApplicationException(404);
+            }
+        } catch (UnauthorizedAccessAttemptException ex) {
+            LOGGER.error("Context " + pCtx.toString() + " is not authorized to access object by id " + s_id);
+            throw new WebApplicationException(401);
+        } catch (EntityNotFoundException ex) {
+            LOGGER.error("No DigitalObject accessible by context " + pCtx + " found for provided id " + pId + ".");
+            throw new WebApplicationException(404);
+        } finally {
+            mdm.close();
+        }
+    }
 }

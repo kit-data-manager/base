@@ -18,8 +18,8 @@ package edu.kit.sharing.test;
 import com.sun.jersey.api.core.HttpContext;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IDefaultGrant;
+import edu.kit.dama.authorization.entities.IDefaultGrantSet;
 import edu.kit.dama.authorization.entities.IDefaultReferenceId;
-import edu.kit.dama.authorization.entities.ISimpleGrantSet;
 import edu.kit.dama.authorization.entities.ISimpleGroupId;
 import edu.kit.dama.authorization.entities.ISimpleUserId;
 import edu.kit.dama.authorization.entities.ReferenceId;
@@ -151,7 +151,7 @@ public class SharingTestService implements ISharingService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleGrantSet> getGrantSetForResource(String pDomain, String pDomainUniqueId, String pGroupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultGrantSet> getGrantSetForResource(String pDomain, String pDomainUniqueId, String pGroupId, HttpContext hc) {
         SecurableResourceId rid = new SecurableResourceId(pDomain,
                 pDomainUniqueId);
 

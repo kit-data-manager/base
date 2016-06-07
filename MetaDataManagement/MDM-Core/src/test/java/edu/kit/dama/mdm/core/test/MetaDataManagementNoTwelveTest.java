@@ -19,7 +19,7 @@
  */
 package edu.kit.dama.mdm.core.test;
 
-import edu.kit.dama.authorization.annotations.resources.TestEntity;
+import edu.kit.dama.mdm.core.test.entities.TestEntity;
 import edu.kit.dama.authorization.exceptions.AuthorizationException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.mdm.core.IMetaDataManager;

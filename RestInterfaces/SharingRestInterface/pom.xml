@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama.rest</groupId>
         <artifactId>RestInterfaces</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
     <artifactId>SharingRestInterface</artifactId>
     <name>SharingRestInterface</name>
     <packaging>jar</packaging>
-    <version>1.2</version>
+    <version>1.3</version>
 
     <description>REST interface definition for sharing access to resources.</description>
 
@@ -37,7 +37,8 @@
         <projectName>SharingRestInterface</projectName>
         <firstName>Thomas</firstName>
         <lastName>Jejkal</lastName>
-        <nameId>jejkal</nameId>
+        <nameId>jejkal</nameId>         
+        <root.relative.path>../../</root.relative.path>  
     </properties>
 
     <developers>
@@ -65,12 +66,12 @@
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>ClientBase</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>ServiceBase</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>

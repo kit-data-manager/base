@@ -16,6 +16,7 @@
  */
 package edu.kit.dama.staging.interfaces;
 
+import edu.kit.dama.commons.interfaces.IConfigurableAdapter;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
 import edu.kit.dama.staging.entities.download.DownloadInformation;

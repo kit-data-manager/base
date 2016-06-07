@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,28 +23,46 @@ package edu.kit.dama.commons.types;
  */
 public abstract class ILFN implements Cloneable {
 
-  /**
-   * An abstract version of a logical filename.
-   */
-  public ILFN() {
-  }
+    /**
+     * An abstract version of a logical filename.
+     */
+    public ILFN() {
+    }
 
-  /**
-   * Returns this LFN as string.
-   *
-   * @return The LFN as string.
-   */
-  public abstract String asString();
+    /**
+     * Returns this LFN as string.
+     *
+     * @return The LFN as string.
+     */
+    public abstract String asString();
 
-  /**
-   * Parses this LFN from string.
-   *
-   * @param stringRepresentation The string representation to parse.
-   */
-  public abstract void fromString(String stringRepresentation);
+    /**
+     * Parses this LFN from string.
+     *
+     * @param stringRepresentation The string representation to parse.
+     */
+    public abstract void fromString(String stringRepresentation);
 
-  @Override
-  public final ILFN clone() throws CloneNotSupportedException {
-    return (ILFN) super.clone();
-  }
+    /**
+     * Get the string representation of this LFN.
+     *
+     * @return The string representation.
+     */
+    public String getStringRepresentation() {
+        return asString();
+    }
+
+    /**
+     * Set the string representation of this LFN.
+     *
+     * @param pStringRepesentation The string representation.
+     */
+    public void setStringRepresentation(String pStringRepesentation) {
+        fromString(pStringRepesentation);
+    }
+
+    @Override
+    public final ILFN clone() throws CloneNotSupportedException {
+        return (ILFN) super.clone();
+    }
 }

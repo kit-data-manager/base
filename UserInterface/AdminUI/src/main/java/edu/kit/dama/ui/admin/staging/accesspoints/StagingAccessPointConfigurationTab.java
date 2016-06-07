@@ -147,9 +147,8 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
             implementationClassField.setImmediate(true);
             implementationClassField.setWidth("100%");
             implementationClassField.setRequired(true);
-            implementationClassField.setMinimumQueryCharacters(3);
             implementationClassField.addStyleName(CSSTokenContainer.BOLD_CAPTION);
-
+            implementationClassField.setMinimumQueryCharacters(3);
             implementationClassField.setQueryListener(new AutocompleteQueryListener<String>() {
                 @Override
                 public void handleUserQuery(AutocompleteField<String> field, String query) {
@@ -198,9 +197,9 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
                 public void buttonClick(Button.ClickEvent event) {
                     try {
                         StagingAccessPointConfiguration newAccessPoint = createAccessPoint();
-                        
+
                         commitAccessPoint(newAccessPoint);
-                        
+
                         addNewElementInstance(newAccessPoint);
                         setEnabledComponents(ListSelection.VALID);
                         getParentApp().showNotification("Staging access point successfully created.");
@@ -220,11 +219,6 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
      * persisted. Modifications can be applied afterwards.
      */
     private StagingAccessPointConfiguration createAccessPoint() throws ConfigurationException {
-        // Validate value of implementation class field
-        if (!UIUtils7.validate(getImplementationClassField())) {
-            throw new ConfigurationException("Invalid implementation class.");
-        }
-
         // Valid implementation class name => Create new access point
         String implClassName = getImplementationClassField().getText();
         try {
@@ -372,8 +366,7 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
      * be found.
      */
     private void checkImplementationClassField() throws ConfigurationException {
-        if (getImplementationClassField().getText() == null || getImplementationClassField().getText().isEmpty()
-                || !UIUtils7.validate(getImplementationClassField())) {
+        if (getImplementationClassField().getText() == null || getImplementationClassField().getText().isEmpty() || !UIUtils7.validate(getImplementationClassField())) {
             setPropertiesLayout(PropertiesLayoutType.BASIC);
             throw new ConfigurationException("Implementation class is invalid.");
         } else {

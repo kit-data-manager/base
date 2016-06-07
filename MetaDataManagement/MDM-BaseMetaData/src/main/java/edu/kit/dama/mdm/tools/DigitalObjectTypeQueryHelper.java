@@ -50,7 +50,7 @@ public class DigitalObjectTypeQueryHelper {
      * @param pContext The context used to authorize the access.
      *
      * @return A list of digital object types assigned to the provided digital
-     * object loaded using the DigitalObjectType.simple fetch graph.
+     * object.
      *
      * @throws UnauthorizedAccessAttemptException if pContext is not authorized
      * to perform the query.
@@ -62,7 +62,7 @@ public class DigitalObjectTypeQueryHelper {
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(pContext);
         try {
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectType.simple");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectType.default");
             return mdm.findResultList("SELECT t FROM ObjectTypeMapping m, DigitalObjectType t WHERE m.objectType.id = t.id AND m.digitalObject.baseId = " + pInputObject.getBaseId(), DigitalObjectType.class);
         } finally {
             mdm.close();
@@ -194,8 +194,7 @@ public class DigitalObjectTypeQueryHelper {
      * @param pObjectType The object type to query for.
      * @param pContext The context used to authorize the access.
      *
-     * @return A list of accessible digital objects having pObjectType assigned
-     * loaded using the DigitalObject.simple fetch graph.
+     * @return A list of accessible digital objects having pObjectType assigned.
      *
      * @throws UnauthorizedAccessAttemptException if pContext is not authorized
      * to perform the query.
@@ -214,7 +213,7 @@ public class DigitalObjectTypeQueryHelper {
             List<ObjectTypeMapping> resultMappings = mdm.findResultList("SELECT m FROM ObjectTypeMapping m WHERE m.objectType.id = " + pObjectType.getId(), ObjectTypeMapping.class);
             LOGGER.debug("Obtaining digital objects from mappings.");
             List<DigitalObject> result = new ArrayList<>();
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.simple");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.default");
             for (ObjectTypeMapping mapping : resultMappings) {
                 result.add(mapping.getDigitalObject());
             }

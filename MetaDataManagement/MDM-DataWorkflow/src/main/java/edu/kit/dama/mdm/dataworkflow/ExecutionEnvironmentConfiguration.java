@@ -34,6 +34,9 @@ import javax.persistence.NamedAttributeNode;
 import javax.persistence.NamedEntityGraph;
 import javax.persistence.NamedEntityGraphs;
 import javax.persistence.OneToMany;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.io.FileUtils;
@@ -65,29 +68,31 @@ import org.slf4j.LoggerFactory;
  * @author mf6319
  */
 @Entity
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("uniqueIdentifier")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("uniqueIdentifier"),
-                @XmlNamedAttributeNode("name"),
-                @XmlNamedAttributeNode("description"),
-                @XmlNamedAttributeNode("customProperties"),
-                @XmlNamedAttributeNode("groupId"),
-                @XmlNamedAttributeNode("handlerImplementationClass"),
-                @XmlNamedAttributeNode("stagingAccessPointId"),
-                @XmlNamedAttributeNode("accessPointLocalBasePath"),
-                @XmlNamedAttributeNode("maxParallelTasks"),
-                @XmlNamedAttributeNode("defaultEnvironment"),
-                @XmlNamedAttributeNode("disabled")
-            })})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id"),
+//                @XmlNamedAttributeNode("uniqueIdentifier")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id"),
+//                @XmlNamedAttributeNode("uniqueIdentifier"),
+//                @XmlNamedAttributeNode("name"),
+//                @XmlNamedAttributeNode("description"),
+//                @XmlNamedAttributeNode("customProperties"),
+//                @XmlNamedAttributeNode("groupId"),
+//                @XmlNamedAttributeNode("handlerImplementationClass"),
+//                @XmlNamedAttributeNode("stagingAccessPointId"),
+//                @XmlNamedAttributeNode("accessPointLocalBasePath"),
+//                @XmlNamedAttributeNode("maxParallelTasks"),
+//                @XmlNamedAttributeNode("defaultEnvironment"),
+//                @XmlNamedAttributeNode("disabled")
+//            })})
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement
 @NamedEntityGraphs({
     @NamedEntityGraph(
             name = "ExecutionEnvironmentConfiguration.simple",

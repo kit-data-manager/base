@@ -28,6 +28,7 @@ import edu.kit.dama.mdm.base.Participant;
 import edu.kit.dama.mdm.base.Relation;
 import edu.kit.dama.mdm.base.Study;
 import edu.kit.dama.mdm.base.Task;
+import edu.kit.dama.mdm.base.TransitionType;
 import edu.kit.dama.mdm.base.UserData;
 import edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject;
 import edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectTransition;
@@ -40,15 +41,6 @@ import edu.kit.dama.mdm.base.interfaces.IDefaultRelation;
 import edu.kit.dama.mdm.base.interfaces.IDefaultStudy;
 import edu.kit.dama.mdm.base.interfaces.IDefaultTask;
 import edu.kit.dama.mdm.base.interfaces.IDefaultUserData;
-import edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObject;
-import edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectTransition;
-import edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectType;
-import edu.kit.dama.mdm.base.interfaces.ISimpleInvestigation;
-import edu.kit.dama.mdm.base.interfaces.ISimpleMetaDataSchema;
-import edu.kit.dama.mdm.base.interfaces.ISimpleOrganizationUnit;
-import edu.kit.dama.mdm.base.interfaces.ISimpleStudy;
-import edu.kit.dama.mdm.base.interfaces.ISimpleTask;
-import edu.kit.dama.mdm.base.interfaces.ISimpleUserData;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.base.types.CheckServiceResponse;
 import edu.kit.dama.rest.base.types.ServiceStatus;
@@ -63,7 +55,7 @@ import edu.kit.dama.rest.basemetadata.types.ParticipantWrapper;
 import edu.kit.dama.rest.basemetadata.types.RelationWrapper;
 import edu.kit.dama.rest.basemetadata.types.StudyWrapper;
 import edu.kit.dama.rest.basemetadata.types.TaskWrapper;
-import edu.kit.dama.rest.basemetadata.types.UserDataWrapper;
+import edu.kit.dama.rest.admin.types.UserDataWrapper;
 import edu.kit.dama.util.Constants;
 import java.util.Arrays;
 import java.util.Date;
@@ -72,6 +64,9 @@ import java.util.Objects;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  *
@@ -367,7 +362,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleStudy> getStudyIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultStudy> getStudies(String groupId, Integer first, Integer results, HttpContext hc) {
         return new StudyWrapper(Arrays.asList(factoryStudyEntity(1l, true)));
     }
 
@@ -387,7 +382,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleStudy> getStudyCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultStudy> getStudyCount(String groupId, HttpContext hc) {
         return new StudyWrapper(1);
     }
 
@@ -428,12 +423,12 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleInvestigation> getInvestigationIds(String groupId, Long studyId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultInvestigation> getInvestigations(String groupId, Long studyId, Integer first, Integer results, HttpContext hc) {
         return new InvestigationWrapper(Arrays.asList(factoryInvestigationEntity(1l, true)));
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleInvestigation> getInvestigationCount(String groupId, Long studyId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultInvestigation> getInvestigationCount(String groupId, Long studyId, HttpContext hc) {
         return new InvestigationWrapper(1);
     }
 
@@ -484,14 +479,14 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectIds(String groupId, Long investigationId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjects(String groupId, Long investigationId, Integer first, Integer results, HttpContext hc) {
         return new DigitalObjectWrapper(
                 Arrays.asList(factoryDigitalObjectEntity(1l, true))
         );
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectCount(String groupId, Long investigationId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjectCount(String groupId, Long investigationId, HttpContext hc) {
         return new DigitalObjectWrapper(1);
     }
 
@@ -530,7 +525,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleOrganizationUnit> getOrganizationUnitIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultOrganizationUnit> getOrganizationUnits(String groupId, Integer first, Integer results, HttpContext hc) {
         return new OrganizationUnitWrapper(
                 factoryOrganizationUnitEntity(1l, true), factoryOrganizationUnitEntity(2l, true));
     }
@@ -549,7 +544,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleOrganizationUnit> getOrganizationUnitCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultOrganizationUnit> getOrganizationUnitCount(String groupId, HttpContext hc) {
         return new OrganizationUnitWrapper(2);
     }
 
@@ -572,7 +567,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleMetaDataSchema> getMetadataSchemaIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultMetaDataSchema> getMetadataSchemas(String groupId, Integer first, Integer results, HttpContext hc) {
         return new MetadataSchemaWrapper(
                 factoryMetadataSchemaEntity(1l, true), factoryMetadataSchemaEntity(2l, true));
     }
@@ -584,7 +579,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleMetaDataSchema> getMetadataSchemaCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultMetaDataSchema> getMetadataSchemaCount(String groupId, HttpContext hc) {
         return new MetadataSchemaWrapper(2);
     }
 
@@ -594,7 +589,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleTask> getTaskIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultTask> getTasks(String groupId, Integer first, Integer results, HttpContext hc) {
         return new TaskWrapper(factoryTaskEntity(1l, true), factoryTaskEntity(2l, true));
     }
 
@@ -606,7 +601,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleTask> getTaskCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultTask> getTaskCount(String groupId, HttpContext hc) {
         return new TaskWrapper(2);
     }
 
@@ -616,13 +611,13 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserData> getUserDataIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserData> getUserDataEntities(String groupId, Integer first, Integer results, HttpContext hc) {
         return new UserDataWrapper(
                 factoryUserDataEntity(1l, true), factoryUserDataEntity(2l, true));
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserData> getUserDataCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserData> getUserDataCount(String groupId, HttpContext hc) {
         return new UserDataWrapper(2);
     }
 
@@ -670,7 +665,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObjectType> getDigitalObjectTypeIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectType> getDigitalObjectTypes(String groupId, Integer first, Integer results, HttpContext hc) {
         return new DigitalObjectTypeWrapper(factoryObjectTypeEntity(1l, true));
     }
 
@@ -690,22 +685,22 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObjectType> getDigitalObjectTypeCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectType> getDigitalObjectTypeCount(String groupId, HttpContext hc) {
         return new DigitalObjectTypeWrapper(1);
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectsForDigitalObjectType(String groupId, Long id, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjectsForDigitalObjectType(String groupId, Long id, Integer first, Integer results, HttpContext hc) {
         return new DigitalObjectWrapper(factoryDigitalObjectEntity(1l, true));
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectCountForType(String groupId, Long id, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjectCountForType(String groupId, Long id, HttpContext hc) {
         return new DigitalObjectWrapper(1);
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObjectType> getDigitalObjectTypesForDigitalObject(String groupId, Long id, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectType> getDigitalObjectTypesForDigitalObject(String groupId, Long id, HttpContext hc) {
         if (new Long(1l).equals(id)) {
             return new DigitalObjectTypeWrapper(factoryObjectTypeEntity(1l, true));
         }
@@ -723,7 +718,44 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObjectTransition> getDigitalObjectDerivationInformation(String groupId, Long id, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectTransition> addDigitalObjectTransition(String groupId, String inputObjectMap, String outputObjectList, TransitionType type, String typeData, HttpContext hc) {
+        if (TransitionType.ELASTICSEARCH.equals(type)) {
+            JSONObject o = new JSONObject(typeData);
+            if (!"value".equals((String) o.get("key"))) {
+                throw new WebApplicationException(500);
+            }
+        }
+
+        DigitalObjectTransition transition = new DigitalObjectTransition();
+        try {
+            JSONArray array = new JSONArray(inputObjectMap);
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject objectViewMapping = array.getJSONObject(i);
+                String objectId = (String) objectViewMapping.keys().next();
+                String viewName = objectViewMapping.getString(objectId);
+                transition.addInputMapping(DigitalObject.factoryNewDigitalObject(objectId), viewName);
+            }
+        } catch (JSONException ex) {
+            throw new IllegalArgumentException("Failed to parse input map", ex);
+        }
+        //parsing and validating output objects
+        try {
+            JSONArray array = new JSONArray(outputObjectList);
+            for (int i = 0; i < array.length(); i++) {
+                long objectId = array.getLong(i);
+                DigitalObject o = new DigitalObject();
+                o.setBaseId(objectId);
+                transition.addOutputObject(o);
+            }
+        } catch (JSONException ex) {
+            throw new IllegalArgumentException("Failed to parse output map", ex);
+        }
+
+        return new DigitalObjectTransitionWrapper(transition);
+    }
+
+    @Override
+    public IEntityWrapper<? extends IDefaultDigitalObjectTransition> getDigitalObjectDerivationInformation(String groupId, Long id, HttpContext hc) {
         if (id == 2l) {
             //object with id 2 is derived from object with id 1
             return new DigitalObjectTransitionWrapper(factoryDigitalObjectTransitionEntity(1l, 2l, true));
@@ -734,7 +766,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObjectTransition> getDigitalObjectContributionInformation(String groupId, Long id, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectTransition> getDigitalObjectContributionInformation(String groupId, Long id, HttpContext hc) {
         if (id == 1l) {
             //object with id 1  contributes to object with id 1
             return new DigitalObjectTransitionWrapper(factoryDigitalObjectTransitionEntity(1l, 2l, true));
@@ -745,7 +777,7 @@ public class BaseMetaDataTestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends IDefaultDigitalObjectTransition> addTransitionToDigitalObject(String groupId, Long id, Long otherId, String viewName, Long outputId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectTransition> addTransitionToDigitalObject(String groupId, Long id, Long otherId, String viewName, Long outputId, TransitionType type, String typeData, HttpContext hc) {
         if (id == 1l && outputId == 2l) {
             return new DigitalObjectTransitionWrapper(factoryDigitalObjectTransitionEntity(id, outputId, false));
         } else if (id != 1l) {

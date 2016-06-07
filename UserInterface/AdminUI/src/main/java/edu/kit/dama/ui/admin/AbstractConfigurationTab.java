@@ -744,7 +744,7 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
         LOGGER.debug("Validating list selection for current value '{}'", selection);
         // Validate selection
         if (selection == null) {
-            LOGGER.warn("Found NO selection. This should actually never happen.");
+            LOGGER.warn("Found NO selection. This should only happen during commit operation.");
             return ListSelection.NO;
         }
 

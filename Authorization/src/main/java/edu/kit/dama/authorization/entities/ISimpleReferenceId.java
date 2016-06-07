@@ -19,6 +19,6 @@ package edu.kit.dama.authorization.entities;
  *
  * @author jejkal
  */
-public interface ISimpleReferenceId extends ISecurableResource{
+public interface ISimpleReferenceId{
     
 }

@@ -35,9 +35,6 @@ import javax.persistence.NamedSubgraph;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
-import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 import org.eclipse.persistence.queries.FetchGroupTracker;
 import org.eclipse.persistence.sessions.Session;
 
@@ -47,19 +44,19 @@ import org.eclipse.persistence.sessions.Session;
  * @author hartmann-v
  */
 @Entity
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("participantId")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                @XmlNamedAttributeNode("participantId"),
-                @XmlNamedAttributeNode(value = "task", subgraph = "simple"),
-                @XmlNamedAttributeNode(value = "user", subgraph = "simple")
-            })})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("participantId")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("participantId"),
+//                @XmlNamedAttributeNode(value = "task", subgraph = "simple"),
+//                @XmlNamedAttributeNode(value = "user", subgraph = "simple")
+//            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @NamedEntityGraphs({

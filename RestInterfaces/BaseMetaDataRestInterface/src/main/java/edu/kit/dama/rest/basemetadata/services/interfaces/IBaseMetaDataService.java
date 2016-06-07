@@ -18,6 +18,7 @@ package edu.kit.dama.rest.basemetadata.services.interfaces;
 
 import com.qmino.miredot.annotations.ReturnType;
 import com.sun.jersey.api.core.HttpContext;
+import edu.kit.dama.mdm.base.TransitionType;
 import edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject;
 import edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectTransition;
 import edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectType;
@@ -29,15 +30,6 @@ import edu.kit.dama.mdm.base.interfaces.IDefaultRelation;
 import edu.kit.dama.mdm.base.interfaces.IDefaultStudy;
 import edu.kit.dama.mdm.base.interfaces.IDefaultTask;
 import edu.kit.dama.mdm.base.interfaces.IDefaultUserData;
-import edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObject;
-import edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectTransition;
-import edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectType;
-import edu.kit.dama.mdm.base.interfaces.ISimpleInvestigation;
-import edu.kit.dama.mdm.base.interfaces.ISimpleMetaDataSchema;
-import edu.kit.dama.mdm.base.interfaces.ISimpleOrganizationUnit;
-import edu.kit.dama.mdm.base.interfaces.ISimpleStudy;
-import edu.kit.dama.mdm.base.interfaces.ISimpleTask;
-import edu.kit.dama.mdm.base.interfaces.ISimpleUserData;
 import edu.kit.dama.rest.base.ICommonRestInterface;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.util.Constants;
@@ -76,9 +68,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the transition.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A DigitalObjectTransition serialized using the <b>default</b>
-     * object graph of DigitalObjectTransition, which contains all entity
-     * attributes.
+     * @return A DigitalObjectTransition.
      */
     @GET
     @Path(value = "/transitions/{id}")
@@ -87,6 +77,67 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     IEntityWrapper<? extends IDefaultDigitalObjectTransition> getDigitalObjectTransitionById(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
+            @javax.ws.rs.core.Context HttpContext hc);
+
+    /**
+     * Add an n:n transition with single/multiple input object(s) and
+     * single/multiple output object(s). In order to be able to describe the
+     * transition a transition type might be assigned. Depending on the
+     * transition type it might be necessary to provide type data, e.g. a
+     * transition entity id that can be used to obtain further information or a
+     * JSON document that will be processed by an according processor on the
+     * server side.
+     *
+     * <table summary="Supported transition types">
+     * <tr>
+     * <td><b>Type</b></td>
+     * <td><b>Description</b></td>
+     * <td><b>TypeData</b></td>
+     * </tr>
+     * <tr>
+     * <td>NONE</td><td>No type (default)</td><td>none</td>
+     * <td>DATAWORKFLOW</td><td>The transition was created by a DataWorkflow
+     * task. More details on the task are available via the provided task
+     * id.</td><td>Single DataWorkflow task id provided in the form
+     * <i>{"transitionEntityId":"4711"}</i>. A task with this id must exists in
+     * the DataWorkflowTask table.</td>
+     * <td>ELASTICSEARCH</td><td>Type for providing a custom JSON document that
+     * can be further processed/registered by a configured handler. The handler
+     * is configured on the server side in datamanager.xml</td><td>Custom JSON
+     * document depending on the configured handler.</td>
+     * </tr>
+     * </table>
+     *
+     * @summary Add a DigitalObjectTransition with one or more input objects and
+     * one or more output objects.
+     *
+     * @param groupId The id of the group the object type belongs to (default:
+     * USERS).
+     * @param inputObjectMap The map of input objects and the according
+     * DataOrganization view. This argument must be a single string in the form
+     * <i>[{"1":"default"},{"2":"customView"}]</i> where the keys are the
+     * digital object baseIds and the values are the view names.
+     * @param outputObjectList The list of output digital object baseIds. The
+     * argument must be a single string in the form
+     * <i>[3,4]</i>.
+     * @param type The type enum of this transition. Depending on the type the
+     * value of 'typeData' should be provided as documented above.
+     * @param typeData The data that can be used to assign additional
+     * information to the transition.
+     * @param hc The HttpContext for OAuth check.
+     *
+     * @return The added DigitalObjectTransition.
+     */
+    @POST
+    @Path(value = "/transitions/")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectTransition>")
+    IEntityWrapper<? extends IDefaultDigitalObjectTransition> addDigitalObjectTransition(
+            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("inputObjectMap") String inputObjectMap,
+            @FormParam("outputObjectList") String outputObjectList,
+            @FormParam("type") @DefaultValue("NONE") TransitionType type,
+            @FormParam("typeData") String typeData,
             @javax.ws.rs.core.Context HttpContext hc);
 
 //</editor-fold>
@@ -104,16 +155,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of digital object type entities. All returned entities are
-     * serialized using the <b>simple</b> object graph of
-     * DigitalObjectTypeWrapper, which removes all attributes but the id from
-     * the returned entities.
+     * @return A list of digital object type entities.
      */
     @GET
     @Path(value = "/objectTypes/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectType>")
-    IEntityWrapper<? extends ISimpleDigitalObjectType> getDigitalObjectTypeIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectType>")
+    IEntityWrapper<? extends IDefaultDigitalObjectType> getDigitalObjectTypes(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -129,9 +177,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The ObjectType id.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return One or none single object type entities. The returned entity is
-     * serialized using the <b>default</b> object graph of
-     * DigitalObjectTypeWrapper, which contains all attributes.
+     * @return One or none single object type entity. 
      */
     @GET
     @Path(value = "/objectTypes/{id}")
@@ -158,9 +204,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * type.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The created object type entities. The returned entity is
-     * serialized using the <b>default</b> object graph of
-     * DigitalObjectTypeWrapper, which contains all attributes.
+     * @return The created object type entity.
      */
     @POST
     @Path(value = "/objectTypes/")
@@ -183,15 +227,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param groupId The id of the group the object types belong to.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The number of accessible object types. The result is serialized
-     * using the <b>simple</b> object graph of DigitalObjectTypeWrapper and just
-     * contains the 'count' attribute.
+     * @return The number of accessible object types.
      */
     @GET
     @Path(value = "/objectTypes/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectType>")
-    IEntityWrapper<? extends ISimpleDigitalObjectType> getDigitalObjectTypeCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectType>")
+    IEntityWrapper<? extends IDefaultDigitalObjectType> getDigitalObjectTypeCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
@@ -214,15 +256,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return A list of accessible digital objects that have the digital object
-     * type with the provided id assigned. The result is serialized using the
-     * <b>simple</b> object graph of DigitalObjectWrapper, which removes all
-     * attributes but the id from the returned entities.
+     * type with the provided id assigned.
      */
     @GET
     @Path(value = "/objectTypes/{id}/digitalObjects")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObject>")
-    IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectsForDigitalObjectType(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject>")
+    IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjectsForDigitalObjectType(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
@@ -242,15 +282,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return The number of accessible digital objects that have the digital
-     * object type with the provided id assigned. The result is serialized using
-     * the <b>simple</b> object graph of DigitalObjectWrapper that contains only
-     * the 'count' attribute.
+     * object type with the provided id assigned.
      */
     @GET
     @Path(value = "/objectTypes/{id}/digitalObjects/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObject>")
-    IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectCountForType(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject>")
+    IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjectCountForType(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @javax.ws.rs.core.Context HttpContext hc);
@@ -269,16 +307,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of organization unit entities. All returned entities are
-     * serialized using the <b>simple</b> object graph of
-     * OrganizationUnitWrapper, which removes all attributes but the id from the
-     * returned entities.
+     * @return A list of organization unit entities.
      */
     @GET
     @Path(value = "/organizationUnits/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleOrganizationUnit>")
-    IEntityWrapper<? extends ISimpleOrganizationUnit> getOrganizationUnitIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultOrganizationUnit>")
+    IEntityWrapper<? extends IDefaultOrganizationUnit> getOrganizationUnits(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -303,9 +338,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param website The website of the organization unit.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The created organization unit entity serialized using the
-     * <b>default</b> object graph of OrganizationUnitWrapper, which contains
-     * all basic fields of the organization unit.
+     * @return The created organization unit entity.
      */
     @POST
     @Path(value = "/organizationUnits/")
@@ -332,14 +365,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * [default: USERS]
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The number of accessible organization units associated with the
-     * provided group wrapped by a OrganizationUnitWrapper entity.
+     * @return The number of accessible organization units.
      */
     @GET
     @Path(value = "/organizationUnits/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleOrganizationUnit>")
-    IEntityWrapper<? extends ISimpleOrganizationUnit> getOrganizationUnitCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultOrganizationUnit>")
+    IEntityWrapper<? extends IDefaultOrganizationUnit> getOrganizationUnitCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
@@ -352,10 +384,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the organization unit to query for.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The organization unit with the provided id or one of the status
-     * codes below. The returned entity is serialized using the <b>default</b>
-     * object graph of OrganizationUnitWrapper, which contains all basic fields
-     * of the organization unit.
+     * @return The organization unit with the provided id.
      */
     @GET
     @Path(value = "/organizationUnits/{id}")
@@ -381,10 +410,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param website The website of the organization unit.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The updated organization unit with the provided id or one of the
-     * status codes below. The returned entity is serialized using the
-     * <b>default</b> object graph of OrganizationUnitWrapper, which contains
-     * all basic fields of the organization unit.
+     * @return The updated organization unit with the provided id.
      */
     @PUT
     @Path(value = "/organizationUnits/{id}")
@@ -415,15 +441,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of metadata schema entities. All returned entities are
-     * serialized using the <b>simple</b> object graph of MetadataSchemaWrapper,
-     * which removes all attributes but the id from the returned entities.
+     * @return A list of metadata schema entities.
      */
     @GET
     @Path(value = "/metadataSchemas/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleMetaDataSchema>")
-    IEntityWrapper<? extends ISimpleMetaDataSchema> getMetadataSchemaIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultMetaDataSchema>")
+    IEntityWrapper<? extends IDefaultMetaDataSchema> getMetadataSchemas(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -442,9 +466,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param schemaUrl The schema URL.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The created/existing metadata schema entity serialized using the
-     * <b>default</b> object graph of MetadataSchemaWrapper, which contains all
-     * basic fields of the metadata schema.
+     * @return The created/existing metadata schema entity.
      */
     @POST
     @Path(value = "/metadataSchemas/")
@@ -465,14 +487,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * [default: USERS]
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The number of accessible metadata schemas associated with the
-     * provided group wrapped by a MetadataSchemaWrapper entity.
+     * @return The number of accessible metadata schemas.
      */
     @GET
     @Path(value = "/metadataSchemas/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleMetaDataSchema>")
-    IEntityWrapper<? extends ISimpleMetaDataSchema> getMetadataSchemaCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultMetaDataSchema>")
+    IEntityWrapper<? extends IDefaultMetaDataSchema> getMetadataSchemaCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
@@ -485,10 +506,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the metadata schema to query for.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The metadata schema with the provided id or one of the status
-     * codes below. The returned entity is serialized using the <b>default</b>
-     * object graph of MetadataSchemaWrapper, which contains all basic fields of
-     * the metadata schema.
+     * @return The metadata schema with the provided id.
      */
     @GET
     @Path(value = "/metadataSchemas/{id}")
@@ -513,15 +531,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of task entities. All returned entities are serialized
-     * using the <b>simple</b> object graph of TaskWrapper, which removes all
-     * attributes but the id from the returned entities.
+     * @return A list of task entities.
      */
     @GET
     @Path(value = "/tasks/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleTask>")
-    IEntityWrapper<? extends ISimpleTask> getTaskIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultTask>")
+    IEntityWrapper<? extends IDefaultTask> getTasks(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -538,9 +554,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * here.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The created task entity serialized using the
-     * <b>default</b> object graph of TaskWrapper, which contains all basic
-     * fields of the task.
+     * @return The created task entity.
      *
      */
     @POST
@@ -560,14 +574,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param groupId The group id the task is associated with. [default: USERS]
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The number of accessible tasks associated with the provided group
-     * wrapped by a TaskWrapper entity.
+     * @return The number of accessible tasks.
      */
     @GET
     @Path(value = "/tasks/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleTask>")
-    IEntityWrapper<? extends ISimpleTask> getTaskCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultTask>")
+    IEntityWrapper<? extends IDefaultTask> getTaskCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
@@ -580,9 +593,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the task to query for.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The task with the provided id or one of the status codes below.
-     * The returned entity is serialized using the <b>default</b>
-     * object graph of TaskWrapper, which contains all basic fields of the task.
+     * @return The task with the provided id.
      */
     @GET
     @Path(value = "/tasks/{id}")
@@ -607,15 +618,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of UserData entities. All returned entities are serialized
-     * using the <b>simple</b> object graph of UserDataWrapper, which removes
-     * all attributes but the id from the returned entities.
+     * @return A list of UserData entities.
      */
     @GET
     @Path(value = "/userData/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleUserData>")
-    IEntityWrapper<? extends ISimpleUserData> getUserDataIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultUserData>")
+    IEntityWrapper<? extends IDefaultUserData> getUserDataEntities(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -631,14 +640,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * USERS]
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The number of accessible UserData entities associated with the
-     * provided group wrapped by a UserDataWrapper entity.
+     * @return The number of accessible UserData entities.
      */
     @GET
     @Path(value = "/userData/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleUserData>")
-    IEntityWrapper<? extends ISimpleUserData> getUserDataCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultUserData>")
+    IEntityWrapper<? extends IDefaultUserData> getUserDataCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
@@ -651,9 +659,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the UserData to query for.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The UserData with the provided id or one of the status codes
-     * below. The returned entity is serialized using the <b>default</b>
-     * object graph of UserDataWrapper, which contains all basic fields.
+     * @return The UserData with the provided id.
      */
     @GET
     @Path(value = "/userData/{id}")
@@ -675,10 +681,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the participant to query for.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The participant with the provided id or one of the status codes
-     * below. The returned entity is serialized using the <b>default</b>
-     * object graph of ParticipantWrapper, which contains all basic fields of
-     * the participant.
+     * @return The participant with the provided id.
      */
     @GET
     @Path(value = "/participants/{id}")
@@ -700,10 +703,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the relation to query for.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The relation with the provided id or one of the status codes
-     * below. The returned entity is serialized using the <b>default</b>
-     * object graph of RelationWrapper, which contains all basic fields of the
-     * relation.
+     * @return The relation with the provided id.
      */
     @GET
     @Path(value = "/relations/{id}")
@@ -729,15 +729,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of studies entities. All returned entities are serialized
-     * using the <b>simple</b> object graph of StudyWrapper, which removes all
-     * attributes but the id from the returned entities.
+     * @return A list of studies entities.
      */
     @GET
     @Path(value = "/studies/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleStudy>")
-    IEntityWrapper<? extends ISimpleStudy> getStudyIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultStudy>")
+    IEntityWrapper<? extends IDefaultStudy> getStudies(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -762,10 +760,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * date will be set.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The created study entity serialized using the
-     * <b>default</b> object graph of StudyWrapper, which contains all basic
-     * fields of the study. Enclosed entities are returned with their id and
-     * might be queried separately.
+     * @return The created study entity.
      */
     @POST
     @Path(value = "/studies/")
@@ -792,9 +787,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param taskId The id of the relations task.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The modified study entity serialized using the
-     * <b>default</b> object graph of StudyWrapper, which contains all basic
-     * fields of the study.
+     * @return The modified study entity.
      */
     @POST
     @Path(value = "/studies/{id}/relations/")
@@ -816,14 +809,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * USERS]
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The number of accessible studies associated with the provided
-     * group wrapped by a StudyWrapper entity.
+     * @return The number of accessible studies.
      */
     @GET
     @Path(value = "/studies/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleStudy>")
-    IEntityWrapper<? extends ISimpleStudy> getStudyCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultStudy>")
+    IEntityWrapper<? extends IDefaultStudy> getStudyCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
@@ -836,10 +828,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the study to query for.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The study with the provided id or one of the status codes below.
-     * The returned entity is serialized using the <b>default</b> object graph
-     * of StudyWrapper, which contains all basic fields of the study. Enclosed
-     * entities are returned with their id and might be queried separately.
+     * @return The study with the provided id.
      */
     @GET
     @Path(value = "/studies/{id}")
@@ -867,11 +856,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * provided, no end date will be set.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The added investigation with the provided id or one of the status
-     * codes below. The returned entity is serialized using the <b>default</b>
-     * object graph of InvestigationWrapper, which contains all basic fields of
-     * the investigation. Enclosed entities are returned with their id and might
-     * be queried separately.
+     * @return The added investigation with the provided id.
      */
     @POST
     @Path(value = "/studies/{id}/investigations/")
@@ -903,11 +888,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param endDate The end date of the study.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The updated study serialized using the <b>default</b> object
-     * graph of StudyWrapper which contains all basic fields of the study.
-     * Enclosed entities are returned with their id and might be queried
-     * separately.
-     *
+     * @return The updated study serialized.
      */
     @PUT
     @Path(value = "/studies/{id}")
@@ -960,15 +941,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of investigation entities. All returned entities are
-     * serialized using the <b>simple</b> object graph of InvestigationWrapper,
-     * which removes all attributes but the id from the returned entities.
+     * @return A list of investigation entities.
      */
     @GET
     @Path(value = "/investigations/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleInvestigation>")
-    IEntityWrapper<? extends ISimpleInvestigation> getInvestigationIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultInvestigation>")
+    IEntityWrapper<? extends IDefaultInvestigation> getInvestigations(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("studyId") @DefaultValue(Constants.REST_ALL_INT) Long studyId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
@@ -987,14 +966,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param studyId The study id the investigation is associated with.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The number of accessible investigations associated with the
-     * provided group and study wrapped by an InvestigationWrapper entity.
+     * @return The number of accessible investigations.
      */
     @GET
     @Path(value = "/investigations/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleInvestigation>")
-    IEntityWrapper<? extends ISimpleInvestigation> getInvestigationCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultInvestigation>")
+    IEntityWrapper<? extends IDefaultInvestigation> getInvestigationCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("studyId") @DefaultValue(Constants.REST_ALL_INT) Long studyId,
             @javax.ws.rs.core.Context HttpContext hc);
@@ -1008,11 +986,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param groupId The group id the investigation is associated with.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The investigation with the provided id or one of the status codes
-     * below. The returned entity is serialized using the <b>default</b> object
-     * graph of InvestigationWrapper, which contains all basic fields of the
-     * investigation. Enclosed entities are returned with their id and might be
-     * queried separately.
+     * @return The investigation with the provided id.
      */
     @GET
     @Path(value = "/investigations/{id}")
@@ -1042,12 +1016,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * provided, no end date will be set.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The added digital object with the provided id or one of the
-     * status codes below. The returned entity is serialized using the
-     * <b>default</b>
-     * object graph of DigitalObjectWrapper, which contains all basic fields of
-     * the digital object. Enclosed entities are returned with their id and
-     * might be queried separately.
+     * @return The added digital object with the provided id.
      */
     @POST
     @Path(value = "/investigations/{id}/digitalObjects/")
@@ -1075,9 +1044,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param taskId The id of the participants task.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The modified investigation entity serialized using the
-     * <b>default</b> object graph of InvestigationWrapper, which contains all
-     * basic fields of the investigation.
+     * @return The modified investigation entity.
      */
     @POST
     @Path(value = "/investigations/{id}/participants/")
@@ -1100,9 +1067,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param metadataSchemaId The id of the metadata schema.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The modified investigation entity serialized using the
-     * <b>default</b> object graph of InvestigationWrapper, which contains all
-     * basic fields of the investigation.
+     * @return The modified investigation entity.
      */
     @POST
     @Path(value = "/investigations/{id}/metadataSchemas/")
@@ -1130,10 +1095,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param endDate The end date of the study.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The updated investigation serialized using the <b>default</b>
-     * object graph of InvestigationWrapper, which contains all basic fields of
-     * the investigation. Enclosed entities are returned with their id and might
-     * be queried separately.
+     * @return The updated investigation.
      */
     @PUT
     @Path(value = "/investigations/{id}")
@@ -1173,7 +1135,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="/digitalObjects/">
     /**
-     * Returns a list of accessible digital object ids. Without any arguments a
+     * Returns a list of accessible digital objects. Without any arguments a
      * call to this method returns the first 10 (or less) objects accessible by
      * the calling user in the group USERS.
      *
@@ -1187,15 +1149,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of digital object entities. All returned entities are
-     * serialized using the <b>simple</b> object graph of DigitalObjectWrapper,
-     * which removes all attributes but the id from the returned entities.
+     * @return A list of digital object entities.
      */
     @GET
     @Path(value = "/digitalObjects/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObject>")
-    IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject>")
+    IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjects(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("investigationId") @DefaultValue(Constants.REST_ALL_INT) Long investigationId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
@@ -1215,14 +1175,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * with.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The number of accessible digital objects associated with the
-     * provided group and investigation wrapped by a DigitalObjectWrapper.
+     * @return The number of accessible digital objects.
      */
     @GET
     @Path(value = "/digitalObjects/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObject>")
-    IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject>")
+    IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjectCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("investigationId") @DefaultValue(Constants.REST_ALL_INT) Long investigationId,
             @javax.ws.rs.core.Context HttpContext hc);
@@ -1236,11 +1195,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param groupId The group id the digital object is associated with.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The digital object with the provided id or one of the status
-     * codes below. The returned entity is serialized using the <b>default</b>
-     * object graph of DigitalObjectWrapper, which contains all basic fields of
-     * the digital object. Enclosed entities are returned with their id and
-     * might be queried separately.
+     * @return The digital object with the provided id.
      */
     @GET
     @Path(value = "/digitalObjects/{id}")
@@ -1261,11 +1216,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param groupId The group id the digital object is associated with.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The digital object with the provided digital object id or one of
-     * the status codes below. The returned entity is serialized using the
-     * <b>default</b> object graph of DigitalObjectWrapper, which contains all
-     * basic fields of the digital object. Enclosed entities are returned with
-     * their id and might be queried separately.
+     * @return The digital object with the provided digital object id.
      */
     @GET
     @Path(value = "/digitalObjects/doi/")
@@ -1290,15 +1241,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return A list of object types assigned to the object with the provided
-     * id. All returned entities are serialized using the <b>simple</b> object
-     * graph of DigitalObjectTypeWrapper, which removes all attributes but the
-     * id from the returned entities.
+     * id.
      */
     @GET
     @Path(value = "/digitalObjects/{id}/objectTypes")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectType>")
-    IEntityWrapper<? extends ISimpleDigitalObjectType> getDigitalObjectTypesForDigitalObject(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectType>")
+    IEntityWrapper<? extends IDefaultDigitalObjectType> getDigitalObjectTypesForDigitalObject(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @javax.ws.rs.core.Context HttpContext hc);
@@ -1315,9 +1264,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param objectTypeId The id of the object type to add.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The assigned object type. The result is serialized using the
-     * <b>default</b> object graph of DigitalObjectTypeWrapper, which contains
-     * all attributes of the digital object type.
+     * @return The assigned object type.
      */
     @POST
     @Path(value = "/digitalObjects/{id}/objectTypes")
@@ -1333,8 +1280,8 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * Get the transition(s) the digital object with the provided id is derived
      * from. Typically, only one transition should contribute to a digital
      * object, but this may change in future. Transitions returned by this
-     * method will have the object with the provided id in their outputObjects
-     * list.
+     * method will have the object with the provided <i>id</i> in their
+     * outputObjects list.
      *
      * @summary Get the transition(s) the digital object with the provided id is
      * derived from.
@@ -1344,15 +1291,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the digital object.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return All transitions. The result is serialized using the
-     * <b>simple</b> object graph of DigitalObjectTransitionWrapper, which
-     * contains the id of the transition.
+     * @return All transitions having the object with the provided id as input.
      */
     @GET
     @Path(value = "/digitalObjects/{id}/derivedFrom/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectTransition>")
-    IEntityWrapper<? extends ISimpleDigitalObjectTransition> getDigitalObjectDerivationInformation(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectTransition>")
+    IEntityWrapper<? extends IDefaultDigitalObjectTransition> getDigitalObjectDerivationInformation(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @javax.ws.rs.core.Context HttpContext hc);
@@ -1360,7 +1305,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     /**
      * Get the transition(s) the digital object with the provided id contributes
      * to. Transitions returned by this method will have the object with the
-     * provided id and an according view id in their inputObjects map.
+     * provided <i>id</i> in their inputObjects map.
      *
      * @summary Get the transition(s) the digital object with the provided id
      * contributes to.
@@ -1370,28 +1315,25 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the digital object.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return All transitions an object contributes to. The result is
-     * serialized using the
-     * <b>simple</b> object graph of DigitalObjectTransitionWrapper, which
-     * contains the id of the transition.
+     * @return All transitions having the object with the provided id as output.
      */
     @GET
     @Path(value = "/digitalObjects/{id}/contributesTo/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectTransition>")
-    IEntityWrapper<? extends ISimpleDigitalObjectTransition>  getDigitalObjectContributionInformation(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectTransition>")
+    IEntityWrapper<? extends IDefaultDigitalObjectTransition> getDigitalObjectContributionInformation(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @javax.ws.rs.core.Context HttpContext hc);
 
     /**
-     * Add a transition for the digital object with the provided id. By default,
-     * the object with the id <i>id</i> is expected to be the input of the
-     * transition, the object with the id <i>otherId</i> is intended to be the
-     * output. This can be changed by setting <i>outputId</i> to the same value
-     * as
-     * <i>id</i>. Finally, the viewName used together with the input object is
-     * provided.
+     * Add a one to one transition for the digital object with the provided id.
+     * By default, the object with the baseId <i>id</i> is expected to be the
+     * input of the transition, the object with the baseId <i>otherId</i> is
+     * intended to be the output. This can be changed by setting <i>outputId</i>
+     * to the value of
+     * <i>id</i>. Finally, the DataOrganization view name of the input object
+     * that was used to obtain the output object is provided.
      *
      * Currently, it is only possible to add transitions with one source and one
      * target object. This may change in later versions.
@@ -1403,26 +1345,29 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The id of the digital object.
      * @param otherId The id of the other digital object.
      * @param viewName The data organization view name used together with the
-     * input object.
+     * input object. The default value is Constants.DEFAULT_VIEW.
      * @param outputId The id of the output object. The default value -1 means
      * that outputId = otherId. This can be changed by setting outputId = id.
+     * @param type The type enum of this transition. Depending on the type the
+     * value of 'typeData' should be provided as documented above.
+     * @param typeData The data that can be used to assign additional
+     * information to the transition.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return All transitions an object contributes to. The result is
-     * serialized using the
-     * <b>default</b> object graph of DigitalObjectTransitionWrapper, which
-     * contains the id of the transition.
+     * @return The added transition.
      */
     @POST
     @Path(value = "/digitalObjects/{id}/transitions/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectTransition>")
-    IEntityWrapper<? extends IDefaultDigitalObjectTransition>  addTransitionToDigitalObject(
+    IEntityWrapper<? extends IDefaultDigitalObjectTransition> addTransitionToDigitalObject(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @FormParam("otherId") Long otherId,
             @FormParam("viewName") @DefaultValue(value = Constants.DEFAULT_VIEW) String viewName,
             @FormParam("outputId") @DefaultValue(value = Constants.REST_ALL_INT) Long outputId,
+            @FormParam("type") @DefaultValue("NONE") TransitionType type,
+            @FormParam("typeData") String typeData,
             @javax.ws.rs.core.Context HttpContext hc);
 
     /**
@@ -1435,15 +1380,13 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param userDataId The id of the experimenters userData.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The modified digital object entity serialized using the
-     * <b>default</b> object graph of DigitalObjectWrapper, which contains all
-     * basic fields of the digital object.
+     * @return The modified digital object entity.
      */
     @POST
     @Path(value = "/digitalObjects/{id}/experimenters/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject>")
-    IEntityWrapper<? extends IDefaultDigitalObject>  addExperimenterToDigitalObject(
+    IEntityWrapper<? extends IDefaultDigitalObject> addExperimenterToDigitalObject(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @FormParam("userDataId") Long userDataId,
@@ -1464,10 +1407,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param endDate The end date of the digital object.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The updated investigation serialized using the <b>default</b>
-     * object graph of DigitalObjectWrapper, which contains all basic fields of
-     * the digital object. Enclosed entities are returned with their id and
-     * might be queried separately.
+     * @return The updated investigation.
      */
     @PUT
     @Path(value = "/digitalObjects/{id}")

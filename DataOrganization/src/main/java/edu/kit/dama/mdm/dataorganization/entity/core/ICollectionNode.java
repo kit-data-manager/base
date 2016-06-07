@@ -66,5 +66,5 @@ public interface ICollectionNode extends IDataOrganizationNode {
      *
      * @param children The list of children.
      */
-    void addChildren(List<IDataOrganizationNode> children);
+    void addChildren(List<? extends IDataOrganizationNode> children);
 }

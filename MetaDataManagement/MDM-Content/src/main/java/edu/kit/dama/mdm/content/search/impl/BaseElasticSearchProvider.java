@@ -195,7 +195,7 @@ public abstract class BaseElasticSearchProvider extends AbstractSearchProvider<D
 //    /*  MetadataIndexingTask task = new MetadataIndexingTask();
 //     task.setId(1l);
 //     for (int i = 1; i <= 4; i++) {
-//     MetaDataSchema schema = new MetaDataSchema("post3", "http://ipelsdf1.lsdf.kit.edu/md/post3");
+//     MetaDataSchema schema = new MetaDataSchema("post3", "http://datamanager.kit.edu/md/post3");
 //     task.setSchemaReference(schema);
 //     task.setDigitalObjectId(Integer.toString(i));
 //     task.setMetadataDocumentUrl("file:///d:/metadata_" + Integer.toString(i) + ".xml");

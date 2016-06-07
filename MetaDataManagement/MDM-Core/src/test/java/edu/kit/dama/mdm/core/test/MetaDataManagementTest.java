@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package edu.kit.dama.mdm.core.test;
 
-import edu.kit.dama.authorization.annotations.resources.TestEntity;
+import edu.kit.dama.mdm.core.test.entities.TestEntity;
 import edu.kit.dama.authorization.exceptions.AuthorizationException;
 import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
@@ -40,255 +40,255 @@ import org.junit.Ignore;
  */
 public class MetaDataManagementTest {
 
-  /**
-   * For logging purposes.
-   */
-  private static Logger LOGGER = LoggerFactory.getLogger(MetaDataManagementTest.class);
-  /**
-   * Manager holding all Information.
-   */
-  private static IMetaDataManager entityManager = null;
-  private static TestEntity referenceEntity = null;
-  private static final String DESCRIPTION = "reference description";
-  private static final String DESCRIPTION_NEW = "updated reference description";
-  private static final String SUMMARY = "reference summary";
+    /**
+     * For logging purposes.
+     */
+    private static Logger LOGGER = LoggerFactory.getLogger(MetaDataManagementTest.class);
+    /**
+     * Manager holding all Information.
+     */
+    private static IMetaDataManager entityManager = null;
+    private static TestEntity referenceEntity = null;
+    private static final String DESCRIPTION = "reference description";
+    private static final String DESCRIPTION_NEW = "updated reference description";
+    private static final String SUMMARY = "reference summary";
 
-  @BeforeClass
-  public static void prepareClassForTests() {
-    LOGGER.info("Prepare class 'MetaDataManagementTest' for Tests!");
-    // create entity Manager
-    MetaDataManagementHelper.replaceConfig(null);
-    prepareEntityManager();
-    assertNotNull(entityManager);
-  }
-
-  public static void prepareEntityManager() {
-    entityManager = MetaDataManagement.getMetaDataManagement().getMetaDataManager("JPA", "MDM-Core-Test");
-    entityManager.setAuthorizationContext(SecurityUtil.adminContext);
-  }
-
-  @AfterClass
-  public static void releaseClassAfterTests() throws AuthorizationException {
-    LOGGER.info("All tests done!\nRelease class 'MetaDataManagementTest' for Tests!");
-    List<TestEntity> find = entityManager.find(TestEntity.class);
-    for (TestEntity item : find) {
-      entityManager.remove(item);
+    @BeforeClass
+    public static void prepareClassForTests() {
+        LOGGER.info("Prepare class 'MetaDataManagementTest' for Tests!");
+        // create entity Manager
+        MetaDataManagementHelper.replaceConfig(null);
+        prepareEntityManager();
+        assertNotNull(entityManager);
     }
-    entityManager.close();
-  }
 
-  @Before
-  public void addTestEntityReference() throws UnauthorizedAccessAttemptException {
-    referenceEntity = createTestEntityReference();
-    entityManager.save(referenceEntity);
-  }
-
-  @After
-  public void removeAllEntities() throws AuthorizationException {
-    entityManager.setAuthorizationContext(SecurityUtil.adminContext);
-    List<TestEntity> find = entityManager.find(TestEntity.class);
-    for (TestEntity entity : find) {
-      entityManager.remove(entity);
+    public static void prepareEntityManager() {
+        entityManager = MetaDataManagement.getMetaDataManagement().getMetaDataManager("JPA", "MDM-Core-Test");
+        entityManager.setAuthorizationContext(SecurityUtil.adminContext);
     }
-  }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void test01_DataBaseFailure() {
-    IMetaDataManager noEntityManager = MetaDataManagement.getMetaDataManagement().getMetaDataManager("JPA", "notExist");
-    assertEquals(noEntityManager.toString(), "Should not happen!");
-  }
-
-  @Test
-  public void test02_testDataBaseExists() {
-    assertNotNull(entityManager);
-    assertTrue(IMetaDataManager.class.isAssignableFrom(entityManager.getClass()));
-  }
-
-  /**
-   * Test if all existing Entities are shown as valid objects.
-   */
-  @Test
-  public void test03_Entities() throws UnauthorizedAccessAttemptException {
-    TestEntity testEntity = new TestEntity();
-
-    assertEquals(false, entityManager.contains(testEntity));
-  }
-
-  /**
-   * Test if all existing Entities are shown as valid objects.
-   */
-  @Test(expected = IllegalArgumentException.class)
-  public void test04_NoEntities() throws UnauthorizedAccessAttemptException {
-    assertEquals(false, entityManager.contains(this));
-  }
-
-  /**
-   * Test save entity to database.
-   */
-  @Test
-  public void test05_SaveEntity() throws UnauthorizedAccessAttemptException {
-    TestEntity EntityForTestFive = createTestEntityReference();
-    Long idBefore = EntityForTestFive.getId();
-    entityManager.save(EntityForTestFive);
-    Long idAfter = EntityForTestFive.getId();
-    assertNotNull(idAfter);
-    assertNotSame(idBefore, idAfter);
-    referenceEntity = EntityForTestFive;
-    assertEquals(true, entityManager.contains(referenceEntity));
-  }
-
-  /**
-   * Test save entity to database.
-   */
-  @Test
-  public void testSaveEntityTwice() throws UnauthorizedAccessAttemptException {
-    TestEntity entityForTestFive = createTestEntityReference();
-    entityManager.save(entityForTestFive);
-    entityManager.save(entityForTestFive);
-    assertEquals(true, entityManager.contains(entityForTestFive));
-  }
-
-  /**
-   * Test persist entity to database.
-   */
-  @Test(expected = EntityExistsException.class)
-  public void testPersistEntityTwice() throws UnauthorizedAccessAttemptException {
-    TestEntity entityForTestFive = createTestEntityReference();
-    entityManager.persist(entityForTestFive);
-    entityManager.persist(entityForTestFive);
-    assertEquals(true, entityManager.contains(entityForTestFive));
-  }
-
-  /**
-   * Test persist entity to database twice.
-   */
-  @Test(expected = EntityExistsException.class)
-  public void testPersistDetachedEntityTwice() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-    TestEntity entityForTestFive = createTestEntityReference();
-    entityManager.persist(entityForTestFive);
-    int noOfTestEntities = entityManager.find(entityForTestFive.getClass()).size();
-    assertEquals(noOfTestEntities, entityManager.find(TestEntity.class).size());
-    MetaDataManagement.getMetaDataManagement().getMetaDataManager("JPA", "MDM-Core-Test").persist(entityForTestFive);
-    assertFalse(true);
-  }
-
-  @Test
-  public void testCloseManager() throws UnauthorizedAccessAttemptException {
-    entityManager.close();
-    try {
-      entityManager.find(referenceEntity.getClass());
-      assertTrue(false);
-    } catch (IllegalStateException ise) {
-    } finally {
-      prepareEntityManager();
+    @AfterClass
+    public static void releaseClassAfterTests() throws AuthorizationException {
+        LOGGER.info("All tests done!\nRelease class 'MetaDataManagementTest' for Tests!");
+        List<TestEntity> find = entityManager.find(TestEntity.class);
+        for (TestEntity item : find) {
+            entityManager.remove(item);
+        }
+        entityManager.close();
     }
-  }
 
-  /**
-   * Test update entity to database.
-   */
-  @Test(expected = EntityNotFoundException.class)
-  @Ignore("Should be allowed now")
-  public void testUpdateForNotManagedEntity() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-    TestEntity entityForTestFive = createTestEntityReference();
-    entityForTestFive = entityManager.update(entityForTestFive);
-    assertEquals(true, entityManager.contains(entityForTestFive));
-  }
+    @Before
+    public void addTestEntityReference() throws UnauthorizedAccessAttemptException {
+        referenceEntity = createTestEntityReference();
+        entityManager.save(referenceEntity);
+    }
 
-  /**
-   * Test if entity is already persisted to database.
-   */
-  /**
-   * Test if entity if find works.
-   */
-  @Test
-  public void testFindEntity() throws AuthorizationException {
-    TestEntity find = entityManager.find(TestEntity.class, referenceEntity.getId());
-    assertEquals(referenceEntity.getId(), find.getId());
-    assertEquals(referenceEntity.getDescription(), find.getDescription());
-    assertEquals(referenceEntity.getSummary(), find.getSummary());
-    assertEquals(DESCRIPTION, find.getDescription());
-    assertEquals(SUMMARY, find.getSummary());
-  }
+    @After
+    public void removeAllEntities() throws AuthorizationException {
+        entityManager.setAuthorizationContext(SecurityUtil.adminContext);
+        List<TestEntity> find = entityManager.find(TestEntity.class);
+        for (TestEntity entity : find) {
+            entityManager.remove(entity);
+        }
+    }
 
-  /**
-   * Test if entity if find works.
-   */
-  @Test
-  public void testFindAllEntities() throws UnauthorizedAccessAttemptException {
-    List<TestEntity> find = entityManager.find(TestEntity.class);
-    assertEquals(find.size(), 1);
-    TestEntity firstElement = find.get(0);
-    assertEquals(referenceEntity.getId(), firstElement.getId());
-    assertEquals(referenceEntity.getDescription(), firstElement.getDescription());
-    assertEquals(referenceEntity.getSummary(), firstElement.getSummary());
-    assertEquals(DESCRIPTION, firstElement.getDescription());
-    assertEquals(SUMMARY, firstElement.getSummary());
-  }
+    @Test(expected = IllegalArgumentException.class)
+    public void test01_DataBaseFailure() {
+        IMetaDataManager noEntityManager = MetaDataManagement.getMetaDataManagement().getMetaDataManager("JPA", "notExist");
+        assertEquals(noEntityManager.toString(), "Should not happen!");
+    }
 
-  /**
-   * Test if entity if refresh works.
-   * 
-   * @throws AuthorizationException If authorization fails
-   */
-  @Test
-  public void testRefreshEntity() throws AuthorizationException {
-    // ToDo: Try to understand why refresh seems not to work with mysql!?
-    TestEntity find = entityManager.find(TestEntity.class, referenceEntity.getId());
-    assertEquals(DESCRIPTION, find.getDescription());
-    assertEquals(SUMMARY, find.getSummary());
-    // make some changes to the entity
-    find.setSummary(DESCRIPTION);
-    find.setDescription(DESCRIPTION_NEW);
-    // do refresh
-    find = entityManager.refresh(find);
-    // Values should be the same as before...
-    assertEquals(referenceEntity.getId(), find.getId());
-    assertEquals(referenceEntity.getDescription(), find.getDescription());
-    assertEquals(referenceEntity.getSummary(), find.getSummary());
-    assertEquals(DESCRIPTION, find.getDescription());
-    assertEquals(SUMMARY, find.getSummary());
-  }
+    @Test
+    public void test02_testDataBaseExists() {
+        assertNotNull(entityManager);
+        assertTrue(IMetaDataManager.class.isAssignableFrom(entityManager.getClass()));
+    }
 
-  /**
-   * Test if entity if update works.
-   */
-  @Test
-  public void testUpdateEntity() throws AuthorizationException {
-    TestEntity find = entityManager.find(TestEntity.class, referenceEntity.getId());
-    // make one change to entity
-    find.setDescription(DESCRIPTION_NEW);
-    find.setSummary(SUMMARY);
-    // save changed entity
-    entityManager.save(find);
-    // Load find from database
-    find = entityManager.find(TestEntity.class, referenceEntity.getId());
-    assertEquals(referenceEntity.getId(), find.getId());
-    assertEquals(referenceEntity.getSummary(), find.getSummary());
-    assertEquals(DESCRIPTION_NEW, find.getDescription());
-  }
+    /**
+     * Test if all existing Entities are shown as valid objects.
+     */
+    @Test
+    public void test03_Entities() throws UnauthorizedAccessAttemptException {
+        TestEntity testEntity = new TestEntity();
 
-  /**
-   * Test if entity if update works.
-   */
-  @Test
-  public void testRemoveEntity() throws AuthorizationException {
-    int noOfTestEntities = entityManager.find(TestEntity.class).size();
-    TestEntity newEntity = createTestEntityReference();
-    // add new entity
-    entityManager.save(newEntity);
-    boolean contains = entityManager.contains(newEntity);
-    assertTrue(contains);
-    List<TestEntity> resultList = entityManager.find(TestEntity.class);
-    assertEquals(noOfTestEntities + 1, resultList.size());
+        assertEquals(false, entityManager.contains(testEntity));
+    }
 
-    // remove entity from database
-    entityManager.remove(newEntity);
-    resultList = entityManager.find(TestEntity.class);
-    assertEquals(noOfTestEntities, resultList.size());
-    contains = entityManager.contains(newEntity);
-    assertFalse(contains);
-  }
+    /**
+     * Test if all existing Entities are shown as valid objects.
+     */
+    @Test(expected = IllegalArgumentException.class)
+    public void test04_NoEntities() throws UnauthorizedAccessAttemptException {
+        assertEquals(false, entityManager.contains(this));
+    }
+
+    /**
+     * Test save entity to database.
+     */
+    @Test
+    public void test05_SaveEntity() throws UnauthorizedAccessAttemptException {
+        TestEntity EntityForTestFive = createTestEntityReference();
+        Long idBefore = EntityForTestFive.getId();
+        entityManager.save(EntityForTestFive);
+        Long idAfter = EntityForTestFive.getId();
+        assertNotNull(idAfter);
+        assertNotSame(idBefore, idAfter);
+        referenceEntity = EntityForTestFive;
+        assertEquals(true, entityManager.contains(referenceEntity));
+    }
+
+    /**
+     * Test save entity to database.
+     */
+    @Test
+    public void testSaveEntityTwice() throws UnauthorizedAccessAttemptException {
+        TestEntity entityForTestFive = createTestEntityReference();
+        entityManager.save(entityForTestFive);
+        entityManager.save(entityForTestFive);
+        assertEquals(true, entityManager.contains(entityForTestFive));
+    }
+
+    /**
+     * Test persist entity to database.
+     */
+    @Test(expected = EntityExistsException.class)
+    public void testPersistEntityTwice() throws UnauthorizedAccessAttemptException {
+        TestEntity entityForTestFive = createTestEntityReference();
+        entityManager.persist(entityForTestFive);
+        entityManager.persist(entityForTestFive);
+        assertEquals(true, entityManager.contains(entityForTestFive));
+    }
+
+    /**
+     * Test persist entity to database twice.
+     */
+    @Test(expected = EntityExistsException.class)
+    public void testPersistDetachedEntityTwice() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
+        TestEntity entityForTestFive = createTestEntityReference();
+        entityManager.persist(entityForTestFive);
+        int noOfTestEntities = entityManager.find(entityForTestFive.getClass()).size();
+        assertEquals(noOfTestEntities, entityManager.find(TestEntity.class).size());
+        MetaDataManagement.getMetaDataManagement().getMetaDataManager("JPA", "MDM-Core-Test").persist(entityForTestFive);
+        assertFalse(true);
+    }
+
+    @Test
+    public void testCloseManager() throws UnauthorizedAccessAttemptException {
+        entityManager.close();
+        try {
+            entityManager.find(referenceEntity.getClass());
+            assertTrue(false);
+        } catch (IllegalStateException ise) {
+        } finally {
+            prepareEntityManager();
+        }
+    }
+
+    /**
+     * Test update entity to database.
+     */
+    @Test(expected = EntityNotFoundException.class)
+    @Ignore("Should be allowed now")
+    public void testUpdateForNotManagedEntity() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
+        TestEntity entityForTestFive = createTestEntityReference();
+        entityForTestFive = entityManager.update(entityForTestFive);
+        assertEquals(true, entityManager.contains(entityForTestFive));
+    }
+
+    /**
+     * Test if entity is already persisted to database.
+     */
+    /**
+     * Test if entity if find works.
+     */
+    @Test
+    public void testFindEntity() throws AuthorizationException {
+        TestEntity find = entityManager.find(TestEntity.class, referenceEntity.getId());
+        assertEquals(referenceEntity.getId(), find.getId());
+        assertEquals(referenceEntity.getDescription(), find.getDescription());
+        assertEquals(referenceEntity.getSummary(), find.getSummary());
+        assertEquals(DESCRIPTION, find.getDescription());
+        assertEquals(SUMMARY, find.getSummary());
+    }
+
+    /**
+     * Test if entity if find works.
+     */
+    @Test
+    public void testFindAllEntities() throws UnauthorizedAccessAttemptException {
+        List<TestEntity> find = entityManager.find(TestEntity.class);
+        assertEquals(find.size(), 1);
+        TestEntity firstElement = find.get(0);
+        assertEquals(referenceEntity.getId(), firstElement.getId());
+        assertEquals(referenceEntity.getDescription(), firstElement.getDescription());
+        assertEquals(referenceEntity.getSummary(), firstElement.getSummary());
+        assertEquals(DESCRIPTION, firstElement.getDescription());
+        assertEquals(SUMMARY, firstElement.getSummary());
+    }
+
+    /**
+     * Test if entity if refresh works.
+     *
+     * @throws AuthorizationException If authorization fails
+     */
+    @Test
+    public void testRefreshEntity() throws AuthorizationException {
+        // ToDo: Try to understand why refresh seems not to work with mysql!?
+        TestEntity find = entityManager.find(TestEntity.class, referenceEntity.getId());
+        assertEquals(DESCRIPTION, find.getDescription());
+        assertEquals(SUMMARY, find.getSummary());
+        // make some changes to the entity
+        find.setSummary(DESCRIPTION);
+        find.setDescription(DESCRIPTION_NEW);
+        // do refresh
+        find = entityManager.refresh(find);
+        // Values should be the same as before...
+        assertEquals(referenceEntity.getId(), find.getId());
+        assertEquals(referenceEntity.getDescription(), find.getDescription());
+        assertEquals(referenceEntity.getSummary(), find.getSummary());
+        assertEquals(DESCRIPTION, find.getDescription());
+        assertEquals(SUMMARY, find.getSummary());
+    }
+
+    /**
+     * Test if entity if update works.
+     */
+    @Test
+    public void testUpdateEntity() throws AuthorizationException {
+        TestEntity find = entityManager.find(TestEntity.class, referenceEntity.getId());
+        // make one change to entity
+        find.setDescription(DESCRIPTION_NEW);
+        find.setSummary(SUMMARY);
+        // save changed entity
+        entityManager.save(find);
+        // Load find from database
+        find = entityManager.find(TestEntity.class, referenceEntity.getId());
+        assertEquals(referenceEntity.getId(), find.getId());
+        assertEquals(referenceEntity.getSummary(), find.getSummary());
+        assertEquals(DESCRIPTION_NEW, find.getDescription());
+    }
+
+    /**
+     * Test if entity if update works.
+     */
+    @Test
+    public void testRemoveEntity() throws AuthorizationException {
+        int noOfTestEntities = entityManager.find(TestEntity.class).size();
+        TestEntity newEntity = createTestEntityReference();
+        // add new entity
+        entityManager.save(newEntity);
+        boolean contains = entityManager.contains(newEntity);
+        assertTrue(contains);
+        List<TestEntity> resultList = entityManager.find(TestEntity.class);
+        assertEquals(noOfTestEntities + 1, resultList.size());
+
+        // remove entity from database
+        entityManager.remove(newEntity);
+        resultList = entityManager.find(TestEntity.class);
+        assertEquals(noOfTestEntities, resultList.size());
+        contains = entityManager.contains(newEntity);
+        assertFalse(contains);
+    }
 
 //  /**
 //   * Test for search between two 'references'.
@@ -321,17 +321,17 @@ public class MetaDataManagementTest {
 //    }
 //    entityManager.remove(EntityForTestEleven);
 //  }
-  private TestEntity createTestEntityReference() {
-    TestEntity testEntity = new TestEntity();
-    testEntity.setDescription(DESCRIPTION);
-    testEntity.setSummary(SUMMARY);
-    return testEntity;
-  }
+    private TestEntity createTestEntityReference() {
+        TestEntity testEntity = new TestEntity();
+        testEntity.setDescription(DESCRIPTION);
+        testEntity.setSummary(SUMMARY);
+        return testEntity;
+    }
 
-  private static TestEntity createTestEntityReference(String prefix) {
-    TestEntity testEntity = new TestEntity();
-    testEntity.setDescription(prefix + DESCRIPTION);
-    testEntity.setSummary(prefix + SUMMARY);
-    return testEntity;
-  }
+    private static TestEntity createTestEntityReference(String prefix) {
+        TestEntity testEntity = new TestEntity();
+        testEntity.setDescription(prefix + DESCRIPTION);
+        testEntity.setSummary(prefix + SUMMARY);
+        return testEntity;
+    }
 }

@@ -36,22 +36,19 @@ import edu.kit.dama.mdm.admin.ServiceAccessToken;
 import edu.kit.dama.mdm.admin.util.ServiceAccessUtil;
 import edu.kit.dama.rest.base.exceptions.DeserializationException;
 import edu.kit.dama.util.Constants;
-import edu.kit.dama.util.DataManagerSettings;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.ws.WebServiceException;
 import org.eclipse.persistence.jaxb.MarshallerProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,8 +100,7 @@ public final class RestUtils {
      * @return The authorization context including pGroupId and the according
      * max. role of the obtained user.
      */
-    public static IAuthorizationContext authorize(HttpContext hc,
-            GroupId pGroupId) {
+    public static IAuthorizationContext authorize(HttpContext hc, GroupId pGroupId) {
         if (pGroupId == null || pGroupId.getStringRepresentation() == null) {
             throw new IllegalArgumentException(
                     "Argument pGroupId and its string representation must not be 'null'");
@@ -112,11 +108,9 @@ public final class RestUtils {
         OAuthServerRequest request = new OAuthServerRequest(hc.getRequest());
         // get incoming OAuth parameters
         OAuthParameters params = new OAuthParameters();
-        //params.setSignatureMethod("PLAINTEXT");
         params.readRequest(request);
 
-        LOGGER.debug("Authorizing access request for access key {}", params.
-                getToken());
+        LOGGER.debug("Authorizing access request for access key {}", params.getToken());
         try {
             //obtain ServiceAccessToken based on the provided user token using the meta data management
             IMetaDataManager manager = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
@@ -124,8 +118,7 @@ public final class RestUtils {
             ServiceAccessToken token = ServiceAccessUtil.getAccessToken(manager, params.getToken(), Constants.REST_API_SERVICE_KEY);
             manager.close();
             if (token == null) {
-                throw new Exception("No access token for access key " + params.
-                        getToken() + " found");
+                throw new Exception("No access token for access key " + params.getToken() + " found");
             }
 
             // OAuthParameters params1 = new OAuthParameters().consumerKey("dpf43f3p2l4k3l03").token("nnch734d00sl2jdk").signatureMethod(HMAC_SHA1.NAME).timestamp().nonce().version();
@@ -139,30 +132,26 @@ public final class RestUtils {
             if (OAuthSignature.verify(request, params, secrets)) {
                 //allowed, map everything to an appropriate context
                 UserId theUser = new UserId(token.getUserId());
-                LOGGER.debug(
-                        "Successfully obtained user with id {}. Determining max. role in group {}",
-                        new Object[]{theUser, pGroupId});
-                Role maxRole = (Role) GroupServiceLocal.getSingleton().
-                        getMaximumRole(pGroupId, new UserId(token.getUserId()),
-                                AuthorizationContext.factorySystemContext());
-                LOGGER.debug(
-                        "Successfully authorized user. Returning authorization context for userId {} in group {} with role {}",
-                        new Object[]{token.getUserId(), pGroupId, maxRole});
-                return new AuthorizationContext(new UserId(token.getUserId()),
-                        pGroupId, maxRole);
+                LOGGER.debug("Successfully obtained user with id {}. Determining max. role in group {}", new Object[]{theUser, pGroupId});
+                Role maxRole = (Role) GroupServiceLocal.getSingleton().getMaximumRole(pGroupId, new UserId(token.getUserId()), AuthorizationContext.factorySystemContext());
+                if (maxRole.moreThan(Role.MANAGER)) {
+                    LOGGER.debug("Max. role is {}. Limiting role to MANAGER.", maxRole);
+                    maxRole = Role.MANAGER;
+                }
+
+                LOGGER.debug("Successfully authorized user. Returning authorization context for userId {} in group {} with role {}", new Object[]{token.getUserId(), pGroupId, maxRole});
+                return new AuthorizationContext(new UserId(token.getUserId()), pGroupId, maxRole);
             } else {
-                LOGGER.warn(
-                        "Signature verification failed for user {}. Authorization denied.",
-                        token.getUserId());
-                throw new WebServiceException(OAUTH_ERROR);
+                LOGGER.warn("Signature verification failed for user {}. Authorization denied.", token.getUserId());
+                throw new WebApplicationException(Status.UNAUTHORIZED);
             }
         } catch (OAuthSignatureException ose) {
             LOGGER.error("Failed to verify OAuth signature", ose);
-            throw new WebServiceException(OAUTH_ERROR);
+            throw new WebApplicationException(Status.UNAUTHORIZED);
         } catch (Exception ex) {
             LOGGER.error("Failed to authorize access for access key " + params.
                     getToken(), ex);
-            throw new WebServiceException(OAUTH_ERROR);
+            throw new WebApplicationException(Status.UNAUTHORIZED);
         }
     }
 
@@ -188,24 +177,6 @@ public final class RestUtils {
             @Override
             public void write(OutputStream arg0) {
                 try {
-                    if (!DataManagerSettings.getSingleton().isProductionMode()) {
-                        // Check if the provided entities are instances of the
-                        // provided classes. This is possibly costly so only
-                        // perform the check if not running in production mode
-                        LOGGER.debug("Performing instance check.");
-                        next:
-                        for (Object o : pEntities) {
-                            LOGGER.debug(" * Checking object {}", o);
-                            for (Class c : pEntityClass) {
-                                LOGGER.debug("   * Checking class {}", c);
-                                if (c.isInstance(o)) {
-                                    //continue with next iteration over pEntities (indeed, this works as intended)
-                                    continue next;
-                                }
-                            }
-                            throw new ClassCastException(o.toString());
-                        }
-                    }
                     LOGGER.debug("Performing marshalling");
                     Marshaller marshaller = org.eclipse.persistence.jaxb.JAXBContext.newInstance(pEntityClass).createMarshaller();
                     marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
@@ -278,21 +249,7 @@ public final class RestUtils {
             final Object pEntity) {
 
         try {
-            if (!DataManagerSettings.getSingleton().isProductionMode()) {
-                // Check if the provided entities are instances of the
-                // provided classes. This is possibly costly so only
-                // perform the check if not running in production mode
-                LOGGER.debug("Performing instance check.");
-                LOGGER.debug(" * Checking object {}", pEntity);
-                for (Class c : pEntityClass) {
-                    LOGGER.debug("   * Checking class {}", c);
-                    if (!c.isInstance(pEntity)) {
-                        throw new ClassCastException(pEntity.toString());
-                    }
-                }
-            }
-
-            LOGGER.debug("Performing marshalling");
+            LOGGER.debug("Performing marshalling of object.");
             Marshaller marshaller = org.eclipse.persistence.jaxb.JAXBContext.newInstance(pEntityClass).createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             if (pGraphName != null) {
@@ -302,10 +259,8 @@ public final class RestUtils {
             marshaller.marshal(pEntity, bout);
             LOGGER.debug("Marshalling finished. Flushing output stream.");
             bout.flush();
-            LOGGER.debug("Output flushed.");
-            System.out.println(new String(bout.toByteArray()));
+            LOGGER.debug("Output flushed. Converting XML result '{}' back to object.", new String(bout.toByteArray()));
             ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-
             Unmarshaller unmarshaller = org.eclipse.persistence.jaxb.JAXBContext.newInstance(
                     pEntityClass).createUnmarshaller();
             return (C) unmarshaller.unmarshal(bin);
@@ -371,7 +326,7 @@ public final class RestUtils {
                         break;
                     }
                 } catch (UnknownHostException ex) {
-                    System.out.println("Failed to check remote host for beeing local.");
+                    LOGGER.error("Failed to check remote host for beeing local.");
                 }
             }
         } else {

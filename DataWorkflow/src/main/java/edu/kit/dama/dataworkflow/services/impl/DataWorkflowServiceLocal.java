@@ -15,35 +15,22 @@
  */
 package edu.kit.dama.dataworkflow.services.impl;
 
-import com.sun.jersey.api.core.HttpContext;
-import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
-import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.dataworkflow.exceptions.UnsupportedTaskException;
-import edu.kit.dama.dataworkflow.impl.DataWorkflowPersistenceImpl;
 import edu.kit.dama.mdm.base.Investigation;
 import edu.kit.dama.mdm.core.IMetaDataManager;
-import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.mdm.core.authorization.SecureMetaDataManager;
 import edu.kit.dama.mdm.core.jpa.MetaDataManagerJpa;
 import edu.kit.dama.mdm.dataworkflow.DataWorkflowTask;
 import edu.kit.dama.mdm.dataworkflow.DataWorkflowTaskConfiguration;
 import edu.kit.dama.mdm.dataworkflow.ExecutionEnvironmentConfiguration;
-import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultExecutionEnvironment;
-import edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleExecutionEnvironment;
 import edu.kit.dama.mdm.dataworkflow.tools.DataWorkflowTaskSecureQueryHelper;
-import edu.kit.dama.rest.base.IEntityWrapper;
-import edu.kit.dama.rest.base.types.CheckServiceResponse;
-import edu.kit.dama.rest.base.types.ServiceStatus;
-import edu.kit.dama.rest.util.RestUtils;
 import edu.kit.dama.util.PropertiesUtil;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.EntityNotFoundException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -222,9 +209,9 @@ public final class DataWorkflowServiceLocal {
         try {
             LOGGER.debug("Getting all DataWorkflowTaskConfigurations.");
             if (pGroupId != null) {
-                return mdm.findResultList("SELECT c FROM DataWorkflowTaskConfiguration c WHERE c.groupId='" + pGroupId + "'", first, results);
+                return mdm.findResultList("SELECT c FROM DataWorkflowTaskConfiguration c WHERE c.groupId='" + pGroupId + "'", DataWorkflowTaskConfiguration.class, first, results);
             } else {
-                return mdm.findResultList("SELECT c FROM DataWorkflowTaskConfiguration c", first, results);
+                return mdm.findResultList("SELECT c FROM DataWorkflowTaskConfiguration c", DataWorkflowTaskConfiguration.class, first, results);
             }
         } finally {
             mdm.close();
@@ -260,9 +247,9 @@ public final class DataWorkflowServiceLocal {
         try {
             LOGGER.debug("Getting all ExecutionEnvironmentConfiguration.");
             if (groupId != null) {
-                return mdm.findResultList("SELECT e FROM ExecutionEnvironmentConfiguration e WHERE e.groupId='" + groupId + "'", first, results);
+                return mdm.findResultList("SELECT e FROM ExecutionEnvironmentConfiguration e WHERE e.groupId='" + groupId + "'", ExecutionEnvironmentConfiguration.class, first, results);
             } else {
-                return mdm.findResultList("SELECT e FROM ExecutionEnvironmentConfiguration e", first, results);
+                return mdm.findResultList("SELECT e FROM ExecutionEnvironmentConfiguration e", ExecutionEnvironmentConfiguration.class, first, results);
             }
         } finally {
             mdm.close();

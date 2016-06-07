@@ -53,32 +53,8 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
  *
  * @author jejkal
  */
-//<editor-fold defaultstate="collapsed" desc="Annotations for JPA and MOXy">
+//<editor-fold defaultstate="collapsed" desc="Annotations for JPA">
 @Entity
-@NamedQueries({
-    @NamedQuery(name = "GetAllIngests",
-            query = "SELECT x FROM IngestInformation x WHERE x.ownerUuid LIKE ?1"),
-    @NamedQuery(name = "GetIngestsByObjectId",
-            query = "SELECT x FROM IngestInformation x WHERE x.digitalObjectUuid = ?1 AND x.ownerUuid LIKE ?2"),
-    @NamedQuery(name = "GetIngestsByOwner",
-            query = "SELECT x FROM IngestInformation x WHERE x.ownerUuid = ?1"),
-    @NamedQuery(name = "GetIngestsByStatus",
-            query = "SELECT x FROM IngestInformation x WHERE x.status = ?1 AND x.ownerUuid LIKE ?2"),
-    @NamedQuery(name = "GetIngestById",
-            query = "SELECT x FROM IngestInformation x WHERE x.id = ?1 AND x.ownerUuid LIKE ?2"),
-    @NamedQuery(name = "GetExpiredIngests",
-            query = "SELECT x FROM IngestInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < x.expiresAt) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3"),
-    @NamedQuery(name = "UpdateIngestStatus",
-            query = "UPDATE IngestInformation x SET x.status = ?2, x.errorMessage = ?3, x.lastUpdate = ?4 WHERE x.id = ?1 AND x.ownerUuid LIKE ?5"),
-    @NamedQuery(name = "UpdateIngestClientAccessUrl",
-            query = "UPDATE IngestInformation x SET x.clientAccessUrl = ?2, x.status = ?3, x.lastUpdate = ?4 WHERE x.id = ?1 AND x.ownerUuid LIKE ?5"),
-    @NamedQuery(name = "UpdateIngestStorageUrl",
-            query = "UPDATE IngestInformation x SET x.storageUrl = ?2, x.status = ?3, x.lastUpdate = ?4 WHERE x.id = ?1 AND x.ownerUuid LIKE ?5"),
-    @NamedQuery(name = "UpdateIngestStagingUrl",
-            query = "UPDATE IngestInformation x SET x.stagingUrl = ?2, x.status = ?3, x.lastUpdate = ?4 WHERE x.id = ?1 AND x.ownerUuid LIKE ?5"),
-    @NamedQuery(name = "DeleteIngestById",
-            query = "DELETE FROM IngestInformation x WHERE x.id = ?1 AND x.ownerUuid LIKE ?2")
-})
 @XmlNamedObjectGraphs({
     @XmlNamedObjectGraph(
             name = "simple",
@@ -462,6 +438,29 @@ public class IngestInformation implements IDefaultIngestInformation, ITransferIn
     }
 
     /**
+     * Clear the list of staging processors.
+     */
+    public void clearStagingProcessors() {
+        if (stagingProcessors == null) {
+            stagingProcessors = new HashSet<>();
+        } else {
+            stagingProcessors.clear();
+        }
+
+        if (serverSideStagingProcessors != null) {
+            serverSideStagingProcessors.clear();
+        }
+
+        if (clientSideStagingProcessors != null) {
+            clientSideStagingProcessors.clear();
+        }
+
+        if (postArchivingStagingProcessors != null) {
+            postArchivingStagingProcessors.clear();
+        }
+    }
+
+    /**
      * Add a client-side staging processor.
      *
      * @param pProcessor The processor to add.
@@ -497,11 +496,19 @@ public class IngestInformation implements IDefaultIngestInformation, ITransferIn
      * @param pProcessor The processor to add.
      */
     public final void addServerSideStagingProcessor(StagingProcessor pProcessor) {
-        stagingProcessors.add(pProcessor);
-        if (serverSideStagingProcessors == null) {
-            serverSideStagingProcessors = new HashSet<>();
+        if (pProcessor == null || pProcessor.getType() == null || !pProcessor.getType().isServerSideProcessor()) {
+            throw new IllegalArgumentException("Provided processor must not be null and must be of type PROCESSOR_TYPE.SERVER_SIDE_ONLY or PROCESSOR_TYPE.CLIENT_AND_SERVER_SIDE or PROCESSOR_TYPE.POST_ARCHIVING");
         }
-        serverSideStagingProcessors.add(pProcessor);
+
+        if (StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY.equals(pProcessor.getType())) {
+            stagingProcessors.add(pProcessor);
+            if (serverSideStagingProcessors == null) {
+                serverSideStagingProcessors = new HashSet<>();
+            }
+            serverSideStagingProcessors.add(pProcessor);
+        } else if (StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.equals(pProcessor.getType())) {
+            addPostArchivingStagingProcessor(pProcessor);
+        }
     }
 
     /**
@@ -545,6 +552,9 @@ public class IngestInformation implements IDefaultIngestInformation, ITransferIn
      * @param pProcessor The processor to add.
      */
     public final void addPostArchivingStagingProcessor(StagingProcessor pProcessor) {
+        if (pProcessor == null || !StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.equals(pProcessor.getType())) {
+            throw new IllegalArgumentException("Provided processor must not be null and must be of type PROCESSOR_TYPE.POST_ARCHIVING");
+        }
         stagingProcessors.add(pProcessor);
         if (postArchivingStagingProcessors == null) {
             postArchivingStagingProcessors = new HashSet<>();

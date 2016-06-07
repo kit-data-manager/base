@@ -31,7 +31,6 @@ import edu.kit.dama.mdm.base.Task;
 import edu.kit.dama.mdm.base.UserData;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
-import edu.kit.dama.util.migration.MigrationObject;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
@@ -50,9 +49,9 @@ public class CreateMigrationObject {
   
   public static void main(String[] args) throws Exception {
 
-    String filename = "/home/linsec/vondrous/tmp/migrationObject.xml";
-    long   id     = 1;
-    String userId = "foobar";
+    String filename = "migrationObject.xml";
+    long   id     = 34;
+    String userId = "admin";
     
     AuthorizationContext ctx;
     IMetaDataManager mdm;

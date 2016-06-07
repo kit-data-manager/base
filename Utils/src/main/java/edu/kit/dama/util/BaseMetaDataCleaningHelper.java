@@ -102,7 +102,7 @@ public final class BaseMetaDataCleaningHelper {
     for (Investigation investigation : pStudy.getInvestigations()) {
       LOGGER.debug("Deleting investigation with id {} from study with id {}", investigation.getInvestigationId(), pStudy.getStudyId());
       deleteInvestigation(investigation, pContext);
-    }
+    }  
     LOGGER.debug(" - Removing study.");
     IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
     mdm.setAuthorizationContext(pContext);

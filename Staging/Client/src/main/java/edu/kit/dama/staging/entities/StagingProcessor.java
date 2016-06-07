@@ -18,10 +18,11 @@ package edu.kit.dama.staging.entities;
 
 import edu.kit.dama.commons.exceptions.ConfigurationException;
 import edu.kit.dama.commons.exceptions.PropertyValidationException;
-import edu.kit.dama.staging.entities.interfaces.ISimpleStagingProcessor;
+import edu.kit.dama.staging.entities.interfaces.IDefaultStagingProcessor;
 import edu.kit.dama.staging.processor.AbstractStagingProcessor;
 import edu.kit.dama.util.PropertiesUtil;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
 import java.util.UUID;
@@ -35,19 +36,42 @@ import javax.persistence.Id;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
-import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
+import org.eclipse.persistence.queries.FetchGroupTracker;
+import org.eclipse.persistence.sessions.Session;
 
 /**
  *
  * @author jejkal
  */
 @Entity
-@XmlNamedObjectGraph(name = "simple", attributeNodes = {
-    @XmlNamedAttributeNode("id")})
+//@XmlNamedObjectGraph(name = "simple", attributeNodes = {
+//    @XmlNamedAttributeNode("id")})
+//@NamedEntityGraphs({
+//    @NamedEntityGraph(
+//            name = "StagingProcessor.simple",
+//            includeAllAttributes = false,
+//            attributeNodes = {
+//                @NamedAttributeNode("id"),
+//                @NamedAttributeNode("uniqueIdentifier")}),
+//    @NamedEntityGraph(
+//            name = "StagingProcessor.default",
+//            includeAllAttributes = false,
+//            attributeNodes = {
+//                @NamedAttributeNode("id"),
+//                @NamedAttributeNode("uniqueIdentifier"),
+//                @NamedAttributeNode("name"),
+//                @NamedAttributeNode("description"),
+//                @NamedAttributeNode("implementationClass"),
+//                @NamedAttributeNode("groupId"),
+//                @NamedAttributeNode("type"),
+//                @NamedAttributeNode("defaultOn"),
+//                @NamedAttributeNode("disabled"),
+//                @NamedAttributeNode("ingestProcessingSupported"),
+//                @NamedAttributeNode("downloadProcessingSupported"),})
+//})
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-public class StagingProcessor implements ISimpleStagingProcessor {
+public class StagingProcessor implements IDefaultStagingProcessor, FetchGroupTracker, Serializable {
 
     /**
      *
@@ -82,23 +106,29 @@ public class StagingProcessor implements ISimpleStagingProcessor {
          * known.
          */
         POST_ARCHIVING;
+        
+        public boolean isServerSideProcessor() {
+            return !CLIENT_SIDE_ONLY.equals(this);
+        }
     }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false, unique = true)
+    private String uniqueIdentifier;
     private String name;
     private String implementationClass;
     @Column(length = 1024)
     private String properties;
-    @Column(nullable = false, unique = true)
-    private String uniqueIdentifier;
     private String groupId = null;
     @Enumerated(EnumType.STRING)
     private PROCESSOR_TYPE type;
     @Column(length = 1024)
     private String description;
-    private boolean defaultOn = false;
-    private boolean disabled = false;
+    private Boolean defaultOn = false;
+    private Boolean disabled = false;
+    private Boolean ingestProcessingSupported = false;
+    private Boolean downloadProcessingSupported = false;
 
     /**
      * Factory a new staging processor with the provided identifier.
@@ -155,11 +185,7 @@ public class StagingProcessor implements ISimpleStagingProcessor {
         this.name = name;
     }
 
-    /**
-     * Get the name.
-     *
-     * @return The name.
-     */
+    @Override
     public String getName() {
         return name;
     }
@@ -173,11 +199,7 @@ public class StagingProcessor implements ISimpleStagingProcessor {
         this.type = type;
     }
 
-    /**
-     * Get the type.
-     *
-     * @return The type.
-     */
+    @Override
     public PROCESSOR_TYPE getType() {
         return type;
     }
@@ -191,11 +213,7 @@ public class StagingProcessor implements ISimpleStagingProcessor {
         this.uniqueIdentifier = uniqueIdentifier;
     }
 
-    /**
-     * Get the unique identifier.
-     *
-     * @return The unique identifier.
-     */
+    @Override
     public String getUniqueIdentifier() {
         return uniqueIdentifier;
     }
@@ -209,11 +227,7 @@ public class StagingProcessor implements ISimpleStagingProcessor {
         this.description = description;
     }
 
-    /**
-     * Set the description.
-     *
-     * @return The description.
-     */
+    @Override
     public String getDescription() {
         return description;
     }
@@ -227,11 +241,7 @@ public class StagingProcessor implements ISimpleStagingProcessor {
         this.implementationClass = implementationClass;
     }
 
-    /**
-     * Get the implementation class.
-     *
-     * @return The implementation class.
-     */
+    @Override
     public String getImplementationClass() {
         return implementationClass;
     }
@@ -267,11 +277,7 @@ public class StagingProcessor implements ISimpleStagingProcessor {
         return PropertiesUtil.propertiesFromString(properties);
     }
 
-    /**
-     * Get the properties.
-     *
-     * @return The properties.
-     */
+    @Override
     public String getProperties() {
         return properties;
     }
@@ -285,11 +291,7 @@ public class StagingProcessor implements ISimpleStagingProcessor {
         this.groupId = groupId;
     }
 
-    /**
-     * Get the group id this processor is associated with.
-     *
-     * @return The group id this processor is associated with.
-     */
+    @Override
     public String getGroupId() {
         return groupId;
     }
@@ -303,12 +305,8 @@ public class StagingProcessor implements ISimpleStagingProcessor {
         this.defaultOn = defaultOn;
     }
 
-    /**
-     * Check if this processor is selected by default.
-     *
-     * @return TRUE = This processor is selected by default.
-     */
-    public boolean isDefaultOn() {
+    @Override
+    public Boolean isDefaultOn() {
         return defaultOn;
     }
 
@@ -321,13 +319,37 @@ public class StagingProcessor implements ISimpleStagingProcessor {
         this.disabled = disabled;
     }
 
-    /**
-     * Check if this processor is enabled/disabled.
-     *
-     * @return TRUE = This processor is disabled.
-     */
-    public boolean isDisabled() {
+    @Override
+    public Boolean isDisabled() {
         return disabled;
+    }
+
+    /**
+     * Set whether this processor supports processing downloads or not.
+     *
+     * @param pValue TRUE = This processor supports processing downloads.
+     */
+    public void setDownloadProcessingSupported(boolean pValue) {
+        downloadProcessingSupported = pValue;
+    }
+
+    @Override
+    public Boolean isDownloadProcessingSupported() {
+        return downloadProcessingSupported;
+    }
+
+    /**
+     * Set whether this processor supports processing ingests or not.
+     *
+     * @param pValue TRUE = This processor supports processing ingests.
+     */
+    public void setIngestProcessingSupported(boolean pValue) {
+        ingestProcessingSupported = pValue;
+    }
+
+    @Override
+    public Boolean isIngestProcessingSupported() {
+        return ingestProcessingSupported;
     }
 
     /**
@@ -361,5 +383,48 @@ public class StagingProcessor implements ISimpleStagingProcessor {
         } catch (PropertyValidationException ex) {
             throw new ConfigurationException("Failed to validate properties of StagingProcessor.", ex);
         }
+    }
+    private transient org.eclipse.persistence.queries.FetchGroup fg;
+    private transient Session sn;
+
+    @Override
+    public org.eclipse.persistence.queries.FetchGroup _persistence_getFetchGroup() {
+        return this.fg;
+    }
+
+    @Override
+    public void _persistence_setFetchGroup(org.eclipse.persistence.queries.FetchGroup fg) {
+        this.fg = fg;
+    }
+
+    @Override
+    public boolean _persistence_isAttributeFetched(String string) {
+        return true;
+    }
+
+    @Override
+    public void _persistence_resetFetchGroup() {
+    }
+
+    @Override
+    public boolean _persistence_shouldRefreshFetchGroup() {
+        return false;
+    }
+
+    @Override
+    public void _persistence_setShouldRefreshFetchGroup(boolean bln) {
+
+    }
+
+    @Override
+    public Session _persistence_getSession() {
+
+        return sn;
+    }
+
+    @Override
+    public void _persistence_setSession(Session sn) {
+        this.sn = sn;
+
     }
 }

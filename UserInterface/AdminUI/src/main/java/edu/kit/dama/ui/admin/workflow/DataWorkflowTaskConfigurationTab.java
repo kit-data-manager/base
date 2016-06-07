@@ -168,8 +168,8 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
             dummySelection.setContactUserId("admin");
             dummySelection.setApplicationPackageUrl("file:///");
             dummySelection.setGroupId(Constants.USERS_GROUP_ID);
-            dummySelection.setDisabled(true);
-            dummySelection.setDefaultTask(false);
+            dummySelection.setDisabled(Boolean.TRUE);
+            dummySelection.setDefaultTask(Boolean.FALSE);
             getBasicPropertiesLayout().updateSelection(dummySelection);
 
             selection = null;

@@ -61,7 +61,7 @@ public class MetadataIndexerJob extends AbstractConfigurableJob {
 
     private String groupId = Constants.USERS_GROUP_ID;
     private String cluster = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_CLUSTER_ID, "KITDataManager");
-    private String index = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_INDEX_ID, "dc");
+    private String index = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_INDEX_ID, "kitdatamanager").toLowerCase();
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {

@@ -41,7 +41,7 @@ public class CollectionNode extends DataOrganizationNode implements
   @Override
   public final List<IDataOrganizationNode> getChildren() {
     if (null == children) {
-      children = new ArrayList<IDataOrganizationNode>();
+      children = new ArrayList<>();
     }
     return children;
   }
@@ -49,7 +49,7 @@ public class CollectionNode extends DataOrganizationNode implements
   @Override
   public final void addChild(final IDataOrganizationNode child) {
     if (null == children) {
-      children = new ArrayList<IDataOrganizationNode>();
+      children = new ArrayList<>();
     }
     children.add(child);
     child.setParent(this);
@@ -57,7 +57,7 @@ public class CollectionNode extends DataOrganizationNode implements
   }
 
   @Override
-  public final void addChildren(List<IDataOrganizationNode> children) {
+  public final void addChildren(List<? extends IDataOrganizationNode> children) {
     for (IDataOrganizationNode child : children) {
       addChild(child);
     }

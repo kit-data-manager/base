@@ -15,6 +15,7 @@
  */
 package edu.kit.dama.authorization.entities.impl;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.kit.dama.authorization.entities.IDefaultUser;
 import edu.kit.dama.authorization.entities.Role;
 
@@ -24,6 +25,7 @@ import java.util.List;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
@@ -60,6 +62,8 @@ public class User implements IDefaultUser, Serializable {
     private String userId;
     private Role maximumRole;
     @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    @XmlTransient
+    @JsonIgnore
     private List<Membership> memberships = new ArrayList<>();
 
     /**

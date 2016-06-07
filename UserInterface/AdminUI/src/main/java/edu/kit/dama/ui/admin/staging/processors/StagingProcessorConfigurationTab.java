@@ -156,8 +156,9 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
 
             implementationClassField.setSuggestionPickedListener(new AutocompleteSuggestionPickedListener<String>() {
                 @Override
-                public void onSuggestionPicked(String page) {
-                    implementationClassField.setText(page);
+                public void onSuggestionPicked(String value) {
+                    getImplementationClassField().setText(value);
+                    getImplementationClassField().setValue(value);
                 }
             });
 
@@ -211,9 +212,9 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
      */
     private StagingProcessor createProcessor() throws ConfigurationException {
         // Validate value of implementation class field
-        if (!UIUtils7.validate(getImplementationClassField())) {
+        /*if (!UIUtils7.validate(getImplementationClassField())) {
             throw new ConfigurationException("Invalid implementation class.");
-        }
+    }*/
 
         // Valid implementation class name => Create new processor
         String implClassName = getImplementationClassField().getText();
@@ -298,7 +299,12 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
             checkProcessorConfigurability(changedProcessor);
             commitProcessor(changedProcessor);
             updateElementInstance(changedProcessor);
-            getParentApp().showNotification("Changes successfully committed.");
+
+            if (!changedProcessor.isDownloadProcessingSupported() && !changedProcessor.isDownloadProcessingSupported()) {
+                getParentApp().showNotification("Changes successfully committed. Attention: The current configuration neither supports ingests nor downloads and will be ignored.");
+            } else {
+                getParentApp().showNotification("Changes successfully committed.");
+            }
         } catch (ConfigurationException ex) {
             getParentApp().showError("Staging processor not modifiable! Cause: " + ex.getMessage());
             String object = "the changed processor '" + selectedElement.getUniqueIdentifier() + "'";
@@ -344,6 +350,7 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
         implementationClassField.setReadOnly(false);
         if (pSelectedElement != null && pSelectedElement.getImplementationClass() != null) {
             getImplementationClassField().setText(pSelectedElement.getImplementationClass());
+            getImplementationClassField().setValue(pSelectedElement.getImplementationClass());
             AbstractStagingProcessor processorInstance = createProcessorInstance(pSelectedElement.getImplementationClass());
             try {
                 getSpecificPropertiesLayout().updateComponents(processorInstance, pSelectedElement.getPropertiesAsObject());
@@ -386,8 +393,7 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
      * @throws ConfigurationException
      */
     private void checkImplementationClassField() throws ConfigurationException {
-        if (getImplementationClassField().getText() == null || getImplementationClassField().getText().isEmpty()
-                || !UIUtils7.validate(getImplementationClassField())) {
+        if (getImplementationClassField().getText() == null || getImplementationClassField().getText().isEmpty() || !UIUtils7.validate(getImplementationClassField())) {
             setPropertiesLayout(PropertiesLayoutType.BASIC);
             throw new ConfigurationException("Implementation class is invalid.");
         }
@@ -449,6 +455,9 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
         processor.setGroupId((String) getBasicPropertiesLayout().getGroupBox().getValue());
         processor.setType((StagingProcessor.PROCESSOR_TYPE) getBasicPropertiesLayout()
                 .getProcessorTypeBox().getValue());
+        processor.setIngestProcessingSupported(getBasicPropertiesLayout().getIngestProcessingSupportedBox().getValue());
+        processor.setDownloadProcessingSupported(getBasicPropertiesLayout().getDownloadProcessingSupportedBox().getValue());
+
         try {
             processor.setPropertiesFromObject(getSpecificPropertiesLayout().getProperties());
         } catch (IOException ex) {

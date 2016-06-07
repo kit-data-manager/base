@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
     <artifactId>DataOrganization</artifactId>
     <name>DataOrganization</name>
     <packaging>jar</packaging>
-    <version>1.2</version>
+    <version>1.3</version>
   
     <description>This module contains the implementation of DataOrganization components of KIT Data Manager. The DataOrganization is a representation of the data structure
         associated with a DigitalObject. The default implementation reflects a file-based structure supporting different representations (views) of the same data. Other 
@@ -39,6 +39,7 @@
         <firstName>Halil</firstName>
         <lastName>Pasic</lastName>
         <nameId>pasic</nameId>
+        <root.relative.path>../</root.relative.path>  
     </properties>
   
     <developers>
@@ -66,17 +67,17 @@
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Authorization</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>MDM-Core</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Commons</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>com.qmino</groupId>

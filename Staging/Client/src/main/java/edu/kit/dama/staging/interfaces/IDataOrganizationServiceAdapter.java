@@ -15,6 +15,7 @@
  */
 package edu.kit.dama.staging.interfaces;
 
+import edu.kit.dama.commons.interfaces.IConfigurableAdapter;
 import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
 
 /**

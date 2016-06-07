@@ -634,6 +634,7 @@ public class DataOrganizationUtils {
             LOGGER.debug("Node id is null. Skip setting it.");
         }
         result.setName(pNode.getName());
+        result.setViewName(pNode.getViewName());
         result.setDescription(pNode.getDescription());
         LOGGER.debug("Copying attributes.");
         Set<? extends IAttribute> attributes = pNode.getAttributes();
@@ -934,11 +935,13 @@ public class DataOrganizationUtils {
                 if ("file".equals(lfnUrl.getProtocol())) {
                     f = new File(lfnUrl.toURI());
                     size += f.length();
+                } else {
+                    throw new MalformedURLException("Protocol " + lfnUrl.getProtocol() + " currently not supported.");
                 }
+                pMap.put(basePath, f);
             } catch (MalformedURLException | URISyntaxException ex) {
-                LOGGER.error("Unsupported LFN " + lfn + ". Only LFNs refering to locally accessible files are supported.");
+                LOGGER.warn("Unsupported LFN " + lfn + ". Only LFNs refering to locally accessible files are supported.");
             }
-            pMap.put(basePath, f);
         } else {
             throw new IllegalArgumentException("Argument " + pNode + " is not a supported argument. Only nodes of type ICollectionNode or IFileNode are supported.");
         }
@@ -1095,19 +1098,4 @@ public class DataOrganizationUtils {
             doMdm.close();
         }
     }
-
-//  public static void main(String[] args) throws Exception {
-//
-//    /* URL base = new URL("sftp://ipelsdf1.lsdf.kit.edu:2222/tmp/cache/123-123-123-123/");
-//     base = new URL("https://dama.lsdf.kit.edu/webdav2/USERS/10406/31101/");
-//
-//     //IFileTree tree1 = createTreeFromFile("123-123-123-123", new AbstractFile(new File("d:/tmp/Bla")), base, true);
-//     //IFileTree tree2 = createTreeFromFile("123-123-123-123", new AbstractFile(new File("d:/tmp/DOTestFolder")), base, true);
-//     IFileTree tree2 = createTreeFromFile("123-123-123-123", new AbstractFile(new URL("https://dama.lsdf.kit.edu/webdav2/USERS/10406/31101")), new URL("https://dama.lsdf.kit.edu/webdav2/USERS/10406/31101"), true);
-//
-//     //merge(tree1, tree2);
-//     printTree((ICollectionNode) tree2, true);*/
-//    //  restoreTreeStructure(tree2, new AbstractFile(new File("d:/tmp/Bla2")), new HashMap<StagingFile, StagingFile>());
-//    //System.out.println(DataOrganizationUtils.getAssociatedFileCount(new DigitalObjectId("c1873dfd-10cc-4f5a-95dc-c2b6d6319c80")));
-//  }
 }

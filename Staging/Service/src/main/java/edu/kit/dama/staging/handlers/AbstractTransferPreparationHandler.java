@@ -191,7 +191,7 @@ public abstract class AbstractTransferPreparationHandler<C extends ITransferStat
     if (isIngest()) {
       result = StagingService.getSingleton().prepareIngest(new DigitalObjectId(getTransferInformation().getDigitalObjectId()), preferredAccessPoint, pSecurityContext);
     } else {
-      result = StagingService.getSingleton().scheduleDownload(new DigitalObjectId(getTransferInformation().getDigitalObjectId()), preferredAccessPoint, pSecurityContext);
+      result = StagingService.getSingleton().prepareDownload(new DigitalObjectId(getTransferInformation().getDigitalObjectId()), preferredAccessPoint, pSecurityContext);
     }
 
     if (result.getStatus().equals(INGEST_STATUS.PRE_INGEST_SCHEDULED) || result.getStatus().equals(DOWNLOAD_STATUS.SCHEDULED)) {

@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
     <artifactId>UserInterface</artifactId>
     <name>UserInterface</name>
     <packaging>pom</packaging>
-    <version>1.2</version>
+    <version>1.3</version>
   
     <description>This module collection contains all modules related to (graphical) user interfaces. Typically, user interfaces are community dependent and hosted externally.
         The user interfaces of this module are community indenpendent, e.g. for administration or monitoring.
@@ -74,12 +74,12 @@
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Commons</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>UICommons7</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
             <type>jar</type>
         </dependency>
     </dependencies>

@@ -19,9 +19,7 @@ package edu.kit.dama.rest.admin.services.interfaces;
 import com.qmino.miredot.annotations.ReturnType;
 import com.sun.jersey.api.core.HttpContext;
 import edu.kit.dama.mdm.admin.interfaces.IDefaultUserGroup;
-import edu.kit.dama.mdm.admin.interfaces.ISimpleUserGroup;
 import edu.kit.dama.mdm.base.interfaces.IDefaultUserData;
-import edu.kit.dama.mdm.base.interfaces.ISimpleUserData;
 import edu.kit.dama.rest.base.ICommonRestInterface;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.util.Constants;
@@ -46,26 +44,24 @@ import javax.ws.rs.core.Response;
 public interface IUserGroupService extends ICommonRestInterface {
 
     /**
-     * Get a list of all group ids. Without any parameter this method will
-     * return the first 10 group ids.
+     * Get a list of all groups. Without any parameter this method will return
+     * the first 10 groups.
      *
-     * @summary Get a list of all group ids.
+     * @summary Get a list of all groups.
      *
      * @param first The first index.
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of UserGroup entities serialized using the
-     * <b>simple</b> object graph of UserGroupWrapper, which removes all
-     * attributes but the id from the returned entities.
+     * @return A list of UserGroup entities.
      *
      * @see edu.kit.dama.rest.admin.types.UserGroupWrapper
      */
     @GET
     @Path(value = "/groups/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.admin.interfaces.ISimpleUserGroup>")
-    IEntityWrapper<? extends ISimpleUserGroup> getGroupIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.admin.interfaces.IDefaultUserGroup>")
+    IEntityWrapper<? extends IDefaultUserGroup> getGroups(
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
             @javax.ws.rs.core.Context HttpContext hc);
@@ -74,8 +70,9 @@ public interface IUserGroupService extends ICommonRestInterface {
      * Add a new group with the provided groupId, name and description. The
      * description is optional. The provided groupId could be an arbitrary
      * string from an arbitrary source, but it has to be unique. The groupId
-     * <b>USERS</b>
-     * is used by KIT Data Manager itself.
+     * <b>USERS</b> is used by KIT Data Manager itself.
+     *
+     * Role restriction: Administrator
      *
      * @summary Add a new group.
      *
@@ -85,9 +82,7 @@ public interface IUserGroupService extends ICommonRestInterface {
      * @param description A human readable description of the group to create.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The created UserGroup serialized using the
-     * <b>default</b> object graph of UserGroupWrapper, which contains all
-     * attributes.
+     * @return The created UserGroup.
      *
      * @see edu.kit.dama.rest.admin.types.UserGroupWrapper
      */
@@ -108,15 +103,15 @@ public interface IUserGroupService extends ICommonRestInterface {
      *
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The number of all groups wrapped by a UserGroupWrapper entity.
+     * @return The number of all groups.
      *
      * @see edu.kit.dama.rest.admin.types.UserGroupWrapper
      */
     @GET
     @Path(value = "/groups/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.admin.interfaces.ISimpleUserGroup>")
-    IEntityWrapper<? extends ISimpleUserGroup> getGroupCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.admin.interfaces.IDefaultUserGroup>")
+    IEntityWrapper<? extends IDefaultUserGroup> getGroupCount(
             @javax.ws.rs.core.Context HttpContext hc);
 
     /**
@@ -127,9 +122,7 @@ public interface IUserGroupService extends ICommonRestInterface {
      * @param id The group id.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The UserGroup for the provided id serialized using the
-     * <b>default</b> object graph of UserGroupWrapper, which contains all
-     * attributes including the generated id and groupId.
+     * @return The UserGroup for the provided id.
      *
      * @see edu.kit.dama.rest.admin.types.UserGroupWrapper
      */
@@ -146,6 +139,8 @@ public interface IUserGroupService extends ICommonRestInterface {
      * update will only work if the calling user is member of the group and/or
      * has appropriate permissions.
      *
+     * Role restriction: MANAGER
+     *
      * @summary Update the group with the provided id.
      *
      * @param id The id of the group to update.
@@ -153,9 +148,7 @@ public interface IUserGroupService extends ICommonRestInterface {
      * @param description The updated group description.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The updated UserGroup for the provided id serialized using the
-     * <b>default</b> object graph of UserGroupWrapper, which contains all
-     * attributes including the generated id and groupId.
+     * @return The updated UserGroup for the provided id.
      *
      * @see edu.kit.dama.rest.admin.types.UserGroupWrapper
      */
@@ -170,8 +163,10 @@ public interface IUserGroupService extends ICommonRestInterface {
             @javax.ws.rs.core.Context HttpContext hc);
 
     /**
-     * Delete the group with the provided id. Deletion will only work if the
-     * caller has according permissions.
+     * Delete the group with the provided id. Group deletion is currently not
+     * supported.
+     *
+     * Role restriction: Not supported
      *
      * @summary Delete the group with the provided id.
      *
@@ -194,6 +189,8 @@ public interface IUserGroupService extends ICommonRestInterface {
      * on the implementation. Normally, the calling user should be member of the
      * group and/or have appropriate permissions.
      *
+     * Role restriction: MEMBER
+     *
      * @summary Get the list of users in the group with the provided id.
      *
      * @param id The group id.
@@ -201,17 +198,15 @@ public interface IUserGroupService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of users in the group with the provided id. The returned
-     * users are serialized using the <b>simple</b> object graph of
-     * UserDataWrapper, which contains no attributes but the user id.
+     * @return A list of users in the group with the provided id.
      *
      * @see edu.kit.dama.rest.admin.types.UserDataWrapper
      */
     @GET
     @Path(value = "/groups/{id}/users")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleUserData>")
-    IEntityWrapper<? extends ISimpleUserData> getGroupUsers(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultUserData>")
+    IEntityWrapper<? extends IDefaultUserData> getGroupUsers(
             @PathParam("id") Long id,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -221,6 +216,8 @@ public interface IUserGroupService extends ICommonRestInterface {
      * Add a new user to the group with the provided id. This call only succeeds
      * if the caller is manager of the group and/or has appropriate permissions.
      *
+     * Role restriction: MANAGER
+     *
      * @summary Add a new user to the group with the provided id.
      *
      * @param id The group id.
@@ -228,8 +225,7 @@ public interface IUserGroupService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return A UserGroupWrapper entity containing the number of modified rows
-     * in the count field. If the value is 1, the operation was successfull.
-     * Otherwise, the operation failed.
+     * in the count field.
      *
      * @see edu.kit.dama.rest.admin.types.UserGroupWrapper
      */
@@ -247,6 +243,8 @@ public interface IUserGroupService extends ICommonRestInterface {
      * provided group id. This call only succeeds if the caller is manager of
      * the group and/or has appropriate permissions.
      *
+     * Role restriction: MANAGER
+     *
      * @summary Remove a user from a group.
      *
      * @param id The group id.
@@ -255,8 +253,7 @@ public interface IUserGroupService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return A UserGroupWrapper entity containing the number of modified rows
-     * in the count field. If the value is 1, the operation was successful.
-     * Otherwise, the operation failed.
+     * in the count field.
      *
      * @see edu.kit.dama.rest.admin.types.UserGroupWrapper
      */
@@ -276,6 +273,8 @@ public interface IUserGroupService extends ICommonRestInterface {
      * in the attribute <i>groupId</i> of UserGroup. Without any parameter this
      * method will return the first 10 users.
      *
+     * Role restriction: MANAGER
+     *
      * @summary Get all users.
      *
      * @param groupId The group id used to perform the request.
@@ -283,17 +282,15 @@ public interface IUserGroupService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of UserData entities serialized using the
-     * <b>simple</b> object graph of UserDataWrapper, which removes all
-     * attributes but the id from the returned entities.
+     * @return A list of UserData entities.
      *
      * @see edu.kit.dama.rest.admin.types.UserDataWrapper
      */
     @GET
     @Path(value = "/users/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleUserData>")
-    IEntityWrapper<? extends ISimpleUserData> getUsersIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultUserData>")
+    IEntityWrapper<? extends IDefaultUserData> getUsers(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -307,6 +304,8 @@ public interface IUserGroupService extends ICommonRestInterface {
      * might be performed, e.g. adding the user to the default group
      * Constants.USERS_GROUP_ID.
      *
+     * Role restriction: MANAGER
+     *
      * @summary Add a new user.
      *
      * @param groupId The group id used to perform the request.
@@ -318,9 +317,7 @@ public interface IUserGroupService extends ICommonRestInterface {
      * external source, e.g. an LDAP directory.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The created UserData serialized using the
-     * <b>default</b> object graph of UserDataWrapper, which contains all
-     * attributes including the generated userId.
+     * @return The created UserData.
      *
      * @see edu.kit.dama.rest.admin.types.UserDataWrapper
      */
@@ -346,21 +343,24 @@ public interface IUserGroupService extends ICommonRestInterface {
      * @param groupId The group where to count the users.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The number of all users in the group with the provided id wrapped
-     * by a UserDataWrapper entity.
+     * @return The number of all users in the group with the provided id.
      *
      * @see edu.kit.dama.rest.admin.types.UserDataWrapper
      */
     @GET
     @Path(value = "/users/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.ISimpleUserData>")
-    IEntityWrapper<? extends ISimpleUserData> getUserCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultUserData>")
+    IEntityWrapper<? extends IDefaultUserData> getUserCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
     /**
-     * Get details of the user with the provided userId.
+     * Get details of the user with the provided userId. If the provided userId
+     * is 0, information about the caller are returned and the call is not role
+     * restricted.
+     *
+     * Role restriction: MEMBER
      *
      * @summary Get details of the user with the provided userId.
      *
@@ -368,9 +368,7 @@ public interface IUserGroupService extends ICommonRestInterface {
      * equal 0, the information about the caller are returned.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The UserData for the provided id serialized using the
-     * <b>default</b> object graph of UserDataWrapper, which contains all
-     * attributes.
+     * @return The UserData for the provided id.
      *
      * @see edu.kit.dama.rest.admin.types.UserDataWrapper
      */
@@ -387,6 +385,11 @@ public interface IUserGroupService extends ICommonRestInterface {
      * update is only performed if the caller is the user with the provided user
      * id or has an according role within the group with the id groupId.
      *
+     * If the provided userId belongs to the calling user, the call is not role
+     * restricted.
+     *
+     * Role restriction: MANAGER
+     *
      * @summary Update the user with the provided id.
      *
      * @param groupId The group id of the callers context.
@@ -396,9 +399,7 @@ public interface IUserGroupService extends ICommonRestInterface {
      * @param email The email of the user.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The updated UserData for the provided id serialized using the
-     * <b>default</b> object graph of UserDataWrapper, which contains all
-     * attributes.
+     * @return The updated UserData for the provided id.
      *
      * @see edu.kit.dama.rest.admin.types.UserDataWrapper
      */
@@ -417,11 +418,14 @@ public interface IUserGroupService extends ICommonRestInterface {
     /**
      * Delete the user with the provided userId.
      *
-     * <b>By default this method should implemented to revoke all permissions
-     * instead of deleting the user.</b>
+     * <b>By default this method should be implemented to revoke all permissions
+     * instead of deleting the user as this may have undesired side effects.</b>
+     *
+     * Role restriction: ADMINISTRATOR
      *
      * @summary Delete the user with the provided id.
      *
+     * @param groupId The group id of the callers context.
      * @param userId The id of the user to delete.
      * @param hc The HttpContext for OAuth check.
      *
@@ -432,6 +436,7 @@ public interface IUserGroupService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("java.lang.Void")
     Response deleteUser(
+            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("userId") Long userId,
             @javax.ws.rs.core.Context HttpContext hc);
 }

@@ -62,16 +62,34 @@ public final class SecureMetaDataManager implements IMetaDataManager {
 
     /**
      * Factory a new instance of a SecureMetaDataManager using the provided
-     * context.
+     * persistence unit and context.
+     *
+     * @param pPersistenceUnit The persistence unit name to use.
+     * @param ctx The context.
+     *
+     * @return The metadata manager.
+     */
+    public static IMetaDataManager factorySecureMetaDataManager(String pPersistenceUnit, IAuthorizationContext ctx) {
+        IMetaDataManager mdm;
+        if (pPersistenceUnit != null) {
+            mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(pPersistenceUnit);
+        } else {
+            mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+        }
+        mdm.setAuthorizationContext(ctx);
+        return mdm;
+    }
+
+    /**
+     * Factory a new instance of a SecureMetaDataManager using the provided
+     * context and the default persistence unit.
      *
      * @param ctx The context.
      *
      * @return The metadata manager.
      */
     public static IMetaDataManager factorySecureMetaDataManager(IAuthorizationContext ctx) {
-        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
-        mdm.setAuthorizationContext(ctx);
-        return mdm;
+        return factorySecureMetaDataManager(null, ctx);
     }
 
     /**
@@ -771,12 +789,10 @@ public final class SecureMetaDataManager implements IMetaDataManager {
     public <T> void remove(T entity) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         if (entity instanceof ISecurableResource) {
             remove(entity, authCtx);
+        } else if (impl.contains(entity)) {
+            impl.remove(entity);
         } else {
-            if (impl.contains(entity)) {
-                impl.remove(entity);
-            } else {
-                throw new EntityNotFoundException("Entity '" + entity + "' doesn't exist! Can't remove it.");
-            }
+            throw new EntityNotFoundException("Entity '" + entity + "' doesn't exist! Can't remove it.");
         }
     }
 

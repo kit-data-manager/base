@@ -17,12 +17,12 @@
 package edu.kit.dama.rest.dataorganization.test;
 
 import com.sun.jersey.api.core.HttpContext;
+import com.sun.jersey.api.core.ResourceConfig;
 import edu.kit.dama.mdm.dataorganization.ext.TestUtil;
 import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDefaultDataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
-import edu.kit.dama.mdm.dataorganization.entity.core.ISimpleDataOrganizationNode;
 import edu.kit.dama.rest.dataorganization.types.DataOrganizationNodeWrapper;
 import edu.kit.dama.rest.dataorganization.types.DataOrganizationViewWrapper;
 import edu.kit.dama.rest.dataorganization.services.interfaces.IDataOrganizationRestService;
@@ -31,13 +31,17 @@ import edu.kit.dama.rest.base.types.CheckServiceResponse;
 import edu.kit.dama.rest.base.types.ServiceStatus;
 import edu.kit.dama.mdm.dataorganization.impl.staging.CollectionNodeImpl;
 import edu.kit.dama.mdm.dataorganization.impl.staging.DataOrganizationNodeImpl;
+import edu.kit.dama.mdm.dataorganization.impl.util.Util;
+import edu.kit.dama.mdm.dataorganization.service.exception.InvalidNodeIdException;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import java.io.ByteArrayInputStream;
 import java.util.LinkedList;
 import java.util.List;
 import javax.ws.rs.Path;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import org.json.JSONObject;
 
 /**
  *
@@ -63,7 +67,7 @@ public class DataOrganizationTestService implements IDataOrganizationRestService
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataOrganizationNode> getRootNode(String groupId, Long id, Integer first, Integer results, String viewName, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataOrganizationNode> getRootNode(String groupId, Long id, Integer first, Integer results, String viewName, HttpContext hc) {
         CollectionNodeImpl rnd = new CollectionNodeImpl();
 
         rnd.setName(tree.getRootNode().getName());
@@ -79,7 +83,7 @@ public class DataOrganizationTestService implements IDataOrganizationRestService
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataOrganizationNode> getRootNodeCount(String groupId, Long id, String viewName, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataOrganizationNode> getRootNodeCount(String groupId, Long id, String viewName, HttpContext hc) {
         return new DataOrganizationNodeWrapper(1);
     }
 
@@ -150,7 +154,7 @@ public class DataOrganizationTestService implements IDataOrganizationRestService
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataOrganizationNode> getChildCount(String groupId, Long id, Long nodeId, String viewName, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataOrganizationNode> getChildCount(String groupId, Long id, Long nodeId, String viewName, HttpContext hc) {
         IDataOrganizationNode nd;
 
         if (nodeId == 100l) {
@@ -190,8 +194,19 @@ public class DataOrganizationTestService implements IDataOrganizationRestService
             Long objectId,
             String viewName,
             String path,
-            @javax.ws.rs.core.Context HttpContext hc) {
+            @javax.ws.rs.core.Context HttpContext hc,
+            @javax.ws.rs.core.Context ResourceConfig context) {
         ByteArrayInputStream bin = new ByteArrayInputStream((groupId + "/" + objectId + "/" + viewName + "/" + path).getBytes());
         return Response.ok(bin, MediaType.TEXT_PLAIN).build();
+    }
+
+    @Override
+    public IEntityWrapper<? extends IDefaultDataOrganizationNode> addDataOrganizationView(String groupId, Long baseId, String viewData, Boolean preserveAttributes, HttpContext hc) {
+        try {
+            IFileTree tree = Util.jsonViewToFileTree(new JSONObject(viewData), preserveAttributes, false);
+            return new DataOrganizationNodeWrapper((CollectionNodeImpl) tree.getRootNode());
+        } catch (InvalidNodeIdException ex) {
+            throw new WebApplicationException(500);
+        }
     }
 }

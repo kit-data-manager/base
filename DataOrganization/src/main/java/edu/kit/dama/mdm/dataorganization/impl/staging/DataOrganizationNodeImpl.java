@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,19 +15,24 @@
  */
 package edu.kit.dama.mdm.dataorganization.impl.staging;
 
+import edu.kit.dama.commons.types.ILFN;
 import edu.kit.dama.mdm.dataorganization.entity.core.IAttribute;
 import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDefaultDataOrganizationNode;
+import edu.kit.dama.mdm.dataorganization.entity.core.IFileNode;
 import edu.kit.dama.mdm.dataorganization.entity.impl.client.NodeId;
-import edu.kit.dama.util.Constants;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
@@ -49,7 +54,9 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
                 @XmlNamedAttributeNode("nodeId"),
                 @XmlNamedAttributeNode("name"),
                 @XmlNamedAttributeNode("description"),
-                @XmlNamedAttributeNode(value = "attributes", subgraph = "default")
+                @XmlNamedAttributeNode("logicalFileName"),
+                @XmlNamedAttributeNode(value = "attributes", subgraph = "default"),
+                @XmlNamedAttributeNode(value = "children", subgraph = "simple")
             })
 
 })
@@ -180,4 +187,30 @@ public class DataOrganizationNodeImpl implements IDefaultDataOrganizationNode, I
         this.viewName = viewName;
     }
 
+    @Override
+    @XmlElementWrapper
+    @XmlElement(name = "child", type = DataOrganizationNodeImpl.class)
+    public List<? extends IDataOrganizationNode> getChildren() {
+        if (this instanceof CollectionNodeImpl) {
+            return ((CollectionNodeImpl) this).getChildren();
+        }
+        return null;
+    }
+
+    public void setChildren(List<? extends IDataOrganizationNode> children) {
+        //not supported
+    }
+
+    public void setLogicalFileName() {
+        //not supported
+    }
+
+    @Override
+    @XmlElement(name = "logicalFileName", type = LFNImpl.class)
+    public ILFN getLogicalFileName() {
+        if (this instanceof FileNodeImpl) {
+            return ((FileNodeImpl) this).getLogicalFileName();
+        }
+        return null;
+    }
 }

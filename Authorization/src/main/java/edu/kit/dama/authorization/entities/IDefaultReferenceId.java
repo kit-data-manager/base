@@ -27,4 +27,11 @@ public interface IDefaultReferenceId extends ISimpleReferenceId {
      * @return the value of groupId
      */
     ISimpleGroupId getGroupId();
+
+    /**
+     * Get the resource id.
+     *
+     * @return The resource id.
+     */
+    SecurableResourceId getResourceId();
 }

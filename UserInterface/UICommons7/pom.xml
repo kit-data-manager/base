@@ -22,7 +22,7 @@
   <artifactId>UICommons7</artifactId>
   <name>UICommons7</name>
   <packaging>jar</packaging>
-  <version>1.2</version>
+  <version>1.3</version>
   
   <description>The Vaadin 7 compliant version of UICommons.</description>
   
@@ -160,27 +160,27 @@
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Authorization</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Commons</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>MDM-Core</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>MDM-BaseMetaData</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>MDM-Admin</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
     
         <dependency>
@@ -218,8 +218,8 @@
     </distributionManagement>
   
     <scm>
-        <developerConnection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/KDM/tags/KITDM-1.2/UserInterface/UICommons7</developerConnection>
-        <url>http://ipepc21.ka.fzk.de/viewcvs/KDM/tags/KITDM-1.2/UserInterface/UICommons7</url>
+        <developerConnection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/KDM/tags/KITDM-1.3/UserInterface/UICommons7</developerConnection>
+        <url>http://ipepc21.ka.fzk.de/viewcvs/KDM/tags/KITDM-1.3/UserInterface/UICommons7</url>
     </scm>
   
 </project>

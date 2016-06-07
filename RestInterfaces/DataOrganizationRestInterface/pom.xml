@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama.rest</groupId>
         <artifactId>RestInterfaces</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
     <artifactId>DataOrganizationRestInterface</artifactId>
     <name>DataOrganizationRestInterface</name>
     <packaging>jar</packaging>
-    <version>1.2</version>
+    <version>1.3</version>
 
     <description>REST interface definition for accessing the DataOrganization of digital objects.</description>
 
@@ -37,7 +37,8 @@
         <projectName>DataOrganizationRestInterface</projectName>
         <firstName>Thomas</firstName>
         <lastName>Jejkal</lastName>
-        <nameId>jejkal</nameId>
+        <nameId>jejkal</nameId>         
+        <root.relative.path>../../</root.relative.path>  
     </properties>
 
     <developers>
@@ -62,18 +63,18 @@
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>StagingClient</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>ServiceBase</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>DataOrganization</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
     </dependencies>  
   

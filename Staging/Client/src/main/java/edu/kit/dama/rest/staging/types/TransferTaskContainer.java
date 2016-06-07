@@ -33,6 +33,7 @@ import edu.kit.dama.mdm.dataorganization.impl.staging.FileTreeImpl;
 import edu.kit.dama.mdm.dataorganization.impl.staging.LFNImpl;
 import edu.kit.dama.staging.entities.StagingFile;
 import edu.kit.dama.rest.staging.client.impl.StagingServiceRESTClient;
+import edu.kit.dama.staging.entities.download.DownloadInformation;
 import edu.kit.dama.staging.interfaces.ITransferInformation;
 import edu.kit.dama.staging.util.DataOrganizationUtils;
 import edu.kit.dama.util.Constants;
@@ -207,6 +208,35 @@ public class TransferTaskContainer implements IDefaultTransferTaskContainer {
         return container;
     }
 
+     /**
+     * Factory a new download container. This method will set the provided
+     * attributes and returns the container. This method is intended to be used
+     * on the server side to create a download container for a previously
+     * selected file tree. The provided file tree must fulfill structural
+     * constraints and should be created using createTree().
+     *
+     * The returned container will contain the provided file tree and is closed.
+     * To allow the user to access the container it has to be serialized to a
+     * file accessible to the user. On the client side, the file can be loaded
+     * using loadFromStream() and processed.
+     *
+     * @param pTransferInfo The associated transfer information entity.
+     * @param pFileTree The file tree to download.
+     * @param pServiceUrl The service URL of the staging REST service.
+     *
+     * @return The TransferTaskContainer.
+     */
+    public static TransferTaskContainer factoryDownloadContainer(DownloadInformation pTransferInfo, IFileTree pFileTree, String pServiceUrl) {
+        TransferTaskContainer container = new TransferTaskContainer();
+        container.setServiceUrl(pServiceUrl);
+         container.setTransferId(pTransferInfo.getId());
+        container.setTransferInformation(pTransferInfo);
+        container.setType(TYPE.DOWNLOAD);
+        container.setFileTree(pFileTree);
+        container.close();
+        return container;
+    }
+    
     /**
      * Factory an internal container. Internal containers are used e.g. for
      * internal staging processes where no external transfer information entity

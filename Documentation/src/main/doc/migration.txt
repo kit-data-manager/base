@@ -1,7 +1,7 @@
 Migration of Digital Objects
 ----------------------------
-The migration tools for digital objects provide extraction and insertion of digital objects in order 
-to move digital objects between two or more KIT-DM repository instances. 
+The migration tools for Digital Objects provide extraction and insertion of Digital Objects in order 
+to move Digital Objects between two or more KIT-DM repository instances. 
 
 The Utils module (maven module) contains the migration code. The class `CreateMigrationObject` and 
 `MigrateObject` extract and insert a migration object (class `MirgrationObject`) as an xml file to 
@@ -25,7 +25,7 @@ Implementation
 ~~~~~~~~~~~~~~
 The migration from the xml file to the destination repository will check if the entities are 
 already present in the destination repository. If something is missing, it will be added. 
-This is necessary because two digital objects from the same investigation will not create 
+This is necessary because two Digital Objects from the same investigation will not create 
 two different investigations.
 
 The following section contains technical terms. Please make sure you have an idea of the JPA and JAXB.

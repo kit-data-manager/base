@@ -17,65 +17,91 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>edu.kit.dama</groupId>
+        <artifactId>KITDM</artifactId>
+        <version>1.3</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
     <groupId>edu.kit.dama</groupId>
-    <artifactId>KITDM</artifactId>
-    <version>1.2</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
-  <groupId>edu.kit.dama</groupId>
-  <artifactId>Documentation</artifactId>
-  <name>Documentation</name>
-  <packaging>jar</packaging>
-  <version>1.2</version>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <projectName>Documentation</projectName>
-    <firstName>Thomas</firstName>
-    <lastName>Jejkal</lastName>
-    <nameId>jejkal</nameId>
-  </properties>
-  <developers>
-    <developer>
-      <id>${nameId}</id>
-      <name>${firstName} ${lastName}</name>
-      <email>${firstName}.${lastName}@kit.edu</email>
-      <organization>Karlsruhe Institute of Technology (KIT)</organization>
-      <roles>
-        <role>Project manager</role>
-      </roles>
-      <timezone>1</timezone>
-    </developer>
-  </developers>
+    <artifactId>Documentation</artifactId>
+    <name>Documentation</name>
+    <packaging>jar</packaging>
+    <version>1.3</version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <projectName>Documentation</projectName>
+        <firstName>Thomas</firstName>
+        <lastName>Jejkal</lastName>
+        <nameId>jejkal</nameId>
+        <root.relative.path>../</root.relative.path>
+        <asciidoctor.maven.plugin.version>1.5.3</asciidoctor.maven.plugin.version>
+        <asciidoctorj.pdf.version>1.5.0-alpha.11</asciidoctorj.pdf.version>
+        <asciidoctorj.version>1.5.4</asciidoctorj.version>
+        <jruby.version>1.7.21</jruby.version>
+        <!--supports html5 and pdf-->
+        <output.format>html5</output.format>
+    </properties>
+    <developers>
+        <developer>
+            <id>${nameId}</id>
+            <name>${firstName} ${lastName}</name>
+            <email>${firstName}.${lastName}@kit.edu</email>
+            <organization>Karlsruhe Institute of Technology (KIT)</organization>
+            <roles>
+                <role>Project manager</role>
+            </roles>
+            <timezone>1</timezone>
+        </developer>
+    </developers>
     
-  <description>Documentation/Manual of KIT Data Manager</description>
+    <description>Documentation/Manual of KIT Data Manager</description>
    
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.asciidoctor</groupId>
-        <artifactId>asciidoctor-maven-plugin</artifactId>
-        <version>1.5.0</version>
-        <executions>
-          <execution>
-            <id>output-html</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>process-asciidoc</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <sourceDirectory>src/main/doc/</sourceDirectory>
-          <sourceDocumentName>documentation.txt</sourceDocumentName>
-          <sourceHighlighter>highlightjs</sourceHighlighter>
-          <backend>html5</backend>
-          <attributes>
-             <!--stylesheet>flask.css</stylesheet-->
-          </attributes>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>	
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.asciidoctor</groupId>
+                <artifactId>asciidoctor-maven-plugin</artifactId>
+                <version>1.5.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.asciidoctor</groupId>
+                        <artifactId>asciidoctorj-pdf</artifactId>
+                        <version>${asciidoctorj.pdf.version}</version>
+                    </dependency>
+                    <!-- Comment this section to use the default jruby artifact provided by the plugin -->
+                    <dependency>
+                        <groupId>org.jruby</groupId>
+                        <artifactId>jruby-complete</artifactId>
+                        <version>${jruby.version}</version>
+                    </dependency>
+                    <!-- Comment this section to use the default AsciidoctorJ artifact provided by the plugin -->
+                    <dependency>
+                        <groupId>org.asciidoctor</groupId>
+                        <artifactId>asciidoctorj</artifactId>
+                        <version>${asciidoctorj.version}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>output-html</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>process-asciidoc</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <sourceDirectory>src/main/doc/</sourceDirectory>
+                    <sourceDocumentName>documentation.txt</sourceDocumentName>
+                    <sourceHighlighter>highlightjs</sourceHighlighter>
+                    <backend>${output.format}</backend>
+                    <attributes>
+                        <!--stylesheet>flask.css</stylesheet-->
+                    </attributes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>	
 </project>

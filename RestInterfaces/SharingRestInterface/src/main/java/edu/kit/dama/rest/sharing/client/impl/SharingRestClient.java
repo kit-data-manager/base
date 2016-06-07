@@ -225,9 +225,7 @@ public final class SharingRestClient extends AbstractRestClient {
    * queried.
    * @param pSecurityContext The SecurityContext for OAuth check.
    *
-   * @return The list of userIds serialized using the
-   * <b>default</b> object graph of UserIdWrapper, which contains all
-   * attributes.
+   * @return The list of userIds.
    *
    * @see edu.kit.dama.rest.sharing.types.UserIdWrapper
    */
@@ -265,9 +263,7 @@ public final class SharingRestClient extends AbstractRestClient {
    * queried.
    * @param pSecurityContext The SimpleRESTContext for OAuth check.
    *
-   * @return The list of userIds serialized using the
-   * <b>default</b> object graph of GroupIdWrapper, which contains all
-   * attributes.
+   * @return The list of userIds.
    *
    * @see edu.kit.dama.rest.sharing.types.GroupIdWrapper
    */
@@ -296,15 +292,14 @@ public final class SharingRestClient extends AbstractRestClient {
   }
 
   /**
-   * Get details about the Grant with the provided id.
+   * Get details about the grant with the provided id.
    *
-   * @param pId The id of the Grant.
-   * @param pGroupId The id of the group in whose name the Grant will be
+   * @param pId The id of the grant.
+   * @param pGroupId The id of the group in whose name the grant will be
    * queried.
    * @param pSecurityContext The SimpleRESTContext for OAuth check.
    *
-   * @return The Grant serialized using the
-   * <b>default</b> object graph of GrantWrapper, which contains all attributes.
+   * @return The grant.
    *
    * @see edu.kit.dama.rest.sharing.types.GrantWrapper
    */
@@ -328,20 +323,18 @@ public final class SharingRestClient extends AbstractRestClient {
   }
 
   /**
-   * Get all single user Grants for the resource from the provided domain with
+   * Get all single user grants for the resource from the provided domain with
    * the domainUniqueId.
    *
-   * @param pDomain The domain of the resource for which the Grants should be
+   * @param pDomain The domain of the resource for which the grants should be
    * obtained.
    * @param pDomainUniqueId The domain unique id of the resource for which the
-   * Grants should be obtained.
-   * @param pGroupId The id of the group in whose name the Grants will be
+   * grants should be obtained.
+   * @param pGroupId The id of the group in whose name the grants will be
    * queried.
    * @param pSecurityContext The SimpleRESTContext for OAuth check.
    *
-   * @return The resulting GrantSet serialized using the
-   * <b>simple</b> object graph of GrantSetWrapper, which contains all
-   * attributes of the GrantSet itself and the ids of the contained Grants.
+   * @return The resulting GrantSet.
    *
    * @see edu.kit.dama.rest.sharing.types.GrantSetWrapper
    */
@@ -379,9 +372,7 @@ public final class SharingRestClient extends AbstractRestClient {
    * resource.
    * @param pSecurityContext The SimpleRESTContext for OAuth check.
    *
-   * @return All ReferenceIds serialized using the
-   * <b>default</b> object graph of ReferenceIdWrapper, which contains the id of
-   * the resource reference.
+   * @return All ReferenceIds.
    *
    * @see edu.kit.dama.rest.sharing.types.ReferenceIdWrapper
    */
@@ -409,10 +400,10 @@ public final class SharingRestClient extends AbstractRestClient {
 //</editor-fold>
   //<editor-fold defaultstate="collapsed" desc="create[Grant|Reference]">
   /**
-   * Create a new access Grant for the resource from the provided domain with
+   * Create a new access grant for the resource from the provided domain with
    * the domainUniqueId, for the user with the id pUserId and the role pRole. If
-   * Grants are not allowed for the resource, Grants will be allowed first with
-   * the limitation to role MEMBER and then the new Grant will be added.
+   * grants are not allowed for the resource, grants will be allowed first with
+   * the limitation to role MEMBER and then the new grant will be added.
    *
    * @param pDomain The domain of the resource for which access should be
    * granted.
@@ -420,13 +411,12 @@ public final class SharingRestClient extends AbstractRestClient {
    * access should be granted.
    * @param pUserId The id of the user who should be allowed to access the
    * resource.
-   * @param pGroupId The id of the group in whose name the Grant will be
+   * @param pGroupId The id of the group in whose name the grant will be
    * created.
    * @param pRole The role which will be granted.
    * @param pSecurityContext The SimpleRESTContext for OAuth check.
    *
-   * @return The created Grant serialized using the
-   * <b>default</b> object graph of GrantWrapper, which contains all attributes.
+   * @return The created grant.
    *
    * @see edu.kit.dama.rest.sharing.types.GrantWrapper
    */
@@ -472,9 +462,7 @@ public final class SharingRestClient extends AbstractRestClient {
    * @param pGroupId The id of the group in which the operation is performed.
    * @param pSecurityContext The SimpleRESTContext for OAuth check.
    *
-   * @return The created ReferenceId serialized using the
-   * <b>default</b> object graph of ReferenceIdWrapper, which contains all
-   * attributes.
+   * @return The created ReferenceId.
    *
    * @see edu.kit.dama.rest.sharing.types.ReferenceIdWrapper
    */
@@ -568,7 +556,7 @@ public final class SharingRestClient extends AbstractRestClient {
     queryParams.add(PARAMETER_DOMAIN, pDomain);
     queryParams.add(PARAMETER_DOMAIN_UNIQUE_ID, pDomainUniqueId);
 
-    return performDelete(GRANT_BY_ID, queryParams);
+    return performDelete(GRANTS_URL, queryParams);
   }
 
   /**
@@ -609,16 +597,15 @@ public final class SharingRestClient extends AbstractRestClient {
 
   //<editor-fold defaultstate="collapsed" desc="updateGrant">
   /**
-   * Update the role of the Grant with the provided id to pRole.
+   * Update the role of the grant with the provided id to pRole.
    *
-   * @param pId The id of the Grant.
-   * @param pGroupId The id of the group in whose name the Grant will be
+   * @param pId The id of the grant.
+   * @param pGroupId The id of the group in whose name the grant will be
    * updated.
    * @param pRole The role which will be granted.
    * @param pSecurityContext The SimpleRESTContext for OAuth check.
    *
-   * @return The updated Grant serialized using the
-   * <b>default</b> object graph of GrantWrapper, which contains all attributes.
+   * @return The updated grant.
    *
    * @see edu.kit.dama.rest.sharing.types.GrantWrapper
    */

@@ -28,9 +28,6 @@ import edu.kit.dama.mdm.dataworkflow.DataWorkflowTaskConfiguration;
 import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowConfiguration;
 import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowTask;
 import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultExecutionEnvironment;
-import edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleDataWorkflowConfiguration;
-import edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleDataWorkflowTask;
-import edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleExecutionEnvironment;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.dataworkflow.types.DataWorkflowTaskConfigurationWrapper;
 import java.io.IOException;
@@ -129,7 +126,7 @@ public class DataWorkflowTestService implements IDataWorkflowRestService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataWorkflowTask> getAllTasks(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataWorkflowTask> getAllTasks(String groupId, Integer first, Integer results, HttpContext hc) {
         return new DataWorkflowTaskWrapper(tasks);
     }
 
@@ -162,7 +159,7 @@ public class DataWorkflowTestService implements IDataWorkflowRestService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataWorkflowConfiguration> getAllTaskConfigurations(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataWorkflowConfiguration> getAllTaskConfigurations(String groupId, Integer first, Integer results, HttpContext hc) {
         return new DataWorkflowTaskConfigurationWrapper(config);
     }
 
@@ -172,22 +169,22 @@ public class DataWorkflowTestService implements IDataWorkflowRestService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleExecutionEnvironment> getAllExecutionEnvironmentConfigurations(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultExecutionEnvironment> getAllExecutionEnvironmentConfigurations(String groupId, Integer first, Integer results, HttpContext hc) {
         return new ExecutionEnvironmentConfigurationWrapper(environment);
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataWorkflowTask> getTaskCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataWorkflowTask> getTaskCount(String groupId, HttpContext hc) {
         return new DataWorkflowTaskWrapper(tasks.size());
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDataWorkflowConfiguration> getTaskConfigurationCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDataWorkflowConfiguration> getTaskConfigurationCount(String groupId, HttpContext hc) {
         return new DataWorkflowTaskConfigurationWrapper(1);
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleExecutionEnvironment> getExecutionEnvironmentConfigurationCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultExecutionEnvironment> getExecutionEnvironmentConfigurationCount(String groupId, HttpContext hc) {
         return new ExecutionEnvironmentConfigurationWrapper(1);
     }
 

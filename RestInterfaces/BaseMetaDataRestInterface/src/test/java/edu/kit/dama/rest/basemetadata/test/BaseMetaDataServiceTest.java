@@ -19,17 +19,17 @@ import com.sun.jersey.test.framework.JerseyTest;
 import edu.kit.dama.mdm.base.DigitalObject;
 import edu.kit.dama.mdm.base.ObjectViewMapping;
 import edu.kit.dama.mdm.base.OrganizationUnit;
-import edu.kit.dama.mdm.base.xml.DigitalObjectViewMapAdapter;
+import edu.kit.dama.mdm.base.TransitionType;
 import edu.kit.dama.rest.basemetadata.types.DigitalObjectWrapper;
 import edu.kit.dama.rest.basemetadata.types.MetadataSchemaWrapper;
 import edu.kit.dama.rest.basemetadata.types.OrganizationUnitWrapper;
 import edu.kit.dama.rest.basemetadata.types.ParticipantWrapper;
 import edu.kit.dama.rest.basemetadata.types.RelationWrapper;
 import edu.kit.dama.rest.basemetadata.types.TaskWrapper;
-import edu.kit.dama.rest.basemetadata.types.UserDataWrapper;
 import edu.kit.dama.rest.basemetadata.client.impl.BaseMetaDataRestClient;
 
 import edu.kit.dama.rest.SimpleRESTContext;
+import edu.kit.dama.rest.admin.types.UserDataWrapper;
 import edu.kit.dama.rest.basemetadata.types.DigitalObjectTransitionWrapper;
 import edu.kit.dama.rest.basemetadata.types.DigitalObjectTypeWrapper;
 import edu.kit.dama.rest.basemetadata.types.InvestigationWrapper;
@@ -37,12 +37,17 @@ import edu.kit.dama.rest.basemetadata.types.StudyWrapper;
 import edu.kit.dama.util.Constants;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.xml.ws.WebServiceException;
+import org.json.JSONObject;
 import org.junit.Assert;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -218,7 +223,7 @@ public class BaseMetaDataServiceTest extends JerseyTest {
     }
 
     @Test
-    public void testGetOrganizationUnitIds() {
+    public void testGetOrganizationUnits() {
         OrganizationUnitWrapper wrapper = client.getAllOrganizationUnits(
                 0, Integer.MAX_VALUE, null, ctx);
 
@@ -258,7 +263,7 @@ public class BaseMetaDataServiceTest extends JerseyTest {
     }
 
     @Test
-    public void testGetMetadataSchemaIds() {
+    public void testGetMetadataSchemas() {
         MetadataSchemaWrapper msw = client.getAllMetadataSchemas(0,
                 Integer.MAX_VALUE, null, ctx);
 
@@ -294,7 +299,7 @@ public class BaseMetaDataServiceTest extends JerseyTest {
     }
 
     @Test
-    public void testGetTaskIds() {
+    public void testGetTasks() {
         TaskWrapper tw = client.getAllTasks(0, Integer.MAX_VALUE, null, ctx);
 
         assertEquals(tw.getCount().longValue(),
@@ -329,7 +334,7 @@ public class BaseMetaDataServiceTest extends JerseyTest {
     }
 
     @Test
-    public void testGetUserDataIds() {
+    public void testGetUserDataEntities() {
         UserDataWrapper uw = client.getAllUserData(0, Integer.MAX_VALUE, null,
                 ctx);
 
@@ -501,6 +506,24 @@ public class BaseMetaDataServiceTest extends JerseyTest {
         assertEquals(1l, tw.getEntities().get(0).getId().longValue());
         assertEquals(2l, ((DigitalObject) tw.getEntities().get(0).getOutputObjects().toArray()[0]).getBaseId().longValue());
         assertEquals(1l, ((ObjectViewMapping) tw.getEntities().get(0).getInputObjectViewMappings().toArray()[0]).getDigitalObject().getBaseId().longValue());
+    }
+
+    @Test
+    public void testAddComplexTransition() {
+        Map<DigitalObject, String> map = new HashMap<>();
+        List<DigitalObject> out = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            DigitalObject o = new DigitalObject();
+            o.setBaseId((long) i);
+            map.put(o, "default");
+            out.add(o);
+        }
+        JSONObject o = new JSONObject();
+        o.putOnce("key", "value");
+        DigitalObjectTransitionWrapper tw = client.addDigitalObjectTransition(map, out, TransitionType.ELASTICSEARCH, o.toString(), Constants.USERS_GROUP_ID, ctx);
+        assertEquals(1, tw.getWrappedEntities().size());
+        assertEquals(3, tw.getEntities().get(0).getOutputObjects().size());
+        assertEquals(3, tw.getEntities().get(0).getInputObjectViewMappings().size());
     }
 
     @Test(expected = WebServiceException.class)

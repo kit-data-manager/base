@@ -49,9 +49,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.eclipse.persistence.annotations.BatchFetch;
 import org.eclipse.persistence.annotations.BatchFetchType;
-import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 import org.eclipse.persistence.queries.FetchGroupTracker;
 import org.eclipse.persistence.sessions.Session;
 import org.slf4j.Logger;
@@ -63,26 +60,26 @@ import org.slf4j.LoggerFactory;
  * @author hartmann-v
  */
 @Entity
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("studyId")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                @XmlNamedAttributeNode("studyId"),
-                @XmlNamedAttributeNode("uniqueIdentifier"),
-                @XmlNamedAttributeNode("topic"),
-                @XmlNamedAttributeNode("note"),
-                @XmlNamedAttributeNode("legalNote"),
-                @XmlNamedAttributeNode(value = "manager", subgraph = "simple"),
-                @XmlNamedAttributeNode(value = "organizationUnits", subgraph = "simple"),
-                @XmlNamedAttributeNode(value = "investigations", subgraph = "simple"),
-                @XmlNamedAttributeNode("startDate"),
-                @XmlNamedAttributeNode("endDate")
-            })})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("studyId")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("studyId"),
+//                @XmlNamedAttributeNode("uniqueIdentifier"),
+//                @XmlNamedAttributeNode("topic"),
+//                @XmlNamedAttributeNode("note"),
+//                @XmlNamedAttributeNode("legalNote"),
+//                @XmlNamedAttributeNode(value = "manager", subgraph = "simple"),
+//                @XmlNamedAttributeNode(value = "organizationUnits", subgraph = "simple"),
+//                @XmlNamedAttributeNode(value = "investigations", subgraph = "simple"),
+//                @XmlNamedAttributeNode("startDate"),
+//                @XmlNamedAttributeNode("endDate")
+//            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @NamedEntityGraphs({

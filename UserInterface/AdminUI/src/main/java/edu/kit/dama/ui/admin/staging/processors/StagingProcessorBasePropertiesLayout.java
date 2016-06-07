@@ -15,7 +15,9 @@
  */
 package edu.kit.dama.ui.admin.staging.processors;
 
+import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
+import com.vaadin.ui.HorizontalLayout;
 import edu.kit.dama.ui.admin.AdminUIMainView;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
@@ -35,6 +37,8 @@ public class StagingProcessorBasePropertiesLayout extends AbstractBaseProperties
     private static final String DEBUG_ID_PREFIX = StagingProcessorBasePropertiesLayout.class.getName() + "_";
 
     private ComboBox processorTypeBox;
+    private CheckBox ingestSupportedBox;
+    private CheckBox downloadSupportedBox;
 
     public StagingProcessorBasePropertiesLayout(AdminUIMainView parentApp) {
         super(parentApp);
@@ -53,6 +57,9 @@ public class StagingProcessorBasePropertiesLayout extends AbstractBaseProperties
         addComponent(getNameField(), 0, 0, 2, 0);
         addComponent(getGroupBox(), 0, 1);
         addComponent(getProcessorTypeBox(), 0, 2);
+
+        getCheckBoxesLayout().addComponent(new HorizontalLayout(getIngestProcessingSupportedBox(), getDownloadProcessingSupportedBox()));
+
         addComponent(getCheckBoxesLayout(), 2, 1, 2, 2);
         addComponent(getDescriptionArea(), 0, 3, 2, 3);
 
@@ -78,12 +85,52 @@ public class StagingProcessorBasePropertiesLayout extends AbstractBaseProperties
             for (StagingProcessor.PROCESSOR_TYPE value : StagingProcessor.PROCESSOR_TYPE.values()) {
                 processorTypeBox.addItem(value);
             }
+            processorTypeBox.select(StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY);
 
-            processorTypeBox.setNullSelectionItemId(StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY);
+            //processorTypeBox.setNullSelectionItemId(StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY);
         }
         return processorTypeBox;
     }
 
+    /**
+     * Returns the checkbox for getting the 'ingestSupported' flag of an
+     * element.
+     *
+     * @return The 'ingestSupported' box
+     */
+    public final CheckBox getIngestProcessingSupportedBox() {
+        if (ingestSupportedBox == null) {
+            String id = "ingestProcessingSupportedBox";
+            LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
+
+            ingestSupportedBox = new CheckBox("INGEST SUPPORTED");
+            ingestSupportedBox.setId(DEBUG_ID_PREFIX + id);
+            ingestSupportedBox.setImmediate(true);
+            ingestSupportedBox.setDescription("Ingest support of this processor.");
+            ingestSupportedBox.addStyleName(CSSTokenContainer.BOLD_CAPTION);
+        }
+        return ingestSupportedBox;
+    }
+
+    /**
+     * Returns the checkbox for getting the 'downloadSupported' flag of an
+     * element.
+     *
+     * @return The 'downloadSupported' box
+     */
+    public final CheckBox getDownloadProcessingSupportedBox() {
+        if (downloadSupportedBox == null) {
+            String id = "downloadProcessingSupportedBox";
+            LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
+
+            downloadSupportedBox = new CheckBox("DOWNLOAD SUPPORTED");
+            downloadSupportedBox.setId(DEBUG_ID_PREFIX + id);
+            downloadSupportedBox.setImmediate(true);
+            downloadSupportedBox.setDescription("Download support of this processor.");
+            downloadSupportedBox.addStyleName(CSSTokenContainer.BOLD_CAPTION);
+        }
+        return downloadSupportedBox;
+    }
 
     @Override
     public void updateSelection(StagingProcessor processor) throws UIComponentUpdateException {
@@ -106,6 +153,8 @@ public class StagingProcessorBasePropertiesLayout extends AbstractBaseProperties
         getDefaultBox().setValue(processor.isDefaultOn());
         getDisabledBox().setValue(processor.isDisabled());
         getDescriptionArea().setValue(processor.getDescription());
+        getIngestProcessingSupportedBox().setValue(processor.isIngestProcessingSupported());
+        getDownloadProcessingSupportedBox().setValue(processor.isDownloadProcessingSupported());
     }
 
     @Override
@@ -117,6 +166,8 @@ public class StagingProcessorBasePropertiesLayout extends AbstractBaseProperties
         getDefaultBox().setValue(false);
         getDisabledBox().setValue(false);
         getDescriptionArea().setValue(null);
+        getIngestProcessingSupportedBox().setValue(false);
+        getDownloadProcessingSupportedBox().setValue(false);
     }
 
     @Override

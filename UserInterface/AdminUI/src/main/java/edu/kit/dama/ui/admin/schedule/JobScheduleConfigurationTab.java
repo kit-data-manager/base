@@ -31,8 +31,11 @@ import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.commons.exceptions.ConfigurationException;
 import edu.kit.dama.commons.exceptions.PropertyValidationException;
 import edu.kit.dama.scheduler.SchedulerManagement;
+import edu.kit.dama.scheduler.api.impl.QuartzExpressionTrigger;
+import edu.kit.dama.scheduler.api.impl.QuartzIntervalTrigger;
 import edu.kit.dama.scheduler.api.impl.QuartzSchedule;
 import edu.kit.dama.scheduler.api.schedule.SimpleSchedule;
+import edu.kit.dama.scheduler.api.trigger.JobTrigger;
 import edu.kit.dama.scheduler.manager.ISchedulerManager;
 import edu.kit.dama.scheduler.quartz.jobs.AbstractConfigurableJob;
 import edu.kit.dama.ui.admin.AbstractConfigurationTab;
@@ -47,6 +50,7 @@ import edu.kit.dama.ui.commons.util.UIUtils7;
 import edu.kit.dama.util.PropertiesUtil;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -255,19 +259,34 @@ public final class JobScheduleConfigurationTab extends AbstractConfigurationTab<
             collectSchedule.setScheduleGroup(getBasicPropertiesLayout().getGroupField().getValue());
             collectSchedule.setJobClass(getImplementationClassField().getText());
             collectSchedule.setJobParameters(PropertiesUtil.propertiesToString(getSpecificPropertiesLayout().getProperties()));
-
+            List<JobTrigger> storedTriggers = new ArrayList<>();
             String jobId = getBasicPropertiesLayout().getIdField().getValue();
             if (!NEW_UNIQUE_ID.equals(jobId) && !UNSCHEDULED_JOB_UNIQUE_ID.equals(jobId)) {
                 //probably exists....remove first.
                 LOGGER.debug("Removing existing job with id '{}' in order to allow update.", jobId);
+                storedTriggers = manager.getTriggersByScheduleId(jobId);
                 manager.removeSchedule(jobId);
                 getElementList().removeItem(jobId);
                 LOGGER.debug("Storing job with id '{}'", jobId);
             } else {
                 LOGGER.debug("Storing new job.");
             }
-
+            LOGGER.debug("Scheduling job.");
             SimpleSchedule result = manager.addSchedule(collectSchedule);
+            if (!storedTriggers.isEmpty()) {
+                for (JobTrigger trigger : storedTriggers) {
+                    LOGGER.debug("Adding new trigger.");
+                    if (trigger instanceof QuartzExpressionTrigger) {
+                        LOGGER.debug("Restoring expression trigger.");
+                    } else if (trigger instanceof QuartzIntervalTrigger) {
+                        LOGGER.debug("Restoring interval trigger.");
+                    } else {
+                        LOGGER.debug("Restoring misc trigger.");
+                    }
+                    manager.addTrigger(jobId, trigger);
+                }
+            }
+
             getParentApp().showNotification("Job successfully stored with id '" + result.getId() + "'.");
             getElementList().removeItem(UNSCHEDULED_JOB_UNIQUE_ID);
             addNewElementInstance(result);

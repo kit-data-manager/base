@@ -16,15 +16,14 @@
 package edu.kit.dama.util;
 
 import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.joran.util.ConfigurationWatchListUtil;
 import ch.qos.logback.core.util.StatusPrinter;
 import edu.kit.dama.commons.exceptions.InitializationError;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
-import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +63,10 @@ public final class DataManagerSettings {
     public final static String GENERAL_MAIL_SERVER = "general.mailServer";
     public final static String GENERAL_GLOBAL_SECRET = "general.globalSecret";//qr2I9Hyp0CBhUUXj
     public static final String GENERAL_BASE_URL_ID = "general.baseUrl"; //"http://localhost:8080/";
-    public static final String PRODUCTION_MODE_ID = "general.productionMode"; //"false";
+    public static final String PRODUCTION_MODE_ID = "general.productionMode"; //"true";
+
+    public static final String DATA_ORGANIZATION_CONFIG_ROOT = "dataOrganization";
+    public static final String METADATA_MANAGEMENT_CONFIG_ROOT = "metadataManagement";
 
     // Global production mode switch, disables e.g. serialization/deserialization c
     // class instance checks
@@ -98,7 +100,7 @@ public final class DataManagerSettings {
             LOGGER.debug("Loading configuration from {}", configUrl);
             settings = new XMLConfiguration(configUrl);
             LOGGER.debug("Loading productionMode property");
-            productionMode = getBooleanProperty(PRODUCTION_MODE_ID, false);
+            productionMode = getBooleanProperty(PRODUCTION_MODE_ID, true);
             LOGGER.debug("Configuration initialized successfully.");
         } catch (ConfigurationException e) {
             //initialization not possible, quit everything.
@@ -145,6 +147,8 @@ public final class DataManagerSettings {
 
         URL resource = null;
         if (configResource != null) {
+            LOGGER.debug("Try to read resource from {}", configResource);
+
             //just try if configResource is not null
             resource = Thread.currentThread().getContextClassLoader().
                     getResource(configResource);
@@ -243,6 +247,24 @@ public final class DataManagerSettings {
      */
     public Boolean getBooleanProperty(String pKey, boolean defaultValue) {
         return settings.getBoolean(pKey, defaultValue);
+    }
+
+    /**
+     * Get a sub-configuration located at path pConfiguration or null if no
+     * sub-configuration was found. Valid paths are relative to the root node
+     * 'config', e.g. <i>dataOrganization</i> or <i>staging</i>.
+     *
+     * @param pConfiguration The sub-configuration path.
+     *
+     * @return The sub-configuration.
+     */
+    public Configuration getSubConfiguration(String pConfiguration) {
+        try {
+            return settings.configurationAt(pConfiguration);
+        } catch (IllegalArgumentException ex) {
+            LOGGER.warn("No configuration node found for subpath '" + pConfiguration + "'");
+            return null;
+        }
     }
 
     /**

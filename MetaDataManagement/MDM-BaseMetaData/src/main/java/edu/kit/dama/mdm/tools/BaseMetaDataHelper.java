@@ -34,7 +34,7 @@ public class BaseMetaDataHelper {
   /**
    * prefix of namespaces for kit data manager metadata.
    */
-  private static final String PREFIX_DAMA_NAMESPACE = "http://ipelsdf1.lsdf.kit.edu/dama/";
+  private static final String PREFIX_DAMA_NAMESPACE = "http://datamanager.kit.edu/dama/";
 
   /**
    * signature for base meta data (digital object).
@@ -58,12 +58,12 @@ public class BaseMetaDataHelper {
   public static final String CSMD_NAMESPACE_PREFIX = "csmd";
   /**
    * Namespace for the base meta data (digital object).
-   * http://ipelsdf1.lsdf.kit.edu/dama/basemetadata/2012-04)
+   * http://datamanager.kit.edu/dama/basemetadata/2012-04)
    */
   public static final String DAMA_NAMESPACE_BASEMETADATA = PREFIX_DAMA_NAMESPACE + POSTFIX_DAMA_NAMESPACE_BASEMETADATA + VERSION_DAMA_NAMESPACE;
   /**
    * Namespace for the kit data manager meta data.
-   * (http://ipelsdf1.lsdf.kit.edu/dama/metadata/2012-04)
+   * (http://datamanager.kit.edu/dama/metadata/2012-04)
    */
   public static final String DAMA_NAMESPACE_METADATA = PREFIX_DAMA_NAMESPACE + POSTFIX_DAMA_NAMESPACE_METADATA + VERSION_DAMA_NAMESPACE;
 // </editor-fold>

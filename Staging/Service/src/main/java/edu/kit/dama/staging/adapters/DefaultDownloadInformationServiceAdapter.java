@@ -62,7 +62,7 @@ public class DefaultDownloadInformationServiceAdapter implements IDownloadInform
   public DownloadInformation getDownloadInformation(DigitalObjectId pDigitalObjectId, IAuthorizationContext pContext) throws ServiceAdapterException {
     LOGGER.debug("Getting download information for object with id '{}'", pDigitalObjectId);
     DownloadInformation result;
-    List<DownloadInformation> queryResult = DownloadInformationServiceLocal.getSingleton().getDownloadInformationByDigitalObjectId(pDigitalObjectId, -1, -1, pContext);
+    List<DownloadInformation> queryResult = DownloadInformationServiceLocal.getSingleton().getDownloadInformationByDigitalObjectId(pDigitalObjectId, 0, Integer.MAX_VALUE, pContext);
     if (queryResult != null && !queryResult.isEmpty()) {
       LOGGER.debug("Query to DownloadInformationService returned");
       if (queryResult.size() == 1) {
@@ -100,7 +100,7 @@ public class DefaultDownloadInformationServiceAdapter implements IDownloadInform
   public List<DownloadInformation> getDownloadsForStaging(IAuthorizationContext pContext) throws ServiceAdapterException {
     LOGGER.debug("Getting all downloads ready for staging");
     List<DownloadInformation> result = new LinkedList<>();
-    List<DownloadInformation> queryResult = DownloadInformationServiceLocal.getSingleton().getDownloadInformationByStatus(DOWNLOAD_STATUS.SCHEDULED.getId(), -1, -1, pContext);
+    List<DownloadInformation> queryResult = DownloadInformationServiceLocal.getSingleton().getDownloadInformationByStatus(DOWNLOAD_STATUS.SCHEDULED.getId(), 0, Integer.MAX_VALUE, pContext);
     if (queryResult != null && !queryResult.isEmpty()) {
       LOGGER.debug("Query for stageable downloads returned '{}' results", queryResult.size());
       Collections.addAll(result, queryResult.toArray(new DownloadInformation[queryResult.size()]));
@@ -120,7 +120,7 @@ public class DefaultDownloadInformationServiceAdapter implements IDownloadInform
   public List<DownloadInformation> getDownloadsByStatus(DOWNLOAD_STATUS pStatus, IAuthorizationContext pContext) throws ServiceAdapterException {
     LOGGER.debug("Getting all downloads by status {}", pStatus);
     List<DownloadInformation> result = new LinkedList<>();
-    List<DownloadInformation> queryResult = DownloadInformationServiceLocal.getSingleton().getDownloadInformationByStatus(pStatus.getId(), -1, -1, pContext);
+    List<DownloadInformation> queryResult = DownloadInformationServiceLocal.getSingleton().getDownloadInformationByStatus(pStatus.getId(), 0, Integer.MAX_VALUE, pContext);
     if (queryResult != null && !queryResult.isEmpty()) {
       LOGGER.debug("Query for downloads by status returned '{}' results", queryResult.size());
       Collections.addAll(result, queryResult.toArray(new DownloadInformation[queryResult.size()]));

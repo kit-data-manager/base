@@ -22,55 +22,55 @@ package edu.kit.dama.authorization.entities;
 public enum Role implements IRoleRestriction<Role> {
 
   /**
-   *
+   *0
    */
   NO_ACCESS,
   /**
-   *
+   *1
    */
   MEMBERSHIP_REQUESTED,
   /**
-   *
+   *2
    */
   UNALLOC_02,
   /**
-   *
+   *3
    */
   GUEST,
   /**
-   *
+   *4
    */
   UNALLOC_04,
   /**
-   *
+   *5
    */
   UNALLOC_05,
   /**
-   *
+   *6
    */
   MEMBER,
   /**
-   *
+   *7
    */
   UNALLOC_07,
   /**
-   *
+   *8
    */
   UNALLOC_08,
   /**
-   *
+   *9
    */
   MANAGER,
   /**
-   *
+   *10
    */
   UNALLOC_10,
   /**
-   *
+   *11
    */
   UNALLOC_11,
   /**
-   *
+   *12
    */
   ADMINISTRATOR;
 

@@ -18,14 +18,16 @@ package edu.kit.dama.rest.dataorganization.services.interfaces;
 
 import com.qmino.miredot.annotations.ReturnType;
 import com.sun.jersey.api.core.HttpContext;
+import com.sun.jersey.api.core.ResourceConfig;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDefaultDataOrganizationNode;
-import edu.kit.dama.mdm.dataorganization.entity.core.ISimpleDataOrganizationNode;
 import edu.kit.dama.rest.base.ICommonRestInterface;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.dataorganization.types.DataOrganizationViewWrapper;
 import edu.kit.dama.util.Constants;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -61,23 +63,99 @@ public interface IDataOrganizationRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return A list of root nodes (typically exactly one) of the
-     * DataOrganization stored for the provided digital object. All returned
-     * entities are serialized using the <b>simple</b> object graph of
-     * DataOrganizationNodeWrapper, which removes all attributes but the id from
-     * the returned entities.
+     * DataOrganization stored for the provided digital object.
      *
      * @see edu.kit.dama.rest.dataorganization.types.DataOrganizationNodeWrapper
      */
     @GET
     @Path(value = "/organization/{id}")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataorganization.entity.core.ISimpleDataOrganizationNode>")
-    IEntityWrapper<? extends ISimpleDataOrganizationNode> getRootNode(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataorganization.entity.core.IDefaultDataOrganizationNode>")
+    IEntityWrapper<? extends IDefaultDataOrganizationNode> getRootNode(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long baseId,
             @QueryParam("first") @DefaultValue("0") Integer first,
             @QueryParam("results") @DefaultValue("10") Integer results,
             @QueryParam("viewName") @DefaultValue(Constants.DEFAULT_VIEW) String viewName,
+            @javax.ws.rs.core.Context HttpContext hc);
+
+    /**
+     * Add a new DataOrganization view to the DigitalObject with the provided
+     * id. This can be used to provide an alternative DataOrganization for a
+     * digital object and to re-structure the DataOrganization of a digital
+     * object. The provided view must not be equal to the 'default' view but may
+     * use nodes of the default view. Existing nodes are identified by their
+     * node id. If an existing node (either file or collection node) is
+     * referenced, its contents (and child nodes) are be duplicated to the new
+     * view. Furthermore, it is possible to provide attributes for each node.
+     * Their handling dependes on the 'preserveAttributes' flag. If the flag is
+     * 'TRUE' existing attributes of existing nodes are preserved and provided
+     * attributes are added. If the flag is set to 'FALSE' existing attributes
+     * are ignored and the only attributed in the JSON structure are added to
+     * the elements.
+     *
+     * The format of viewData must be:
+     * <pre>
+     * {
+     *"objectId":"1234-5678-abcd",
+     *"viewName":"custom",
+     *"children":[
+     *    {
+     *       "nodeId":100,
+     *       "type":"CollectionNode"
+     *       "attributes":[
+     *          {
+     *              "childAttrib":"customNewAttribute"
+     *          }
+     *      ]
+     *   },{
+     *      "name":"newCollectionNode",
+     *      "type":"CollectionNode"
+     *      "children":[
+     *          {
+     *              "nodeId":200,
+     *              "type":"FileNode",
+     *              "attributes":[
+     *                  {
+     *                      "subChildAttrib":"myValue"
+     *                  }
+     *              ]
+     *          },
+     *          {
+     *             "nodeId":300,
+     *             "type":"FileNode"
+     *          }
+     *      ]
+     *    }
+     * ]
+     * }
+     * </pre>
+     *
+     * @summary Create a new DataOrganization view for the object with the
+     * provided baseId.
+     *
+     * @param groupId The id of the group the digital object belongs to.
+     * @param baseId The baseId of the digital object for which a
+     * DataOrganization view should be posted.
+     * @param viewData The data structure defining the data organization view.
+     * @param preserveAttributes If TRUE all attributes of existing nodes are
+     * preserved meaning they are copied to the according node in the new view.
+     * @param hc The HttpContext for OAuth check.
+     *
+     * @return The root node of the created DataOrganization view stored for the
+     * provided digital object.
+     *
+     * @see edu.kit.dama.rest.dataorganization.types.DataOrganizationNodeWrapper
+     */
+    @POST
+    @Path(value = "/organization/{id}")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataorganization.entity.core.IDefaultDataOrganizationNode>")
+    IEntityWrapper<? extends IDefaultDataOrganizationNode> addDataOrganizationView(
+            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @PathParam("id") Long baseId,
+            @FormParam("viewData") String viewData,
+            @FormParam("preserveAttributes") Boolean preserveAttributes,
             @javax.ws.rs.core.Context HttpContext hc);
 
     /**
@@ -102,8 +180,8 @@ public interface IDataOrganizationRestService extends ICommonRestInterface {
     @GET
     @Path(value = "/organization/{id}/count/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataorganization.entity.core.ISimpleDataOrganizationNode>")
-    IEntityWrapper<? extends ISimpleDataOrganizationNode> getRootNodeCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataorganization.entity.core.IDefaultDataOrganizationNode>")
+    IEntityWrapper<? extends IDefaultDataOrganizationNode> getRootNodeCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long baseId,
             @QueryParam("viewName") @DefaultValue(Constants.DEFAULT_VIEW) String viewName,
@@ -129,20 +207,15 @@ public interface IDataOrganizationRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return A list of child DataOrganization nodes associated with the root
-     * node of the provided digital object. The returned entity is serialized
-     * using the
-     * <b>simple</b> object graph of DataOrganizationNodeWrapper, which contains
-     * all attributes but complex types. For complex attributes, e.g. the parent
-     * node, the ids of the entity are returned and can be used for additional
-     * queries.
+     * node of the provided digital object.
      *
      * @see edu.kit.dama.rest.dataorganization.types.DataOrganizationNodeWrapper
      */
     @GET
     @Path(value = "/organization/{id}/children")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataorganization.entity.core.ISimpleDataOrganizationNode>")
-    IEntityWrapper<? extends ISimpleDataOrganizationNode> getRootNodeChildren(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataorganization.entity.core.IDefaultDataOrganizationNode>")
+    IEntityWrapper<? extends IDefaultDataOrganizationNode> getRootNodeChildren(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long baseId,
             @QueryParam("first") @DefaultValue("0") Integer first,
@@ -170,12 +243,7 @@ public interface IDataOrganizationRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return The DataOrganization node with the provided nodeId associated
-     * with the provided digital object. The returned entity is serialized using
-     * the
-     * <b>default</b> object graph of DataOrganizationNodeWrapper, which
-     * contains all attributes but complex types. For complex attributes, e.g.
-     * the parent node, the ids of the entity are returned and can be used for
-     * additional queries.
+     * with the provided digital object.
      *
      * @see edu.kit.dama.rest.dataorganization.types.DataOrganizationNodeWrapper
      */
@@ -211,12 +279,7 @@ public interface IDataOrganizationRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return A list of DataOrganization nodes which are children of the node
-     * with the provided nodeId associated with the provided digital object. The
-     * returned entity is serialized using the
-     * <b>default</b> object graph of DataOrganizationNodeWrapper, which
-     * contains all attributes but complex types. For complex attributes, e.g.
-     * the parent node, the ids of the entity are returned and can be used for
-     * additional queries.
+     * with the provided nodeId associated with the provided digital object.
      *
      * @see edu.kit.dama.rest.dataorganization.types.DataOrganizationNodeWrapper
      */
@@ -249,16 +312,15 @@ public interface IDataOrganizationRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return The number of children of the DataOrganization node with the
-     * provided nodeId associated with the provided digital object. The result
-     * is wrapped by an instance of DataOrganizationNodeWrapper.
+     * provided nodeId associated with the provided digital object.
      *
      * @see edu.kit.dama.rest.dataorganization.types.DataOrganizationNodeWrapper
      */
     @GET
     @Path(value = "/organization/{id}/{nodeId}/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataorganization.entity.core.ISimpleDataOrganizationNode>")
-    IEntityWrapper<? extends ISimpleDataOrganizationNode> getChildCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataorganization.entity.core.IDefaultDataOrganizationNode>")
+    IEntityWrapper<? extends IDefaultDataOrganizationNode> getChildCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long baseId,
             @PathParam("nodeId") Long nodeId,
@@ -341,6 +403,7 @@ public interface IDataOrganizationRestService extends ICommonRestInterface {
      * @param viewName The data organization view that will be accessed.
      * @param path The path in the data organization view to access.
      * @param hc The HttpContext for OAuth check.
+     * @param context The context for init param check.
      *
      * @return A response object providing a stream to the according data
      * provided by the call.
@@ -353,6 +416,7 @@ public interface IDataOrganizationRestService extends ICommonRestInterface {
             @PathParam("objectId") Long baseId,
             @QueryParam("viewName") @DefaultValue(Constants.DEFAULT_VIEW) String viewName,
             @PathParam("path") String path,
-            @javax.ws.rs.core.Context HttpContext hc);
+            @javax.ws.rs.core.Context HttpContext hc,
+            @javax.ws.rs.core.Context ResourceConfig context);
 
 }

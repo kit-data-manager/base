@@ -43,9 +43,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.eclipse.persistence.annotations.BatchFetch;
 import org.eclipse.persistence.annotations.BatchFetchType;
-import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 import org.eclipse.persistence.queries.FetchGroupTracker;
 import org.eclipse.persistence.sessions.Session;
 
@@ -65,21 +62,21 @@ import org.eclipse.persistence.sessions.Session;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "TRANSITION_TYPE")
 @Table(name = "DIGITALOBJECTTRANSITION")
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("transitionEntityId"),
-                @XmlNamedAttributeNode(value = "inputObjectViewMappings", subgraph = "default"),
-                @XmlNamedAttributeNode(value = "outputObjects", subgraph = "simple"),
-                @XmlNamedAttributeNode("creationTimestamp")
-            })})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id"),
+//                @XmlNamedAttributeNode("transitionEntityId"),
+//                @XmlNamedAttributeNode(value = "inputObjectViewMappings", subgraph = "default"),
+//                @XmlNamedAttributeNode(value = "outputObjects", subgraph = "simple"),
+//                @XmlNamedAttributeNode("creationTimestamp")
+//            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @NamedEntityGraphs({
@@ -290,6 +287,7 @@ public class DigitalObjectTransition<C> implements Serializable, IDefaultDigital
      *
      * @return The string representation of the linked entity id.
      */
+    @Override
     public String getTransitionEntityId() {
         return transitionEntityId;
     }
@@ -309,6 +307,7 @@ public class DigitalObjectTransition<C> implements Serializable, IDefaultDigital
     public C getTransitionEntity(IAuthorizationContext pContext) {
         return null;
     }
+
     private transient org.eclipse.persistence.queries.FetchGroup fg;
     private transient Session sn;
 

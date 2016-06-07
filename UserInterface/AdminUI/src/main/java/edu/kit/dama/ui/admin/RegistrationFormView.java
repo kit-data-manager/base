@@ -187,7 +187,7 @@ public class RegistrationFormView extends CustomComponent {
 
     //save password entity
     try {
-      ServiceAccessToken token = new ServiceAccessToken(userScreenName.getStringRepresentation(), AdminUIMainView.MAIN_LOGIN_TOKEN_KEY);
+      ServiceAccessToken token = new ServiceAccessToken(userScreenName.getStringRepresentation(), Constants.MAIN_LOGIN_SERVICE_ID);
       token.setTokenKey(userMail);
       token.setSecret(userPassword1);
       mdm.save(token);

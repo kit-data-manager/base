@@ -29,9 +29,6 @@ import javax.persistence.NamedSubgraph;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
-import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 import org.eclipse.persistence.queries.FetchGroupTracker;
 import org.eclipse.persistence.sessions.Session;
 
@@ -40,19 +37,19 @@ import org.eclipse.persistence.sessions.Session;
  * @author mf6319
  */
 @Entity
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                //id is not in because it is not needed
-                @XmlNamedAttributeNode(value = "digitalObject", subgraph = "simple"),
-                @XmlNamedAttributeNode("viewName")
-            })})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                //id is not in because it is not needed
+//                @XmlNamedAttributeNode(value = "digitalObject", subgraph = "simple"),
+//                @XmlNamedAttributeNode("viewName")
+//            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @NamedEntityGraphs({

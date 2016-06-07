@@ -17,7 +17,7 @@ about the resposibilities of each service and in which chapter(s) the services a
 |Metadata Management|<<ChapterMetadataManagement,Metadata Management>>|Managing and accessing different kinds of metadata.
 |Search|<<ChapterMetadataManagement,Metadata Management>>,<<ChapterDataOrganization,Data Organization>>|Search for metadata.
 |Staging|<<ChapterStaging,Staging>>, <<ChapterDataOrganization,Data Organization>>|Accessing and managing (file-based) data.
-|Data Processing|Not available, yet.|Processing of data stored in a KIT Data Manager repository.
+|Data Processing|<<ChapterDataWorkflow,Data Workflow>>|Processing of data stored in a KIT Data Manager repository.
 |Lifecycle Management|Not available, yet.|Services for managing a data lifecycle.
 |Policy Enforcement|Not available, yet.|Services for enforcing policies on data.
 |============================================================================================================================
@@ -33,7 +33,6 @@ Digital Objects consisting of metadata and data.
 [[ChapterAuthorization]]
 Authorization
 ~~~~~~~~~~~~~
-
 One of the core components which concerns almost every part of KIT Data Manager is the Authorization. It is based on users, groups and an effective role and determines if the 
 access to a secured resource (e.g. Digital Objects) or operation (e.g. adding users) is granted or not. Authorization decisions in KIT Data Manager are always based on a 
 specific context the user is currently working in. This context consists of:
@@ -55,8 +54,7 @@ resources or functionalities. Currently, there are the following roles available
 |NO_ACCESS|An AuthorizationContext with this role has no access to any operation or resource.
 |MEMBERSHIP_REQUESTED|This is an intermediate role used in special cases. 
  Users with this role have requested the membership for e.g. a group but are not activated, yet.
-|GUEST|Using an AuthorizationContext with the role `GUEST` grants read access to public accessible resources. 
- Modifications of resources are not allowed.
+|GUEST|Using an AuthorizationContext with the role `GUEST` grants read access to public accessible resources. Modifications of resources are not allowed.
 |MEMBER|An AuthorizationContext with this role can be used to read and modify resources. This role should be used in most cases.
 |MANAGER|An AuthorizationContext with the role `MANAGER` can be used for operations that require special access to resources and 
 functionalities on a group level, e.g. assign new memberships to a group or deleting resources owned by a specific group.
@@ -176,18 +174,71 @@ Data Organization
 ~~~~~~~~~~~~~~~~~
 The Data Organization is closely coupled with the Staging and holds information on how the data belonging to a Digital Object is organized and where it is located. 
 In the most simple case, after ingesting a file tree the Data Organization reflects exactly the ingested tree including CollectionNodes representing folders and FileNodes representing the files.
-This allows to restore the file tree in case of a download in the representation the user expects. In addition, there might be attributes linked to single Data Organization items, 
-e.g. size or mime type of a tree node. In more sophisticated scenarios the Data Organization might be customized according to user needs. 
-These customizations are called `Views`. Views can be useful, e.g. to group all files with the same type belonging to one Digital Object or to transform a Digital Object's data into another 
-format but keep the data organization linked to the particular Digital Object.
+This allows to restore the file tree in case of a download in the representation the user expects. In addition, there might be attributes linked to Data Organization nodes, e.g. size or mime type of a node.
+
+In more sophisticated scenarios the Data Organization might be customized according to user needs. These customizations are called `Views`. Views can be useful, e.g. to group all files with the same type belonging 
+to one Digital Object or to transform a Digital Object's data into another format but keep the Data Organization linked to the particular Digital Object.
 
 [[DataOrganization]]
 .The graphic shows exemplarily different views for the Data Organization of a Digital Object. On the left hand side the default view with all contained files is shown. The second view contains only the data files, the third view contains a compressed version of the default view. Finally, the view on the right hand side contains generated files with a preview of the images contained in the default view that can be mapped by their names to each other.
 image::DataOrganization.png[DataOrganization, width="600px", align="center"]
 
+Apart from the basic file-based use case it is also possible to provide a custom Data Organization tree during ingest. This allows to register Data Organization trees where single nodes may refer to data located elsewhere.
+For standard workflows, e.g. for ingest and dowload, this enhanced scenario implies some differences: 
+
+Ingest::
+   Instead of ingesting a file tree, one or more JSON file(s) containing a defined structure is/are ingested. An according StagingProcessor implemented by the class `edu.kit.dama.staging.processor.impl.ReferenceTreeIngestProcessor` 
+   has to be configured properly in beforehand. This StagingProcessor will parse and register the Data Organization information provided by the JSON file(s). 
+Download::
+   For download there are multiple options. The easiest way for supporting transparent access to remotely stored data is to refer to data openly accessible via HTTP. In that case, the LFNs available in the Data Organization nodes can be 
+   directly accessed by the user to obtain the data. Furthermore, the REST-based Data Download described in the following section fully supports streaming of data from HTTP LFNs. Finally, also the Staging Service allows to stage data
+   only accessible via HTTP the same way as it is done for locally available data. However, this requires a bit more configuration effort.
+
+For more information on how to enable the support for ingesting custom Data Organization trees please refer to the section  <<ChapterCustomDataOrganization,Support for Ingest of Custom Data Organization Trees>>.
+
+For details on how to perform the ingest of a custom Data Organization tree please refer to the link:https://github.com/kit-data-manager/base/tree/master/Sample[Sample module] of KIT Data Manager. Here, the 
+example `CustomDataOrganizationIngest` shows how to ingest a custom Data Organization and describes what are requirements and rules.
+
+[[SectionRESTBasedDownload]]
+REST-based Data Download
+^^^^^^^^^^^^^^^^^^^^^^^^
 For obtaining data represented in the Data Organization typically the Staging Service is used for transferring data to a location accessible using one of the configured StagingAccessPoints. 
-Another alternative that can be used for smaller downloads and for synchronous access without including the asynchronous staging process the Data Organization REST service offers the direct
-access to the content of single FileNodes and to CollectionsNodes by downloading all sub-nodes as a Zip archive. Please refer to the REST documentation for more details.
+An alternative that can be used for smaller downloads and for direct access avoiding the asynchronous staging process the Data Organization REST service offers direct access to the content 
+of single nodes. Typically, this feature is used the same way as any other REST endpoint and the access is authorized via OAuth. The URL for downloading the content of a Data Organization node 
+is build as follows: 
+
+`http://kitdm-host:8080/KITDM/rest/dataorganization/organization/download/{objectId}/{path}?groupId=USERS&viewName=default` 
+
+The first part `http://kitdm-host:8080/KITDM/rest/dataorganization/organization/download/` is the base URL pointing to the download endpoint. Typically, only `kitdm-host` has to be changed according to the accessed
+KIT DM instance. The second part of the URL defines the accessed digital object by its numeric `baseId` followed by the Data Organization path. The value of path can be one of the following: 
+
+[cols="m,n", options="header"]
+|============================================================================================================================
+|Value of {path}|Delivered Content
+|'nothing'|The entire content of the provided view zipped in a file named <DIGITAL_OBJECT_ID>.zip
+|MyCollection/|Assuming that MyCollection refers to a collection node, the zipped content of the node and all children is returned.
+|MyCollection/MyFile.txt|Assuming that MyFile.txt refers to a file node, the file content is returned using the automatically determined mime type of the file.
+|100|The content of the node with the provided nodeId. Depending on the node type the call is handled similar to one of the previous cases, e.g. 100 typically refers to the root node. Hence, providing 100 behaves identical to the example in table row 1.
+|============================================================================================================================
+
+The arguments provided in the URL are optional and define the group used to authorize the access to the associated Digital Object and the Data Organization view that will be accessed. By default these values are `USERS` and `default`.
+
+As mentioned before, access to the REST-based data download is authorized via OAuth and the standard KIT DM authorization mechanisms based on the Digital Object the Data Organization is associated with. However, there may be scenarios where one wants to 
+provide open access to repository content, e.g. for showing an image, stored in the repository, on a web page. For this purpose the Data Organization offers the so called `authorization-less access`. The concept of this feature is to provide open access
+to a particular part of the Data Organization of a Digital Object without any user or group based authentification and authorization. Of course, this feature should be used with care in order to avoid opening data that should not be accessible by everybody.
+
+Currently, there are four different kinds of 
+
+[cols="m,n,o", options="header"]
+|============================================================================================================================
+|Parameter Name|Example Value|Description
+|public.view.names|public;public2|List of Data Organization views that are publicly accessible. In the example, all elements stored in views named `public` and `public2` of all Digital Objects in the repository system are publicly accessible. Attention: You should never provide the `default` view here as this would open the entire data of a Digital Object.
+|public.attribute.key|isOpen|A single attribute, which sets a node (either collection or file node) to be publicly accessible if an attribute with the provided name has been assigned to the node. In the example, all Data Organization nodes having the attribute `isOpen` assigned are publicly accessible. The attribute value is currently not evaluated.
+|public.collection.node.access.allowed|false|Either `true` or `false`. Mainly for testing purposes to allow authorization-less access to entire collection nodes in all Digital Objects and all Data Organization views. It is recommended NOT to enable this option. 
+|public.file.node.filter|(.*)\.jpg$|Regular expression granting public access to all file nodes in all Digital Objects and all Data Organization views for which the node name fulfills the regular expression. In the example, all nodes with the extension `jpg` are publicly available.
+|============================================================================================================================
+
+For setting up `authorization-less access` for the Data Organization service please refer to chapter <<ChapterAuthorizationLessAccess,Authorization-less Access to Data Organization>>.
 
 [[ChapterDataWorkflow]]
 Data Workflows
@@ -267,8 +318,8 @@ pointing to an absolute path within the execution environment. Available variabl
 [cols="m,n", options="header"]
 |============================================================================================================================
 |Variable|Content
-|${data.input.dir}|The directory containing all staged input data. If multiple digital objects are input for one task, the data of all object will be located in this directory.
-|${data.output.dir}|The directory that can be used to store output data. All data located in this directory will be ingested as a new digital object as soon as the processing has succeeded. 
+|${data.input.dir}|The directory containing all staged input data. If multiple Digital Objects are input for one task, the data of all object will be located in this directory.
+|${data.output.dir}|The directory that can be used to store output data. All data located in this directory will be ingested as a new Digital Object as soon as the processing has succeeded. 
 |${working.dir}|The working directory where the application archive is extracted to. Furthermore, the execution settings, which can be provided for each task execution, 
 are stored in a file `dataworkflow.properties`, which is also located in the working directory.
 |${temp.dir}|A temporary directory where the user application can store intermediate data. The content of this directory will be removed during task cleanup.
@@ -285,9 +336,9 @@ The actual execution of a workflow task is covered by an associated execution en
 |Phase Name|Actions|Next Phase
 |SCHEDULED|Initial phase after creation.|PREPARING
 |PREPARING|Creation of task directories, obtaining and extracting application package and performing variable substitution.|STAGING
-|STAGING|Provide the data of all input digital objects in the input directory of the task.|PROCESSING
+|STAGING|Provide the data of all input Digital Objects in the input directory of the task.|PROCESSING
 |PROCESSING|Use the concrete handler implementation to execute/submit and monitor the application execution.|INGEST
-|INGEST|Ingest the data located in the task output directory as a new digital object.|CLEANUP
+|INGEST|Ingest the data located in the task output directory as a new Digital Object.|CLEANUP
 |CLEANUP|Remove all task directories and their contents.|-
 |============================================================================================================================
 
@@ -304,6 +355,6 @@ execution won't finish until the phase is either in its SUCCESSFUL or FAILED sta
 .Task state transitions of data workflow tasks.
 image::TaskStatus.png[TaskStatus]
 
-Summarizing, the Data Workflow Service offer a great potential for processing digital objects in an automated way including the tracking of provenance information for better reproducability. For more details
+Summarizing, the Data Workflow Service offer a great potential for processing Digital Objects in an automated way including the tracking of provenance information for better reproducability. For more details
 on how to setup execution environments, workflow tasks and triggering them, please refer to the chapters <<ChapterInstallation,Installation>> of KIT Data Manager and <<ChapterSettings,Settings>> 
 of the Administration UI.

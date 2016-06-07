@@ -35,9 +35,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.eclipse.persistence.annotations.BatchFetch;
 import org.eclipse.persistence.annotations.BatchFetchType;
-import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 import org.eclipse.persistence.queries.FetchGroupTracker;
 import org.eclipse.persistence.sessions.Session;
 
@@ -46,26 +43,26 @@ import org.eclipse.persistence.sessions.Session;
  * @author hartmann-v
  */
 @Entity
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("baseId")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                @XmlNamedAttributeNode("baseId"),
-                @XmlNamedAttributeNode("digitalObjectIdentifier"),
-                @XmlNamedAttributeNode("label"),
-                @XmlNamedAttributeNode("note"),
-                @XmlNamedAttributeNode(value = "investigation", subgraph = "simple"),
-                @XmlNamedAttributeNode(value = "uploader", subgraph = "simple"),
-                @XmlNamedAttributeNode(value = "experimenters", subgraph = "simple"),
-                @XmlNamedAttributeNode("startDate"),
-                @XmlNamedAttributeNode("endDate"),
-                @XmlNamedAttributeNode("uploadDate")
-            })})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("baseId")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("baseId"),
+//                @XmlNamedAttributeNode("digitalObjectIdentifier"),
+//                @XmlNamedAttributeNode("label"),
+//                @XmlNamedAttributeNode("note"),
+//                @XmlNamedAttributeNode(value = "investigation", subgraph = "simple"),
+//                @XmlNamedAttributeNode(value = "uploader", subgraph = "simple"),
+//                @XmlNamedAttributeNode(value = "experimenters", subgraph = "simple"),
+//                @XmlNamedAttributeNode("startDate"),
+//                @XmlNamedAttributeNode("endDate"),
+//                @XmlNamedAttributeNode("uploadDate")
+//            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @NamedEntityGraphs({
@@ -175,7 +172,7 @@ public class DigitalObject implements Serializable, IDefaultDigitalObject, IDigi
     /**
      * Data set visible or not.
      */
-    private Boolean visible = Boolean.TRUE;
+    private Boolean visible;
     // </editor-fold>
 
     /**
@@ -192,6 +189,7 @@ public class DigitalObject implements Serializable, IDefaultDigitalObject, IDigi
         DigitalObject result = new DigitalObject();
         result.setDigitalObjectIdentifier(pDigitalObjectIdentifier);
         result.setExperimenters(new HashSet<UserData>());
+        result.setVisible(Boolean.TRUE);
         return result;
     }
 
@@ -414,7 +412,11 @@ public class DigitalObject implements Serializable, IDefaultDigitalObject, IDigi
 
     @Override
     public Boolean isVisible() {
-        return visible;
+        return getVisible();
+    }
+
+    public Boolean getVisible() {
+        return (visible == null) || visible;
     }
 
     /**
@@ -550,13 +552,11 @@ public class DigitalObject implements Serializable, IDefaultDigitalObject, IDigi
 
     @Override
     public Session _persistence_getSession() {
-
         return sn;
     }
 
     @Override
     public void _persistence_setSession(Session sn) {
         this.sn = sn;
-
     }
 }

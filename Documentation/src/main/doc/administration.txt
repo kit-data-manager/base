@@ -143,12 +143,12 @@ know at a glance
 [disc]
 - the number of user groups you are currently member of compared to the total 
 amount of available user groups
-- the number of digital objects currently accessible by 
-you compared to the total amount of available digital objects
-- the number of files collected in digital objects currently accessible by you 
+- the number of Digital Objects currently accessible by 
+you compared to the total amount of available Digital Objects
+- the number of files collected in Digital Objects currently accessible by you 
 compared to the total amount of available files
-- the data amount of digital objects currently accessible by you compared to the
-total data amount of available digital objects.
+- the data amount of Digital Objects currently accessible by you compared to the
+total data amount of available Digital Objects.
 
 [[Profile]]
 image::Profile.png[Profile, align="center"]
@@ -865,7 +865,7 @@ Create New Data Workflow Task:: For creating a new data workflow task, select th
 `NEW` from the left-hand container `AVAILABLE ELEMENTS`. Fill all fields according to your task properties and requirements. `PACKAGE_URL` should be in the form
 `file://<ZIP_LOCATION_ON_LOCAL_FILESYSTEM>`. Optionally, you can provide `ENVIRONMENT PROPERTIES` that have to be provided by an execution environment in order 
 to execute the task. Please refer to the <<ChapterExecutionEnvironments,according section>> for more details. Finally, after committing the changed, the workflow task is 
-registered and can be linked to digital objects using the according REST service or Java API.
+registered and can be linked to Digital Objects using the according REST service or Java API.
 
 View/Modify Existing Data Workflow Tasks:: For viewing or modifying the configuration
 of an already declared data workflow task, select the corresponding data workflow task
@@ -895,7 +895,7 @@ results in creating a new version of the task.
 
 `DESCRIPTION`:: Text area displaying additional information with respect to the selected workflow task.
 
-`Default`:: Check box for setting the selected workflow task as default task, e.g. to be applied by default to ingested digital objects. Currently, this flag is not actively used.
+`Default`:: Check box for setting the selected workflow task as default task, e.g. to be applied by default to ingested Digital Objects. Currently, this flag is not actively used.
 
 `Disabled`:: Check box for disabling the selected workflow task.
 

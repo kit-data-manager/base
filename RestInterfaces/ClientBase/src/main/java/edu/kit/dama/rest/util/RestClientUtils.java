@@ -17,7 +17,6 @@ package edu.kit.dama.rest.util;
 
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.base.exceptions.DeserializationException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

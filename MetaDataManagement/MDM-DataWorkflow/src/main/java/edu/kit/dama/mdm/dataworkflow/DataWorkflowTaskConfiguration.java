@@ -34,11 +34,11 @@ import javax.persistence.NamedSubgraph;
 import javax.persistence.OneToMany;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
-import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
+import javax.xml.bind.annotation.XmlRootElement;
 import org.eclipse.persistence.queries.FetchGroupTracker;
 import org.eclipse.persistence.sessions.Session;
 
@@ -47,29 +47,31 @@ import org.eclipse.persistence.sessions.Session;
  * @author mf6319
  */
 @Entity
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("name"),
-                @XmlNamedAttributeNode("description"),
-                @XmlNamedAttributeNode("version"),
-                @XmlNamedAttributeNode("creationDate"),
-                @XmlNamedAttributeNode("keywords"),
-                @XmlNamedAttributeNode("contactUserId"),
-                @XmlNamedAttributeNode("groupId"),
-                @XmlNamedAttributeNode("applicationPackageUrl"),
-                @XmlNamedAttributeNode("applicationArguments"),
-                @XmlNamedAttributeNode("defaultTask"),
-                @XmlNamedAttributeNode("disabled"),
-                @XmlNamedAttributeNode(value = "requiredEnvironmentProperties", subgraph = "default")
-            })})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id"),
+//                @XmlNamedAttributeNode("name"),
+//                @XmlNamedAttributeNode("description"),
+//                @XmlNamedAttributeNode("version"),
+//                @XmlNamedAttributeNode("creationDate"),
+//                @XmlNamedAttributeNode("keywords"),
+//                @XmlNamedAttributeNode("contactUserId"),
+//                @XmlNamedAttributeNode("groupId"),
+//                @XmlNamedAttributeNode("applicationPackageUrl"),
+//                @XmlNamedAttributeNode("applicationArguments"),
+//                @XmlNamedAttributeNode("defaultTask"),
+//                @XmlNamedAttributeNode("disabled"),
+//                @XmlNamedAttributeNode(value = "requiredEnvironmentProperties", subgraph = "default")
+//            })})
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement
 @NamedEntityGraphs({
     @NamedEntityGraph(
             name = "DataWorkflowTaskConfiguration.simple",
@@ -345,7 +347,7 @@ public class DataWorkflowTaskConfiguration implements IDefaultDataWorkflowConfig
      *
      * @param defaultTask New default task flag value.
      */
-    public void setDefaultTask(boolean defaultTask) {
+    public void setDefaultTask(Boolean defaultTask) {
         this.defaultTask = defaultTask;
     }
 
@@ -359,7 +361,7 @@ public class DataWorkflowTaskConfiguration implements IDefaultDataWorkflowConfig
      *
      * @param disabled New disabled flag value.
      */
-    public void setDisabled(boolean disabled) {
+    public void setDisabled(Boolean disabled) {
         this.disabled = disabled;
     }
 

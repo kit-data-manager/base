@@ -130,7 +130,7 @@ public final class StagingService {
      *
      * @return The authorization context.
      */
-    public final IAuthorizationContext getContext(ITransferInformation pInfo) {
+    public IAuthorizationContext getContext(ITransferInformation pInfo) {
         LOGGER.debug("Building authorization context for user id {} in group {} with role MEMBER", new Object[]{pInfo.getOwnerId(), pInfo.getGroupId()});
         return new AuthorizationContext(new UserId(pInfo.getOwnerId()), new GroupId(pInfo.getGroupId()), Role.MEMBER);
     }
@@ -146,40 +146,13 @@ public final class StagingService {
      *
      * @return The local staging folder.
      */
-    public final File getLocalStagingFolder(ITransferInformation pTransferInfo, IAuthorizationContext pContext) {
+    public File getLocalStagingFolder(ITransferInformation pTransferInfo, IAuthorizationContext pContext) {
         AbstractStagingAccessPoint accessPoint = StagingConfigurationManager.getSingleton().getAccessPointById(pTransferInfo.getAccessPointId());
         if (accessPoint == null) {
             throw new IllegalArgumentException("Unable to find access point for access point id '" + pTransferInfo.getAccessPointId() + "'");
         }
         URL localAccessUrl = accessPoint.getAccessUrl(pTransferInfo, pContext);
         return accessPoint.getLocalPathForUrl(localAccessUrl, pContext);
-    }
-
-    /**
-     * Helper method to update the status of the provided transfer.
-     *
-     * @param pInfo The modified entity.
-     *
-     * @return TRUE if everything is fine.
-     */
-    private boolean updateTransferStatus(ITransferInformation pInfo) {
-        boolean result = true;
-        String errorString = IIS_ACCESS_ERROR;
-        try {
-            if (pInfo instanceof IngestInformation) {
-                errorString = IIS_ACCESS_ERROR;
-                StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().updateIngestInformation((IngestInformation) pInfo, getContext(pInfo));
-            } else if (pInfo instanceof DownloadInformation) {
-                errorString = DIS_ACCESS_ERROR;
-                StagingConfigurationManager.getSingleton().getDownloadInformationServiceAdapter().updateDownloadInformation((DownloadInformation) pInfo, getContext(pInfo));
-            } else {
-                throw new IllegalArgumentException("Argument pInfo is no instance of IngestInformation or DownloadInformation");
-            }
-        } catch (ServiceAdapterException ex) {
-            LOGGER.error(errorString, ex);
-            result = false;
-        }
-        return result;
     }
 
     /**
@@ -264,7 +237,11 @@ public final class StagingService {
         }
 
         if (!StagingConfigurationManager.getSingleton().isExistingAccessPoint(pAccessPointId)) {
-            throw new IllegalArgumentException("Provided AccessPoint '" + pAccessPointId + "' is not configured");
+            throw new IllegalArgumentException("Provided AccessPoint '" + pAccessPointId + "' is not configured.");
+        }
+
+        if (StagingConfigurationManager.getSingleton().isDisabledAccessPoint(pAccessPointId)) {
+            throw new IllegalArgumentException("Provided AccessPoint '" + pAccessPointId + "' is disabled.");
         }
 
         LOGGER.debug("Preparing ingest for ID '{}'", pDigitalObjectId);
@@ -328,6 +305,59 @@ public final class StagingService {
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Ingest Finalization (Automatic)">
     /**
+     * This method is used internally in an automated fashion to finalize the
+     * next ingest. At first, all finalizable ingests are obtained and sorted by
+     * their expiration date. Afterwards, for the ingest expiring next {@link #finalizeIngest(edu.kit.dama.commons.types.DigitalObjectId, edu.kit.dama.authorization.entities.IAuthorizationContext)
+     * } is called.
+     *
+     * @return TRUE if an ingest could be finalized or if there was nothing to
+     * do.
+     */
+    public boolean finalizeIngests() {
+        LOGGER.info("Finalizing ingests.");
+
+        try {
+            //check running ingests...2 allowed at the same time
+            int maxParallelIngest = DataManagerSettings.getSingleton().getIntProperty(DataManagerSettings.STAGING_MAX_PARALLEL_INGESTS, 2);
+            LOGGER.debug(" - Checking running ingests");
+            List<IngestInformation> preparingIngests = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestsByStatus(INGEST_STATUS.INGEST_RUNNING, AuthorizationContext.factorySystemContext());
+            if (preparingIngests.size() > maxParallelIngest) {
+                LOGGER.info("There are already two ingests running. Skipping finalization cycle.");
+                return false;
+            } else {
+                LOGGER.debug(" - Less than two ingests are running...continuing.");
+            }
+        } catch (ServiceAdapterException sae) {
+            LOGGER.error(IIS_ACCESS_ERROR, sae);
+            return false;
+        }
+
+        List<IngestInformation> finalizableIngests;
+        try {
+            LOGGER.debug("Obtaining finalizable ingests");
+            finalizableIngests = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestsForArchiving(AuthorizationContext.factorySystemContext());
+            LOGGER.debug(" - Received {} entity/entities", finalizableIngests.size());
+        } catch (ServiceAdapterException sae) {
+            LOGGER.error(IIS_ACCESS_ERROR, sae);
+            return false;
+        }
+
+        if (finalizableIngests.isEmpty()) {
+            LOGGER.debug("No finalizable ingests found");
+            return true;
+        }
+
+        Collections.sort(finalizableIngests, new Comparator<IngestInformation>() {
+            @Override
+            public int compare(IngestInformation o1, IngestInformation o2) {
+                return Long.valueOf(o1.getExpiresAt()).compareTo(o2.getExpiresAt());
+            }
+        });
+        //finalize first ingest (the one which will expire next)
+        return finalizeIngest(new DigitalObjectId(finalizableIngests.get(0).getDigitalObjectId()), getContext(finalizableIngests.get(0)));
+    }
+
+    /**
      * This method finalizes the ingest for the provided digital object id. This
      * method can be called directly, e.g. as administrative using a user
      * interface, or by automated processes triggering transfer finalization. It
@@ -367,8 +397,8 @@ public final class StagingService {
             return false;
         }
 
-        if (!ingest.getStatusEnum().equals(INGEST_STATUS.PRE_INGEST_FINISHED) && !ingest.getStatusEnum().equals(INGEST_STATUS.PRE_INGEST_RUNNING) && !ingest.getStatusEnum().equals(INGEST_STATUS.PRE_INGEST_SCHEDULED)) {
-            LOGGER.error("Finalization of ingest impossible. Status of ingest '" + pId + "' is " + ingest.getStatusEnum() + ", but has to be PRE_INGEST_FINISHED or PRE_INGEST_RUNNING or PRE_INGEST_SCHEDULED");
+        if (!ingest.getStatusEnum().isFinalizationPossible()) {
+            LOGGER.error("Finalization of ingest impossible. Status of ingest #{} is {}, but has to be PRE_INGEST_FINISHED or PRE_INGEST_RUNNING or PRE_INGEST_SCHEDULED", ingest.getTransferId(), ingest.getStatusEnum());
             return false;
         }
 
@@ -379,11 +409,11 @@ public final class StagingService {
             return false;
         }
 
-        LOGGER.debug("Performing ingest finalization");
+        LOGGER.debug("Performing ingest finalization for ingest with id {}", ingest.getTransferId());
         boolean result = true;
 
         try {
-            //obtain the local path where this ingest's files (user data) are located
+            //get URL where the uploaded data is located using the configured access point
             URL stagingUrl = new URL(ingest.getStagingUrl());
             LOGGER.debug("Obtaining AccessPoint with id  '{}'", ingest.getAccessPointId());
             AbstractStagingAccessPoint accessPoint = StagingConfigurationManager.getSingleton().getAccessPointById(ingest.getAccessPointId());
@@ -391,6 +421,7 @@ public final class StagingService {
             LOGGER.debug("Obtaining local path for staging URL '{}'", stagingUrl.toString());
             File localPath = accessPoint.getLocalPathForUrl(stagingUrl, getContext(ingest));
 
+            //check the local path obtained from the access point
             if (localPath == null) {
                 LOGGER.error("Failed to obtain local path for staging URL '{}'", stagingUrl);
                 //cannot be handled here...log error and hope for administrator
@@ -444,18 +475,19 @@ public final class StagingService {
 
                 //now close the container as all additional files are added
                 container.close();
-                //continue after preprocessing
+
+                //continue if preprocessing has succeeded
                 if (preProcessingSucceeded) {
                     //try to perform staging
-                    LOGGER.debug("Perform staging for folder '{}'", localPath);
+                    LOGGER.debug("Perform ingest of folder '{}'", localPath);
                     LOGGER.debug(" - Writing data to archive");
-                    //ingest files and get file tree as a result
 
+                    //ingest files and get file tree as a result
                     IFileTree virtualizedFileTree = StagingConfigurationManager.getSingleton().getStorageVirtualizationAdapter().store(container, getContext(ingest));
                     if (virtualizedFileTree == null) {
-                        LOGGER.error("Writing to archive failed, no valid data organization was returned");
+                        LOGGER.error("Writing to archive failed, no valid data organization was returned.");
                         ingest.setStatus(INGEST_STATUS.INGEST_FAILED.getId());
-                        ingest.setErrorMessage("Internal error. Failed to store data.");
+                        ingest.setErrorMessage("Internal error. Failed to ingest data.");
                     } else {
                         LOGGER.debug(" - Registering data organization");
 
@@ -464,11 +496,12 @@ public final class StagingService {
                         LOGGER.debug("Obtaining 'generated' node.");
                         IDataOrganizationNode generatedNode = Util.getNodeByName(virtualizedFileTree.getRootNode(), Constants.STAGING_GENERATED_FOLDER_NAME);
                         boolean dataStored;
+                        //store 'data' view
                         if (dataNode == null || !(dataNode instanceof ICollectionNode)) {
-                            LOGGER.warn("No valid 'data' node found. Expecting non-default tree structure and registering entire tree.");
+                            LOGGER.warn("No valid 'data' node found. Expecting non-default tree structure and registering entire tree as view 'default'.");
                             dataStored = StagingConfigurationManager.getSingleton().getDataOrganizationAdapter().saveFileTree(virtualizedFileTree);
                         } else {
-                            LOGGER.debug("Creating data tree.");
+                            LOGGER.debug("Creating tree for 'data' content.");
                             IFileTree dataTree = new FileTreeImpl();
                             dataTree.setDigitalObjectId(pId);
                             dataTree.setViewName(Constants.DEFAULT_VIEW);
@@ -476,31 +509,34 @@ public final class StagingService {
                                 LOGGER.debug("Adding child {} to data tree.", childNode.getName());
                                 dataTree.getRootNode().addChild(DataOrganizationUtils.copyNode(childNode, false));
                             }
-                            LOGGER.debug("Storing data tree.");
+                            LOGGER.debug("Storing 'data' content tree as view 'default'.");
                             dataStored = StagingConfigurationManager.getSingleton().getDataOrganizationAdapter().saveFileTree(dataTree);
                         }
 
                         if (dataStored) {
-                             LOGGER.debug("Successfully stored 'data' view.");
+                            LOGGER.debug("Successfully stored 'data'content as view 'default'.");
                             if (generatedNode == null || !(generatedNode instanceof ICollectionNode) || ((ICollectionNode) generatedNode).getChildren().isEmpty()) {
-                                LOGGER.info("Generated node not found or is empty. Skip registering view 'generated'.");
+                                LOGGER.info("Node for 'generated' content not found or is empty. Skip registering view 'generated'.");
                             } else {
+                                LOGGER.debug("Creating tree for 'generated' content.");
                                 IFileTree generatedTree = new FileTreeImpl();
                                 generatedTree.setDigitalObjectId(pId);
                                 generatedTree.setViewName("generated");
                                 for (IDataOrganizationNode childNode : ((ICollectionNode) generatedNode).getChildren()) {
                                     generatedTree.getRootNode().addChild(DataOrganizationUtils.copyNode(childNode, false));
                                 }
+                                LOGGER.debug("Storing 'generated' content tree as view 'generated'.");
                                 if (StagingConfigurationManager.getSingleton().getDataOrganizationAdapter().saveFileTree(generatedTree)) {
-                                    LOGGER.debug("Successfully stored 'generated' view.");
+                                    LOGGER.debug("Successfully stored view 'generated'.");
                                 } else {
-                                    LOGGER.error("Failed to stored 'generated' view.");
+                                    LOGGER.error("Failed to stored view 'generated'.");
                                 }
                             }
 
                             LOGGER.debug(" - Data organization successfully stored. Updating ingest status.");
                             ingest.setStatus(INGEST_STATUS.INGEST_FINISHED.getId());
                             ingest.setErrorMessage(null);
+
                             //Perform post-archive processors as soon as archiving has finished. Normally, these processors should not produce errors as the archiving is alread finished.
                             //Therefore, errors are logged but won't result in a failed ingest any longer.
                             LOGGER.debug("Executing {} post-archiving staging processors", ingest.getPostArchivingStagingProcessor().length);
@@ -524,7 +560,7 @@ public final class StagingService {
                                 }
                             }
                         } else {
-                            LOGGER.error("Failed to store 'data' view.");
+                            LOGGER.error("Failed to store view 'default'.");
                             ingest.setStatus(INGEST_STATUS.INGEST_FAILED.getId());
                             ingest.setErrorMessage("Failed to register data organization.");
                         }
@@ -562,62 +598,10 @@ public final class StagingService {
         return result;
     }
 
-    /**
-     * This method is used internally in an automated fashion to finalize the
-     * next ingest. At first, all finalizable ingests are obtained and sorted by
-     * their expiration date. Afterwards, for the ingest expiring next {@link #finalizeIngest(edu.kit.dama.commons.types.DigitalObjectId, edu.kit.dama.authorization.entities.IAuthorizationContext)
-     * } is called.
-     *
-     * @return TRUE if an ingest could be finalized or if there was nothing to do.
-     */
-    public boolean finalizeIngests() {
-        LOGGER.info("Finalizing ingests.");
-
-        try {
-            //check running ingests...2 allowed at the same time
-            int maxParallelIngest = DataManagerSettings.getSingleton().getIntProperty(DataManagerSettings.STAGING_MAX_PARALLEL_INGESTS, 2);
-            LOGGER.debug(" - Checking running ingests");
-            List<IngestInformation> preparingIngests = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestsByStatus(INGEST_STATUS.INGEST_RUNNING, AuthorizationContext.factorySystemContext());
-            if (preparingIngests.size() > maxParallelIngest) {
-                LOGGER.info("There are already two ingests running. Skipping finalization cycle.");
-                return false;
-            } else {
-                LOGGER.debug(" - Less than two ingests are running...continuing.");
-            }
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(IIS_ACCESS_ERROR, sae);
-            return false;
-        }
-
-        List<IngestInformation> finalizableIngests;
-        try {
-            LOGGER.debug("Obtaining finalizable ingests");
-            finalizableIngests = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestsForArchiving(AuthorizationContext.factorySystemContext());
-            LOGGER.debug(" - Received {} entity/entities", finalizableIngests.size());
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(IIS_ACCESS_ERROR, sae);
-            return false;
-        }
-
-        if (finalizableIngests.isEmpty()) {
-            LOGGER.debug("No finalizable ingests found");
-            return true;
-        }
-
-        Collections.sort(finalizableIngests, new Comparator<IngestInformation>() {
-            @Override
-            public int compare(IngestInformation o1, IngestInformation o2) {
-                return Long.valueOf(o1.getExpiresAt()).compareTo(o2.getExpiresAt());
-            }
-        });
-        //finalize first ingest (the one which will expire next)
-        return finalizeIngest(new DigitalObjectId(finalizableIngests.get(0).getDigitalObjectId()), getContext(finalizableIngests.get(0)));
-    }
-
 //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc=" Download Preparation (Interactive)">
     /**
-     * Schedules the download for the digital object with the provided digital
+     * Prepares the download for the digital object with the provided digital
      * object ID. This method will be called by the transfer preparation handler
      * if the user requests an ingest. The method takes care, that there is a
      * download folder existing after this call, which is writeable by the
@@ -636,7 +620,7 @@ public final class StagingService {
      * @return A StagingPreparationResult object containing the result ( status,
      * error message and/or staging URL).
      */
-    public StagingPreparationResult<DOWNLOAD_STATUS> scheduleDownload(DigitalObjectId pDigitalObjectId, String pAccessPointId, IAuthorizationContext pContext) {
+    public StagingPreparationResult<DOWNLOAD_STATUS> prepareDownload(DigitalObjectId pDigitalObjectId, String pAccessPointId, IAuthorizationContext pContext) {
         if (pDigitalObjectId == null) {
             throw new IllegalArgumentException(DOI_NULL_ERROR);
         }
@@ -646,7 +630,10 @@ public final class StagingService {
         }
 
         if (!StagingConfigurationManager.getSingleton().isExistingAccessPoint(pAccessPointId)) {
-            throw new IllegalArgumentException("Provided AccessPoint '" + pAccessPointId + "' is not configured");
+            throw new IllegalArgumentException("Provided AccessPoint '" + pAccessPointId + "' is not configured,");
+        }
+        if (StagingConfigurationManager.getSingleton().isDisabledAccessPoint(pAccessPointId)) {
+            throw new IllegalArgumentException("Provided AccessPoint '" + pAccessPointId + "' is disabled.");
         }
 
         LOGGER.debug("Preparing download for ID '{}'", pDigitalObjectId);
@@ -728,7 +715,8 @@ public final class StagingService {
      * succeeded. If everything is done, the ingest information is update using
      * the ingest information service adapter.
      *
-     * @return TRUE if any download could be finalized or if there was nothing to do.
+     * @return TRUE if any download could be finalized or if there was nothing
+     * to do.
      */
     public boolean finalizeDownloads() {
         LOGGER.info("Finalizing open downloads");
@@ -807,65 +795,114 @@ public final class StagingService {
      * @return TRUE if the download could be finalized.
      */
     private boolean finalizeDownload(DownloadInformation pDownloadInfo) {
-        if (!pDownloadInfo.getStatusEnum().equals(DOWNLOAD_STATUS.SCHEDULED)) {
+        if (!pDownloadInfo.getStatusEnum().isFinalizationPossible()) {
             LOGGER.error("Finalization of download impossible. Status of download #{} is {}, but has to be DOWNLOAD_STATUS.SCHEDULED", pDownloadInfo.getTransferId(), pDownloadInfo.getStatusEnum());
             return false;
         }
-        boolean result = true;
 
+        LOGGER.debug("Setting download status to PREPARING");
         pDownloadInfo.setStatusEnum(DOWNLOAD_STATUS.PREPARING);
         if (!updateTransferStatus(pDownloadInfo)) {
             LOGGER.error("Failed to update download status to {}. Finalizing impossible.", DOWNLOAD_STATUS.PREPARING);
             return false;
         }
 
-        LOGGER.debug("Preparing download #{} for object '{}'", pDownloadInfo.getTransferId(), pDownloadInfo.getDigitalObjectId());
+        LOGGER.debug("Performing download finalization for download with id {}", pDownloadInfo.getTransferId());
+        boolean result = true;
+
         try {
-            //obtain the local path where this ingest's files are located
+            URL stagingUrl = new URL(pDownloadInfo.getStagingUrl());
+            LOGGER.debug("Obtaining AccessPoint with id  '{}'", pDownloadInfo.getAccessPointId());
             AbstractStagingAccessPoint accessPoint = StagingConfigurationManager.getSingleton().getAccessPointById(pDownloadInfo.getAccessPointId());
 
-            URL stagingUrl = new URL(pDownloadInfo.getStagingUrl());
-            LOGGER.debug("Obtaining user paths for  URL '{}'", stagingUrl.toString());
+            LOGGER.debug("Obtaining user paths for staging URL '{}'", stagingUrl.toString());
             File localStagingPath = accessPoint.getLocalPathForUrl(stagingUrl, getContext(pDownloadInfo));
-            //File localDataPath = new File(localStagingPath, Constants.STAGING_DATA_FOLDER_NAME);
+            //obtain settings path as the file tree to download is stored there
             File localSettingsPath = new File(localStagingPath, Constants.STAGING_SETTINGS_FOLDER_NAME);
 
             //try to perform staging
             StagingFile destinationForStaging = new StagingFile(new AbstractFile(localStagingPath));
             LOGGER.debug("Perform staging into folder '{}'", destinationForStaging);
-            LOGGER.debug(" - Reading data from storage virtualization");
 
             String treeFile = FilenameUtils.concat(localSettingsPath.getPath(), DownloadPreparationHandler.DATA_FILENAME);
+            LOGGER.debug(" - Loading file tree from {}", treeFile);
             IFileTree downloadTree = DataOrganizationUtils.readTreeFromFile(new File(treeFile));
 
             //get filetree and restore
-            LOGGER.debug("Restoring data organization tree from file '{}'", treeFile);
+            LOGGER.debug("Restoring data organization tree using storage virtualization");
             if (!StagingConfigurationManager.getSingleton().getStorageVirtualizationAdapter().restore(pDownloadInfo, downloadTree, destinationForStaging)) {
                 LOGGER.error("Failed to restore data organization tree from file {}", treeFile);
                 pDownloadInfo.setStatus(DOWNLOAD_STATUS.PREPARATION_FAILED.getId());
                 pDownloadInfo.setErrorMessage("Failed to reconstruct file tree.");
                 result = false;
             } else {
-                //preparation successfully...transfer can be performed
-                LOGGER.debug("Download preparation finished. Download #{} for object {} is now ready", pDownloadInfo.getTransferId(), pDownloadInfo.getDigitalObjectId());
-                pDownloadInfo.setStatus(DOWNLOAD_STATUS.DOWNLOAD_READY.getId());
-                pDownloadInfo.setErrorMessage(null);
-
-                //handle notification
-                Properties notificationProperties = MailNotificationHelper.restoreProperties(localSettingsPath);
-                if (!notificationProperties.isEmpty()) {
-                    if (result) {
-                        LOGGER.debug("Try to notify user about finalized download");
-                        MailNotificationHelper.sendDownloadNotification(notificationProperties, pDownloadInfo);
-                    } else {
-                        LOGGER.warn("Download not finalized successfully. Notification skipped.");
+                LOGGER.debug("Creating file tree and transfer container.");
+                IFileTree tree = DataOrganizationUtils.createTreeFromFile(pDownloadInfo.getDigitalObjectId(), destinationForStaging.getAbstractFile(), destinationForStaging.getAbstractFile().getUrl(), false);
+                TransferTaskContainer container = TransferTaskContainer.factoryDownloadContainer(pDownloadInfo, tree, StagingConfigurationManager.getSingleton().getRestServiceUrl());
+                container.setDestination(localStagingPath.toURI().toURL());
+                LOGGER.debug("Transfer container successfully created.");
+                boolean postProcessingSucceeded = true;
+                LOGGER.debug("Executing {} staging processors", pDownloadInfo.getServerSideStagingProcessor().length);
+                for (StagingProcessor processor : pDownloadInfo.getServerSideStagingProcessor()) {
+                    if (processor.isDisabled()) {
+                        LOGGER.info("StagingProcessor with id {} is disabled. Skipping execution.", processor.getUniqueIdentifier());
+                        continue;
                     }
+
+                    try {
+                        LOGGER.debug(" - Try to execute processor {} ({})", new Object[]{processor.getName(), processor.getUniqueIdentifier()});
+                        AbstractStagingProcessor sProcessor = processor.createInstance();
+                        LOGGER.debug(" - Executing processor");
+                        sProcessor.performPostTransferProcessing(container);
+                        LOGGER.debug(" - Finishing processor execution");
+                        sProcessor.finalizePostTransferProcessing(container);
+                        LOGGER.debug(" - Processor successfully executed");
+                    } catch (ConfigurationException ex) {
+                        LOGGER.error("Failed to configure StagingProcessor " + processor.getName() + " (" + processor.getUniqueIdentifier() + ")", ex);
+                        pDownloadInfo.setStatus(DOWNLOAD_STATUS.PREPARATION_FAILED.getId());
+                        pDownloadInfo.setErrorMessage("Internal error. Failed to configure StagingProcessor '" + processor.getName() + "'.");
+                        postProcessingSucceeded = false;
+                        result = false;
+                    } catch (StagingProcessorException ex) {
+                        LOGGER.error("Failed to perform StagingProcessor " + processor.getName() + " (" + processor.getUniqueIdentifier() + ")", ex);
+                        pDownloadInfo.setStatus(DOWNLOAD_STATUS.PREPARATION_FAILED.getId());
+                        pDownloadInfo.setErrorMessage("Internal error. Failed to execute StagingProcessor '" + processor.getName() + "'.");
+                        postProcessingSucceeded = false;
+                        result = false;
+                    }
+                }
+
+                if (postProcessingSucceeded) {
+                    //preparation successfully...transfer can be performed
+                    LOGGER.debug("Download preparation finished. Download #{} for object {} is now ready.", pDownloadInfo.getTransferId(), pDownloadInfo.getDigitalObjectId());
+                    pDownloadInfo.setStatus(DOWNLOAD_STATUS.DOWNLOAD_READY.getId());
+                    pDownloadInfo.setErrorMessage(null);
+
+                    //handle notification
+                    Properties notificationProperties = MailNotificationHelper.restoreProperties(localSettingsPath);
+                    if (!notificationProperties.isEmpty()) {
+                        if (result) {
+                            LOGGER.debug("Try to notify user about finalized download");
+                            MailNotificationHelper.sendDownloadNotification(notificationProperties, pDownloadInfo);
+                        } else {
+                            LOGGER.warn("Download not finalized successfully. Notification skipped.");
+                        }
+                    }
+                } else {
+                    LOGGER.error("Postprocessing failed, skipping user notification.");
+                    //status to download should be already set
                 }
             }
         } catch (MalformedURLException mue) {
             LOGGER.error("Failed to convert staging URL '" + pDownloadInfo.getStagingUrl() + "' of transfer '" + pDownloadInfo.getTransferId() + "' to local path", mue);
             pDownloadInfo.setStatus(DOWNLOAD_STATUS.PREPARATION_FAILED.getId());
             pDownloadInfo.setErrorMessage("Staging URL '" + pDownloadInfo.getStagingUrl() + "' seems to be invalid.");
+            result = false;
+        } catch (AdalapiException ex) {
+            //failed to handle file tree stuff
+            LOGGER.error("Failed finalize download for object ID " + pDownloadInfo.getId(), ex);
+            pDownloadInfo.setStatus(DOWNLOAD_STATUS.PREPARATION_FAILED.getId());
+            pDownloadInfo.setErrorMessage("Failed to finalize download. Cause: " + ex.getMessage());
             result = false;
         } catch (RuntimeException t) {
             //failed to handle file tree stuff
@@ -994,109 +1031,31 @@ public final class StagingService {
         return true;
     }
 
-//  public static void main(String[] args) throws Exception{
-//
-//    IFileTree downloadTree = DataOrganizationUtils.readTreeFromFile(new File("D:\\Virtual Machines\\Ubuntu12\\Share\\preparationContent.xml"));
-//    
-//    System.out.println(((IFileNode) downloadTree.getRootNode().getChildren().get(0)).getLogicalFileName().asString());
-//    System.out.println(new URL(((IFileNode) downloadTree.getRootNode().getChildren().get(0)).getLogicalFileName().asString()));     
-//    System.out.println(new AbstractFile(new URL(((IFileNode) downloadTree.getRootNode().getChildren().get(0)).getLogicalFileName().asString())).getUrl());
-//    StagingFile sourceLfn = new StagingFile(((IFileNode) downloadTree.getRootNode().getChildren().get(0)).getLogicalFileName());
-//         
-//        System.out.println(  sourceLfn.getAbstractFile().getUrl());
-//        //target LFN is a local file
-//        AbstractFile targetFile = new AbstractFile(URLCreator.appendToURL(new URL("http://localhost/webdav/"), downloadTree.getRootNode().getChildren().get(0).getName()));
-//        System.out.println( targetFile.getUrl());
-//        StagingFile targetLfn = new StagingFile(targetFile);
-//       System.out.println(  targetLfn.getAbstractFile().getUrl());
-//     
-//    DataOrganizationUtils.printTree(downloadTree.getRootNode(), true);
-//   }
-    //public static void main(String[] args) throws Exception {
-        /*
-     * URL u = new
-     * URL("gsiftp://ipelsdf1.lsdf.kit.edu:2811/test/myFolder/myFile.php?test");
-     * URI ur = new URI("file", null, u.getPath(), null);
-     * System.out.println(ur);
+    /**
+     * Helper method to update the status of the provided transfer.
+     *
+     * @param pInfo The modified entity.
+     *
+     * @return TRUE if everything is fine.
      */
-    /* String configFile = JhoveBase.getConfigFileFromProperties();
-     String saxClass = JhoveBase.getSaxClassFromProperties();
-     JhoveBase base = new JhoveBase();
-     base.init(configFile, saxClass);
-     base.getHandler(XmlHandler.class.getCanonicalName());
+    private boolean updateTransferStatus(ITransferInformation pInfo) {
+        boolean result = true;
+        String errorString = IIS_ACCESS_ERROR;
+        try {
+            if (pInfo instanceof IngestInformation) {
+                errorString = IIS_ACCESS_ERROR;
+                StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().updateIngestInformation((IngestInformation) pInfo, getContext(pInfo));
+            } else if (pInfo instanceof DownloadInformation) {
+                errorString = DIS_ACCESS_ERROR;
+                StagingConfigurationManager.getSingleton().getDownloadInformationServiceAdapter().updateDownloadInformation((DownloadInformation) pInfo, getContext(pInfo));
+            } else {
+                throw new IllegalArgumentException("Argument pInfo is no instance of IngestInformation or DownloadInformation");
+            }
+        } catch (ServiceAdapterException ex) {
+            LOGGER.error(errorString, ex);
+            result = false;
+        }
+        return result;
+    }
 
-     App a = new App("", "", new int[]{0, 0, 0}, "", "");
-     long s = System.currentTimeMillis();
-     base.dispatch(a, null, null, new XmlHandler() {
-     @Override
-     public void show(RepInfo ri) {
-     super.show(ri);
-     if (ri.isConsistent()) {
-     System.out.println("Mime: " + ri.getMimeType());
-     System.out.println("Note: " + ri.getNote());
-     System.out.println("Created: " + ri.getCreated());
-     System.out.println("LastMod: " + ri.getLastModified());
-     System.out.println("Size: " + ri.getSize());
-     System.out.println("Profile: " + ri.getProfile());
-     System.out.println("-------------------");
-     }
-
-     }
-     }, saxClass, new String[]{"file:///d:/CorelX4.iso"});
-
-     System.out.println("D " + (System.currentTimeMillis() - s));
-     if (true) {
-     return;
-     }
-
-     final XmlHandler h = new XmlHandler("Test", "1", new int[]{0, 0, 0}, "", "");
-     h.setWriter(new PrintWriter(System.out));
-     h.setBase(base);
-     for (Object o : base.getModuleList()) {
-     //System.out.println("M " + o);
-     Module current = (Module) o;
-     base.process(null, current, new HandlerBase("Test", "1", new int[]{0, 0, 0}, "", "") {
-     @Override
-     public void show(Module module) {
-     }
-
-     @Override
-     public void show(RepInfo ri) {
-     if (ri.isConsistent()) {
-     System.out.println("Mime: " + ri.getMimeType());
-     System.out.println("Note: " + ri.getNote());
-     System.out.println("Created: " + ri.getCreated());
-     System.out.println("LastMod: " + ri.getLastModified());
-     System.out.println("Size: " + ri.getSize());
-     System.out.println("Profile: " + ri.getProfile());
-     h.show(ri);
-     h.reset();
-     System.out.println("-------------------");
-     }
-
-     }
-
-     @Override
-     public void show(OutputHandler oh) {
-     System.out.println("O " + oh);
-     }
-
-     @Override
-     public void show() {
-     }
-
-     @Override
-     public void show(App app) {
-     }
-
-     @Override
-     public void showHeader() {
-     }
-
-     @Override
-     public void showFooter() {
-     }
-     }, "file:///d:/carbon.gif");
-     }*/
-  // }
 }

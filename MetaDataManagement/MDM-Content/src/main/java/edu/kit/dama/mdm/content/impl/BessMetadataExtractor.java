@@ -48,7 +48,7 @@ public class BessMetadataExtractor extends AbstractMetadataExtractor {
   /**
    * Schema path of the OME XML file.
    */
-  private static final String SCHEMA_PATH = "http://ipelsdf1.lsdf.kit.edu/dama/bess/2013-07";
+  private static final String SCHEMA_PATH = "http://datamanager.kit.edu/dama/bess/2013-07";
   /**
    * The logger
    */

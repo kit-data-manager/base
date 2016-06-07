@@ -15,6 +15,7 @@
  */
 package edu.kit.dama.staging.interfaces;
 
+import edu.kit.dama.commons.interfaces.IConfigurableAdapter;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.commons.types.DigitalObjectId;
 import edu.kit.dama.staging.entities.ingest.INGEST_STATUS;

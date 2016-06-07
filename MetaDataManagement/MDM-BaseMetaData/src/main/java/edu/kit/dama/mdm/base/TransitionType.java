@@ -22,7 +22,8 @@ package edu.kit.dama.mdm.base;
 public enum TransitionType {
 
   NONE("N"),
-  DATAWORKFLOW("W");
+  DATAWORKFLOW("W"),
+  ELASTICSEARCH("E");
 
   private final String ch;
 

@@ -22,6 +22,7 @@ import edu.kit.dama.commons.exceptions.PropertyValidationException;
 import edu.kit.dama.staging.exceptions.StagingProcessorException;
 import java.text.SimpleDateFormat;
 import java.util.Properties;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.w3c.dom.Element;
 
 /**
@@ -33,113 +34,113 @@ import org.w3c.dom.Element;
  */
 public class DublinCoreMetadataExtractor extends AbstractMetadataExtractor {
 
-  /**
-   * ISO 8601 [W3CDTF] date format
-   */
-  public static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+    /**
+     * ISO 8601 [W3CDTF] date format
+     */
+    public static final String ISO_8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
 
-  /**
-   * Default constructor.
-   *
-   * @param pUniqueIdentifier The unique identifier of the extractor.
-   */
-  public DublinCoreMetadataExtractor(String pUniqueIdentifier) {
-    super(pUniqueIdentifier);
-  }
-
-  @Override
-  protected void validateExtractorProperties(Properties pProperties) throws PropertyValidationException {
-    //no properties needed
-  }
-
-  @Override
-  protected String[] getExtractorPropertyKeys() {
-    //no extra properties available
-    return null;
-  }
-
-  @Override
-  protected String getExtractorPropertyDescription(String pProperty) {
-    return null;
-  }
-
-  @Override
-  protected void configureExtractor(Properties pProperties) {
-  }
-
-  @Override
-  protected void performPreTransferExtraction(TransferTaskContainer pContainer) throws StagingProcessorException {
-  }
-
-  @Override
-  public String createMetadataDocument(TransferTaskContainer pContainer) throws StagingProcessorException {
-    StringBuilder xmlBuilder = new StringBuilder();
-    xmlBuilder.append("<oai_dc:dc \n"
-            + "     xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" \n"
-            + "     xmlns:dc=\"http://purl.org/dc/elements/1.1/\" \n"
-            + "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \n"
-            + "     xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ \n"
-            + "     http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">");
-
-    xmlBuilder.append("<dc:title>").append(getDigitalObject().getLabel()).append("</dc:title>");
-    UserData uploader = getDigitalObject().getUploader();
-    if (uploader != null) {
-      xmlBuilder.append("<dc:creator>").append(uploader.getFullname()).append("</dc:creator>");
-      xmlBuilder.append("<dc:publisher>").append(uploader.getFullname()).append("</dc:publisher>");
+    /**
+     * Default constructor.
+     *
+     * @param pUniqueIdentifier The unique identifier of the extractor.
+     */
+    public DublinCoreMetadataExtractor(String pUniqueIdentifier) {
+        super(pUniqueIdentifier);
     }
 
-    for (UserData experimenter : getDigitalObject().getExperimenters()) {
-      //don't list uploader a second time here
-      if (uploader == null || !experimenter.equals(uploader)) {
-        xmlBuilder.append("<dc:contributor>").append(experimenter.getFullname()).append("</dc:contributor>");
-      }
+    @Override
+    protected void validateExtractorProperties(Properties pProperties) throws PropertyValidationException {
+        //no properties needed
     }
 
-    if (getDigitalObject().getInvestigation() != null) {
-      xmlBuilder.append("<dc:subject>").append(getDigitalObject().getInvestigation().getTopic()).append("</dc:subject>");
-      String description = getDigitalObject().getInvestigation().getDescription();
-      if (description != null) {
-        xmlBuilder.append("<dc:description>").append(description).append("</dc:description>");
-      }
-      if (getDigitalObject().getInvestigation().getStudy() != null) {
-        String legalNotes = getDigitalObject().getInvestigation().getStudy().getLegalNote();
-        if (legalNotes != null) {
-          xmlBuilder.append("<dc:rights>").append(legalNotes).append("</dc:rights>");
+    @Override
+    protected String[] getExtractorPropertyKeys() {
+        //no extra properties available
+        return null;
+    }
+
+    @Override
+    protected String getExtractorPropertyDescription(String pProperty) {
+        return null;
+    }
+
+    @Override
+    protected void configureExtractor(Properties pProperties) {
+    }
+
+    @Override
+    protected void performPreTransferExtraction(TransferTaskContainer pContainer) throws StagingProcessorException {
+    }
+
+    @Override
+    public String createMetadataDocument(TransferTaskContainer pContainer) throws StagingProcessorException {
+        StringBuilder xmlBuilder = new StringBuilder();
+        xmlBuilder.append("<oai_dc:dc \n"
+                + "     xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" \n"
+                + "     xmlns:dc=\"http://purl.org/dc/elements/1.1/\" \n"
+                + "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \n"
+                + "     xsi:schemaLocation=\"http://www.openarchives.org/OAI/2.0/oai_dc/ \n"
+                + "     http://www.openarchives.org/OAI/2.0/oai_dc.xsd\">");
+
+        xmlBuilder.append("<dc:title>").append(StringEscapeUtils.escapeXml11(getDigitalObject().getLabel())).append("</dc:title>");
+        UserData uploader = getDigitalObject().getUploader();
+        if (uploader != null) {
+            xmlBuilder.append("<dc:creator>").append(StringEscapeUtils.escapeXml11(uploader.getFullname())).append("</dc:creator>");
+            xmlBuilder.append("<dc:publisher>").append(StringEscapeUtils.escapeXml11(uploader.getFullname())).append("</dc:publisher>");
         }
-      }
+
+        for (UserData experimenter : getDigitalObject().getExperimenters()) {
+            //don't list uploader a second time here
+            if (uploader == null || !experimenter.equals(uploader)) {
+                xmlBuilder.append("<dc:contributor>").append(StringEscapeUtils.escapeXml11(experimenter.getFullname())).append("</dc:contributor>");
+            }
+        }
+
+        if (getDigitalObject().getInvestigation() != null) {
+            xmlBuilder.append("<dc:subject>").append(StringEscapeUtils.escapeXml11(getDigitalObject().getInvestigation().getTopic())).append("</dc:subject>");
+            String description = getDigitalObject().getInvestigation().getDescription();
+            if (description != null) {
+                xmlBuilder.append("<dc:description>").append(StringEscapeUtils.escapeXml11(description)).append("</dc:description>");
+            }
+            if (getDigitalObject().getInvestigation().getStudy() != null) {
+                String legalNotes = getDigitalObject().getInvestigation().getStudy().getLegalNote();
+                if (legalNotes != null) {
+                    xmlBuilder.append("<dc:rights>").append(StringEscapeUtils.escapeXml11(legalNotes)).append("</dc:rights>");
+                }
+            }
+        }
+        if (getDigitalObject().getStartDate() != null) {
+            xmlBuilder.append("<dc:date>").append(new SimpleDateFormat(ISO_8601_DATE_FORMAT).format(getDigitalObject().getStartDate())).append("</dc:date>");
+        }
+        //not possible in our case - use binary type 'application/octet-stream'
+        xmlBuilder.append("<dc:format>").append("application/octet-stream").append("</dc:format>");
+
+        //see http://dublincore.org/documents/2012/06/14/dcmi-terms/?v=dcmitype  
+        xmlBuilder.append("<dc:type>").append("Dataset").append("</dc:type>");
+        xmlBuilder.append("<dc:identifier>").append(StringEscapeUtils.escapeXml11(getDigitalObject().getDigitalObjectId().getStringRepresentation())).append("</dc:identifier>");
+
+        //>>>not possible, yet -> later: getDigitalObject().getPredecessor() for processing results!?
+        //xmlBuilder.append("<dc:source>").append(----).append("</dc:source>");
+        //xmlBuilder.append("<dc:relation>").append(----).append("</dc:relation>");
+        //>>>not relevant!? Otherwise refer to RFC 4646
+        //xmlBuilder.append("<dc:language>").append("").append("</dc:language>");
+        //Not relevant?!
+        //xmlBuilder.append("<dc:coverage>").append("").append("</dc:coverage>");
+        xmlBuilder.append("</oai_dc:dc>");
+
+        return xmlBuilder.toString();
     }
-    if (getDigitalObject().getStartDate() != null) {
-      xmlBuilder.append("<dc:date>").append(new SimpleDateFormat(ISO_8601_DATE_FORMAT).format(getDigitalObject().getStartDate())).append("</dc:date>");
+
+    @Override
+    protected Element createCommunitySpecificElement(TransferTaskContainer pContainer) throws MetaDataExtractionException {
+        //not needed here  
+        return null;
     }
-    //not possible in our case - use binary type 'application/octet-stream'
-    xmlBuilder.append("<dc:format>").append("application/octet-stream").append("</dc:format>");
 
-    //see http://dublincore.org/documents/2012/06/14/dcmi-terms/?v=dcmitype  
-    xmlBuilder.append("<dc:type>").append("Dataset").append("</dc:type>");
-    xmlBuilder.append("<dc:identifier>").append(getDigitalObject().getDigitalObjectId().getStringRepresentation()).append("</dc:identifier>");
-
-    //>>>not possible, yet -> later: getDigitalObject().getPredecessor() for processing results!?
-    //xmlBuilder.append("<dc:source>").append(----).append("</dc:source>");
-    //xmlBuilder.append("<dc:relation>").append(----).append("</dc:relation>");
-    //>>>not relevant!? Otherwise refer to RFC 4646
-    //xmlBuilder.append("<dc:language>").append("").append("</dc:language>");
-    //Not relevant?!
-    //xmlBuilder.append("<dc:coverage>").append("").append("</dc:coverage>");
-    xmlBuilder.append("</oai_dc:dc>");
-
-    return xmlBuilder.toString();
-  }
-
-  @Override
-  protected Element createCommunitySpecificElement(TransferTaskContainer pContainer) throws MetaDataExtractionException {
-    //not needed here  
-    return null;
-  }
-
-  @Override
-  public String getName() {
-    return "DublinCoreMetadataExtractor";
-  }
+    @Override
+    public String getName() {
+        return "DublinCoreMetadataExtractor";
+    }
 
 //  public static void main(String[] args) throws Exception {
 //    DigitalObject dob = DigitalObject.factoryNewDigitalObject("1234567890");

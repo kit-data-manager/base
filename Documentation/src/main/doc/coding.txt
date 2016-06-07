@@ -17,11 +17,13 @@ The typical access to KIT Data Manager services for basic (remote) use cases is 
 |Staging Service|Service for initiating data transfers task to and from KIT Data Manager. This service does not take care of the actual transfer!
 |DataOrganization Service|Access to the DataOrganization of Digital Objects as soon as it is extractred during ingest.
 |Sharing Service|Obtaining and changing access permissions for secured resources (e.g. Study, Investigation, Digital Object).
-|Data Workflow Service|Apply processing tasks or workflows to digital objects in the repository system.
+|Data Workflow Service|Apply processing tasks or workflows to Digital Objects in the repository system.
 |================================================================================================================================================
 
-You'll find the documentation of all of these services in your KIT Data Manager distribution. All these REST interfaces are secured via oAuth 1.0. In order to 
-authorize the access to a service, you have to provide an oAuth header with each REST call using the following oAuth parameters: 
+You'll find the documentation of all of these services in your KIT Data Manager distribution. All these REST interfaces are secured via OAuth 1.0. 
+The OAuth implementation used for KIT Data Manager is kept rather simple for the time being. There is no management of different consumers, thus the 
+consumer key and secret are always the same and both have the value `secret`. In order to authorize the access to a service, you have to provide an 
+OAuth header with each REST call using the following OAuth parameters: 
 
 [cols="m,n", options="header"]
 |================================================================================================================================================
@@ -52,6 +54,9 @@ The implementation classes and default service base URLs are shown in the follow
 ||http://kitdm-host:8080/KITDM/rest/dataworkflow/
 |================================================================================================================================================
 
+[NOTE]
+You'll find some of the following and other examples withint the code base of KIT Data Manager in the link:https://github.com/kit-data-manager/base/tree/master/Sample[Sample module]
+
 In Java, the access to the different services looks quite similar. The following example shows how to create the BasicMetadata structure for a new Digital Object:
 
 [source,java]
@@ -64,13 +69,13 @@ SimpleRESTContext context = new SimpleRESTContext(accessKey, accessSecret);
 
 //First, create temporary objects which contain the attributes you want to provide for the metadata entities.
 //It is recommended to collect as many attributes as possible in order to be able to distinguish registered metadata entities as good as possible.
-//At least topic/label should be provided for studies, investigations and digital objects.
+//At least topic/label should be provided for studies, investigations and Digital Objects.
 
 //Collect all study attributes and return it as a temporary object.
 Study newStudy = getStudy(); 
 //Collect all investigation attributes and return it as a temporary object.
 Investigation newInvestigation = getInvestigation(); 
-//Collect all digital object attributes and return it as a temporary object.
+//Collect all Digital Object attributes and return it as a temporary object.
 DigitalObject newDigitalObject = getDigitalObject(); 
 
 //Instantiate BaseMetaDataRestClient using the base URL and the security context, both defined above
@@ -86,7 +91,7 @@ InvestigationWrapper investigationWrapper = client.addInvestigationToStudy(newSt
 //Assign returned investigation to 'newInvestigation' as the created entity now contains a valid investigationId.
 newInvestigation = investigationWrapper.getEntities().get(0);
 
-//Use the investigationId to add a new digital object to the investigation just created.
+//Use the investigationId to add a new Digital Object to the investigation just created.
 DigitalObjectWrapper digitalObjectWrapper = client.addDigitalObjectToInvestigation(newInvestigation.getInvestigationId(), newDigitalObject, defaultGroup);
 //Assign returned digitalObject to 'newDigitalObject' as the created entity now contains a valid objectId.
 newDigitalObject = digitalObjectWrapper.getEntities().get(0);
@@ -109,7 +114,7 @@ String uniqueAPIdentifier = stagingClient.getAccessPointById(accessPointId, cont
 //To identify the object you have to use the DigitalObjectId which is NOT identical with the objectId we were talking about before.
 String digitalObjectId = newDigitalObject.getDigitalObjectId().getStringRepresentation();
 IngestInformationWrapper ingest = stagingClient.createIngest(digitalObjectId, uniqueAPIdentifier);
-//Note: As of KIT Data Manager 1.1 the ingest can also be created using the numeric ids of digital object and access point.
+//Note: As of KIT Data Manager 1.1 the ingest can also be created using the numeric ids of Digital Object and access point.
 //Therefore, the following call would lead to the same result as the call above: 
 //IngestInformationWrapper ingest = stagingClient.createIngest(Long.toString(newDigitalObject.getBaseId()), Long.toString(accessPointId));
 
@@ -118,19 +123,19 @@ long ingestId = ingest.getEntities().get(0).getId();
 
 //As the ingest preparation takes place synchronously, the ingest is usable immediately.
 //To be sure the current status can be polled by calling:
-IngestInformationWrapper wrapper = stagingClient.getIngestbyId(ingestId);
+IngestInformationWrapper wrapper = stagingClient.getIngestById(ingestId);
 int status = wrapper.getEntities().get(0).getStatus();
 
 //If the status is 4 (INGEST_STATUS.PRE_INGEST_SCHEDULED), data can be uploaded to the URL obtainable by:
-IngestInformationWrapper wrapper = stagingClient.getIngestbyId(ingestId);
-URL dataUploadFolder = wrapper.getEntities().get(0).getDataFolderURL();
+wrapper = stagingClient.getIngestById(ingestId);
+URL dataUploadFolder = wrapper.getEntities().get(0).getDataFolderUrl();
 
 //If the upload has finished, the status has to be set to 16 (INGEST_STATUS.PRE_INGEST_FINISHED) in order to trigger archiving of the data.
 //updateIngest() returns a ClientResponse object that can be checked for success via response.getStatus() == 200
 stagingClient.updateIngest(ingestId, null, INGEST_STATUS.PRE_INGEST_FINISHED.getId());
 
 //If further monitoring is required, you can wait for a status change to status 128 (INGEST_STATUS.INGEST_FINISHED), which means that archiving has finished.
-IngestInformationWrapper wrapper = stagingClient.getIngestbyId(ingestId);
+wrapper = stagingClient.getIngestById(ingestId);
 boolean ingestFinished = wrapper.getEntities().get(0).getStatus() == INGEST_STATUS.INGEST_FINISHED.getId();
 --------------------------------------
 
@@ -407,33 +412,33 @@ There are many different opportunities to reduce the amount of returned data and
 
 [source,java]
 --------------------------------------
-//Return only the first 10 digital objects for pagination.
+//Return only the first 10 Digital Objects for pagination.
 List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o", DigitalObject.class, 0, 10);
-//Return all digital objects from investigation with id 5.
+//Return all Digital Objects from investigation with id 5.
 List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o WHERE o.investigation.investigationId=5", DigitalObject.class);
-//Return all digital objects in any investigation of the study with id 3.
+//Return all Digital Objects in any investigation of the study with id 3.
 List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o WHERE o.investigation.study.studyId=3", DigitalObject.class);
-//Return only the labels of all digital objects.
+//Return only the labels of all Digital Objects.
 List<String> labels = mgr.findResultList("SELECT o.label FROM DigitalObject o", String.class);
 
 //When providing query parameters a proper escaping, e.g. of strings, should be desired. Therefor, query arguments can be provided.
-//In the following call all digital objects containing 'test' in their note field are returned. The argument array contains the value 
+//In the following call all Digital Objects containing 'test' in their note field are returned. The argument array contains the value 
 //on the first position and can therefore be referenced by ?1 in the query.
 List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o WHERE o.note LIKE ?1", new Object[]{"%test%"}, DigitalObject.class);
 
 //Finally, parameters may contain collections to query for different value for a single field.
-//The following list contains three base ids for which the according digital object should be returned.
+//The following list contains three base ids for which the according Digital Object should be returned.
 List<Long> relevantIds = Arrays.asList(new Long[]{1l, 2l, 10l});
 //JPA will take care of putting the collection elements into the query including proper escaping.
 List<DigitalObject> objects = mgr.findResultList("SELECT o FROM DigitalObject o WHERE o.baseId IN ?1", new Object[]{relevantIds}, DigitalObject.class);
 --------------------------------------
 
-With such queries a very good performance while reading Base Metadata can be achieved. The same applies to updates. If e.g. a digital object
+With such queries a very good performance while reading Base Metadata can be achieved. The same applies to updates. If e.g. a Digital Object
 should be updated this can be done in two different ways:
 
 [source,java]
 --------------------------------------
-//Obtain the digital object with base id 1.
+//Obtain the Digital Object with base id 1.
 DigitalObject object = mgr.find(DigitalObject.class, 1l);
 object.setNote("Updated note");
 //Update the object in the database.
@@ -444,7 +449,7 @@ object = mgr.update(object);
 //int affectedEntities = mdm.performUpdate("UPDATE DigitalObject o SET o.note='Updated note' WHERE o.baseId=1");
 --------------------------------------
 
-For more details about the syntax of custom queries please refer to the link:http://docs.oracle.com/javaee/6/tutorial/doc/bnbuf.html[JPQL Standard].
+For more details about the syntax of custom queries please refer to the link:http://docs.oracle.com/javaee/6/tutorial/doc/bnbuf.htlml[JPQL Standard].
 
 Adding Authorization on Method-Level
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

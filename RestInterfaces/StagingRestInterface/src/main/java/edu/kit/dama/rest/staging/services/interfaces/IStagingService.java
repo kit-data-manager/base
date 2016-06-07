@@ -23,8 +23,8 @@ import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.staging.entities.interfaces.IDefaultDownloadInformation;
 import edu.kit.dama.staging.entities.interfaces.IDefaultIngestInformation;
 import edu.kit.dama.staging.entities.interfaces.IDefaultStagingAccessPointConfiguration;
+import edu.kit.dama.staging.entities.interfaces.IDefaultStagingProcessor;
 import edu.kit.dama.staging.entities.interfaces.IDefaultTransferTaskContainer;
-import edu.kit.dama.staging.entities.interfaces.ISimpleStagingAccessPointConfiguration;
 import edu.kit.dama.staging.entities.interfaces.ISimpleTransferInformation;
 import edu.kit.dama.util.Constants;
 import javax.ws.rs.DELETE;
@@ -90,10 +90,7 @@ public interface IStagingService extends ICommonRestInterface {
      * @param results The max. number of results. [default: 10]
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of TransferInformation entities. All returned entities are
-     * serialized using the <b>simple</b> object graph of
-     * IngestInformationWrapper, which removes all attributes but the id from
-     * the returned entities.
+     * @return A list of TransferInformation entities.
      *
      * @see edu.kit.dama.staging.entities.ingest.IngestInformation
      * @see edu.kit.dama.rest.staging.types.IngestInformationWrapper
@@ -102,8 +99,8 @@ public interface IStagingService extends ICommonRestInterface {
     @GET
     @Path(value = "/ingests/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.ISimpleTransferInformation>")
-    IEntityWrapper<? extends ISimpleTransferInformation> getIngestIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.IDefaultIngestInformation>")
+    IEntityWrapper<? extends IDefaultIngestInformation> getIngests(
             @QueryParam("ownerId") String ownerId,
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("objectId") String objectId,
@@ -119,22 +116,24 @@ public interface IStagingService extends ICommonRestInterface {
      *
      * @summary Create a new ingest entity.
      *
+     * @param groupId The group id the ingest belongs to [default: USERS]
      * @param objectId The object id for which an ingest should be created.
      * Valid values for this argument are either a digitalObjectIdentifier
      * (unique identifier of a digital object, e.g.
      * efb7aabd-5f35-41fc-8750-90de31b9231e) or the primary key (the database
      * primary key/the base id of the object, e.g. 4711). In future versions
      * this parameter may change to support only the numeric identifier.
-     * @param accessPointId The unique identifier (e.g.
+     * @param accessPointId The id or unique identifier (e.g. 1 or
      * 86ad265e-ddf3-45fc-9c2e-c9c5bdb978b2) of the AccessPoint to use to
-     * perform this ingest.
-     * @param groupId The group id the ingest belongs to [default: USERS]
+     * perform this ingest. In future versions this parameter may change to
+     * support only the numeric identifier.
+     * @param stagingProcessors A JSON array in the form [1,2,3] containing ids
+     * of the staging processors associtated with this ingest. The content of
+     * this element won't affect the assignment of staging processors marked as
+     * 'default'.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The created IngestInformation entity serialized using the
-     * <b>default</b> object graph of IngestInformation, which contains all
-     * basic fields of the ingest information. Enclosed entities are returned
-     * with their id and might be queried separately.
+     * @return The created IngestInformation entity.
      *
      * @see edu.kit.dama.staging.entities.ingest.IngestInformation
      * @see edu.kit.dama.rest.staging.types.IngestInformationWrapper
@@ -147,6 +146,7 @@ public interface IStagingService extends ICommonRestInterface {
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("objectId") String objectId,
             @FormParam("accessPoint") String accessPointId,
+            @FormParam("stagingProcessors") String stagingProcessors,
             @javax.ws.rs.core.Context HttpContext hc);
 
     /**
@@ -189,8 +189,8 @@ public interface IStagingService extends ICommonRestInterface {
     @GET
     @Path(value = "/ingests/count")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.ISimpleTransferInformation>")
-    IEntityWrapper<? extends ISimpleTransferInformation> getIngestsCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.IDefaultIngestInformation")
+    IEntityWrapper<? extends IDefaultIngestInformation> getIngestsCount(
             @QueryParam("ownerId") String ownerId,
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("status") @DefaultValue(Constants.REST_ALL_INT) Integer status,
@@ -204,11 +204,7 @@ public interface IStagingService extends ICommonRestInterface {
      * @param id The id of the ingest to query for.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The ingest with the provided id or one of the status codes below.
-     * The returned entity is serialized using the <b>default</b> object graph
-     * of IngestInformationWrapper, which contains all basic fields of the
-     * ingest information. Enclosed entities are returned with their id and
-     * might be queried separately.
+     * @return The ingest with the provided id.
      *
      * @see edu.kit.dama.staging.entities.ingest.IngestInformation
      * @see edu.kit.dama.rest.staging.types.IngestInformationWrapper
@@ -293,10 +289,7 @@ public interface IStagingService extends ICommonRestInterface {
      * @param results The max. number of results. [default: 10]
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of IngestInformation entities. All returned entities are
-     * serialized using the <b>simple</b> object graph of
-     * IngestInformationWrapper, which removes all attributes but the id from
-     * the returned entities.
+     * @return A list of IngestInformation entities.
      *
      * @see edu.kit.dama.staging.entities.ingest.IngestInformation
      * @see edu.kit.dama.rest.staging.types.IngestInformationWrapper
@@ -304,8 +297,8 @@ public interface IStagingService extends ICommonRestInterface {
     @GET
     @Path(value = "/ingests/expired")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.ISimpleTransferInformation>")
-    IEntityWrapper<? extends ISimpleTransferInformation> getExpiredIngests(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.IDefaultIngestInformation>")
+    IEntityWrapper<? extends IDefaultIngestInformation> getExpiredIngests(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -368,10 +361,7 @@ public interface IStagingService extends ICommonRestInterface {
      * @param results The max. number of results. [default: 10]
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of DownloadInformation entities. All returned entities are
-     * serialized using the <b>simple</b> object graph of
-     * DownloadInformationWrapper, which removes all attributes but the id from
-     * the returned entities.
+     * @return A list of DownloadInformation entities.
      *
      * @see edu.kit.dama.staging.entities.download.DownloadInformation
      * @see edu.kit.dama.rest.staging.types.DownloadInformationWrapper
@@ -380,8 +370,8 @@ public interface IStagingService extends ICommonRestInterface {
     @GET
     @Path(value = "/downloads/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.ISimpleTransferInformation>")
-    IEntityWrapper<? extends ISimpleTransferInformation> getDownloadIds(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.IDefaultIngestInformation>")
+    IEntityWrapper<? extends IDefaultDownloadInformation> getDownloads(
             @QueryParam("ownerId") String ownerId,
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("objectId") String objectId,
@@ -405,15 +395,17 @@ public interface IStagingService extends ICommonRestInterface {
      * efb7aabd-5f35-41fc-8750-90de31b9231e) or the primary key (the database
      * primary key/the base id of the object, e.g. 4711). In future versions
      * this parameter may change to support only the numeric identifier.
-     * @param accessPointId The unique identifier (e.g.
+     * @param accessPointId The id or unique identifier (e.g. 1 or
      * 86ad265e-ddf3-45fc-9c2e-c9c5bdb978b2) of the AccessPoint to use to
-     * perform this download.
+     * perform this download. In future versions this parameter may change to
+     * support only the numeric identifier.
+     * @param stagingProcessors A JSON array in the form [1,2,3] containing ids
+     * of staging processors associtated with this download. The content of this
+     * element won't affect the assignment of staging processors marked as
+     * 'default'.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The created DownloadInformation entity serialized using the
-     * <b>default</b> object graph of DownloadInformationWrapper, which contains
-     * all basic fields of the download information. Enclosed entities are
-     * returned with their id and might be queried separately.
+     * @return The created DownloadInformation entity.
      *
      * @see edu.kit.dama.staging.entities.download.DownloadInformation
      * @see edu.kit.dama.rest.staging.types.DownloadInformationWrapper
@@ -426,6 +418,7 @@ public interface IStagingService extends ICommonRestInterface {
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("objectId") String objectId,
             @FormParam("accessPoint") String accessPointId,
+            @FormParam("stagingProcessors") String stagingProcessors,
             @javax.ws.rs.core.Context HttpContext hc);
 
     /**
@@ -478,11 +471,7 @@ public interface IStagingService extends ICommonRestInterface {
      * @param id The id of the download to query for.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return The download with the provided id or one of the status codes
-     * below. The returned entity is serialized using the <b>default</b> object
-     * graph of DownloadInformation, which contains all basic fields of the
-     * download information. Enclosed entities are returned with their id and
-     * might be queried separately.
+     * @return The download with the provided id.
      *
      * @see edu.kit.dama.staging.entities.download.DownloadInformation
      * @see edu.kit.dama.rest.staging.types.DownloadInformationWrapper
@@ -563,10 +552,7 @@ public interface IStagingService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of DownloadInformation entities. All returned entities are
-     * serialized using the <b>simple</b> object graph of
-     * DownloadInformationWrapper, which removes all attributes but the id from
-     * the returned entities.
+     * @return A list of DownloadInformation entities.
      *
      * @see edu.kit.dama.staging.entities.download.DownloadInformation
      * @see edu.kit.dama.rest.staging.types.DownloadInformationWrapper
@@ -646,15 +632,13 @@ public interface IStagingService extends ICommonRestInterface {
      *
      * @param pUniqueIdentifier The unique identifier of an access point. If
      * this argument is provided, one or no result are returned.
+     * @param pIncludeDisabled Include disabled access points (default: false)
      * @param pGroupId The id of the group to which the access points belong.
      * This argument should never be null. If no groupId is provided, the id of
      * the default group USERS will be used.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of StagingAccessPointConfiguration entities. All returned
-     * entities are serialized using the <b>simple</b> object graph of
-     * StagingAccessPointConfigurationWrapper, which removes all attributes but
-     * the id from the returned entities.
+     * @return A list of StagingAccessPointConfiguration entities.
      *
      * @see
      * edu.kit.dama.rest.staging.types.StagingAccessPointConfigurationWrapper
@@ -662,8 +646,13 @@ public interface IStagingService extends ICommonRestInterface {
     @GET
     @Path(value = "/accesspoints/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.ISimpleStagingAccessPointConfiguration>")
-    IEntityWrapper<? extends ISimpleStagingAccessPointConfiguration> getStagingAccessPoints(@QueryParam("uniqueIdentifier") String pUniqueIdentifier, @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String pGroupId, @javax.ws.rs.core.Context HttpContext hc);
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.IDefaultStagingAccessPointConfiguration>")
+    IEntityWrapper<? extends IDefaultStagingAccessPointConfiguration> getStagingAccessPoints(
+            @QueryParam("uniqueIdentifier") String pUniqueIdentifier,
+            @QueryParam("includeDisabled") @DefaultValue("false") Boolean pIncludeDisabled,
+            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String pGroupId,
+            @javax.ws.rs.core.Context HttpContext hc
+    );
 
     /**
      * Get the staging access point configuration for the provided id. If no
@@ -676,17 +665,51 @@ public interface IStagingService extends ICommonRestInterface {
      * @param pId The numeric id of the staging access point.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of StagingAccessPointConfiguration entities. All returned
-     * entities are serialized using the <b>default</b> object graph of
-     * StagingAccessPointConfigurationWrapper, which contains all attributes.
-     *
-     * @see
-     * edu.kit.dama.rest.staging.types.StagingAccessPointConfigurationWrapper
+     * @return A single StagingAccessPointConfiguration entity or an empty list
+     * if there is no access point for the provided id.
      */
     @GET
     @Path(value = "/accesspoints/{id}")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.IDefaultStagingAccessPointConfiguration>")
     IEntityWrapper<? extends IDefaultStagingAccessPointConfiguration> getStagingAccessPoint(@PathParam("id") Long pId, @javax.ws.rs.core.Context HttpContext hc);
+
+    /**
+     * Get a list of staging processors that can be used for data transfer
+     * from/to a KIT Data Manager instance. Staging processors can be obtains by
+     * group. If a groupId is provided, all staging processors usable by this
+     * group are returned. If no groupId is provided, all processors usable by
+     * the default group 'USERS' are returned.
+     *
+     * @summary Get a list of usable staging processors.
+     *
+     * @param pGroupId The id of the group to which the processor belong. If no
+     * groupId is provided, the id of the default group USERS will be used.
+     * @param hc The HttpContext for OAuth check.
+     *
+     * @return A list of StagingProcessor entities.
+     */
+    @GET
+    @Path(value = "/processors/")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.IDefaultStagingProcessor>")
+    IEntityWrapper<? extends IDefaultStagingProcessor> getStagingProcessors(@QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String pGroupId, @javax.ws.rs.core.Context HttpContext hc);
+
+    /**
+     * Get the staging processor for the provided id.
+     *
+     * @summary Get the staging processor for the provided id.
+     *
+     * @param pId The numeric id of the staging processor.
+     * @param hc The HttpContext for OAuth check.
+     *
+     * @return A single StagingProcessor entity or an empty list if there is no
+     * processor for the provided id.
+     */
+    @GET
+    @Path(value = "/processors/{id}")
+    @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.IDefaultStagingProcessor>")
+    IEntityWrapper<? extends IDefaultStagingProcessor> getStagingProcessor(@PathParam("id") Long pId, @javax.ws.rs.core.Context HttpContext hc);
 
 }

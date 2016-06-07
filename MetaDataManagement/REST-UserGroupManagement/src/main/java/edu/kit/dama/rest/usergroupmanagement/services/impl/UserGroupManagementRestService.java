@@ -37,11 +37,9 @@ import edu.kit.dama.rest.admin.types.UserDataWrapper;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.admin.UserGroup;
 import edu.kit.dama.mdm.admin.interfaces.IDefaultUserGroup;
-import edu.kit.dama.mdm.admin.interfaces.ISimpleUserGroup;
 import edu.kit.dama.mdm.core.authorization.SecureMetaDataManager;
 import edu.kit.dama.mdm.base.UserData;
 import edu.kit.dama.mdm.base.interfaces.IDefaultUserData;
-import edu.kit.dama.mdm.base.interfaces.ISimpleUserData;
 import edu.kit.dama.mdm.core.jpa.MetaDataManagerJpa;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.base.types.CheckServiceResponse;
@@ -65,13 +63,13 @@ public final class UserGroupManagementRestService implements IUserGroupService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserGroupManagementRestService.class);
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserGroup> getGroupIds(Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserGroup> getGroups(Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(Constants.USERS_GROUP_ID));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             LOGGER.debug("Try getting group ids ({}-{}).", first, first + results);
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserGroup.simple");
-            return new UserGroupWrapper(mdm.findResultList("SELECT x FROM UserGroup x", first, results));
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserGroup.default");
+            return new UserGroupWrapper(mdm.findResultList("SELECT x FROM UserGroup x", UserGroup.class, first, results));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain group ids.", ex);
             throw new WebApplicationException(401);
@@ -112,7 +110,7 @@ public final class UserGroupManagementRestService implements IUserGroupService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserGroup> getGroupCount(HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserGroup> getGroupCount(HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(Constants.USERS_GROUP_ID));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -152,6 +150,9 @@ public final class UserGroupManagementRestService implements IUserGroupService {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(Constants.USERS_GROUP_ID));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
+            if (ctx.getRoleRestriction().lessThan(Role.MANAGER)) {
+                throw new UnauthorizedAccessAttemptException("Role " + ctx.getRoleRestriction() + " < MANAGER");
+            }
             LOGGER.debug("Try updating group with id {}", id);
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserGroup.default");
             UserGroup group = mdm.findSingleResult("SELECT x FROM UserGroup x WHERE x.id=" + id, UserGroup.class);
@@ -164,7 +165,7 @@ public final class UserGroupManagementRestService implements IUserGroupService {
             group = mdm.save(group);
             return new UserGroupWrapper(group);
         } catch (UnauthorizedAccessAttemptException ex) {
-            LOGGER.error("Failed to create group.", ex);
+            LOGGER.error("Context " + ctx + " is not authorized to update group.", ex);
             throw new WebApplicationException(401);
         } finally {
             mdm.close();
@@ -178,24 +179,27 @@ public final class UserGroupManagementRestService implements IUserGroupService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserData> getGroupUsers(Long groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserData> getGroupUsers(Long groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(Constants.USERS_GROUP_ID));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
+            if (ctx.getRoleRestriction().lessThan(Role.MEMBER)) {
+                throw new UnauthorizedAccessAttemptException("Role " + ctx.getRoleRestriction() + " < MEMBER");
+            }
             LOGGER.debug("Obtaining users of group {}", groupId);
             //Build a query which joins KIT DM and AAI User/Group entities. 
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.simple");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.default");
             List<UserData> users = mdm.findResultList("SELECT damau FROM "
                     + "UserData damau, UserGroup damag, Groups aaig, Users aaiu, Memberships aaim WHERE "
                     + "damag.id=" + groupId + " AND "
-                    + "aaiu.userId=dama.distinguishedName AND "
+                    + "aaiu.userId=damau.distinguishedName AND "
                     + "aaim.user.id=aaiu.id AND "
                     + "aaim.group.id=aaig.id AND "
                     + "aaig.groupId=damag.groupId", UserData.class, first, results);
             LOGGER.debug("Obtained {} user entries", users.size());
             return new UserDataWrapper(users);
         } catch (UnauthorizedAccessAttemptException ex) {
-            LOGGER.error("Failed to obtain group users", ex);
+            LOGGER.error("Context " + ctx + " is not authorized to list group users.", ex);
             throw new WebApplicationException(401);
         } finally {
             mdm.close();
@@ -208,7 +212,20 @@ public final class UserGroupManagementRestService implements IUserGroupService {
         LOGGER.debug("Try adding user with id '{}' to group with id '{}' ", userId, id);
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
-            LOGGER.debug("Obtaining group for id {}", id);
+            LOGGER.debug("Checking whether userId '{}' is a distinguished name or a primary key of a UserData entity.", userId);
+            try {
+                long userDataId = Long.parseLong(userId);
+                LOGGER.debug("Value is parsable to Long. Trying to find UserData for id {}", userDataId);
+                UserData user = mdm.find(UserData.class, userDataId);
+                if (user != null) {
+                    LOGGER.debug("UserData found. Using distinguished name '{}'", user.getDistinguishedName());
+                    userId = user.getDistinguishedName();
+                }
+            } catch (NumberFormatException ex) {
+                //seems not to be the long id of a UserData entity
+                LOGGER.debug("Value is not parsable to Long. Assuming userId '{}' to be a distinguished name.", userId);
+            }
+            LOGGER.debug("Obtaining group for id '{}'", id);
             UserGroup group = mdm.find(UserGroup.class, id);
             LOGGER.debug("Switching security context to group '{}'", group.getGroupId());
             IRoleRestriction maxRole = GroupServiceLocal.getSingleton().getMaximumRole(new GroupId(group.getGroupId()), ctx.getUserId(), ctx);
@@ -237,8 +254,12 @@ public final class UserGroupManagementRestService implements IUserGroupService {
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             LOGGER.debug("Try to remove user with id {} from group with id {}", userId, id);
-            UserGroup group = mdm.findSingleResult("SELECT x FROM UserGroup x WHERE x.id=" + id, UserGroup.class);
+            UserGroup group = mdm.find(UserGroup.class, id);
             UserData user = mdm.findSingleResult("SELECT x FROM UserData x WHERE x.userId=" + userId, UserData.class);
+            LOGGER.debug("Switching security context to group '{}'", group.getGroupId());
+            IRoleRestriction maxRole = GroupServiceLocal.getSingleton().getMaximumRole(new GroupId(group.getGroupId()), ctx.getUserId(), ctx);
+            ctx = new AuthorizationContext(ctx.getUserId(), new GroupId(group.getGroupId()), (Role) maxRole);
+            LOGGER.debug("Try to remove user {} from group {}", user, group);
             GroupServiceLocal.getSingleton().removeUser(new GroupId(group.getGroupId()), new UserId(user.getDistinguishedName()), ctx);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to remove user from group.", ex);
@@ -253,14 +274,19 @@ public final class UserGroupManagementRestService implements IUserGroupService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserData> getUsersIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserData> getUsers(String groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
-            LOGGER.debug("Try to get user ids ({}-{}) for group {}", first, first + results, groupId);
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.simple");
-            return new UserDataWrapper(mdm.findResultList("SELECT x FROM UserData x", first, results));
+            if (ctx.getRoleRestriction().lessThan(Role.MANAGER)) {
+                throw new UnauthorizedAccessAttemptException("Role " + ctx.getRoleRestriction() + " < MANAGER");
+            }
+
+            LOGGER.debug("Try to get users ({}-{})", first, first + results);
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.default");
+            return new UserDataWrapper(mdm.findResultList("SELECT x FROM UserData x", UserData.class, first, results));
         } catch (UnauthorizedAccessAttemptException ex) {
+            LOGGER.error("Context " + ctx + " is not authorized to obtain all users.", ex);
             throw new WebApplicationException(401);
         } finally {
             mdm.close();
@@ -308,7 +334,7 @@ public final class UserGroupManagementRestService implements IUserGroupService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserData> getUserCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserData> getUserCount(String groupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(Constants.USERS_GROUP_ID));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -335,6 +361,9 @@ public final class UserGroupManagementRestService implements IUserGroupService {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(Constants.USERS_GROUP_ID));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
+            if (userId > 0 && ctx.getRoleRestriction().lessThan(Role.MEMBER)) {
+                throw new UnauthorizedAccessAttemptException("Role " + ctx.getRoleRestriction() + " < MEMBER");
+            }
             UserData user;
             LOGGER.debug("Getting user details for user with id {} (0 = caller)", userId);
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.default");
@@ -345,7 +374,7 @@ public final class UserGroupManagementRestService implements IUserGroupService {
             }
             return new UserDataWrapper(user);
         } catch (UnauthorizedAccessAttemptException ex) {
-            LOGGER.error("Failed to get user details.", ex);
+            LOGGER.error("Context " + ctx + " is not authorized to obtain user details.", ex);
             throw new WebApplicationException(401);
         } finally {
             mdm.close();
@@ -365,13 +394,18 @@ public final class UserGroupManagementRestService implements IUserGroupService {
                 throw new WebApplicationException(404);
             }
 
+            if (!ctx.getUserId().getStringRepresentation().equals(user.getDistinguishedName()) && ctx.getRoleRestriction().lessThan(Role.MANAGER)) {
+                //no self update
+                throw new UnauthorizedAccessAttemptException("Role " + ctx.getRoleRestriction() + " < MANAGER");
+            }
+
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setEmail(email);
             user = mdm.save(user);
             return new UserDataWrapper(user);
         } catch (UnauthorizedAccessAttemptException ex) {
-            LOGGER.error("Failed to update user.", ex);
+            LOGGER.error("Context " + ctx + " is not authorized to update user with id " + userId, ex);
             throw new WebApplicationException(401);
         } finally {
             mdm.close();
@@ -379,7 +413,34 @@ public final class UserGroupManagementRestService implements IUserGroupService {
     }
 
     @Override
-    public Response deleteUser(Long userId, HttpContext hc) {
+    public Response deleteUser(String groupId, Long userId, HttpContext hc) {
+        IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
+        IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
+        try {
+            LOGGER.debug("Try to delete user with id {}", userId);
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.default");
+
+            UserData user = mdm.findSingleResult("SELECT x FROM UserData x WHERE x.userId=" + userId, UserData.class);
+            if (user == null) {
+                throw new WebApplicationException(404);
+            }
+
+            if (ctx.getRoleRestriction().lessThan(Role.ADMINISTRATOR)) {
+                //no self update
+                throw new UnauthorizedAccessAttemptException("Role " + ctx.getRoleRestriction() + " < ADMINISTRATOR");
+            }
+
+            UserServiceLocal.getSingleton().setRoleRestriction(new UserId(user.getDistinguishedName()), Role.NO_ACCESS, ctx);
+            return Response.ok().build();
+        } catch (UnauthorizedAccessAttemptException ex) {
+            LOGGER.error("Context " + ctx + " is not authorized to deactivate (delete) user with id " + userId, ex);
+            throw new WebApplicationException(401);
+        } catch (EntityNotFoundException ex) {
+
+        } finally {
+            mdm.close();
+        }
+
         LOGGER.warn("Deleting a user is currently not supported.");
         throw new WebApplicationException(405);
     }

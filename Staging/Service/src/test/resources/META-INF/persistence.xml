@@ -26,86 +26,60 @@ limitations under the License.
 ***              add a new persistence unit for your own.             ***
 *************************************************************************-->
 <persistence version="1.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence     http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd">
-  <!-- *************************************************************************
-  ***                                                                   ***
-  ***               M O D U L :  A U T H O R I S A T I O N              ***
-  ***                                                                   ***
-  *************************************************************************-->
-  <!-- *************************************************************************
-  ***                    AuthorizationUnit-Test                         ***
-  *************************************************************************-->
-  <persistence-unit name="AuthorizationUnit-Test" transaction-type="RESOURCE_LOCAL">
-    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-    <class>edu.kit.dama.authorization.entities.impl.Group</class>
-    <class>edu.kit.dama.authorization.entities.impl.User</class>
-    <class>edu.kit.dama.authorization.entities.impl.Membership</class>
-    <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
-    <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
-    <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
-    <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
-    <class>edu.kit.dama.authorization.entities.impl.Grant</class>
-    <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
-    <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
-    <shared-cache-mode>NONE</shared-cache-mode>
-    <properties>
-      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://ipelsdf1.lsdf.kit.edu:3306/lsdf"/>
-      <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
-      <property name="javax.persistence.jdbc.user" value="lsdftest"/>
-      <property name="javax.persistence.jdbc.password" value="test4fdsl"/>
-      <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
-      <property name="eclipselink.jdbc.batch-writing.size" value="1000"/>
-      <property name="eclipselink.logging.level" value="SEVERE"/>
-      <property name="eclipselink.canonicalmodel.subpackage" value="test"/>
-      <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
-    </properties>
-  </persistence-unit>
-  <!-- *************************************************************************
-  ***                    MDM-Core-Test                                  ***
-  *************************************************************************-->
-  <persistence-unit name="MDM-Core-Test" transaction-type="RESOURCE_LOCAL">
-    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-    <class>edu.kit.dama.authorization.annotations.resources.TestEntity</class>
-    <class>edu.kit.dama.authorization.annotations.resources.SecurityTestEntity</class>
-    <class>edu.kit.dama.authorization.entities.impl.Group</class>
-    <class>edu.kit.dama.authorization.entities.impl.User</class>
-    <class>edu.kit.dama.authorization.entities.impl.Membership</class>
-    <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
-    <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
-    <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
-    <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
-    <class>edu.kit.dama.authorization.entities.impl.Grant</class>
-    <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
-    <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
-    <shared-cache-mode>NONE</shared-cache-mode>
-    <properties>
-      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://ipelsdf1.lsdf.kit.edu:3306/lsdf"/>
-      <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
-      <property name="javax.persistence.jdbc.user" value="lsdftest"/>
-      <property name="javax.persistence.jdbc.password" value="test4fdsl"/>
-      <property name="eclipselink.jdbc.batch-writing" value="JDBC"/>
-      <property name="eclipselink.jdbc.batch-writing.size" value="1000"/>
-      <property name="eclipselink.logging.level" value="SEVERE"/>
-      <property name="eclipselink.canonicalmodel.subpackage" value="test"/>
-      <property name="eclipselink.ddl-generation" value="create-tables"/>
-    </properties>
-  </persistence-unit>
-  <persistence-unit name="Staging_Test" transaction-type="RESOURCE_LOCAL">
-    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-    <class>edu.kit.dama.staging.entities.ingest.IngestInformation</class>
-    <class>edu.kit.dama.staging.entities.download.DownloadInformation</class>
-    <class>edu.kit.dama.staging.entities.StagingAccessPointConfiguration</class>
-    <class>edu.kit.dama.staging.entities.StagingAccessProviderConfiguration</class>
-    <class>edu.kit.dama.staging.entities.StagingProcessor</class>
-    <properties>
-      <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:unit-testing-jpa"/>
-      <property name="javax.persistence.jdbc.user" value="sa"/>
-      <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver"/>
-      <property name="javax.persistence.jdbc.password" value=""/>
-      <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect"/>
-      <property name="hibernate.hbm2ddl.auto" value="drop-create"/>
-      <property name="eclipselink.logging.level" value="FINE"/>
-      <property name="eclipselink.canonicalmodel.subpackage" value="test"/>
-      <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
-    </properties>
-  </persistence-unit>
+    <!-- *************************************************************************
+    ***                                                                   ***
+    ***               M O D U L :  A U T H O R I S A T I O N              ***
+    ***                                                                   ***
+    *************************************************************************-->
+    <!-- *************************************************************************
+    ***                    AuthorizationUnit-Test                         ***
+    *************************************************************************-->
+    <persistence version="1.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence     http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd">
+        <persistence-unit name="AuthorizationUnit-Test" transaction-type="RESOURCE_LOCAL">
+            <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+            <class>edu.kit.dama.authorization.entities.impl.Group</class>
+            <class>edu.kit.dama.authorization.entities.impl.User</class>
+            <class>edu.kit.dama.authorization.entities.impl.Membership</class>
+            <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
+            <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
+            <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
+            <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
+            <class>edu.kit.dama.authorization.entities.impl.Grant</class>
+            <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+            <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
+            <class>edu.kit.dama.authorization.annotations.resources.TestEntity</class>
+            <class>edu.kit.dama.authorization.annotations.resources.SecurityTestEntity</class>
+            <properties>
+                <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:file:${java.io.tmpdir}/xdb1;sql.syntax_pgs=true"/>
+                <property name="javax.persistence.jdbc.user" value="sa"/>
+                <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver"/>
+                <property name="javax.persistence.jdbc.password" value=""/>
+                <property name="hibernate.connection.autocommit" value="true"/>
+                <property name="hibernate.show_sql" value="true"/>
+                <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect"/>
+                <property name="eclipselink.logging.level" value="SEVERE"/>
+            </properties>
+        </persistence-unit>
+    </persistence>
+    <!-- *************************************************************************
+    ***                    MDM-Core-Test                                  ***
+    *************************************************************************-->
+    <persistence-unit name="Staging_Test" transaction-type="RESOURCE_LOCAL">
+        <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+        <class>edu.kit.dama.staging.entities.ingest.IngestInformation</class>
+        <class>edu.kit.dama.staging.entities.download.DownloadInformation</class>
+        <class>edu.kit.dama.staging.entities.StagingAccessPointConfiguration</class>
+        <class>edu.kit.dama.staging.entities.StagingAccessProviderConfiguration</class>
+        <class>edu.kit.dama.staging.entities.StagingProcessor</class>
+        <properties>
+            <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:mem:unit-testing-jpa"/>
+            <property name="javax.persistence.jdbc.user" value="sa"/>
+            <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver"/>
+            <property name="javax.persistence.jdbc.password" value=""/>
+            <property name="eclipselink.ddl-generation" value="drop-and-create-tables"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect"/>
+            <property name="eclipselink.ddl-generation.output-mode" value="both"/>
+            <property name="eclipselink.create-ddl-jdbc-file-name" value="create.sql"/>
+        </properties>
+    </persistence-unit>
 </persistence>

@@ -77,7 +77,7 @@ public class MetadataIndexer {
   private String hostname = "localhost";
   private int port = 9300;
   private String cluster = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_CLUSTER_ID, "KITDataManager");
-  private String index = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_INDEX_ID, "dc");
+  private String index = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_INDEX_ID, "kitdatamanager").toLowerCase();
   private int tasks = 10;
 
   static {

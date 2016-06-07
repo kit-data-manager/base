@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
     <artifactId>RestInterfaces</artifactId>
     <name>RestInterfaces</name>
     <packaging>pom</packaging>
-    <version>1.2</version>
+    <version>1.3</version>
   
     <description>Module holding all REST interfaces available for KIT Data Manager. The actual implementation of each interface are in separate modules, 
         e.g. in module REST-DataOrganization or REST-Sharing as sub-modules of MetaDataManagement or inside the StagingClient module as sub-module of the Staging
@@ -163,6 +163,26 @@
             <version>1.8</version>
         </dependency>
         <dependency>
+            <groupId>com.sun.jersey.contribs.jersey-oauth</groupId>
+            <artifactId>oauth-signature</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey.contribs.jersey-oauth</groupId>
+            <artifactId>oauth-server</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey.contribs.jersey-oauth</groupId>
+            <artifactId>oauth-client</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
             <groupId>com.qmino</groupId>
             <artifactId>miredot-annotations</artifactId>
             <version>1.4.0</version>
@@ -170,12 +190,12 @@
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Authorization</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Commons</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
     </dependencies>
     

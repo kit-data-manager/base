@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,17 @@
 package edu.kit.dama.rest.dataorganization.test;
 
 import com.sun.jersey.test.framework.JerseyTest;
+import edu.kit.dama.commons.types.DigitalObjectId;
+import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
+import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
+import edu.kit.dama.mdm.dataorganization.impl.staging.CollectionNodeImpl;
 import edu.kit.dama.rest.dataorganization.types.DataOrganizationNodeWrapper;
 import edu.kit.dama.rest.dataorganization.client.impl.DataOrganizationRestClient;
 import edu.kit.dama.rest.dataorganization.types.DataOrganizationViewWrapper;
 import edu.kit.dama.rest.SimpleRESTContext;
 import edu.kit.dama.mdm.dataorganization.impl.staging.DataOrganizationNodeImpl;
+import edu.kit.dama.mdm.dataorganization.impl.staging.FileNodeImpl;
+import edu.kit.dama.mdm.dataorganization.impl.staging.FileTreeImpl;
 import edu.kit.dama.util.Constants;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -85,7 +91,7 @@ public class DataOrganizationServiceTest extends JerseyTest {
 
     @Test
     public void testRootNode() {
-        DataOrganizationNodeWrapper nw = client.getRootNode(null, 1l, 0,
+        DataOrganizationNodeWrapper nw = client.getRootNode(Constants.USERS_GROUP_ID, 1l, 0,
                 Integer.MAX_VALUE, Constants.DEFAULT_VIEW, ctx);
 
         assertEquals(nw.getEntities().size(), 1);
@@ -198,7 +204,21 @@ public class DataOrganizationServiceTest extends JerseyTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullId3() {
-        DataOrganizationNodeWrapper nw = client.getChildren(null, 1l, null, null,
-                null, null);
+        DataOrganizationNodeWrapper nw = client.getChildren(null, 1l, null, null, null, null);
     }
+
+    @Test
+    public void testDataOrganiztionView() {
+        IFileTree tree = new FileTreeImpl();
+        tree.setDigitalObjectId(new DigitalObjectId("abcd-efgh"));
+        FileNodeImpl fnode = new FileNodeImpl(null);
+        fnode.setNodeId(1l);
+        tree.getRootNode().addChild(fnode);
+        tree.setViewName("custom");
+        ICollectionNode node = new CollectionNodeImpl();
+        node.setName("collection");
+        tree.getRootNode().addChild(node);
+        DataOrganizationNodeWrapper nw = client.postView(null, 1l, tree, true, null);
+    }
+
 }

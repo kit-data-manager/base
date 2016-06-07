@@ -144,7 +144,7 @@ public class TikaMetadataExtractor extends AbstractStagingProcessor {
       esType = ELASTIC_SEARCH_DEFAULT_TYPE;
 
       esIndex = settings.getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_INDEX_ID,
-              ELASTIC_SEARCH_DEFAULT_INDEX);
+              ELASTIC_SEARCH_DEFAULT_INDEX).toLowerCase();
 
       LOGGER.debug("Port: {}, host: {}, cluster: {}, index: {}", port,
               host, esCluster, esIndex);

@@ -27,4 +27,11 @@ public interface ISimpleStagingProcessor {
      * @return The id.
      */
     Long getId();
+
+    /**
+     * The unique identifier.
+     *
+     * @return The unique identifier;
+     */
+    String getUniqueIdentifier();
 }

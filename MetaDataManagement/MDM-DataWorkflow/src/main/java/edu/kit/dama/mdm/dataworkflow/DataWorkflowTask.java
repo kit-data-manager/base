@@ -78,37 +78,37 @@ import org.slf4j.LoggerFactory;
  * @author hartmann-v
  */
 @Entity
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("uniqueIdentifier")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("uniqueIdentifier"),
-                @XmlNamedAttributeNode(value = "configuration", subgraph = "simple"),
-                @XmlNamedAttributeNode(value = "executionEnvironment", subgraph = "simple"),
-                @XmlNamedAttributeNode(value = "predecessor", subgraph = "simple"),
-                @XmlNamedAttributeNode("objectViewMap"),
-                @XmlNamedAttributeNode("objectTransferMap"),
-                @XmlNamedAttributeNode("executionSettings"),
-                @XmlNamedAttributeNode("applicationArguments"),
-                @XmlNamedAttributeNode("status"),
-                @XmlNamedAttributeNode("inputDirectoryUrl"),
-                @XmlNamedAttributeNode("outputDirectoryUrl"),
-                @XmlNamedAttributeNode("workingDirectoryUrl"),
-                @XmlNamedAttributeNode("tempDirectoryUrl"),
-                @XmlNamedAttributeNode("errorMessage"),
-                @XmlNamedAttributeNode("lastUpdate"),
-                @XmlNamedAttributeNode("jobId"),
-                @XmlNamedAttributeNode("executorId"),
-                @XmlNamedAttributeNode("executorGroupId"),
-                @XmlNamedAttributeNode("investigationId")
-            })})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id"),
+//                @XmlNamedAttributeNode("uniqueIdentifier")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id"),
+//                @XmlNamedAttributeNode("uniqueIdentifier"),
+//                @XmlNamedAttributeNode(value = "configuration", subgraph = "simple"),
+//                @XmlNamedAttributeNode(value = "executionEnvironment", subgraph = "simple"),
+//                @XmlNamedAttributeNode(value = "predecessor", subgraph = "simple"),
+//                @XmlNamedAttributeNode("objectViewMap"),
+//                @XmlNamedAttributeNode("objectTransferMap"),
+//                @XmlNamedAttributeNode("executionSettings"),
+//                @XmlNamedAttributeNode("applicationArguments"),
+//                @XmlNamedAttributeNode("status"),
+//                @XmlNamedAttributeNode("inputDirectoryUrl"),
+//                @XmlNamedAttributeNode("outputDirectoryUrl"),
+//                @XmlNamedAttributeNode("workingDirectoryUrl"),
+//                @XmlNamedAttributeNode("tempDirectoryUrl"),
+//                @XmlNamedAttributeNode("errorMessage"),
+//                @XmlNamedAttributeNode("lastUpdate"),
+//                @XmlNamedAttributeNode("jobId"),
+//                @XmlNamedAttributeNode("executorId"),
+//                @XmlNamedAttributeNode("executorGroupId"),
+//                @XmlNamedAttributeNode("investigationId")
+//            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @NamedEntityGraphs({
     @NamedEntityGraph(

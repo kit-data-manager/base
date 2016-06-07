@@ -15,16 +15,41 @@
  */
 package edu.kit.dama.mdm.dataorganization.entity.core;
 
-import com.qmino.miredot.annotations.MireDotIgnore;
+import edu.kit.dama.commons.types.ILFN;
+import java.util.List;
+import java.util.Set;
 
 /**
  *
  * @author jejkal
  */
-public interface IDefaultDataOrganizationNode extends ISimpleDataOrganizationNode, IDataOrganizationNode {
+public interface IDefaultDataOrganizationNode extends IDataOrganizationNode {
+
+    /**
+     * Get the node id.
+     *
+     * @return The node id.
+     */
+    Long getNodeId();
+
+    /**
+     * Gets the name of the node.
+     *
+     * @return The name.
+     */
+    @Override
+    String getName();
 
     @Override
-    @MireDotIgnore
-    public ICollectionNode getParent();
+    String getDescription();
 
+    @Override
+    String getViewName();
+
+    List<? extends IDataOrganizationNode> getChildren();
+
+    @Override
+    Set<? extends IAttribute> getAttributes();
+
+    ILFN getLogicalFileName();
 }

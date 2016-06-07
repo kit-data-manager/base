@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,19 +20,25 @@ import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
 import edu.kit.dama.mdm.dataorganization.entity.impl.client.NodeId;
-import edu.kit.dama.mdm.dataorganization.impl.jpa.DataOrganizerImpl;
 import edu.kit.dama.mdm.dataorganization.impl.util.Util;
+import edu.kit.dama.mdm.dataorganization.service.core.DataOrganizer;
 import edu.kit.dama.mdm.dataorganization.service.core.DataOrganizerFactory;
+import edu.kit.dama.mdm.dataorganization.service.exception.EntityNotFoundException;
+import edu.kit.dama.mdm.dataorganization.service.exception.InvalidNodeIdException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author jejkal
  */
 public class ElementPath implements Serializable {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ElementPath.class);
 
     private String[] path;
 
@@ -54,7 +60,7 @@ public class ElementPath implements Serializable {
         this.path = path;
     }
 
-    public IDataOrganizationNode getNodeForPath(DigitalObjectId pObjectId, String pView) {
+    public IDataOrganizationNode getNodeForPath(DigitalObjectId pObjectId, String pView) throws EntityNotFoundException, InvalidNodeIdException {
         long id = -1l;
         if (path.length == 1) {
             //check for node id
@@ -67,11 +73,13 @@ public class ElementPath implements Serializable {
             }
         }//
 
-        DataOrganizerImpl dataOrganizer = DataOrganizerFactory.getInstance().getDataOrganizer();
+        LOGGER.debug("Getting DataOrganizer");
+        DataOrganizer dataOrganizer = DataOrganizerFactory.getInstance().getDataOrganizer();
 
         IDataOrganizationNode result;
         if (id < 0) {
             //no id yet...obtain id by path
+            LOGGER.debug("Loading file tree for object {} and view {}", pObjectId, pView);
             IFileTree tree = dataOrganizer.loadFileTree(pObjectId, pView);
             //traverse root by path
             IDataOrganizationNode rootNode = tree.getRootNode();
@@ -86,6 +94,7 @@ public class ElementPath implements Serializable {
             result = getChildByPath(rootNode, paths);
         } else {
             //use direct node id
+            LOGGER.debug("Loading single node for object {}, view {} and nodeId {}", pObjectId, pView, id);
             NodeId nodeId = new NodeId(pObjectId, id, 1, pView);
             result = dataOrganizer.loadNode(nodeId);
         }

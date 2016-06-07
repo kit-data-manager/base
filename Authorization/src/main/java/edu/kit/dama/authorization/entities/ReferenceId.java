@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package edu.kit.dama.authorization.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import javax.xml.bind.annotation.XmlTransient;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
@@ -36,7 +38,7 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
                 @XmlNamedAttributeNode("resourceId"),
                 @XmlNamedAttributeNode(value = "groupId", subgraph = "simple")
             })})
-public class ReferenceId implements IDefaultReferenceId {
+public class ReferenceId implements IDefaultReferenceId, ISecurableResource {
 
     private SecurableResourceId resourceId;
     private GroupId groupId;
@@ -77,6 +79,7 @@ public class ReferenceId implements IDefaultReferenceId {
      *
      * @return the value of resourceId
      */
+    @Override
     public final SecurableResourceId getResourceId() {
         return resourceId;
     }
@@ -122,6 +125,8 @@ public class ReferenceId implements IDefaultReferenceId {
     }
 
     @Override
+    @XmlTransient
+    @JsonIgnore
     public final SecurableResourceId getSecurableResourceId() {
         return resourceId;
     }

@@ -35,10 +35,6 @@ import edu.kit.dama.rest.base.types.ServiceStatus;
 import edu.kit.dama.staging.services.impl.download.DownloadInformationServiceLocal;
 import edu.kit.dama.staging.services.impl.ingest.IngestInformationServiceLocal;
 import static edu.kit.dama.rest.util.RestUtils.authorize;
-import edu.kit.dama.mdm.dataorganization.impl.staging.AttributeImpl;
-import edu.kit.dama.mdm.dataorganization.impl.staging.DataOrganizationNodeImpl;
-import edu.kit.dama.mdm.dataorganization.impl.staging.FileNodeImpl;
-import edu.kit.dama.mdm.dataorganization.impl.staging.LFNImpl;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.staging.entities.StagingAccessPointConfiguration;
 import edu.kit.dama.rest.staging.types.StagingAccessPointConfigurationWrapper;
@@ -50,12 +46,14 @@ import edu.kit.dama.staging.exceptions.TransferPreparationException;
 import edu.kit.dama.rest.staging.types.DownloadInformationWrapper;
 import edu.kit.dama.rest.staging.services.interfaces.IStagingService;
 import edu.kit.dama.rest.staging.types.IngestInformationWrapper;
+import edu.kit.dama.rest.staging.types.StagingProcessorWrapper;
 import edu.kit.dama.rest.util.RestUtils;
+import edu.kit.dama.staging.entities.StagingProcessor;
 import edu.kit.dama.staging.entities.interfaces.IDefaultDownloadInformation;
 import edu.kit.dama.staging.entities.interfaces.IDefaultIngestInformation;
 import edu.kit.dama.staging.entities.interfaces.IDefaultStagingAccessPointConfiguration;
+import edu.kit.dama.staging.entities.interfaces.IDefaultStagingProcessor;
 import edu.kit.dama.staging.entities.interfaces.IDefaultTransferTaskContainer;
-import edu.kit.dama.staging.entities.interfaces.ISimpleStagingAccessPointConfiguration;
 import edu.kit.dama.staging.entities.interfaces.ISimpleTransferInformation;
 import edu.kit.dama.staging.util.DataOrganizationUtils;
 import edu.kit.dama.staging.util.StagingConfigurationManager;
@@ -65,11 +63,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,6 +83,7 @@ import org.slf4j.LoggerFactory;
 @Path("/")
 public class StagingInformationServiceImpl implements IStagingService {
 
+    private final Class[] IMPL_CLASSES = new Class[]{IngestInformationWrapper.class, DownloadInformationWrapper.class, IngestInformation.class, DownloadInformation.class, StagingProcessor.class};
     private static final Logger LOGGER = LoggerFactory.getLogger(StagingInformationServiceImpl.class);
 
     /**
@@ -111,28 +114,55 @@ public class StagingInformationServiceImpl implements IStagingService {
     @Override
     public IEntityWrapper<? extends IDefaultIngestInformation> getIngestById(Long id, HttpContext hc) {
         final IngestInformation result = IngestInformationServiceLocal.getSingleton().getIngestInformationById(id, authorize(hc));
-        return RestUtils.transformObject(new Class[]{IngestInformationWrapper.class}, Constants.REST_DEFAULT_OBJECT_GRAPH, new IngestInformationWrapper(result));
+        return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new IngestInformationWrapper(result));
     }
 
     @Override
-    public IEntityWrapper<? extends IDefaultIngestInformation> createIngest(String groupId, String objectId, String accessPointId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultIngestInformation> createIngest(String groupId, String objectId, String accessPointId, String stagingProcessors, HttpContext hc) {
         TransferClientProperties props = new TransferClientProperties();
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
         props.setStagingAccessPointId(getAccessPointConfigurationForId(accessPointId, ctx).getUniqueIdentifier());
+        if (stagingProcessors != null) {
+            IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(StagingConfigurationPersistence.getSingleton().getPersistenceUnit());
+            mdm.setAuthorizationContext(ctx);
+            try {
+                LOGGER.debug("Assigning staging processors to ingest.");
+                try {
+                    JSONArray a = new JSONArray(stagingProcessors);
+                    for (int i = 0; i < a.length(); i++) {
+                        Long id = a.getLong(i);
+                        LOGGER.debug("Checking staging processor for id {}", id);
+                        StagingProcessor processor = mdm.find(StagingProcessor.class, id);
+                        if (processor != null) {
+                            LOGGER.debug("Staging processor found. Adding it to transfer.");
+                            props.addProcessor(processor);
+                        } else {
+                            LOGGER.warn("No staging processor for id {} found. Ignoring value.", id);
+                        }
+                    }
+                } catch (JSONException ex) {
+                    LOGGER.error("Failed to deserialize json array", ex);
+                }
+            } catch (UnauthorizedAccessAttemptException ex) {
+                LOGGER.error("Unauthorized to obtain staging processor", ex);
+            } finally {
+                mdm.close();
+            }
+        }
+
         LOGGER.debug("Start preparing ingest entity.");
         try {
             DigitalObjectId digitalObjectIdentifier = getObjectIdentifierForId(objectId, ctx);
             final IngestInformation result = IngestInformationServiceLocal.getSingleton().prepareIngest(digitalObjectIdentifier, props, ctx);
-            return RestUtils.transformObject(new Class[]{IngestInformationWrapper.class}, Constants.REST_DEFAULT_OBJECT_GRAPH, new IngestInformationWrapper(result));
+            return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new IngestInformationWrapper(result));
         } catch (TransferPreparationException ex) {
             throw new WebApplicationException(ex);
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleTransferInformation> getIngestIds(String ownerId, String groupId, String objectId, Integer status, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultIngestInformation> getIngests(String ownerId, String groupId, String objectId, Integer status, Integer first, Integer results, HttpContext hc) {
         final List<IngestInformation> result;
-
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
 
         if (ownerId != null) {
@@ -151,11 +181,11 @@ public class StagingInformationServiceImpl implements IStagingService {
             result = IngestInformationServiceLocal.getSingleton().getAllIngestInformation(first, results, ctx);
         }
 
-        return RestUtils.transformObject(new Class[]{IngestInformationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new IngestInformationWrapper(result));
+        return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new IngestInformationWrapper(result));
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleTransferInformation> getIngestsCount(String ownerId, String groupId, Integer status, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultIngestInformation> getIngestsCount(String ownerId, String groupId, Integer status, HttpContext hc) {
         final Number result;
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
         if (ownerId != null) {
@@ -171,11 +201,7 @@ public class StagingInformationServiceImpl implements IStagingService {
         }
 
         LOGGER.debug("Obtained ingest information count is '{}'", result);
-        if (result != null) {
-            return RestUtils.transformObject(new Class[]{IngestInformationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new IngestInformationWrapper(result.intValue()));
-        } else {
-            return RestUtils.transformObject(new Class[]{IngestInformationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new IngestInformationWrapper(0));
-        }
+        return new IngestInformationWrapper((result == null) ? 0 : result.intValue());
     }
 
     @Override
@@ -202,19 +228,19 @@ public class StagingInformationServiceImpl implements IStagingService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleTransferInformation> getExpiredIngests(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultIngestInformation> getExpiredIngests(String groupId, Integer first, Integer results, HttpContext hc) {
         final List<IngestInformation> result = IngestInformationServiceLocal.getSingleton().getExpiredIngestInformation(first, results, authorize(hc, new GroupId(groupId)));
-        return RestUtils.transformObject(new Class[]{IngestInformationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new IngestInformationWrapper(result));
+        return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new IngestInformationWrapper(result));
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleTransferInformation> getExpiredIngestsCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultIngestInformation> getExpiredIngestsCount(String groupId, HttpContext hc) {
         Integer result = IngestInformationServiceLocal.getSingleton().getExpiredIngestInformationCount(authorize(hc, new GroupId(groupId)));
-        return RestUtils.transformObject(new Class[]{IngestInformationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new IngestInformationWrapper(result));
+        return new IngestInformationWrapper(result);
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleTransferInformation> getDownloadIds(String ownerId, String groupId, String objectId, Integer status, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDownloadInformation> getDownloads(String ownerId, String groupId, String objectId, Integer status, Integer first, Integer results, HttpContext hc) {
         final List<DownloadInformation> result;
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
         if (ownerId != null) {
@@ -232,21 +258,50 @@ public class StagingInformationServiceImpl implements IStagingService {
             LOGGER.debug("Returning all ingest ids without filtering.");
             result = DownloadInformationServiceLocal.getSingleton().getAllDownloadInformation(first, results, ctx);
         }
-        return RestUtils.transformObject(new Class[]{DownloadInformationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new DownloadInformationWrapper(result));
+        return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new DownloadInformationWrapper(result));
     }
 
     @Override
-    public IEntityWrapper<? extends IDefaultDownloadInformation> createDownload(String groupId, String objectId, String accessPointId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDownloadInformation> createDownload(String groupId, String objectId, String accessPointId, String stagingProcessors, HttpContext hc) {
         TransferClientProperties props = new TransferClientProperties();
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
         props.setStagingAccessPointId(getAccessPointConfigurationForId(accessPointId, ctx).getUniqueIdentifier());
+
+        if (stagingProcessors != null) {
+            IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(StagingConfigurationPersistence.getSingleton().getPersistenceUnit());
+            mdm.setAuthorizationContext(ctx);
+            try {
+                LOGGER.debug("Assigning staging processors to download.");
+                try {
+                    JSONArray a = new JSONArray(stagingProcessors);
+                    for (int i = 0; i < a.length(); i++) {
+                        Long id = a.getLong(i);
+                        LOGGER.debug("Checking staging processors for id {}.", id);
+                        StagingProcessor processor = mdm.find(StagingProcessor.class, id);
+                        if (processor != null) {
+                            LOGGER.debug("Staging processors found. Assigning it to download.");
+                            props.addProcessor(processor);
+                        } else {
+                            LOGGER.warn("No staging processor for id {} found. Ignoring value.", id);
+                        }
+                    }
+                } catch (JSONException ex) {
+                    LOGGER.error("Failed to deserialize json array", ex);
+                }
+            } catch (UnauthorizedAccessAttemptException ex) {
+                LOGGER.error("Unauthorized to obtain staging processor", ex);
+            } finally {
+                mdm.close();
+            }
+        }
+
         try {
             LOGGER.debug("Obtaining digital object for download.");
             DigitalObjectId digitalObjectIdentifier = getObjectIdentifierForId(objectId, ctx);
             LOGGER.debug("Calling scheduleDownload()");
             final DownloadInformation result = DownloadInformationServiceLocal.getSingleton().scheduleDownload(digitalObjectIdentifier, props, ctx);
             LOGGER.debug("Creating stream from result {}", result);
-            return RestUtils.transformObject(new Class[]{DownloadInformationWrapper.class}, Constants.REST_DEFAULT_OBJECT_GRAPH, new DownloadInformationWrapper(result));
+            return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new DownloadInformationWrapper(result));
         } catch (TransferPreparationException ex) {
             LOGGER.error("Failed to obtain result.", ex);
             throw new WebApplicationException(ex);
@@ -270,17 +325,13 @@ public class StagingInformationServiceImpl implements IStagingService {
         }
 
         LOGGER.debug("Obtained ingest information count is '{}'", result);
-        if (result != null) {
-            return RestUtils.transformObject(new Class[]{DownloadInformationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new DownloadInformationWrapper(result.intValue()));
-        } else {
-            return RestUtils.transformObject(new Class[]{DownloadInformationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new DownloadInformationWrapper());
-        }
+        return new DownloadInformationWrapper((result == null) ? 0 : result.intValue());
     }
 
     @Override
     public IEntityWrapper<? extends IDefaultDownloadInformation> getDownloadById(Long id, HttpContext hc) {
         final DownloadInformation result = DownloadInformationServiceLocal.getSingleton().getDownloadInformationById(id, authorize(hc));
-        return RestUtils.transformObject(new Class[]{DownloadInformationWrapper.class}, Constants.REST_DEFAULT_OBJECT_GRAPH, new DownloadInformationWrapper(result));
+        return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new DownloadInformationWrapper(result));
     }
 
     @Override
@@ -309,12 +360,12 @@ public class StagingInformationServiceImpl implements IStagingService {
     @Override
     public IEntityWrapper<? extends ISimpleTransferInformation> getExpiredDownloads(String ownerId, String groupId, Integer first, Integer results, HttpContext hc) {
         final List<DownloadInformation> result = DownloadInformationServiceLocal.getSingleton().getExpiredDownloadInformation(first, results, authorize(hc, new GroupId(groupId)));
-        return RestUtils.transformObject(new Class[]{DownloadInformationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new DownloadInformationWrapper(result));
+        return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new DownloadInformationWrapper(result));
     }
 
     @Override
     public IEntityWrapper<? extends ISimpleTransferInformation> getExpiredDownloadsCount(String ownerId, String groupId, HttpContext hc) {
-        return RestUtils.transformObject(new Class[]{DownloadInformationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new DownloadInformationWrapper(DownloadInformationServiceLocal.getSingleton().getExpiredDownloadInformationCount(authorize(hc, new GroupId(groupId)))));
+        return new DownloadInformationWrapper(DownloadInformationServiceLocal.getSingleton().getExpiredDownloadInformationCount(authorize(hc, new GroupId(groupId))));
     }
 
     @Override
@@ -341,18 +392,11 @@ public class StagingInformationServiceImpl implements IStagingService {
             throw new WebApplicationException(ex, 404);
         }
 
-        return RestUtils.transformObject(new Class[]{
-            LFNImpl.class,
-            URL.class,
-            TransferTaskContainer.class,
-            DataOrganizationNodeImpl.class,
-            FileNodeImpl.class,
-            AttributeImpl.class
-        }, Constants.DEFAULT_VIEW, container);
+        return container;
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleStagingAccessPointConfiguration> getStagingAccessPoints(String pUniqueIdentifier, String pGroupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultStagingAccessPointConfiguration> getStagingAccessPoints(String pUniqueIdentifier, Boolean pIncludeDisabled, String pGroupId, HttpContext hc) {
         List<StagingAccessPointConfiguration> results;
         //groupId will never be null...if nothing is provided it has the value USERS
         String stagingPU = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.PERSISTENCE_STAGING_PU_ID, "StagingUnit");
@@ -364,15 +408,35 @@ public class StagingInformationServiceImpl implements IStagingService {
             results = Arrays.asList(result);
         }
 
-        return RestUtils.transformObject(new Class[]{StagingAccessPointConfigurationWrapper.class}, Constants.REST_SIMPLE_OBJECT_GRAPH, new StagingAccessPointConfigurationWrapper(results));
+        List<StagingAccessPointConfiguration> cleanedResultList = new ArrayList<>();
+        if (pIncludeDisabled == null || !pIncludeDisabled) {
+            for (StagingAccessPointConfiguration ap : results) {
+                if (!ap.isDisabled()) {
+                    cleanedResultList.add(ap);
+                }
+            }
+            return new StagingAccessPointConfigurationWrapper(cleanedResultList);
+        }
+
+        return new StagingAccessPointConfigurationWrapper(results);
     }
 
     @Override
     public IEntityWrapper<? extends IDefaultStagingAccessPointConfiguration> getStagingAccessPoint(Long pId, HttpContext hc) {
         String stagingPU = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.PERSISTENCE_STAGING_PU_ID, "StagingUnit");
-        return RestUtils.transformObject(new Class[]{StagingAccessPointConfigurationWrapper.class},
-                Constants.REST_DEFAULT_OBJECT_GRAPH, new StagingAccessPointConfigurationWrapper(StagingConfigurationPersistence.getSingleton(stagingPU).findAccessPointConfigurationById(pId))
-        );
+        return new StagingAccessPointConfigurationWrapper(StagingConfigurationPersistence.getSingleton(stagingPU).findAccessPointConfigurationById(pId));
+    }
+
+    @Override
+    public IEntityWrapper<? extends IDefaultStagingProcessor> getStagingProcessors(String pGroupId, HttpContext hc) {
+        String stagingPU = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.PERSISTENCE_STAGING_PU_ID, "StagingUnit");
+        return new StagingProcessorWrapper(StagingConfigurationPersistence.getSingleton(stagingPU).findStagingProcessorsForGroup(pGroupId));
+    }
+
+    @Override
+    public IEntityWrapper<? extends IDefaultStagingProcessor> getStagingProcessor(@PathParam("id") Long pId, @javax.ws.rs.core.Context HttpContext hc) {
+        String stagingPU = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.PERSISTENCE_STAGING_PU_ID, "StagingUnit");
+        return new StagingProcessorWrapper(StagingConfigurationPersistence.getSingleton(stagingPU).findStagingProcessorById(pId));
     }
 
     /**
@@ -393,7 +457,7 @@ public class StagingInformationServiceImpl implements IStagingService {
             try {
                 LOGGER.debug("Trying to parse provided object id {} as long value", s_id);
                 long id = Long.parseLong(s_id);
-                LOGGER.debug("Parsing to long succeeded. Obtaining string identifiert for long id.");
+                LOGGER.debug("Parsing to long succeeded. Obtaining string identifier for long id.");
                 s_id = mdm.findSingleResult("SELECT o.digitalObjectIdentifier FROM DigitalObject o WHERE o.baseId=" + id, String.class);
             } catch (NumberFormatException ex) {
                 LOGGER.debug("Parsing to long failed, expecting string identifier");

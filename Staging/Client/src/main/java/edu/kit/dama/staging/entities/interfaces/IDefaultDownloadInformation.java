@@ -15,6 +15,8 @@
  */
 package edu.kit.dama.staging.entities.interfaces;
 
+import java.util.Set;
+
 /**
  *
  * @author jejkal
@@ -40,4 +42,11 @@ public interface IDefaultDownloadInformation extends ISimpleTransferInformation 
     String getErrorMessage();
 
     String getAccessPointId();
+
+    /**
+     * Get all assigned staging processors.
+     *
+     * @return A list of assigned staging processors.
+     */
+    Set<? extends ISimpleStagingProcessor> getStagingProcessors();
 }

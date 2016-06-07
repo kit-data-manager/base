@@ -21,7 +21,6 @@ import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.IDefaultGrant;
 import edu.kit.dama.authorization.entities.IDefaultGrantSet;
 import edu.kit.dama.authorization.entities.IDefaultReferenceId;
-import edu.kit.dama.authorization.entities.ISimpleGrantSet;
 import edu.kit.dama.authorization.entities.ISimpleGroupId;
 import edu.kit.dama.authorization.entities.ISimpleUserId;
 import edu.kit.dama.authorization.entities.ReferenceId;
@@ -30,6 +29,8 @@ import edu.kit.dama.authorization.entities.SecurableResourceId;
 import edu.kit.dama.authorization.entities.UserId;
 import edu.kit.dama.authorization.entities.impl.Grant;
 import edu.kit.dama.authorization.entities.impl.GrantSet;
+import edu.kit.dama.authorization.entities.impl.SecurableResource;
+import edu.kit.dama.authorization.entities.impl.User;
 import edu.kit.dama.authorization.entities.util.FindUtil;
 import edu.kit.dama.authorization.entities.util.PU;
 import edu.kit.dama.authorization.exceptions.EntityAlreadyExistsException;
@@ -40,7 +41,6 @@ import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.base.types.CheckServiceResponse;
 import edu.kit.dama.rest.base.types.ServiceStatus;
 import edu.kit.dama.rest.util.RestUtils;
-import static edu.kit.dama.rest.util.RestUtils.createObjectGraphStream;
 import edu.kit.dama.rest.sharing.services.interfaces.ISharingService;
 import edu.kit.dama.rest.sharing.types.GrantSetWrapper;
 import edu.kit.dama.rest.sharing.types.GrantWrapper;
@@ -53,7 +53,6 @@ import javax.persistence.EntityManager;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.slf4j.Logger;
@@ -66,55 +65,29 @@ import org.slf4j.LoggerFactory;
 @Path("/")
 public final class SharingRestServiceImpl implements ISharingService {
 
+    private static final Class[] IMPL_CLASSES = new Class[]{
+        GrantSetWrapper.class,
+        ReferenceIdWrapper.class,
+        GrantSet.class,
+        Grant.class,
+        SecurableResource.class,
+        ReferenceId.class,
+        Role.class,
+        User.class
+    };
     private static final Logger LOGGER = LoggerFactory.getLogger(SharingRestServiceImpl.class);
-
-    /**
-     * Internal helper to create a ReferenceId for pDomain, pDomainUniqueId and
-     * pGroupId.
-     *
-     * @param pDomain The resource domain.
-     * @param pDomainUniqueId The domain unique id.
-     * @param pGroupId The group id.
-     *
-     * @return The ReferenceId.
-     */
-    private ReferenceId factoryReferenceId(String pDomain, String pDomainUniqueId, String pGroupId) {
-        SecurableResourceId resId = factoryResourceId(pDomain, pDomainUniqueId);
-        String id = pGroupId;
-        if (id == null) {
-            LOGGER.info("Provided groupId is null. Using default group {} instead.", Constants.USERS_GROUP_ID);
-            id = Constants.USERS_GROUP_ID;
-        }
-        return new ReferenceId(resId, new GroupId(id));
-    }
-
-    /**
-     * Internal helper to create a SecurableResourceId for pDomain and
-     * pDomainUniqueId.
-     *
-     * @param pDomain The resource domain.
-     * @param pDomainUniqueId The domain unique id.
-     *
-     * @return The SecurableResourceId.
-     */
-    private SecurableResourceId factoryResourceId(String pDomain, String pDomainUniqueId) {
-        if (pDomain == null || pDomainUniqueId == null) {
-            LOGGER.error("Arguments pDomain and pDomainUniqueId must not be null. Returning HTTP-400");
-            throw new WebApplicationException(400);
-        }
-
-        return new SecurableResourceId(pDomain, pDomainUniqueId);
-    }
 
     @Override
     public IEntityWrapper<? extends IDefaultReferenceId> createReference(String pDomain, String pDomainUniqueId, String pReferenceGroupId, String pRole, String pGroupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(pGroupId));
+        LOGGER.debug("Creating referenceId for domain {}, uniqueId {} and reference group {}", pDomain, pDomainUniqueId, pReferenceGroupId);
         ReferenceId refId = factoryReferenceId(pDomain, pDomainUniqueId, pReferenceGroupId);
 
         try {
             LOGGER.debug("Try creating reference {}", refId);
             ResourceServiceLocal.getSingleton().createReference(refId, Role.valueOf(pRole), ctx);
             LOGGER.debug("Reference successfully created.");
+            // return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new ReferenceIdWrapper(refId));
             return new ReferenceIdWrapper(refId);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to create reference for resource " + refId, ex);
@@ -133,6 +106,7 @@ public final class SharingRestServiceImpl implements ISharingService {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(pGroupId));
         SecurableResourceId resId = factoryResourceId(pDomain, pDomainUniqueId);
         try {
+            // return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new ReferenceIdWrapper(ResourceServiceLocal.getSingleton().getReferences(resId, ctx)));
             return new ReferenceIdWrapper(ResourceServiceLocal.getSingleton().getReferences(resId, ctx));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get references for resource " + resId, ex);
@@ -178,13 +152,14 @@ public final class SharingRestServiceImpl implements ISharingService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleGrantSet> getGrantSetForResource(String pDomain, String pDomainUniqueId, String pGroupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultGrantSet> getGrantSetForResource(String pDomain, String pDomainUniqueId, String pGroupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(pGroupId));
         SecurableResourceId resId = factoryResourceId(pDomain, pDomainUniqueId);
         try {
             LOGGER.debug("Try getting grantset for resource {}", resId);
             List<Grant> grants = ResourceServiceLocal.getSingleton().getGrants(resId, ctx);
             LOGGER.debug("Obtained {} grants.", (grants != null) ? grants.size() : 0);
+
             GrantSet grantSet = null;
             if (grants != null && !grants.isEmpty()) {
                 //get grantSet from any grant...let's take the first.
@@ -196,6 +171,7 @@ public final class SharingRestServiceImpl implements ISharingService {
                 LOGGER.warn("Obtained no grantset. Returning empty result.");
             }
 
+            // return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new GrantSetWrapper(grantSet));
             return new GrantSetWrapper(grantSet);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain grantset for resource " + resId, ex);
@@ -203,7 +179,7 @@ public final class SharingRestServiceImpl implements ISharingService {
         } catch (EntityNotFoundException ex) {
             LOGGER.error("EntityNotFoundException caught while obtaining ResourceReferences. Probably, the resource " + resId + " was not registered before.", ex);
             throw new WebApplicationException(404);
-        }
+        } 
     }
 
     @Override
@@ -213,6 +189,7 @@ public final class SharingRestServiceImpl implements ISharingService {
         try {
             LOGGER.debug("Finding grant for id " + pId);
             Grant grant = FindUtil.findGrant(em, pId);
+            // return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new GrantWrapper(grant));
             return new GrantWrapper(grant);
         } catch (EntityNotFoundException ex) {
             LOGGER.error("EntityNotFoundException caught while obtaining Grant for id " + pId + ". Probably, there is no grant for this id.", ex);
@@ -258,6 +235,7 @@ public final class SharingRestServiceImpl implements ISharingService {
             } else {
                 LOGGER.warn("No grant information obtained. Returning empty result.");
             }
+            //return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new GrantWrapper(grant));
             return new GrantWrapper(grant);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to create grant", ex);
@@ -267,7 +245,7 @@ public final class SharingRestServiceImpl implements ISharingService {
             throw new WebApplicationException(404);
         } catch (EntityAlreadyExistsException ex) {
             LOGGER.error("EntityAlreadyExistsException caught while adding Grant. Probably, there is already a grant for resource " + new SecurableResourceId(pDomain, pDomainUniqueId) + " and user " + pUserId + ".", ex);
-            throw new WebApplicationException(500);
+            throw new WebApplicationException(409);
         }
     }
 
@@ -297,6 +275,7 @@ public final class SharingRestServiceImpl implements ISharingService {
     public Response revokeAllGrants(String pDomain, String pDomainUniqueId, String pGroupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(pGroupId));
         SecurableResourceId resId = factoryResourceId(pDomain, pDomainUniqueId);
+        
         try {
             ResourceServiceLocal.getSingleton().revokeAllAndDisallowGrants(resId, ctx);
             return Response.ok().build();
@@ -353,6 +332,45 @@ public final class SharingRestServiceImpl implements ISharingService {
     public Response checkService() {
         ServiceStatus status = ServiceStatus.UNKNOWN;
         return Response.status(200).entity(new CheckServiceResponse("Sharing", status)).build();
+    }
+
+    /**
+     * Internal helper to create a ReferenceId for pDomain, pDomainUniqueId and
+     * pGroupId.
+     *
+     * @param pDomain The resource domain.
+     * @param pDomainUniqueId The domain unique id.
+     * @param pGroupId The group id.
+     *
+     * @return The ReferenceId.
+     */
+    private ReferenceId factoryReferenceId(String pDomain, String pDomainUniqueId, String pGroupId) {
+        SecurableResourceId resId = factoryResourceId(pDomain, pDomainUniqueId);
+        String id = pGroupId;
+        if (id == null) {
+            LOGGER.info("Provided groupId is null. Using default group {} instead.", Constants.USERS_GROUP_ID);
+            id = Constants.USERS_GROUP_ID;
+        }
+
+        return new ReferenceId(resId, new GroupId(id));
+    }
+
+    /**
+     * Internal helper to create a SecurableResourceId for pDomain and
+     * pDomainUniqueId.
+     *
+     * @param pDomain The resource domain.
+     * @param pDomainUniqueId The domain unique id.
+     *
+     * @return The SecurableResourceId.
+     */
+    private SecurableResourceId factoryResourceId(String pDomain, String pDomainUniqueId) {
+        if (pDomain == null || pDomainUniqueId == null) {
+            LOGGER.error("Arguments pDomain and pDomainUniqueId must not be null. Returning HTTP-400");
+            throw new WebApplicationException(400);
+        }
+
+        return new SecurableResourceId(pDomain, pDomainUniqueId);
     }
 
 }

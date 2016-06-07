@@ -22,21 +22,17 @@ import edu.kit.dama.rest.admin.types.UserGroupWrapper;
 import edu.kit.dama.rest.admin.types.UserDataWrapper;
 import edu.kit.dama.mdm.admin.UserGroup;
 import edu.kit.dama.mdm.admin.interfaces.IDefaultUserGroup;
-import edu.kit.dama.mdm.admin.interfaces.ISimpleUserGroup;
 import edu.kit.dama.mdm.base.UserData;
 import edu.kit.dama.mdm.base.interfaces.IDefaultUserData;
-import edu.kit.dama.mdm.base.interfaces.ISimpleUserData;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.base.types.CheckServiceResponse;
 import edu.kit.dama.rest.base.types.ServiceStatus;
-import static edu.kit.dama.rest.util.RestUtils.createObjectGraphStream;
 import edu.kit.dama.util.Constants;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 
@@ -164,7 +160,7 @@ public class UserGroupTestService implements IUserGroupService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserGroup> getGroupIds(Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserGroup> getGroups(Integer first, Integer results, HttpContext hc) {
         return new UserGroupWrapper(groups);
     }
 
@@ -179,7 +175,7 @@ public class UserGroupTestService implements IUserGroupService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserGroup> getGroupCount(HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserGroup> getGroupCount(HttpContext hc) {
         return new UserGroupWrapper(groups.size());
     }
 
@@ -210,7 +206,7 @@ public class UserGroupTestService implements IUserGroupService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserData> getGroupUsers(Long id, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserData> getGroupUsers(Long id, Integer first, Integer results, HttpContext hc) {
         UserGroup group = findGroupById(id);
         if (group == null) {
             //invalid group, no users
@@ -245,7 +241,7 @@ public class UserGroupTestService implements IUserGroupService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserData> getUsersIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserData> getUsers(String groupId, Integer first, Integer results, HttpContext hc) {
         return new UserDataWrapper(users);
     }
 
@@ -261,7 +257,7 @@ public class UserGroupTestService implements IUserGroupService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserData> getUserCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserData> getUserCount(String groupId, HttpContext hc) {
         return new UserDataWrapper(users.size());
     }
 
@@ -281,7 +277,7 @@ public class UserGroupTestService implements IUserGroupService {
     }
 
     @Override
-    public Response deleteUser(Long userId, HttpContext hc) {
+    public Response deleteUser(String groupId, Long userId, HttpContext hc) {
         //return "Not Implemented"
         return Response.status(501).build();
     }

@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama.rest</groupId>
         <artifactId>RestInterfaces</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
     <artifactId>ClientBase</artifactId>
     <name>ClientBase</name>
     <packaging>jar</packaging>
-    <version>1.2</version>
+    <version>1.3</version>
 
     <description>Base module containing generic client classes (e.g. for (de-)serialization) for writing clients accessing KIT Data Manager REST services.</description>
 
@@ -38,6 +38,7 @@
         <firstName>Volker</firstName>
         <lastName>Hartmann</lastName>
         <nameId>hartmann-v</nameId>
+         <root.relative.path>../../</root.relative.path>  
     </properties>
             
     <developers>

@@ -48,29 +48,29 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
  *
  * @author jejkal
  */
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("uniqueIdentifier"),
-                @XmlNamedAttributeNode("implementationClass"),
-                @XmlNamedAttributeNode("name"),
-                @XmlNamedAttributeNode("description"),
-                @XmlNamedAttributeNode("groupId"),
-                @XmlNamedAttributeNode("customProperties"),
-                @XmlNamedAttributeNode("remoteBaseUrl"),
-                @XmlNamedAttributeNode("localBasePath"),
-                @XmlNamedAttributeNode("defaultAccessPoint"),
-                @XmlNamedAttributeNode("transientAccessPoint"),
-                @XmlNamedAttributeNode("disabled")
-            })
-})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id"),
+//                @XmlNamedAttributeNode("uniqueIdentifier"),
+//                @XmlNamedAttributeNode("implementationClass"),
+//                @XmlNamedAttributeNode("name"),
+//                @XmlNamedAttributeNode("description"),
+//                @XmlNamedAttributeNode("groupId"),
+//                @XmlNamedAttributeNode("customProperties"),
+//                @XmlNamedAttributeNode("remoteBaseUrl"),
+//                @XmlNamedAttributeNode("localBasePath"),
+//                @XmlNamedAttributeNode("defaultAccessPoint"),
+//                @XmlNamedAttributeNode("transientAccessPoint"),
+//                @XmlNamedAttributeNode("disabled")
+//            })
+//})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @Entity

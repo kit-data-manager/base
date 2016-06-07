@@ -21,9 +21,6 @@ import com.sun.jersey.api.core.HttpContext;
 import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowConfiguration;
 import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowTask;
 import edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultExecutionEnvironment;
-import edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleDataWorkflowConfiguration;
-import edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleDataWorkflowTask;
-import edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleExecutionEnvironment;
 import edu.kit.dama.rest.base.ICommonRestInterface;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.util.Constants;
@@ -53,11 +50,7 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * @param id The id of the task.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return An DataWorkflowTaskWrapper object serialized using the
-     * <b>default</b>
-     * object graph of DataWorkflowTaskWrapper, which contains all attributes
-     * but complex attributes. For complex attributes the ids of the sub-entity
-     * are returned and can be used for additional queries.
+     * @return An DataWorkflowTaskWrapper object.
      *
      * @see edu.kit.dama.rest.dataworkflow.types.DataWorkflowTaskWrapper
      */
@@ -80,19 +73,15 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * @param results The max. number of results.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of DataWorkflowTaskWrapper objects serialized using the
-     * <b>simple</b>
-     * object graph of DataWorkflowTaskWrapper, which contains only the ids of
-     * the task. Details are queried using {@link #getTaskById(java.lang.String, java.lang.Long, com.sun.jersey.api.core.HttpContext)
-     * }.
+     * @return A list of DataWorkflowTaskWrapper objects.
      *
      * @see edu.kit.dama.rest.dataworkflow.types.DataWorkflowTaskWrapper
      */
     @GET
     @Path(value = "/tasks/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleDataWorkflowTask>")
-    IEntityWrapper<? extends ISimpleDataWorkflowTask> getAllTasks(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowTask>")
+    IEntityWrapper<? extends IDefaultDataWorkflowTask> getAllTasks(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -106,18 +95,15 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * @param groupId The id of the group used to access the tasks.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A list of DataWorkflowTaskWrapper objects serialized using the
-     * <b>simple</b>
-     * object graph of DataWorkflowTaskWrapper, which contains the number of
-     * accessible tasks. }.
+     * @return A list of DataWorkflowTaskWrapper objects.
      *
      * @see edu.kit.dama.rest.dataworkflow.types.DataWorkflowTaskWrapper
      */
     @GET
     @Path(value = "/tasks/count/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleDataWorkflowTask>")
-    IEntityWrapper<? extends ISimpleDataWorkflowTask> getTaskCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowTask>")
+    IEntityWrapper<? extends IDefaultDataWorkflowTask> getTaskCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
@@ -132,23 +118,23 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * responsible for executing the task.</li>
      * <li>predecessorId: The Id of the DataWorkflowTask that is predecessor of
      * this task. This parameter is optional.</li>
-     * <li>inputObjectMap: A string representing a {@link java.util.Properties}
-     * object containing a map of input digital object ids (key) and the data
-     * organization view name (value) of the according object used by the task.
-     * The object should be serialized using {@link edu.kit.dama.util.PropertiesUtil#propertiesToString(java.util.Properties)
-     * } which basically returns the content in the form
-     * <i>key1=value1\nkey2=value2</i>. </li>
-     * <li>executionSettings: A serialized {@link java.util.Properties} object
-     * containing key-value entries of custom execution settings. The according
+     * <li>inputObjectMap: A map of input object id (key) and an associated data
+     * organization view name (value). The format of this string can be either
+     * in the form
+     * <i>1=default\n2=customView</i> or
+     * <i>[{"1":"default"},{"2":"customView"}]</i>. Furthermore, the baseId as
+     * well as the digitalObjectIdentifier are supported as keys.
+     * </li>
+     * <li>executionSettings: A map of custom execution settings. The according
      * properties file will be stored in the working directory of the task
-     * execution and can be read by the user application. The object should be
-     * serialized using {@link edu.kit.dama.util.PropertiesUtil#propertiesToString(java.util.Properties)
-     * } which basically returns the content in the form
-     * <i>key1=value1\nkey2=value2</i>. This argument should be optional in most
-     * cases.</li>
+     * execution and can be read by the user application. The format of this
+     * string can be either in the form
+     * <i>key1=value1\nkey2=value2</i> or
+     * <i>[{"key1":"value1"},{"key2":"value2"}]</i>
+     * This argument should be optional in most cases.</li>
      * <li>applicationArguments: Custom application arguments that are provided
-     * during the user application execution. This argument should be optional
-     * in most cases.</li>
+     * during the user application execution. The value can be provided as space
+     * separated string. This argument should be optional in most cases.</li>
      * </ul>
      *
      * After successful creation the task execution will be performed within one
@@ -164,21 +150,13 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * @param configurationId The task configuration id.
      * @param environmentId The execution environment configuration id.
      * @param predecessorId The predecessor task id.
-     * @param inputObjectMap The serialized input object map.
-     * @param executionSettings The serialized execution settings.
+     * @param inputObjectMap The input object map.
+     * @param executionSettings The execution settings map.
      * @param applicationArguments The application arguments.
      *
      * @param hc The HttpContext for OAuth check.
      *
-     * @return A DataWorkflowTaskWrapper object serialized using the
-     * <b>default</b>
-     * object graph of DataWorkflowTaskWrapper, which contains all attributes
-     * but complex attributes. For complex attributes the ids of the sub-entity
-     * are returned and can be used for additional queries.
-     *
-     * All returned entities are serialized using the <b>simple</b> object graph
-     * of DataOrganizationNodeWrapper, which removes all attributes but the id
-     * from the returned entities.
+     * @return A DataWorkflowTaskWrapper object.
      *
      * @see edu.kit.dama.rest.dataworkflow.types.DataWorkflowTaskWrapper
      */
@@ -208,10 +186,7 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return A DataWorkflowTaskConfigurationWrapper object containing all
-     * results. The returned entity is serialized using the <b>default</b>
-     * object graph of DataWorkflowTaskConfigurationWrapper, which contains all
-     * attributes but complex attributes. For complex attributes the ids of the
-     * sub-entity are returned and can be used for additional queries.
+     * results.
      *
      * @see
      * edu.kit.dama.rest.dataworkflow.types.DataWorkflowTaskConfigurationWrapper
@@ -239,9 +214,7 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return A DataWorkflowTaskConfigurationWrapper object containing all
-     * results. The returned entity is serialized using the <b>simple</b> object
-     * graph of ExecutionEnvironmentConfigurationWrapper, which removes all
-     * attributes but the id from the returned entities.
+     * results.
      *
      * @see
      * edu.kit.dama.rest.dataworkflow.types.DataWorkflowTaskConfigurationWrapper
@@ -249,8 +222,8 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
     @GET
     @Path(value = "/configurations/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleDataWorkflowConfiguration>")
-    IEntityWrapper<? extends ISimpleDataWorkflowConfiguration> getAllTaskConfigurations(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowConfiguration>")
+    IEntityWrapper<? extends IDefaultDataWorkflowConfiguration> getAllTaskConfigurations(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -266,9 +239,7 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return A DataWorkflowTaskConfigurationWrapper object containing all
-     * results. The returned entity is serialized using the <b>simple</b> object
-     * graph of DataWorkflowTaskConfigurationWrapper, which removes all
-     * attributes but the id from the returned entities.
+     * results.
      *
      * @see
      * edu.kit.dama.rest.dataworkflow.types.DataWorkflowTaskConfigurationWrapper
@@ -276,8 +247,8 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
     @GET
     @Path(value = "/configurations/count/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleDataWorkflowConfiguration>")
-    IEntityWrapper<? extends ISimpleDataWorkflowConfiguration> getTaskConfigurationCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowConfiguration>")
+    IEntityWrapper<? extends IDefaultDataWorkflowConfiguration> getTaskConfigurationCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
@@ -292,10 +263,7 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return An ExecutionEnvironmentConfigurationWrapper object containing all
-     * results. The returned entity is serialized using the <b>default</b>
-     * object graph of ExecutionEnvironmentConfigurationWrapper, which contains
-     * all attributes but complex attributes. For complex attributes the ids of
-     * the sub-entity are returned and can be used for additional queries.
+     * results.
      *
      * @see
      * edu.kit.dama.rest.dataworkflow.types.ExecutionEnvironmentConfigurationWrapper
@@ -323,9 +291,7 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return An ExecutionEnvironmentConfigurationWrapper object containing all
-     * results. The returned entity is serialized using the <b>simple</b> object
-     * graph of ExecutionEnvironmentConfigurationWrapper, which removes all
-     * attributes but the id from the returned entities.
+     * results.
      *
      * @see
      * edu.kit.dama.rest.dataworkflow.types.ExecutionEnvironmentConfigurationWrapper
@@ -333,8 +299,8 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
     @GET
     @Path(value = "/environments/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleExecutionEnvironment>")
-    IEntityWrapper<? extends ISimpleExecutionEnvironment> getAllExecutionEnvironmentConfigurations(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultExecutionEnvironment>")
+    IEntityWrapper<? extends IDefaultExecutionEnvironment> getAllExecutionEnvironmentConfigurations(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @QueryParam("first") @DefaultValue(Constants.REST_DEFAULT_MIN_INDEX) Integer first,
             @QueryParam("results") @DefaultValue(Constants.REST_DEFAULT_MAX_RESULTS) Integer results,
@@ -351,9 +317,7 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
      * @param hc The HttpContext for OAuth check.
      *
      * @return An ExecutionEnvironmentConfigurationWrapper object containing all
-     * results. The returned entity is serialized using the <b>simple</b> object
-     * graph of ExecutionEnvironmentConfigurationWrapper, which removes all
-     * attributes but the id from the returned entities.
+     * results.
      *
      * @see
      * edu.kit.dama.rest.dataworkflow.types.ExecutionEnvironmentConfigurationWrapper
@@ -361,8 +325,8 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
     @GET
     @Path(value = "/environments/count/")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.ISimpleExecutionEnvironment>")
-    IEntityWrapper<? extends ISimpleExecutionEnvironment> getExecutionEnvironmentConfigurationCount(
+    @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultExecutionEnvironment>")
+    IEntityWrapper<? extends IDefaultExecutionEnvironment> getExecutionEnvironmentConfigurationCount(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @javax.ws.rs.core.Context HttpContext hc);
 }

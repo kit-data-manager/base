@@ -1,15 +1,15 @@
 KIT Data Manager Manual
 =======================
-Contact <support@kitdatamanager.net>
+Contact <webmaster@datamanager.kit.edu>
 :toc: left
 :iconsdir: ./icons
 :icons: font
 :max-width: 90em
 :author:    KIT Data Manager Dev Team
-:email:     support@kitdatamanager.net
-:revdate:   February 04, 2016
-:revnumber: 1.2.0
-:website: http://kitdatamanager.net
+:email:     webmaster@datamanager.kit.edu
+:revdate:   June 03, 2016
+:revnumber: 1.3.0
+:website: http://datamanager.kit.edu
 
 About this documentation
 ------------------------

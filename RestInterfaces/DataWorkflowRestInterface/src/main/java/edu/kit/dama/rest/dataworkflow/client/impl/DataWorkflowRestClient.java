@@ -302,7 +302,7 @@ public class DataWorkflowRestClient extends AbstractRestClient {
      * @param environmentConfiguration The execution environment configuration.
      * @param predecessor The predecessor task or null if no predecessor exists.
      * @param inputObjectMap The input object mapping containing mappings of
-     * digitalObjectIds (keys) and DataOrganizationViews (values).
+     * digitalObjectIds/baseIds (keys) and DataOrganizationViews (values).
      * @param executionSettings The execution settings as key-value object.
      * @param applicationArguments The application arguments.
      * @param pSecurityContext The security context used to access the REST

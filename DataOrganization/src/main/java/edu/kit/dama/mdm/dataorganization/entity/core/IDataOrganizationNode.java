@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@
  */
 package edu.kit.dama.mdm.dataorganization.entity.core;
 
-import com.qmino.miredot.annotations.MireDotIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.kit.dama.mdm.dataorganization.entity.impl.client.NodeId;
 import java.util.Set;
 import javax.xml.bind.annotation.XmlTransient;
@@ -67,6 +67,7 @@ public interface IDataOrganizationNode extends Cloneable {
      * @return The parent node.
      */
     @XmlTransient
+    @JsonIgnore
     ICollectionNode getParent();
 
     /**
@@ -76,6 +77,7 @@ public interface IDataOrganizationNode extends Cloneable {
      * @param parent The parent node.
      */
     @XmlTransient
+    @JsonIgnore
     void setParent(ICollectionNode parent);
 
     /**
@@ -118,6 +120,8 @@ public interface IDataOrganizationNode extends Cloneable {
      *
      * @return The transient node id.
      */
+    @XmlTransient
+    @JsonIgnore
     NodeId getTransientNodeId();
 
     /**

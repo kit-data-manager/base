@@ -22,6 +22,7 @@ import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
 import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
+import edu.kit.dama.commons.exceptions.ConfigurationException;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.authorization.SecureMetaDataManager;
 import edu.kit.dama.mdm.base.DigitalObject;
@@ -35,6 +36,7 @@ import edu.kit.dama.mdm.base.Participant;
 import edu.kit.dama.mdm.base.Relation;
 import edu.kit.dama.mdm.base.Study;
 import edu.kit.dama.mdm.base.Task;
+import edu.kit.dama.mdm.base.TransitionType;
 import edu.kit.dama.mdm.base.UserData;
 import edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject;
 import edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectTransition;
@@ -47,20 +49,17 @@ import edu.kit.dama.mdm.base.interfaces.IDefaultRelation;
 import edu.kit.dama.mdm.base.interfaces.IDefaultStudy;
 import edu.kit.dama.mdm.base.interfaces.IDefaultTask;
 import edu.kit.dama.mdm.base.interfaces.IDefaultUserData;
-import edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObject;
-import edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectTransition;
-import edu.kit.dama.mdm.base.interfaces.ISimpleDigitalObjectType;
-import edu.kit.dama.mdm.base.interfaces.ISimpleInvestigation;
-import edu.kit.dama.mdm.base.interfaces.ISimpleMetaDataSchema;
-import edu.kit.dama.mdm.base.interfaces.ISimpleOrganizationUnit;
-import edu.kit.dama.mdm.base.interfaces.ISimpleStudy;
-import edu.kit.dama.mdm.base.interfaces.ISimpleTask;
-import edu.kit.dama.mdm.base.interfaces.ISimpleUserData;
 import edu.kit.dama.mdm.core.MetaDataManagement;
+import edu.kit.dama.mdm.core.exception.PersistFailedException;
 import edu.kit.dama.mdm.core.jpa.MetaDataManagerJpa;
+import edu.kit.dama.mdm.tools.AbstractTransitionTypeHandler;
+import edu.kit.dama.mdm.tools.DigitalObjectSecureQueryHelper;
 import edu.kit.dama.mdm.tools.DigitalObjectTypeQueryHelper;
+import edu.kit.dama.mdm.tools.InvestigationSecureQueryHelper;
 import edu.kit.dama.mdm.tools.StudySecureQueryHelper;
 import edu.kit.dama.mdm.tools.TransitionQueryHelper;
+import edu.kit.dama.mdm.tools.TransitionTypeHandlerFactory;
+import edu.kit.dama.rest.admin.types.UserDataWrapper;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.base.types.CheckServiceResponse;
 import edu.kit.dama.rest.base.types.ServiceStatus;
@@ -75,7 +74,6 @@ import edu.kit.dama.rest.basemetadata.types.ParticipantWrapper;
 import edu.kit.dama.rest.basemetadata.types.RelationWrapper;
 import edu.kit.dama.rest.basemetadata.types.StudyWrapper;
 import edu.kit.dama.rest.basemetadata.types.TaskWrapper;
-import edu.kit.dama.rest.basemetadata.types.UserDataWrapper;
 import edu.kit.dama.rest.util.RestUtils;
 import java.util.Date;
 import java.util.List;
@@ -83,6 +81,9 @@ import java.util.Objects;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,13 +97,13 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
     private final static Logger LOGGER = LoggerFactory.getLogger(BaseMetaDataRestService.class);
 
     @Override
-    public IEntityWrapper<? extends ISimpleStudy> getStudyIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultStudy> getStudies(String groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             return new StudyWrapper(new StudySecureQueryHelper().getReadableStudies(mdm, first, results, ctx));
         } catch (UnauthorizedAccessAttemptException ex) {
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -142,7 +143,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             }
             if (managerUser == null) {
                 LOGGER.error("No manager user found for id " + managerUserId + " and caller " + ctx.getUserId());
-                throw new WebApplicationException(new Exception("User for id " + managerUserId + " not found"), 404);
+                throw new WebApplicationException(new Exception("User for id " + managerUserId + " not found"), Response.Status.NOT_FOUND);
             }
             study.setManager(managerUser);
             study = mdm.save(study);
@@ -157,15 +158,15 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleStudy> getStudyCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultStudy> getStudyCount(String groupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             LOGGER.debug("Try to get study count.");
-            return new StudyWrapper(((Number) mdm.findSingleResult("SELECT COUNT(s) from Study s")).intValue());
+            return new StudyWrapper(new StudySecureQueryHelper().getStudyCount(mdm, ctx).intValue());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get study count.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -180,12 +181,12 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Study.default");
             Study study = mdm.find(Study.class, id);
             if (study == null) {
-                throw new WebApplicationException(new Exception("Study for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("Study for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             return new StudyWrapper(study);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get study.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -213,7 +214,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Study.simple");
             Study study = mdm.find(Study.class, id);
             if (study == null) {
-                throw new WebApplicationException(new Exception("Study for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("Study for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             mdm.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
             LOGGER.debug("Assigning study with id {} to investigation.", study.getStudyId());
@@ -224,7 +225,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new InvestigationWrapper(mdm.find(Investigation.class, investigation.getInvestigationId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to add investigation to study.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -239,7 +240,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Study.default");
             Study study = mdm.find(Study.class, id);
             if (study == null) {
-                throw new WebApplicationException(new Exception("Study for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("Study for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             study.setTopic(topic);
             study.setNote(note);
@@ -256,7 +257,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new StudyWrapper(mdm.find(Study.class, study));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to udpate study.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -269,11 +270,11 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleInvestigation> getInvestigationIds(String groupId, Long studyId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultInvestigation> getInvestigations(String groupId, Long studyId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         List<Investigation> investigations;
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
-        LOGGER.debug("Try to get investigation ids ({}-{}) for study {} (0 = all)", first, first + results, studyId);
+        LOGGER.debug("Try to get investigations ({}-{}) for study {} (0 = all)", first, first + results, studyId);
         if (studyId != null && studyId > 0) {//get investigations by study
             try {
                 mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Study.simple");
@@ -281,24 +282,24 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
                 if (study == null) {
                     //no study found for id studyId
                     LOGGER.error("Study with id {} not found.", studyId);
-                    throw new WebApplicationException(404);
+                    throw new WebApplicationException(Response.Status.NOT_FOUND);
                 }
-                mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
-                investigations = mdm.findResultList("SELECT i FROM Investigation i WHERE i.study.studyId=" + studyId, Investigation.class, first, results);
+                mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.default");
+                investigations = new InvestigationSecureQueryHelper().getInvestigationsInStudy(study, mdm, first, results, ctx);
             } catch (UnauthorizedAccessAttemptException ex) {
-                LOGGER.error("Failed to get investigation ids.", ex);
-                throw new WebApplicationException(401);
+                LOGGER.error("Failed to get investigations.", ex);
+                throw new WebApplicationException(Response.Status.UNAUTHORIZED);
             } finally {
                 mdm.close();
             }
         } else {//no study provided...get all investigation
-            LOGGER.debug("StudyId is 0. Try getting all investigation ids.");
+            LOGGER.debug("StudyId is 0. Try getting all investigations.");
             try {
-                mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
-                investigations = mdm.findResultList("SELECT i FROM Investigation i", Investigation.class, first, results);
+                mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.default");
+                investigations = new InvestigationSecureQueryHelper().getReadableInvestigations(mdm, first, results, ctx);
             } catch (UnauthorizedAccessAttemptException ex) {
-                LOGGER.error("Failed to get investigation ids.", ex);
-                throw new WebApplicationException(401);
+                LOGGER.error("Failed to get investigations.", ex);
+                throw new WebApplicationException(Response.Status.UNAUTHORIZED);
             } finally {
                 mdm.close();
             }
@@ -307,15 +308,15 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleInvestigation> getInvestigationCount(String groupId, Long studyId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultInvestigation> getInvestigationCount(String groupId, Long studyId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             LOGGER.debug("Getting investigation count.");
-            return new InvestigationWrapper(((Number) mdm.findSingleResult("SELECT COUNT(i) FROM Investigation i")).intValue());
+            return new InvestigationWrapper(new InvestigationSecureQueryHelper().getInvestigationCount(mdm, ctx).intValue());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get investigation count.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -330,12 +331,12 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.default");
             Investigation investigation = mdm.find(Investigation.class, id);
             if (investigation == null) {
-                throw new WebApplicationException(new Exception("Investigation for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("Investigation for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             return new InvestigationWrapper(investigation);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get investigation by id.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -373,7 +374,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
             Investigation investigation = mdm.find(Investigation.class, id);
             if (investigation == null) {
-                throw new WebApplicationException(new Exception("Investigation for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("Investigation for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             mdm.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
             LOGGER.debug(" - Adding digital object to investigation");
@@ -384,7 +385,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new DigitalObjectWrapper(mdm.find(DigitalObject.class, object.getBaseId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to add digital object to investigation.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -399,7 +400,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.default");
             Investigation investigation = mdm.find(Investigation.class, id);
             if (investigation == null) {
-                throw new WebApplicationException(new Exception("Investigation for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("Investigation for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             investigation.setTopic(topic);
             investigation.setNote(note);
@@ -415,7 +416,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new InvestigationWrapper(mdm.find(Investigation.class, investigation.getInvestigationId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to update investigation by id.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -428,39 +429,39 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectIds(String groupId, Long investigationId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjects(String groupId, Long investigationId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
-            LOGGER.debug("Try to get digital object ids ({}-{}) for investigation with id {} (0=all)", first, first + results, investigationId);
+            LOGGER.debug("Try to get digital objects ({}-{}) for investigation with id {} (0=all)", first, first + results, investigationId);
             List<DigitalObject> objects;
             if (investigationId <= 0) {
                 //no investigationId provided...get all objects
-                mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.simple");
-                objects = mdm.findResultList("SELECT o FROM DigitalObject o", first, results);
+                mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.default");
+                objects = mdm.findResultList("SELECT o FROM DigitalObject o", DigitalObject.class, first, results);
             } else {
                 //first, obtain investigation for id
                 mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
                 Investigation investigation = mdm.find(Investigation.class, investigationId);
                 if (investigation == null) {
                     LOGGER.error("Investigation for id {} not found.", investigationId);
-                    throw new WebApplicationException(404);
+                    throw new WebApplicationException(Response.Status.NOT_FOUND);
                 }
                 //try to get objects in investigation
-                mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.simple");
-                objects = mdm.findResultList("SELECT o FROM DigitalObject o WHERE o.investigation.investigationId=" + investigationId, first, results);
+                mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.default");
+                objects = mdm.findResultList("SELECT o FROM DigitalObject o WHERE o.investigation.investigationId=" + investigationId, DigitalObject.class, first, results);
             }
             return new DigitalObjectWrapper(objects);
         } catch (UnauthorizedAccessAttemptException ex) {
-            LOGGER.error("Failed to get digital object ids.", ex);
-            throw new WebApplicationException(401);
+            LOGGER.error("Failed to get digital objects.", ex);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectCount(String groupId, Long investigationId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjectCount(String groupId, Long investigationId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -468,23 +469,23 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             int count = 0;
             if (investigationId <= 0) {
                 //no investigationId provided...get all objects
-                count = ((Number) mdm.findSingleResult("SELECT COUNT(o) FROM DigitalObject o")).intValue();
+                count = new DigitalObjectSecureQueryHelper().getReadableResourceCount(mdm, ctx);
             } else {
                 //first, obtain investigation for id
                 mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
                 Investigation investigation = mdm.find(Investigation.class, investigationId);
                 if (investigation == null) {
-                    throw new WebApplicationException(404);
+                    throw new WebApplicationException(Response.Status.NOT_FOUND);
                 }
                 //try to get objects in investigation
                 mdm.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
-                count = ((Number) mdm.findSingleResult("SELECT COUNT(o) FROM DigitalObject o WHERE o.investigation.investigationId=" + investigationId)).intValue();
+                count = new DigitalObjectSecureQueryHelper().getObjectCountInInvestigation(investigation, null, mdm, ctx).intValue();
             }
 
             return new DigitalObjectWrapper(count);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get digital object count.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -499,12 +500,12 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.default");
             DigitalObject object = mdm.find(DigitalObject.class, id);
             if (object == null) {
-                throw new WebApplicationException(new Exception("DigitalObject for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("DigitalObject for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             return new DigitalObjectWrapper(object);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get digital object by id.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -520,12 +521,12 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             DigitalObject result = mdm.findSingleResult("SELECT o FROM DigitalObject o WHERE o.digitalObjectIdentifier='" + digitalObjectId + "'", DigitalObject.class);
 
             if (result == null) {
-                throw new WebApplicationException(new Exception("DigitalObject for digital object id " + digitalObjectId + " not found"), 404);
+                throw new WebApplicationException(new Exception("DigitalObject for digital object id " + digitalObjectId + " not found"), Response.Status.NOT_FOUND);
             }
             return new DigitalObjectWrapper(result);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get digital object by DOI", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -540,7 +541,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.default");
             DigitalObject object = mdm.find(DigitalObject.class, id);
             if (object == null) {
-                throw new WebApplicationException(new Exception("DigitalObject for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("DigitalObject for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             object.setLabel(label);
             object.setNote(note);
@@ -554,7 +555,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new DigitalObjectWrapper(object);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to update digital object by id.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -567,16 +568,16 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleOrganizationUnit> getOrganizationUnitIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultOrganizationUnit> getOrganizationUnits(String groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
-            LOGGER.debug("Try to getorganization unit ids ({}-{})", first, first + results);
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "OrganizationUnit.simple");
+            LOGGER.debug("Try to get organization units ({}-{})", first, first + results);
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "OrganizationUnit.default");
             return new OrganizationUnitWrapper(mdm.find(OrganizationUnit.class));
         } catch (UnauthorizedAccessAttemptException ex) {
-            LOGGER.error("Failed to get organization unit ids.", ex);
-            throw new WebApplicationException(401);
+            LOGGER.error("Failed to get organization units.", ex);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -606,7 +607,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             }
             if (managerUser == null) {
                 LOGGER.error("No manager user found for id " + managerUserId + " and caller " + ctx.getUserId());
-                throw new WebApplicationException(new Exception("User for id " + managerUserId + " not found"), 404);
+                throw new WebApplicationException(new Exception("User for id " + managerUserId + " not found"), Response.Status.NOT_FOUND);
             }
             ou.setManager(managerUser);
 
@@ -616,14 +617,14 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new OrganizationUnitWrapper(mdm.find(OrganizationUnit.class, ou.getOrganizationUnitId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to add organization unit.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleOrganizationUnit> getOrganizationUnitCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultOrganizationUnit> getOrganizationUnitCount(String groupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -631,7 +632,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new OrganizationUnitWrapper(((Number) mdm.findSingleResult("SELECT COUNT(x) FROM OrganizationUnit x")).intValue());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get organization unit count.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -649,12 +650,12 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             organizationUnit = mdm.find(OrganizationUnit.class, id);
             if (organizationUnit == null) {
                 LOGGER.error("OrganizationUnit for id " + id + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             return new OrganizationUnitWrapper(organizationUnit);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get organization unit by id", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -671,7 +672,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             OrganizationUnit ou = mdm.find(OrganizationUnit.class, id);
             if (ou == null) {
                 LOGGER.error("OrganizationUnit for id " + id + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             ou.setOuName(ouName);
             ou.setAddress(address);
@@ -683,22 +684,22 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new OrganizationUnitWrapper(ou);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to update organization unit by id", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleMetaDataSchema> getMetadataSchemaIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultMetaDataSchema> getMetadataSchemas(String groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "MetaDataSchema.default");
             return new MetadataSchemaWrapper(mdm.find(MetaDataSchema.class));
         } catch (UnauthorizedAccessAttemptException ex) {
-            LOGGER.error("Failed to get metadata schema ids.", ex);
-            throw new WebApplicationException(401);
+            LOGGER.error("Failed to get metadata schemas.", ex);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -726,21 +727,21 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new MetadataSchemaWrapper(mdm.find(MetaDataSchema.class, schema.getId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to create metadata schema", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleMetaDataSchema> getMetadataSchemaCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultMetaDataSchema> getMetadataSchemaCount(String groupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             return new MetadataSchemaWrapper(((Number) mdm.findSingleResult("SELECT COUNT(x) FROM MetaDataSchema x")).intValue());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get metadata schema count.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         }
     }
 
@@ -752,28 +753,28 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "MetaDataSchema.default");
             MetaDataSchema metadataSchema = mdm.find(MetaDataSchema.class, id);
             if (metadataSchema == null) {
-                throw new WebApplicationException(new Exception("MetaDataSchema for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("MetaDataSchema for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             return new MetadataSchemaWrapper(metadataSchema);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get metadata schema by id.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleTask> getTaskIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultTask> getTasks(String groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
 
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Task.simple");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Task.default");
             return new TaskWrapper(mdm.find(Task.class));
         } catch (UnauthorizedAccessAttemptException ex) {
-            LOGGER.error("Failed to get task ids.", ex);
-            throw new WebApplicationException(401);
+            LOGGER.error("Failed to get tasks.", ex);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -787,9 +788,8 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             //check for existing schemas
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Task.simple");
-            List<Task> existingTask = mdm.find(task, task);
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Task.default");
+            List<Task> existingTask = mdm.find(task, task);
             if (!existingTask.isEmpty()) {
                 task = existingTask.get(0);
             } else {
@@ -799,21 +799,21 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new TaskWrapper(mdm.find(Task.class, task.getTaskId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to create task.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleTask> getTaskCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultTask> getTaskCount(String groupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             return new TaskWrapper(((Number) mdm.findSingleResult("SELECT COUNT(x) FROM Task x")).intValue());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get task count.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -827,42 +827,42 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Task.default");
             Task task = mdm.find(Task.class, id);
             if (task == null) {
-                throw new WebApplicationException(new Exception("Task for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("Task for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             return new TaskWrapper(task);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get task by id.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserData> getUserDataIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserData> getUserDataEntities(String groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
 
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.simple");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.default");
             return new UserDataWrapper(mdm.find(UserData.class));
         } catch (UnauthorizedAccessAttemptException ex) {
-            LOGGER.error("Failed to get userdata ids.", ex);
-            throw new WebApplicationException(401);
+            LOGGER.error("Failed to get userdata entities.", ex);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleUserData> getUserDataCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultUserData> getUserDataCount(String groupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             return new UserDataWrapper(((Number) mdm.findSingleResult("SELECT COUNT(x) FROM UserData x")).intValue());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get userdata count.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -878,12 +878,12 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.default");
             userData = mdm.find(UserData.class, id);
             if (userData == null) {
-                throw new WebApplicationException(new Exception("UserData for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("UserData for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             return new UserDataWrapper(userData);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to userdata by id.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -898,12 +898,12 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Participant.default");
             Participant participant = mdm.find(Participant.class, id);
             if (participant == null) {
-                throw new WebApplicationException(new Exception("Participant for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("Participant for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             return new ParticipantWrapper(participant);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get participant by id.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -917,12 +917,12 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Relation.default");
             Relation relation = mdm.find(Relation.class, id);
             if (relation == null) {
-                throw new WebApplicationException(new Exception("Relation for id " + id + " not found"), 404);
+                throw new WebApplicationException(new Exception("Relation for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
             return new RelationWrapper(relation);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get relation by id.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -937,13 +937,13 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             Study study = mdm.find(Study.class, studyId);
             if (study == null) {
                 LOGGER.error("Study for id " + studyId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "OrganizationUnit.simple");
             OrganizationUnit ou = mdm.find(OrganizationUnit.class, organizationUnitId);
             if (ou == null) {
                 LOGGER.error("OrganizationUnit for id " + organizationUnitId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
 
             Task task;
@@ -970,10 +970,10 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new StudyWrapper(mdm.find(Study.class, study.getStudyId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to add relation to study.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } catch (EntityNotFoundException ex) {
             LOGGER.error("Failed to add relation to study.", ex);
-            throw new WebApplicationException(404);
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
         } finally {
             mdm.close();
         }
@@ -988,21 +988,21 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             Investigation investigation = mdm.find(Investigation.class, investigationId);
             if (investigation == null) {
                 LOGGER.error("Investigation for id " + investigationId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
 
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.default");
             UserData user = mdm.find(UserData.class, userDataId);
             if (user == null) {
                 LOGGER.error("UserData for id " + userDataId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
 
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Task.default");
             Task task = mdm.find(Task.class, taskId);
             if (task == null) {
                 LOGGER.error("Task for id " + taskId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             mdm.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
 
@@ -1017,10 +1017,10 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new InvestigationWrapper(mdm.find(Investigation.class, investigation.getInvestigationId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to add participant to investigation.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } catch (EntityNotFoundException ex) {
             LOGGER.error("Failed to add participant to investigation.", ex);
-            throw new WebApplicationException(404);
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
         } finally {
             mdm.close();
         }
@@ -1035,14 +1035,14 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             Investigation investigation = mdm.find(Investigation.class, investigationId);
             if (investigation == null) {
                 LOGGER.error("Investigation for id " + investigationId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
 
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "MetaDataSchema.simple");
             MetaDataSchema schema = mdm.find(MetaDataSchema.class, metadataSchemaId);
             if (schema == null) {
                 LOGGER.error("MetaDataSchema for id " + metadataSchemaId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             mdm.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
             LOGGER.debug("Adding schema to investigation and updating investigation.");
@@ -1053,10 +1053,10 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new InvestigationWrapper(mdm.find(Investigation.class, investigation.getInvestigationId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to add metadata schema to investigation.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } catch (EntityNotFoundException ex) {
             LOGGER.error("Failed to add metadata schema to investigation.", ex);
-            throw new WebApplicationException(404);
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
         } finally {
             mdm.close();
         }
@@ -1071,13 +1071,13 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             DigitalObject digitalObject = mdm.find(DigitalObject.class, baseId);
             if (digitalObject == null) {
                 LOGGER.error("DigitalObject for id " + baseId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.default");
             UserData user = mdm.find(UserData.class, userDataId);
             if (user == null) {
                 LOGGER.error("UserData for id " + userDataId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             mdm.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
 
@@ -1090,10 +1090,10 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new DigitalObjectWrapper(digitalObject);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to add experimenter to digital object.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } catch (EntityNotFoundException ex) {
             LOGGER.error("Failed to add experimenter to digital object.", ex);
-            throw new WebApplicationException(404);
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
         } finally {
             mdm.close();
         }
@@ -1119,18 +1119,18 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObjectType> getDigitalObjectTypeIds(String groupId, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectType> getDigitalObjectTypes(String groupId, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             LOGGER.debug("Obtaining DigitalObjectType entities.");
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectType.simple");
-            List<DigitalObjectType> types = mdm.findResultList("SELECT t FROM DigitalObjectType t", first, results);
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectType.default");
+            List<DigitalObjectType> types = mdm.findResultList("SELECT t FROM DigitalObjectType t", DigitalObjectType.class, first, results);
             LOGGER.debug("{} entities obtained. Returning result.", types.size());
             return new DigitalObjectTypeWrapper(types);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain all digital object types.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -1146,14 +1146,14 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             DigitalObjectType type = mdm.find(DigitalObjectType.class, id);
             if (type == null) {
                 LOGGER.error("DigitalObjectType for id " + id + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
 
             LOGGER.debug("Entity obtained. Returning result.");
             return new DigitalObjectTypeWrapper(type);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain digital object type for id " + id + ".", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -1183,14 +1183,14 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new DigitalObjectTypeWrapper(mdm.find(DigitalObjectType.class, t.getId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to store digital object type.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObjectType> getDigitalObjectTypeCount(String groupId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectType> getDigitalObjectTypeCount(String groupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -1200,14 +1200,14 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new DigitalObjectTypeWrapper(count.intValue());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain digital object type count.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectsForDigitalObjectType(String groupId, Long id, Integer first, Integer results, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjectsForDigitalObjectType(String groupId, Long id, Integer first, Integer results, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -1217,21 +1217,21 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
             if (type == null) {
                 LOGGER.error("DigitalObjectType for id " + id + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             List<DigitalObject> result = DigitalObjectTypeQueryHelper.getDigitalObjectsByDigitalObjectType(type, ctx);
             LOGGER.debug("Obtained {} digital objects associated with object type  with id {}. Returning result.", result.size(), id);
             return new DigitalObjectWrapper(result);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain digital objects for type with id " + id + ".", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObject> getDigitalObjectCountForType(String groupId, Long id, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjectCountForType(String groupId, Long id, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -1241,21 +1241,21 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
             if (type == null) {
                 LOGGER.error("DigitalObjectType for id " + id + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             Long count = DigitalObjectTypeQueryHelper.getDigitalObjectsByDigitalObjectTypeCount(type, ctx);
             LOGGER.debug("Obtained mapping count of {}. Returning result.", count);
             return new DigitalObjectWrapper(count.intValue());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain digital object count for type with id " + id + ".", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObjectType> getDigitalObjectTypesForDigitalObject(String groupId, Long id, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectType> getDigitalObjectTypesForDigitalObject(String groupId, Long id, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -1265,7 +1265,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
             if (object == null) {
                 LOGGER.error("DigitalObject for id " + id + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             LOGGER.debug("Getting DigitalObjectType entities for digital object.");
             List<DigitalObjectType> types = DigitalObjectTypeQueryHelper.getTypesOfObject(object, ctx);
@@ -1273,7 +1273,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new DigitalObjectTypeWrapper(types);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain digital object types for digital object with id " + id + ".", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -1290,14 +1290,14 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
             if (object == null) {
                 LOGGER.error("DigitalObject for id " + id + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
 
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectType.simple");
             DigitalObjectType type = mdm.find(DigitalObjectType.class, objectTypeId);
             if (type == null) {
                 LOGGER.error("DigitalObjectType for id " + objectTypeId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             mdm.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
             ObjectTypeMapping mapping = new ObjectTypeMapping();
@@ -1310,7 +1310,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new DigitalObjectTypeWrapper(mdm.find(DigitalObjectType.class, mapping.getObjectType().getId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to store object-type mapping to database.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
@@ -1327,21 +1327,21 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
             if (transition == null) {
                 LOGGER.error("DigitalObjectTransition for id " + id + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
 
             LOGGER.debug("Obtained DigitalObjectTransition. Returning result.");
             return new DigitalObjectTransitionWrapper(transition);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain digital object transition with id " + id + ".", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObjectTransition> getDigitalObjectDerivationInformation(String groupId, Long id, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectTransition> getDigitalObjectDerivationInformation(String groupId, Long id, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -1350,7 +1350,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             DigitalObject object = mdm.find(DigitalObject.class, id);
             if (object == null) {
                 LOGGER.error("DigitalObject for id " + id + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
 
             LOGGER.debug("DigitalObject obtained. Getting transition with object with id {} as output.", object.getBaseId());
@@ -1359,14 +1359,95 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new DigitalObjectTransitionWrapper(transitions);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain digital object transitions for object with id " + id + " as output.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends ISimpleDigitalObjectTransition> getDigitalObjectContributionInformation(String groupId, Long id, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectTransition> addDigitalObjectTransition(String groupId, String inputObjectMap, String outputObjectList, TransitionType type, String typeData, HttpContext hc) {
+        LOGGER.debug("Try to add digital object transition of type '{}'", type);
+        DigitalObjectTransition transition;
+        try {
+            LOGGER.debug("Obtaining transition type handler.");
+            AbstractTransitionTypeHandler handler = TransitionTypeHandlerFactory.factoryTransitionTypeHandler(type);
+            LOGGER.debug("Handler obtained. Creating transition entity.");
+            transition = handler.factoryTransitionEntity();
+            LOGGER.debug("Handling provided transition type data '{}'", typeData);
+            Object entity = handler.handleTransitionEntityData(typeData);
+            LOGGER.debug("Obtaining entity id from entity.");
+            String entityId = handler.getTransitionEntityId(entity);
+            LOGGER.debug("Setting obtained entity id '{}' at transition.", entityId);
+            transition.setTransitionEntityId(entityId);
+        } catch (ConfigurationException | PersistFailedException ex) {
+            LOGGER.error("Failed to add transition of type '" + type + "'", ex);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
+
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+        mdm.setAuthorizationContext(ctx);
+        try {
+            //parsing and validating input mappings
+            try {
+                JSONArray array = new JSONArray(inputObjectMap);
+                LOGGER.debug("Parsing input object mappings from JSON array.");
+                for (int i = 0; i < array.length(); i++) {
+                    LOGGER.debug("Getting mapping '{}'", i);
+                    JSONObject objectViewMapping = array.getJSONObject(i);
+                    String objectId = (String) objectViewMapping.keys().next();
+                    String viewName = objectViewMapping.getString(objectId);
+
+                    long lObjectId = Long.parseLong(objectId);
+                    DigitalObject result = mdm.find(DigitalObject.class, lObjectId);
+                    if (result == null) {
+                        LOGGER.error("The transition input object with the id  " + lObjectId + " was not found.");
+                        throw new WebApplicationException(Response.Status.NOT_FOUND);
+                    }
+
+                    LOGGER.debug("Adding input mapping {}:{} to transition.", objectId, viewName);
+                    transition.addInputMapping(result, viewName);
+                }
+            } catch (JSONException ex) {
+                LOGGER.error("Failed to parse argument inputObjectMap with value " + inputObjectMap + " as JSON array.", ex);
+                throw new WebApplicationException(Response.Status.BAD_REQUEST);
+            }
+            //parsing and validating output objects
+            try {
+                JSONArray array = new JSONArray(outputObjectList);
+                LOGGER.debug("Parsing output object lsit from JSON array.");
+                for (int i = 0; i < array.length(); i++) {
+                    LOGGER.debug("Getting mapping as long value '{}'", i);
+                    long objectId = array.getLong(i);
+                    DigitalObject result = mdm.find(DigitalObject.class, objectId);
+                    if (result == null) {
+                        LOGGER.error("The transition output object with the id  " + objectId + " was not found.");
+                        throw new WebApplicationException(Response.Status.NOT_FOUND);
+                    }
+                    LOGGER.debug("Adding object id {} to temporary list.", objectId);
+                    transition.addOutputObject(result);
+                }
+            } catch (JSONException ex) {
+                LOGGER.error("Failed to parse argument outputObjectList with value " + outputObjectList + " as JSON array.", ex);
+                throw new WebApplicationException(Response.Status.BAD_REQUEST);
+            }
+            LOGGER.debug("Persisting transition.");
+            transition = mdm.save(transition);
+            LOGGER.debug("Querying and returning default transition representation.");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObjectTransition.default");
+            return new DigitalObjectTransitionWrapper(mdm.find(DigitalObjectTransition.class, transition.getId()));
+        } catch (UnauthorizedAccessAttemptException ex) {
+            LOGGER.error("Failed to add digital object transition.", ex);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
+        } finally {
+            mdm.close();
+        }
+    }
+
+    @Override
+    public IEntityWrapper<? extends IDefaultDigitalObjectTransition> getDigitalObjectContributionInformation(String groupId, Long id, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -1375,7 +1456,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             DigitalObject object = mdm.find(DigitalObject.class, id);
             if (object == null) {
                 LOGGER.error("DigitalObject for id " + id + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
 
             LOGGER.debug("DigitalObject obtained. Getting transition with object as input.");
@@ -1385,14 +1466,32 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new DigitalObjectTransitionWrapper(transitions);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain digital object transitions for object with id " + id + " as output.", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }
     }
 
     @Override
-    public IEntityWrapper<? extends IDefaultDigitalObjectTransition> addTransitionToDigitalObject(String groupId, Long baseId, Long otherBaseId, String viewName, Long outputBaseId, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDigitalObjectTransition> addTransitionToDigitalObject(String groupId, Long baseId, Long otherBaseId, String viewName, Long outputBaseId, TransitionType type, String typeData, HttpContext hc) {
+        LOGGER.debug("Try to add digital object transition of type '{}'", type);
+        DigitalObjectTransition transition;
+        try {
+            LOGGER.debug("Obtaining transition type handler.");
+            AbstractTransitionTypeHandler handler = TransitionTypeHandlerFactory.factoryTransitionTypeHandler(type);
+            LOGGER.debug("Handler obtained. Creating transition entity.");
+            transition = handler.factoryTransitionEntity();
+            LOGGER.debug("Handling provided transition type data '{}'", typeData);
+            Object entity = handler.handleTransitionEntityData(typeData);
+            LOGGER.debug("Obtaining entity id from entity.");
+            String entityId = handler.getTransitionEntityId(entity);
+            LOGGER.debug("Setting obtained entity id '{}' at transition.", entityId);
+            transition.setTransitionEntityId(entityId);
+        } catch (ConfigurationException | PersistFailedException ex) {
+            LOGGER.error("Failed to add transition of type '" + type + "'", ex);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -1401,13 +1500,13 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             DigitalObject object = mdm.find(DigitalObject.class, baseId);
             if (object == null) {
                 LOGGER.error("DigitalObject for id " + baseId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
 
             DigitalObject otherObject = mdm.find(DigitalObject.class, otherBaseId);
             if (otherObject == null) {
                 LOGGER.error("DigitalObject for id " + otherBaseId + " not found");
-                throw new WebApplicationException(404);
+                throw new WebApplicationException(Response.Status.NOT_FOUND);
             }
             DigitalObject input = object;
             DigitalObject output = otherObject;
@@ -1416,7 +1515,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
                 LOGGER.debug("outputId is either null or -1. Using otherId as output object.");
             } else if (!Objects.equals(outputBaseId, baseId) && !Objects.equals(outputBaseId, otherBaseId)) {
                 LOGGER.error("Transition output id " + outputBaseId + " is not equal to one of the provided ids " + baseId + " and " + outputBaseId);
-                throw new WebApplicationException(401);
+                throw new WebApplicationException(Response.Status.UNAUTHORIZED);
             } else {
                 LOGGER.debug("outputId equals id. Using id as output object.");
                 if (Objects.equals(outputBaseId, baseId)) {
@@ -1424,6 +1523,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
                     output = object;
                 }
             }
+
             mdm.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
             DigitalObjectTransition t = new DigitalObjectTransition();
             t.addInputMapping(input, viewName);
@@ -1436,7 +1536,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             return new DigitalObjectTransitionWrapper(mdm.find(DigitalObjectTransition.class, t.getId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to add digital object transition for object with ids " + baseId + " and " + otherBaseId + ".", ex);
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
         } finally {
             mdm.close();
         }

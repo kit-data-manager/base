@@ -18,6 +18,7 @@ package edu.kit.dama.staging.entities.download;
 
 import edu.kit.dama.staging.entities.ingest.INGEST_STATUS;
 import edu.kit.dama.commons.types.DigitalObjectId;
+import edu.kit.dama.staging.entities.StagingProcessor;
 import edu.kit.dama.staging.entities.interfaces.IDefaultDownloadInformation;
 import edu.kit.dama.staging.interfaces.ITransferInformation;
 import edu.kit.dama.util.DataManagerSettings;
@@ -25,10 +26,14 @@ import edu.kit.tools.url.URLCreator;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
@@ -48,30 +53,8 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
  *
  * @author jejkal
  */
-//<editor-fold defaultstate="collapsed" desc="Annotations for JPA and MOXy">
+//<editor-fold defaultstate="collapsed" desc="Annotations for JPA">
 @Entity
-@NamedQueries({
-    @NamedQuery(name = "GetAllDownloads",
-            query = "SELECT x FROM DownloadInformation x WHERE x.ownerUuid LIKE ?1"),
-    @NamedQuery(name = "GetDownloadsByObjectId",
-            query = "SELECT x FROM DownloadInformation x WHERE x.digitalObjectUuid = ?1 AND x.ownerUuid LIKE ?2"),
-    @NamedQuery(name = "GetDownloadsByOwner",
-            query = "SELECT x FROM DownloadInformation x WHERE x.ownerUuid = ?1"),
-    @NamedQuery(name = "GetDownloadsByStatus",
-            query = "SELECT x FROM DownloadInformation x WHERE x.status = ?1 AND x.ownerUuid LIKE ?2"),
-    @NamedQuery(name = "GetDownloadsById",
-            query = "SELECT x FROM DownloadInformation x WHERE x.id = ?1 AND x.ownerUuid LIKE ?2"),
-    @NamedQuery(name = "GetExpiredDownloads",
-            query = "SELECT x FROM DownloadInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < x.expiresAt) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3"),
-    @NamedQuery(name = "UpdateDownloadStatus",
-            query = "UPDATE DownloadInformation x SET x.status = ?2, x.errorMessage = ?3, x.lastUpdate = ?4 WHERE x.id = ?1 AND x.ownerUuid LIKE ?5"),
-    @NamedQuery(name = "UpdateDownloadClientAccessUrl",
-            query = "UPDATE DownloadInformation x SET x.clientAccessUrl = ?2, x.lastUpdate = ?3 WHERE x.id = ?1 AND x.ownerUuid LIKE ?4"),
-    @NamedQuery(name = "UpdateDownloadStagingUrl",
-            query = "UPDATE DownloadInformation x SET x.stagingUrl = ?2,  x.lastUpdate = ?3 WHERE x.id = ?1 AND x.ownerUuid LIKE ?4"),
-    @NamedQuery(name = "DeleteDownloadById",
-            query = "DELETE FROM DownloadInformation x WHERE x.id = ?1 AND x.ownerUuid LIKE ?2")
-})
 @XmlNamedObjectGraphs({
     @XmlNamedObjectGraph(
             name = "simple",
@@ -91,7 +74,8 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
                 @XmlNamedAttributeNode("clientAccessUrl"),
                 @XmlNamedAttributeNode("stagingUrl"),
                 @XmlNamedAttributeNode("errorMessage"),
-                @XmlNamedAttributeNode("accessPointId")
+                @XmlNamedAttributeNode("accessPointId"),
+                @XmlNamedAttributeNode(value = "stagingProcessors", subgraph = "simple")
             })
 })
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -159,6 +143,15 @@ public class DownloadInformation implements IDefaultDownloadInformation, ITransf
      * The id of the access point used to perform this download.
      */
     private String accessPointId = null;
+    @OneToMany(fetch = FetchType.EAGER)
+    @XmlElement(name = "stagingProcessor")
+    private Set<StagingProcessor> stagingProcessors = new HashSet<>();
+    @Transient
+    @XmlTransient
+    private Set<StagingProcessor> clientSideStagingProcessors = null;
+    @Transient
+    @XmlTransient
+    private Set<StagingProcessor> serverSideStagingProcessors = null;
 
     /**
      * Constructor only for bean-compliance. This constructor should no be used
@@ -363,6 +356,7 @@ public class DownloadInformation implements IDefaultDownloadInformation, ITransf
      *
      * @return The status.
      */
+    @Override
     public int getStatus() {
         return status;
     }
@@ -407,6 +401,102 @@ public class DownloadInformation implements IDefaultDownloadInformation, ITransf
     @Override
     public String getAccessPointId() {
         return accessPointId;
+    }
+
+    /**
+     * Set a list of staging processors.
+     *
+     * @param stagingProcessors A list of staging processors.
+     */
+    public void setStagingProcessors(Set<StagingProcessor> stagingProcessors) {
+        this.stagingProcessors = stagingProcessors;
+    }
+
+    @Override
+    public Set<StagingProcessor> getStagingProcessors() {
+        return stagingProcessors;
+    }
+
+    /**
+     * Clear the list of staging processors.
+     */
+    public void clearStagingProcessors() {
+        if (stagingProcessors == null) {
+            stagingProcessors = new HashSet<>();
+        } else {
+            stagingProcessors.clear();
+        }
+
+        if (serverSideStagingProcessors != null) {
+            serverSideStagingProcessors.clear();
+        }
+
+        if (clientSideStagingProcessors != null) {
+            clientSideStagingProcessors.clear();
+        }
+    }
+
+    /**
+     * Add a client-side staging processor.
+     *
+     * @param pProcessor The processor to add.
+     */
+    public final void addClientSideStagingProcessor(StagingProcessor pProcessor) {
+        stagingProcessors.add(pProcessor);
+        if (clientSideStagingProcessors == null) {
+            clientSideStagingProcessors = new HashSet<>();
+        }
+        clientSideStagingProcessors.add(pProcessor);
+    }
+
+    /**
+     * Get all client-side staging processors.
+     *
+     * @return All client-side staging processors.
+     */
+    public final StagingProcessor[] getClientSideStagingProcessor() {
+        if (clientSideStagingProcessors == null) {
+            clientSideStagingProcessors = new HashSet<>();
+            for (StagingProcessor processor : stagingProcessors) {
+                if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY)) {
+                    clientSideStagingProcessors.add(processor);
+                }
+            }
+        }
+        return clientSideStagingProcessors.toArray(new StagingProcessor[clientSideStagingProcessors.size()]);
+    }
+
+    /**
+     * Add a server-side staging processor.
+     *
+     * @param pProcessor The processor to add.
+     */
+    public final void addServerSideStagingProcessor(StagingProcessor pProcessor) {
+        if (pProcessor == null || !StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY.equals(pProcessor.getType()) && !StagingProcessor.PROCESSOR_TYPE.CLIENT_AND_SERVER_SIDE.equals(pProcessor.getType())) {
+            throw new IllegalArgumentException("Provided processor must not be null and must be of type PROCESSOR_TYPE.SERVER_SIDE_ONLY");
+        }
+        stagingProcessors.add(pProcessor);
+        if (serverSideStagingProcessors == null) {
+            serverSideStagingProcessors = new HashSet<>();
+        }
+        serverSideStagingProcessors.add(pProcessor);
+    }
+
+    /**
+     * Get all server-side staging processors.
+     *
+     * @return All server-side staging processors.
+     */
+    public final StagingProcessor[] getServerSideStagingProcessor() {
+        if (serverSideStagingProcessors == null) {
+            serverSideStagingProcessors = new HashSet<>();
+            for (StagingProcessor processor : stagingProcessors) {
+                if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.CLIENT_SIDE_ONLY)) {
+                    serverSideStagingProcessors.add(processor);
+                }
+            }
+        }
+        return serverSideStagingProcessors.toArray(new StagingProcessor[serverSideStagingProcessors.size()]);
     }
 
     @Override

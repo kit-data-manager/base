@@ -30,9 +30,6 @@ import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
-import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 import org.eclipse.persistence.queries.FetchGroupTracker;
 import org.eclipse.persistence.sessions.Session;
 
@@ -44,21 +41,21 @@ import org.eclipse.persistence.sessions.Session;
 @Table(
         uniqueConstraints = @UniqueConstraint(columnNames = {"typeDomain", "identifier", "version"})
 )
-@XmlNamedObjectGraphs({
-    @XmlNamedObjectGraph(
-            name = "simple",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id")
-            }),
-    @XmlNamedObjectGraph(
-            name = "default",
-            attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("typeDomain"),
-                @XmlNamedAttributeNode("identifier"),
-                @XmlNamedAttributeNode("version"),
-                @XmlNamedAttributeNode("description")
-            })})
+//@XmlNamedObjectGraphs({
+//    @XmlNamedObjectGraph(
+//            name = "simple",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id")
+//            }),
+//    @XmlNamedObjectGraph(
+//            name = "default",
+//            attributeNodes = {
+//                @XmlNamedAttributeNode("id"),
+//                @XmlNamedAttributeNode("typeDomain"),
+//                @XmlNamedAttributeNode("identifier"),
+//                @XmlNamedAttributeNode("version"),
+//                @XmlNamedAttributeNode("description")
+//            })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @NamedEntityGraphs({
@@ -166,6 +163,14 @@ public class DigitalObjectType implements Serializable, IDefaultDigitalObjectTyp
     public void setDescription(String description) {
         this.description = description;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder b = new StringBuilder();
+        b.append(getTypeDomain()).append(":").append(getIdentifier()).append(" (v ").append(getVersion()).append(")");
+        return b.toString();
+    }
+
     private transient org.eclipse.persistence.queries.FetchGroup fg;
     private transient Session sn;
 

@@ -18,6 +18,7 @@ package edu.kit.dama.ui.admin;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
@@ -46,6 +47,7 @@ public abstract class AbstractBasePropertiesLayout<C> extends GridLayout {
     private TextField nameField;
     private VerticalLayout checkBoxesLayout;
     private CheckBox defaultBox;
+   
 
     /**
      * Default constructor taking the parent application as argument.
@@ -219,6 +221,8 @@ public abstract class AbstractBasePropertiesLayout<C> extends GridLayout {
         }
         return disabledBox;
     }
+
+   
 
     /**
      * Returns the label of the 'name' field of the element. The value might be

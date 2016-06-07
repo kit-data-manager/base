@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,7 @@
     <artifactId>MetaDataManagement</artifactId>
     <name>MetaDataManagement</name>
     <packaging>pom</packaging>
-    <version>1.2</version>
+    <version>1.3</version>
     
     <description>This module collection contains all metadata management- and access-related sub-modules.
         The main module (MDM-Core) contains core functionalities for metadata access including the MetaDataManagement implementation.
@@ -43,6 +43,7 @@
         <firstName>Volker</firstName>
         <lastName>Hartmann</lastName>
         <nameId>hartmann-v</nameId>
+        <root.relative.path>../</root.relative.path>  
     </properties>
 
     <developers>
@@ -70,7 +71,7 @@
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Commons</artifactId>
-            <version>1.2</version>
+            <version>1.3</version>
         </dependency>
     </dependencies>
   

@@ -184,7 +184,8 @@ public abstract class AbstractSecureQueryHelper<C> {
      * resources.
      * @param pFirstResult The index of the first result.
      * @param pMaxResults The max. number of returned results.
-     * @param pDetailedQuery The detailed query. The object queried for is adressed by 'o', e.g. <i>o.name LIKE %John D%</i>
+     * @param pDetailedQuery The detailed query. The object queried for is
+     * adressed by 'o', e.g. <i>o.name LIKE %John D%</i>
      * @param pContext The context used to authorize the access. Attention: User
      * context needed. System context is not applicable here!
      *
@@ -212,7 +213,13 @@ public abstract class AbstractSecureQueryHelper<C> {
         Object fetchGraph = pMetaDataManager.getProperties().get(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
         pMetaDataManager.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
         logger.debug("Obtaining list of readable unique ids.");
+
+        //At this point ALL possible resource ids are fetched, which kills performance for large repository instances, but is also necessary.
+        //Reasons are: as later on the detailed query may filter out resources that are accessible in principle. 
+        //In that case, additional resource ids would have to be loaded in order to be able to achieve pMaxResults. The second reason is,
+        //that single resources might be invalid, thus 100 resource ids might be retrieved but only 99 entities are returned which might confuse the user.
         List<String> uniqueIds = pMetaDataManager.findResultList(query.toString(), String.class);
+
         if (fetchGraph != null) {
             logger.debug("Re-adding previously assigned fetch graph property.");
             pMetaDataManager.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, fetchGraph);
@@ -241,12 +248,11 @@ public abstract class AbstractSecureQueryHelper<C> {
             List<String> subList = uniqueIds.subList(startIndex, Math.min(uniqueIds.size(), startIndex + stepSize));
             query = new StringBuilder();
             query.append("SELECT o FROM ").append(tableName).append(" o WHERE ");
-            query.append("o.").append(uniqueField).append(" IN :1");
+            query.append("o.").append(uniqueField).append(" IN ?1");
 
             if (pDetailedQuery != null) {
                 query.append(" AND ").append(pDetailedQuery);
             }
-
             List<C> subResults = pMetaDataManager.findResultList(query.toString(), new Object[]{subList}, clazz);
             results.addAll(subResults);
             if (results.size() >= pFirstResult + pMaxResults) {

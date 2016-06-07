@@ -48,6 +48,7 @@ import edu.kit.dama.mdm.base.UserData;
 import edu.kit.dama.ui.simon.panel.SimonMainPanel;
 import edu.kit.dama.ui.simon.util.SimonConfigurator;
 import edu.kit.dama.ui.commons.util.UIUtils7;
+import edu.kit.dama.util.Constants;
 import edu.kit.dama.util.DataManagerSettings;
 import edu.kit.dama.util.StackTraceUtil;
 import java.io.File;
@@ -70,7 +71,6 @@ public class AdminUIMainView extends UI implements IRegistrationCallback {
         LOGIN, SIMON, INFORMATION, PROFILE, SETTINGS
     }
 
-    public static final String MAIN_LOGIN_TOKEN_KEY = "mainLogin";
     private UserData loggedInUser = UserData.NO_USER;
     private GridLayout loginForm;
     private Label title = null;
@@ -203,7 +203,7 @@ public class AdminUIMainView extends UI implements IRegistrationCallback {
                 manager.setAuthorizationContext(AuthorizationContext.factorySystemContext());
                 try {
                     LOGGER.debug("Getting access token for user {}", userMail);
-                    ServiceAccessToken token = ServiceAccessUtil.getAccessToken(manager, userMail, MAIN_LOGIN_TOKEN_KEY);
+                    ServiceAccessToken token = ServiceAccessUtil.getAccessToken(manager, userMail, Constants.MAIN_LOGIN_SERVICE_ID);
                     if (token == null) {
                         new Notification("Login Failed",
                                 "No login information found for email " + userMail + ".", Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());

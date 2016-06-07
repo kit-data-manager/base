@@ -20,9 +20,15 @@
  */
 package edu.kit.dama.mdm.dataorganization.impl.jpa;
 
+import edu.kit.dama.authorization.entities.IAuthorizationContext;
+import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
+import edu.kit.dama.commons.types.DigitalObjectId;
+import edu.kit.dama.mdm.core.IMetaDataManager;
+import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IFileNode;
+import edu.kit.dama.mdm.dataorganization.impl.jpa.persistence.PersistenceFacade;
 import edu.kit.dama.mdm.dataorganization.service.exception.DataOrganizationError;
 
 /**
@@ -30,43 +36,57 @@ import edu.kit.dama.mdm.dataorganization.service.exception.DataOrganizationError
  *
  * @author pasic
  */
-final class JPAImplUtil {
+public final class JPAImplUtil {
 
-  /**
-   * Hidden constructor.
-   */
-  private JPAImplUtil() {
-  }
+    /**
+     * Hidden constructor.
+     */
+    private JPAImplUtil() {
+    }
 
-  /**
-   * Converts some IDataOrganizationNode to JPA data organization node.
-   *
-   * @param pDataOrganizationNode the node to be converted.
-   *
-   * @return a corresponding JPA data organization node.
-   */
-  public static DataOrganizationNode convertDataOrganizationNode(IDataOrganizationNode pDataOrganizationNode) {
-    DataOrganizationNode newDon = null;
-    if (null == pDataOrganizationNode) {
-      return null;
+    /**
+     * Converts some IDataOrganizationNode to JPA data organization node.
+     *
+     * @param pDataOrganizationNode the node to be converted.
+     *
+     * @return a corresponding JPA data organization node.
+     */
+    public static DataOrganizationNode convertDataOrganizationNode(IDataOrganizationNode pDataOrganizationNode) {
+        DataOrganizationNode newDon = null;
+        if (null == pDataOrganizationNode) {
+            return null;
+        }
+        if (pDataOrganizationNode instanceof DataOrganizationNode) {
+            if (pDataOrganizationNode instanceof FileTree) {
+                newDon = new CollectionNode((ICollectionNode) pDataOrganizationNode);
+            } else {
+                newDon = (DataOrganizationNode) pDataOrganizationNode;
+            }
+        } else if (pDataOrganizationNode instanceof ICollectionNode) {
+            newDon = new CollectionNode((ICollectionNode) pDataOrganizationNode);
+        } else if (pDataOrganizationNode instanceof IFileNode) {
+            newDon = new FileNode((IFileNode) pDataOrganizationNode);
+        }
+        if (null == newDon) {
+            throw new DataOrganizationError("node:IDataOrganizationNode should be either"
+                    + " instance of IFileNode or instance of ICollectionNode");
+        }
+        return newDon;
     }
-    if (pDataOrganizationNode instanceof DataOrganizationNode) {
-      if (pDataOrganizationNode instanceof FileTree) {
-        newDon = new CollectionNode((ICollectionNode) pDataOrganizationNode);
-      } else {
-        newDon = (DataOrganizationNode) pDataOrganizationNode;
-      }
-    } else {
-      if (pDataOrganizationNode instanceof ICollectionNode) {
-        newDon = new CollectionNode((ICollectionNode) pDataOrganizationNode);
-      } else if (pDataOrganizationNode instanceof IFileNode) {
-        newDon = new FileNode((IFileNode) pDataOrganizationNode);
-      }
+
+    public static int renameView(DigitalObjectId pObjectId, String pOldName, String pNewName, IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
+        String pu = PersistenceFacade.getInstance().getPersistenceUnitName();
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(pu);
+        mdm.setAuthorizationContext(pContext);
+        try {
+            System.out.println("Update Attrib");
+            //  int attribChanges = mdm.performUpdate("UPDATE Attribute a SET a.viewName=?1 WHERE a.annotatedNode.digitalObjectIDStr=?2 AND a.annotatedNode.viewName=?3", new Object[]{pNewName, pObjectId.getStringRepresentation(), pOldName});
+            //   System.out.println("CHANGE " + attribChanges);
+            System.out.println("UPDATE NODE");
+            return mdm.performUpdate("UPDATE DataOrganizationNode n SET n.viewName=?1 WHERE  n.digitalObjectIDStr=?2 AND n.viewName=?3", new Object[]{pNewName, pObjectId.getStringRepresentation(), pOldName});
+
+        } finally {
+            mdm.close();
+        }
     }
-    if (null == newDon) {
-      throw new DataOrganizationError("node:IDataOrganizationNode should be either"
-              + " instance of IFileNode or instance of ICollectionNode");
-    }
-    return newDon;
-  }
 }

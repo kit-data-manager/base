@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,9 @@
  * the License.
  */
 package edu.kit.dama.authorization.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  *
@@ -76,6 +79,8 @@ public class GroupId implements ISimpleGroupId, ISecurableResource {
      * @return The securable resource id.
      */
     @Override
+    @XmlTransient
+    @JsonIgnore
     public SecurableResourceId getSecurableResourceId() {
         return new SecurableResourceId(DOMAIN, stringRepresentation);
     }
