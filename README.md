@@ -20,7 +20,7 @@ In order to build KIT Data Manager you'll need:
 After obtaining the sources change to the folder where the sources are located and just call:
 
 ```
-user@localhost:/home/user/KITDM/base$ mvn install -DskipTests=true
+user@localhost:/home/user/KITDM/base$ mvn install
 [INFO] Scanning for projects...
 [INFO] ------------------------------------------------------------------------
 [INFO] Reactor Build Order:
@@ -35,12 +35,7 @@ user@localhost:/home/user/KITDM/base$ mvn install -DskipTests=true
 user@localhost:/home/user/KITDM/base$
 ```
 
-After a couple of minutes everything is done. The skipTests flag is required as many of the tests are currently relying on internal structures. As soon as this changes this README file will be updated accordingly. 
-
-##### Using JDK8 for building KIT Data Manager 1.1
-
- If you plan to build KIT Data Manager version 1.1 using JDK 8 you have to set the property `maven.javadoc.skip` inside the main `pom.xml` to `true`. Otherwise, [Doclint](http://openjdk.java.net/jeps/172) will make the build fail due to several minor JavaDoc issues not fixed for version 1.1. However, this will be fixed 
- in the next version of KIT Data Manager.
+After a couple of minutes everything is done.
 
 ## More Information
 
