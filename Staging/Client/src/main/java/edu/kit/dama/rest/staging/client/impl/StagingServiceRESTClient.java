@@ -901,6 +901,21 @@ public class StagingServiceRESTClient extends AbstractRestClient {
      *
      * @param objectId id of the object.
      * @param accessPoint AccessPoint for transfer.
+     * @param groupId GroupId used to create the download.
+     * @param pSecurityContext The security context.
+     *
+     *
+     * @return An IngestInformationWrapper.
+     */
+    public DownloadInformationWrapper createDownload(String objectId, String accessPoint, String groupId, SimpleRESTContext pSecurityContext) {
+        return createDownload(objectId, accessPoint, null, groupId, pSecurityContext);
+    }
+
+    /**
+     * Create a new download for given object id and given AccessPoint.
+     *
+     * @param objectId id of the object.
+     * @param accessPoint AccessPoint for transfer.
      * @param stagingProcessorIds The list of staging processor ids assigned to
      * this download.
      * @param groupId GroupId used to create the download.
