@@ -291,13 +291,13 @@
             <version>${project.kit.datamanager.version}</version>
             <scope>${scope}</scope>
         </dependency-->
-        <dependency>
+        <!--dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>FunctionalTests</artifactId>
             <version>${project.kit.datamanager.version}</version>
             <type>jar</type>
             <scope>${scope}</scope>
-        </dependency>
+        </dependency-->
         <dependency>
             <groupId>edu.kit</groupId>
             <artifactId>ADALAPI</artifactId>
