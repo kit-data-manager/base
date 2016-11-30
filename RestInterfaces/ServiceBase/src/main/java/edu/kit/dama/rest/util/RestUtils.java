@@ -19,22 +19,15 @@ package edu.kit.dama.rest.util;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.core.ResourceConfig;
-import com.sun.jersey.oauth.server.OAuthServerRequest;
-import com.sun.jersey.oauth.signature.OAuthParameters;
-import com.sun.jersey.oauth.signature.OAuthSecrets;
-import com.sun.jersey.oauth.signature.OAuthSignature;
-import com.sun.jersey.oauth.signature.OAuthSignatureException;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.authorization.entities.UserId;
 import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
-import edu.kit.dama.authorization.services.administration.GroupServiceLocal;
-import edu.kit.dama.mdm.core.IMetaDataManager;
-import edu.kit.dama.mdm.core.MetaDataManagement;
-import edu.kit.dama.mdm.admin.ServiceAccessToken;
-import edu.kit.dama.mdm.admin.util.ServiceAccessUtil;
+import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.rest.base.exceptions.DeserializationException;
+import edu.kit.dama.rest.util.auth.AbstractAuthenticator;
+import edu.kit.dama.rest.util.auth.AuthenticatorFactory;
 import edu.kit.dama.util.Constants;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -43,8 +36,8 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Iterator;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.StreamingOutput;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -59,11 +52,7 @@ import org.slf4j.LoggerFactory;
  */
 public final class RestUtils {
 
-    private static final Logger LOGGER = LoggerFactory.
-            getLogger(RestUtils.class);
-
-    private static final String OAUTH_ERROR
-            = "Authorization failed. See server log for more details.";
+    private static final Logger LOGGER = LoggerFactory.getLogger(RestUtils.class);
 
     /**
      * Hiden constructor.
@@ -73,8 +62,8 @@ public final class RestUtils {
 
     /**
      * Perform an OAuth authorization based on the provided HttpContext. This
-     * method maps to authorize(HttpContext hc, GroupId pGroupId) but uses the
-     * default user group as group id.
+     * method maps to authenticate(HttpContext hc, GroupId pGroupId) but uses
+     * the default user group as group id.
      *
      * @param hc The HttpContext used to extract access key and secret.
      *
@@ -105,54 +94,23 @@ public final class RestUtils {
             throw new IllegalArgumentException(
                     "Argument pGroupId and its string representation must not be 'null'");
         }
-        OAuthServerRequest request = new OAuthServerRequest(hc.getRequest());
-        // get incoming OAuth parameters
-        OAuthParameters params = new OAuthParameters();
-        params.readRequest(request);
 
-        LOGGER.debug("Authorizing access request for access key {}", params.getToken());
-        try {
-            //obtain ServiceAccessToken based on the provided user token using the meta data management
-            IMetaDataManager manager = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
-            manager.setAuthorizationContext(AuthorizationContext.factorySystemContext());
-            ServiceAccessToken token = ServiceAccessUtil.getAccessToken(manager, params.getToken(), Constants.REST_API_SERVICE_KEY);
-            manager.close();
-            if (token == null) {
-                throw new Exception("No access token for access key " + params.getToken() + " found");
+        int authCnt = 1;
+        Iterator<AbstractAuthenticator> authenticators = AuthenticatorFactory.getInstance().getAuthenticators().iterator();
+        while (authenticators.hasNext()) {
+            AbstractAuthenticator auth = authenticators.next();
+            LOGGER.debug("Authentication attempt #{}, authenticator '{}'", authCnt, auth.getAuthenticatorId());
+            try {
+                return auth.authenticate(hc, pGroupId);
+            } catch (UnauthorizedAccessAttemptException ex) {
+                LOGGER.debug("Authentication failed. " + ((authenticators.hasNext()) ? "Processing with next authenticator." : "No more authenticators available."), ex);
+                authCnt++;
             }
-
-            // OAuthParameters params1 = new OAuthParameters().consumerKey("dpf43f3p2l4k3l03").token("nnch734d00sl2jdk").signatureMethod(HMAC_SHA1.NAME).timestamp().nonce().version();
-            // OAuthSecrets secrets1 = new OAuthSecrets().consumerSecret("kd94hf93k423kf44").tokenSecret("pfkkdhi9sl3r4s00");
-            //set the secret from the obtained token
-            OAuthSecrets secrets = new OAuthSecrets();
-            secrets = secrets.consumerSecret("secret");
-            secrets.setTokenSecret(token.getSecret());
-
-            //verify the signature using key and secret
-            if (OAuthSignature.verify(request, params, secrets)) {
-                //allowed, map everything to an appropriate context
-                UserId theUser = new UserId(token.getUserId());
-                LOGGER.debug("Successfully obtained user with id {}. Determining max. role in group {}", new Object[]{theUser, pGroupId});
-                Role maxRole = (Role) GroupServiceLocal.getSingleton().getMaximumRole(pGroupId, new UserId(token.getUserId()), AuthorizationContext.factorySystemContext());
-                if (maxRole.moreThan(Role.MANAGER)) {
-                    LOGGER.debug("Max. role is {}. Limiting role to MANAGER.", maxRole);
-                    maxRole = Role.MANAGER;
-                }
-
-                LOGGER.debug("Successfully authorized user. Returning authorization context for userId {} in group {} with role {}", new Object[]{token.getUserId(), pGroupId, maxRole});
-                return new AuthorizationContext(new UserId(token.getUserId()), pGroupId, maxRole);
-            } else {
-                LOGGER.warn("Signature verification failed for user {}. Authorization denied.", token.getUserId());
-                throw new WebApplicationException(Status.UNAUTHORIZED);
-            }
-        } catch (OAuthSignatureException ose) {
-            LOGGER.error("Failed to verify OAuth signature", ose);
-            throw new WebApplicationException(Status.UNAUTHORIZED);
-        } catch (Exception ex) {
-            LOGGER.error("Failed to authorize access for access key " + params.
-                    getToken(), ex);
-            throw new WebApplicationException(Status.UNAUTHORIZED);
         }
+
+        //if we arrive here, no authenticator worked out. Provide access as 'WORLD'.
+        LOGGER.debug("Returning authorization context for 'WORLD'");
+        return new AuthorizationContext(new UserId(Constants.WORLD_USER_ID), new GroupId(Constants.WORLD_GROUP_ID), Role.GUEST);
     }
 
     /**

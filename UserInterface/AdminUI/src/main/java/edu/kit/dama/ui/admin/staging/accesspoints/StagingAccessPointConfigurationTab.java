@@ -16,19 +16,11 @@
 package edu.kit.dama.ui.admin.staging.accesspoints;
 
 import com.vaadin.server.ThemeResource;
-import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.GridLayout;
-import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.Label;
-import com.vaadin.ui.NativeButton;
-import com.vaadin.ui.themes.BaseTheme;
 import com.zybnet.autocomplete.server.AutocompleteField;
-import com.zybnet.autocomplete.server.AutocompleteQueryListener;
-import com.zybnet.autocomplete.server.AutocompleteSuggestionPickedListener;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
-import edu.kit.dama.ui.admin.AdminUIMainView;
 import edu.kit.dama.ui.admin.exception.MsgBuilder;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.IconContainer;
@@ -44,9 +36,12 @@ import edu.kit.dama.ui.commons.util.UIUtils7;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.reflections.Reflections;
@@ -61,18 +56,17 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
 
     private static final Logger LOGGER
             = LoggerFactory.getLogger(StagingAccessPointConfigurationTab.class);
-    private String DEBUG_ID_PREFIX
-            = StagingAccessPointConfigurationTab.class.getName() + "_";
+    private String DEBUG_ID_PREFIX = StagingAccessPointConfigurationTab.class.getName() + "_";
 
     public static final String NEW_ACCESS_POINT_UNIQUE_ID = "MINUS_ONE_ACCESS_POINT";
 
     private GridLayout mainLayout;
     private AutocompleteField<String> implementationClassField;
-    private NativeButton loadImplementationClassButton;
+    private Button loadImplementationClassButton;
     private AccessPointBasePropertiesLayout basicPropertiesLayout;
 
-    public StagingAccessPointConfigurationTab(AdminUIMainView pParentApp) {
-        super(pParentApp);
+    public StagingAccessPointConfigurationTab() {
+        super();
         DEBUG_ID_PREFIX += hashCode() + "_";
     }
 
@@ -81,41 +75,23 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
         String id = "mainLayout";
         LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
-        mainLayout = new GridLayout(3, 6);
+        UIUtils7.GridLayoutBuilder mainLayoutBuilder = new UIUtils7.GridLayoutBuilder(3, 3);
+
+        // Add components to mainLayout
+        mainLayoutBuilder.fillColumn(getElementList(), 0, 0, 1);
+        mainLayoutBuilder.addComponent(getImplementationClassField(), 1, 0, 1, 1).addComponent(getLoadImplementationClassButton(), Alignment.BOTTOM_RIGHT, 2, 0, 1, 1);
+        mainLayoutBuilder.fillRow(getPropertiesPanel(), 1, 1, 1);
+        mainLayoutBuilder.addComponent(getNavigateButton(), Alignment.BOTTOM_LEFT, 1, 2, 1, 1).addComponent(getCommitChangesButton(), Alignment.BOTTOM_RIGHT, 2, 2, 1, 1);
+
+        mainLayout = mainLayoutBuilder.getLayout();
         mainLayout.setId(DEBUG_ID_PREFIX + id);
         mainLayout.setSizeFull();
-        mainLayout.setImmediate(true);
         mainLayout.setSpacing(true);
         mainLayout.setMargin(true);
 
-        // Add components to mainLayout
-        mainLayout.addComponent(getElementList(), 0, 0, 0, 5);
-        mainLayout.addComponent(getImplementationClassField(), 1, 0);
-        mainLayout.addComponent(getLoadImplementationClassButton(), 2, 0);
-        mainLayout.addComponent(new Label("<p> <hr/>", ContentMode.HTML), 1, 1, 2, 1);
-        // mainLayout.addComponent(getPropertiesPanel(), 1, 2);
-        HorizontalLayout coreLayout = new HorizontalLayout(getNavigateLeftButton(), getPropertiesPanel(), getNavigateRightButton());
-        coreLayout.setSizeFull();
-        coreLayout.setExpandRatio(getNavigateLeftButton(), .05f);
-        coreLayout.setComponentAlignment(getNavigateLeftButton(), Alignment.MIDDLE_LEFT);
-        coreLayout.setExpandRatio(getPropertiesPanel(), .9f);
-        coreLayout.setExpandRatio(getNavigateRightButton(), .05f);
-        coreLayout.setComponentAlignment(getNavigateRightButton(), Alignment.MIDDLE_RIGHT);
-        mainLayout.addComponent(coreLayout, 1, 2, 2, 2);
-        mainLayout.addComponent(new Label("<hr/>", ContentMode.HTML), 1, 3, 2, 3);
-        // mainLayout.addComponent(getNavigationButton(), 2, 2);
-        mainLayout.addComponent(getBulletLineLayout(), 1, 4, 2, 4);
-        mainLayout.addComponent(getCommitChangesButton(), 1, 5, 2, 5);
+        mainLayout.setColumnExpandRatio(1, 1f);
+        mainLayout.setRowExpandRatio(1, 1f);
 
-        mainLayout.setComponentAlignment(getImplementationClassField(), Alignment.BOTTOM_LEFT);
-        mainLayout.setComponentAlignment(getLoadImplementationClassButton(), Alignment.BOTTOM_RIGHT);
-        //   mainLayout.setComponentAlignment(getNavigationButton(), Alignment.MIDDLE_RIGHT);
-        mainLayout.setComponentAlignment(getBulletLineLayout(), Alignment.TOP_CENTER);
-        mainLayout.setComponentAlignment(getCommitChangesButton(), Alignment.BOTTOM_RIGHT);
-
-        mainLayout.setColumnExpandRatio(0, 0.3f);
-        mainLayout.setColumnExpandRatio(1, 0.69f);
-        mainLayout.setColumnExpandRatio(2, 0.01f);
         return mainLayout;
     }
 
@@ -149,23 +125,23 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
             implementationClassField.setRequired(true);
             implementationClassField.addStyleName(CSSTokenContainer.BOLD_CAPTION);
             implementationClassField.setMinimumQueryCharacters(3);
-            implementationClassField.setQueryListener(new AutocompleteQueryListener<String>() {
-                @Override
-                public void handleUserQuery(AutocompleteField<String> field, String query) {
-                    Reflections reflections = new Reflections(query);
-                    Set<Class<? extends AbstractStagingAccessPoint>> jobs = reflections.getSubTypesOf(AbstractStagingAccessPoint.class);
-                    for (Class c : jobs) {
-                        field.addSuggestion(c.getCanonicalName(), c.getCanonicalName());
+            implementationClassField.addStyleName("v-textfield");
+            implementationClassField.setQueryListener((AutocompleteField<String> field, String query) -> {
+                Reflections reflections = new Reflections(query);
+                Set<Class<? extends AbstractStagingAccessPoint>> types = reflections.getSubTypesOf(AbstractStagingAccessPoint.class);
+                Class[] elements = types.toArray(new Class[]{});
+                Arrays.sort(elements, (Class o1, Class o2) -> o1.getCanonicalName().compareTo(o2.getCanonicalName()));
+
+                Arrays.asList(elements).forEach((type) -> {
+                    if (!type.isInterface() && !Modifier.isAbstract(type.getModifiers()) && !type.isAnnotationPresent(Deprecated.class)) {
+                        field.addSuggestion(type.getCanonicalName(), type.getCanonicalName());
                     }
-                }
+                });
             });
 
-            implementationClassField.setSuggestionPickedListener(new AutocompleteSuggestionPickedListener<String>() {
-                @Override
-                public void onSuggestionPicked(String value) {
-                    getImplementationClassField().setText(value);
-                    getImplementationClassField().setValue(value);
-                }
+            implementationClassField.setSuggestionPickedListener((String value) -> {
+                getImplementationClassField().setText(value);
+                getImplementationClassField().setValue(value);
             });
 
         }
@@ -176,38 +152,34 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
      *
      * @return
      */
-    public NativeButton getLoadImplementationClassButton() {
+    public Button getLoadImplementationClassButton() {
         if (loadImplementationClassButton == null) {
             String id = "loadImplementationClassField";
             LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
-            loadImplementationClassButton = new NativeButton();
+            loadImplementationClassButton = new Button();
             loadImplementationClassButton.setId(DEBUG_ID_PREFIX + id);
-            loadImplementationClassButton.setIcon(
-                    new ThemeResource(IconContainer.TEXT_CODE_JAVA_INPUT));
-            loadImplementationClassButton.setStyleName(BaseTheme.BUTTON_LINK);
-            loadImplementationClassButton.setImmediate(true);
+            loadImplementationClassButton.setIcon(new ThemeResource(IconContainer.TEXT_CODE_JAVA_INPUT));
+            loadImplementationClassButton.setWidth("100%");
+            // loadImplementationClassButton.setStyleName(BaseTheme.BUTTON_LINK);
+            // loadImplementationClassButton.setImmediate(true);
             loadImplementationClassButton.setDescription(
                     "Load the entered implementation class for setting the "
                     + "configuration of the requested access point");
 
-            loadImplementationClassButton.addClickListener(new Button.ClickListener() {
+            loadImplementationClassButton.addClickListener((Button.ClickEvent event) -> {
+                try {
+                    StagingAccessPointConfiguration newAccessPoint = createAccessPoint();
 
-                @Override
-                public void buttonClick(Button.ClickEvent event) {
-                    try {
-                        StagingAccessPointConfiguration newAccessPoint = createAccessPoint();
+                    commitAccessPoint(newAccessPoint);
 
-                        commitAccessPoint(newAccessPoint);
-
-                        addNewElementInstance(newAccessPoint);
-                        setEnabledComponents(ListSelection.VALID);
-                        getParentApp().showNotification("Staging access point successfully created.");
-                    } catch (ConfigurationException ex) {
-                        getParentApp().showError("Implementation class not loadable! Cause: " + ex.getMessage());
-                        LOGGER.error("Failed to load requested implementation class. Cause: "
-                                + ex.getMessage(), ex);
-                    }
+                    addNewElementInstance(newAccessPoint);
+                    setEnabledComponents(ListSelection.VALID);
+                    UIComponentTools.showInformation("Staging access point successfully created.");
+                } catch (ConfigurationException ex) {
+                    UIComponentTools.showError("Implementation class not loadable! Cause: " + ex.getMessage());
+                    LOGGER.error("Failed to load requested implementation class. Cause: "
+                            + ex.getMessage(), ex);
                 }
             });
         }
@@ -221,12 +193,16 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
     private StagingAccessPointConfiguration createAccessPoint() throws ConfigurationException {
         // Valid implementation class name => Create new access point
         String implClassName = getImplementationClassField().getText();
+        if (implClassName == null) {
+            throw new ConfigurationException("Please use the auto-completion feature to select an implementation class.");
+        }
+
         try {
             // Build instance of implementation class
             createAccessPointInstance(implClassName);
         } catch (ConfigurationException ex) {
             setPropertiesLayout(PropertiesLayoutType.BASIC);
-            throw new ConfigurationException("Failed to create access provider instance. ", ex);
+            throw new ConfigurationException("Failed to create access point instance for implementation class '" + implClassName + "'", ex);
         }
         // Create new access point
         StagingAccessPointConfiguration newAccessPoint = StagingAccessPointConfiguration.factoryNewStagingAccessPointConfiguration();
@@ -257,8 +233,7 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
      * @return
      * @throws ConfigurationException
      */
-    private AbstractStagingAccessPoint createAccessPointInstance(String implClassName,
-            StagingAccessPointConfiguration accessPointConfig) throws ConfigurationException {
+    private AbstractStagingAccessPoint createAccessPointInstance(String implClassName, StagingAccessPointConfiguration accessPointConfig) throws ConfigurationException {
         try {
             if (accessPointConfig == null) {
                 return (AbstractStagingAccessPoint) Class.forName(implClassName).newInstance();
@@ -294,7 +269,7 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
     @Override
     public AccessPointBasePropertiesLayout getBasicPropertiesLayout() {
         if (basicPropertiesLayout == null) {
-            basicPropertiesLayout = new AccessPointBasePropertiesLayout(getParentApp());
+            basicPropertiesLayout = new AccessPointBasePropertiesLayout();
         }
         return basicPropertiesLayout;
     }
@@ -309,9 +284,9 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
             checkAccessPointConfigurability(temporaryAccessPoint, changedAccessPoint);
             commitAccessPoint(changedAccessPoint);
             updateElementInstance(changedAccessPoint);
-            getParentApp().showNotification("Changes successfully committed.");
+            UIComponentTools.showInformation("Changes successfully committed.");
         } catch (ConfigurationException ex) {
-            getParentApp().showError("Staging access point not modifiable! Cause: " + ex.getMessage());
+            UIComponentTools.showError("Failed to commit changes. Cause: " + ex.getMessage());
             String object = "the changed access point '" + selectedAccessPoint.getUniqueIdentifier() + "'";
             LOGGER.error(MsgBuilder.commitFailed(object) + "Cause: " + ex.getMessage(), ex);
         }
@@ -585,17 +560,21 @@ public class StagingAccessPointConfigurationTab extends AbstractConfigurationTab
 
     @Override
     public void enableComponents(boolean pValue) {
-        getImplementationClassField().setReadOnly(!pValue);
+        getImplementationClassField().setEnabled(pValue);
         getLoadImplementationClassButton().setEnabled(pValue);
     }
 
     @Override
     public void fillElementList() {
         List<StagingAccessPointConfiguration> accessPoints = StagingConfigurationPersistence.getSingleton(null).findAllAccessPointConfigurations();
-        for (StagingAccessPointConfiguration accessPoint : accessPoints) {
+        Collections.sort(accessPoints, (StagingAccessPointConfiguration o1, StagingAccessPointConfiguration o2) -> Long.compare(o1.getId(), o2.getId()));
+
+        accessPoints.stream().map((accessPoint) -> {
             getElementList().addItem(accessPoint.getUniqueIdentifier());
+            return accessPoint;
+        }).forEachOrdered((accessPoint) -> {
             getElementList().setItemCaption(accessPoint.getUniqueIdentifier(), getAccessPointItemCaption(accessPoint));
-        }
+        });
     }
 
     @Override

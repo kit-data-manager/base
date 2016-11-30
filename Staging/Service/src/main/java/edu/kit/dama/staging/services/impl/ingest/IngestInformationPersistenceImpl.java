@@ -26,7 +26,6 @@ import edu.kit.dama.commons.types.DigitalObjectId;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.authorization.SecureMetaDataManager;
 import edu.kit.dama.staging.entities.StagingProcessor;
-import edu.kit.dama.staging.entities.download.DownloadInformation;
 import edu.kit.dama.staging.entities.ingest.INGEST_STATUS;
 import edu.kit.dama.staging.entities.ingest.IngestInformation;
 import edu.kit.dama.util.Constants;
@@ -47,13 +46,13 @@ import org.slf4j.LoggerFactory;
 public final class IngestInformationPersistenceImpl implements ITransferInformationPersistence<INGEST_STATUS, IngestInformation> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IngestInformationPersistenceImpl.class);
-   
+
     /**
      * Default persistence unit
      */
     private final static String PERSISTENCE_UNIT_NAME = "StagingUnit";
     private String alternativePersistenceUnit = null;
-   
+
     /**
      * The SINGLETON
      */
@@ -119,8 +118,8 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
      * @param pDigitalObjectId The digital object id for which the ingest will
      * be created.
      * @param pAccessPointId The AccessPoint to use for ingesting data.
-     * @param pProcessors A collection of StagingProcessor applied before/after the
-     * ingest.
+     * @param pProcessors A collection of StagingProcessor applied before/after
+     * the ingest.
      * @param pSecurityContext The security context.
      *
      * @return The created ingest information.
@@ -152,23 +151,7 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
         //add staging processors if available
         if (pProcessors != null && !pProcessors.isEmpty()) {
             for (StagingProcessor processor : pProcessors) {
-                switch (processor.getType()) {
-                    case CLIENT_SIDE_ONLY:
-                        result.addClientSideStagingProcessor(processor);
-                        break;
-                    case SERVER_SIDE_ONLY:
-                        result.addServerSideStagingProcessor(processor);
-                        break;
-                    case CLIENT_AND_SERVER_SIDE:
-                        result.addClientSideStagingProcessor(processor);
-                        result.addServerSideStagingProcessor(processor);
-                        break;
-                    case POST_ARCHIVING:
-                        result.addPostArchivingStagingProcessor(processor);
-                        break;
-                    default:
-                        LOGGER.warn("Unknown StagingProcessor type '{}'", processor.getType());
-                }
+                result.addStagingProcessor(processor);
             }
         }
 
@@ -388,8 +371,7 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         List<IngestInformation> results = new LinkedList<>();
         try {
-            results = mdm.findResultList("SELECT x FROM IngestInformation x WHERE x.status = ?1 AND x.ownerUuid LIKE ?2",
-                    new Object[]{pStatus.getId(), getOwnerFromContext(pSecurityContext)}, IngestInformation.class, pMinIndex, pMaxResults);
+            results = mdm.findResultList("SELECT x FROM IngestInformation x WHERE x.status = ?1 AND x.ownerUuid LIKE ?2", new Object[]{pStatus.getId(), getOwnerFromContext(pSecurityContext)}, IngestInformation.class, pMinIndex, pMaxResults);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to get ingests for status " + pStatus + " using context " + pSecurityContext, ex);
         } finally {
@@ -470,7 +452,7 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         try {
             result = mdm.findSingleResult("SELECT COUNT(x) FROM IngestInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < x.expiresAt) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3",
-                    new Object[]{DownloadInformation.DEFAULT_LIFETIME, System.currentTimeMillis(), getOwnerFromContext(pSecurityContext)}, Number.class);
+                    new Object[]{IngestInformation.DEFAULT_LIFETIME, System.currentTimeMillis(), getOwnerFromContext(pSecurityContext)}, Number.class);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to get expired ingest count using context " + pSecurityContext, ex);
         } finally {
@@ -504,14 +486,12 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
             throw new IllegalArgumentException("Argument pClientAccessUrl must not be 'null'");
         }
 
-        LOGGER.debug("Updating client access url of download {} to {} ", pId, pClientAccessUrl);
+        LOGGER.debug("Updating client access url of ingest {} to {} ", pId, pClientAccessUrl);
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         int result = 0;
         try {
-            System.out.println("PERFORM UPDATE for CTX " + pSecurityContext);
             result = mdm.performUpdate("UPDATE IngestInformation x SET x.clientAccessUrl = ?2, x.status = ?3, x.lastUpdate = ?4 WHERE x.id = ?1 AND x.ownerUuid LIKE ?5",
                     new Object[]{pId, pClientAccessUrl, INGEST_STATUS.PRE_INGEST_SCHEDULED.getId(), System.currentTimeMillis(), getOwnerFromContext(pSecurityContext)});
-            System.out.println("DOME RESULT " + result);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to update client access url for ingest with id " + pId + " using context " + pSecurityContext, ex);
         } finally {

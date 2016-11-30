@@ -61,7 +61,7 @@ public class User implements IDefaultUser, Serializable {
     @Column(unique = true, nullable = false)
     private String userId;
     private Role maximumRole;
-    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @XmlTransient
     @JsonIgnore
     private List<Membership> memberships = new ArrayList<>();

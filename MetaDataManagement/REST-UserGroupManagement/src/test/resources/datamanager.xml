@@ -57,7 +57,7 @@ Elasticsearch-related settings.
 <!--
 MetaDataManagement-related settings.
 -->
-<MetaDataManagement>
+<metaDataManagement>
     <PersistenceImplementations>
       <PersistenceImplementation>
         <!--Name of the persistence implementation-->
@@ -81,15 +81,15 @@ MetaDataManagement-related settings.
 		  otherwise the first entry is interpreted as default persistence unit used by the 
 		  implementation if no persistence unit is specified.
 		  -->
-		  <PersistenceUnit>AuthorizationPU</PersistenceUnit>  
-		  <PersistenceUnit>DataOrganizationPU</PersistenceUnit>
+		  <persistenceUnit>AuthorizationPU</persistenceUnit>  
+		  <persistenceUnit>DataOrganizationPU</persistenceUnit>
 		  <!--Default persistence unit if the used persistence unit is not explicitly named.-->
-		  <PersistenceUnit default="true">MDM-Core</PersistenceUnit>  
-		  <PersistenceUnit>StagingUnit</PersistenceUnit>
+		  <PersistenceUnit default="true">MDM-Core</persistenceUnit>  
+		  <persistenceUnit>StagingUnit</persistenceUnit>
         </PersistenceUnits>
       </PersistenceImplementation>  
     </PersistenceImplementations>
-  </MetaDataManagement>  
+  </metaDataManagement>  
 <!--
 JPA-related settings.
 -->

@@ -37,11 +37,16 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Staging Processor implementation that allows to ZIP all data of a digital
- * object. The output is written to the 'generated' folder of the ingest and is
- * also archived. During archival, the 'data' part of the ingest is stored in
- * the 'default' DataOrganization view whereas the 'generated' content is stored
- * in a view named 'generated' which allows to access the zipped file directly
- * afterwards.
+ * object during download preparation. Therefor, the already staged data of a
+ * download is zipped, the ZIP file is firstly generated in the 'generated'
+ * directory of the download. Afterwards, the 'data' directory is emptied and
+ * the ZIP file is moved there, such that a download will deliver the ZIP file
+ * instead of the single files of the digital object.
+ *
+ * Attention: This StagingProcessor is intended to be used only for downloads.
+ * If one uses it for ingest, this will result in empty digital objects as the
+ * replacement of the data is not tracked at the associated TransferContainer
+ * and the actually registered data is removed by the processor.
  *
  * @author mf6319
  */

@@ -20,13 +20,17 @@ import edu.kit.dama.commons.exceptions.InitializationError;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.IPersistenceFactory;
 import edu.kit.dama.mdm.core.authorization.SecureMetaDataManager;
+import edu.kit.dama.util.StackTraceUtil;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import org.eclipse.persistence.exceptions.DatabaseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,4 +96,19 @@ public class PersistenceFactoryJpa implements IPersistenceFactory {
         LOGGER.debug("Wrapping implementation by SecureMetaDataManager and returning it.");
         return new SecureMetaDataManager(implementation);
     }
+
+    @Override
+    public void destroy() {
+        Set<Entry<String, EntityManagerFactory>> factories = SINGLETON.persistenceUnitsMap.entrySet();
+        for (Entry<String, EntityManagerFactory> factory : factories) {
+            try {
+                LOGGER.debug("Closing EntityManagerFactory '{}'.", factory.getKey());
+                factory.getValue().close();
+            } catch (IllegalStateException | DatabaseException ex) {
+                //ignore
+            }
+        }
+        SINGLETON.persistenceUnitsMap.clear();
+    }
+
 }

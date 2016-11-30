@@ -50,6 +50,11 @@ public class MetadataIndexerJob extends AbstractConfigurableJob {
     private static final String GROUP_ID = "groupId";
 
     /**
+     * The property key for setting the hostname for publishing the metadata.
+     */
+    private static final String HOSTNAME = "hostname";
+
+    /**
      * The property key for setting the index for publishing the metadata.
      */
     private static final String INDEX = "index";
@@ -60,6 +65,7 @@ public class MetadataIndexerJob extends AbstractConfigurableJob {
     private static final String CLUSTER = "cluster";
 
     private String groupId = Constants.USERS_GROUP_ID;
+    private String hostname = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_HOST_ID, "localhost");
     private String cluster = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_CLUSTER_ID, "KITDataManager");
     private String index = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_INDEX_ID, "kitdatamanager").toLowerCase();
 
@@ -80,9 +86,11 @@ public class MetadataIndexerJob extends AbstractConfigurableJob {
                     props = PropertiesUtil.propertiesFromString(jobParameters);
                 }
                 groupId = (props.getProperty(GROUP_ID) != null) ? props.getProperty(GROUP_ID) : Constants.USERS_GROUP_ID;
+                hostname = (props.getProperty(HOSTNAME) != null) ? props.getProperty(HOSTNAME) : hostname;
                 cluster = (props.getProperty(CLUSTER) != null) ? props.getProperty(CLUSTER) : cluster;
                 index = (props.getProperty(INDEX) != null) ? props.getProperty(INDEX) : index;
-                LOGGER.debug(" - Performing indexing");
+                LOGGER.debug(" - Performing indexing to cluster {} accessed via {}/{}", cluster, hostname, index);
+                MetadataIndexingHelper.getSingleton().setHostname(hostname);
                 boolean result = MetadataIndexingHelper.getSingleton().performIndexing(cluster, index, new GroupId(groupId), 10, AuthorizationContext.factorySystemContext());
                 if (!result) {
                     exitCode ^= 2;
@@ -106,7 +114,7 @@ public class MetadataIndexerJob extends AbstractConfigurableJob {
 
     @Override
     public String[] getInternalPropertyKeys() {
-        return new String[]{GROUP_ID, CLUSTER, INDEX};
+        return new String[]{GROUP_ID, HOSTNAME, CLUSTER, INDEX};
     }
 
     @Override
@@ -115,6 +123,8 @@ public class MetadataIndexerJob extends AbstractConfigurableJob {
             switch (pKey) {
                 case GROUP_ID:
                     return "The group whose metadata entries should be indexed.";
+                case HOSTNAME:
+                    return "The hostname where the elastic instance is running.";
                 case CLUSTER:
                     return "The cluster at which the metadata is indexed.";
                 case INDEX:

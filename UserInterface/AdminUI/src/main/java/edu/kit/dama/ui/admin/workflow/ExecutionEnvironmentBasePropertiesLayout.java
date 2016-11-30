@@ -20,7 +20,6 @@ import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.NativeButton;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.TwinColSelect;
 import com.vaadin.ui.UI;
@@ -32,7 +31,6 @@ import edu.kit.dama.mdm.dataworkflow.ExecutionEnvironmentConfiguration;
 import edu.kit.dama.mdm.dataworkflow.properties.ExecutionEnvironmentProperty;
 import edu.kit.dama.staging.entities.StagingAccessPointConfiguration;
 import edu.kit.dama.staging.util.StagingConfigurationPersistence;
-import edu.kit.dama.ui.admin.AdminUIMainView;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.IPathSelector;
@@ -45,6 +43,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +51,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author dx6468
  */
-public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBasePropertiesLayout<ExecutionEnvironmentConfiguration> {
+public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBasePropertiesLayout<ExecutionEnvironmentConfiguration> implements IEnvironmentPropertyCreationListener {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(ExecutionEnvironmentBasePropertiesLayout.class);
     private static final String DEBUG_ID_PREFIX = ExecutionEnvironmentBasePropertiesLayout.class.getName() + "_";
@@ -60,46 +59,49 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
     private TextField maxTasksField;
     private ComboBox accessPointBox;
     private TextField accessPointBasePathField;
-    private NativeButton pathSelectorButton;
+    private Button pathSelectorButton;
     private TwinColSelect environmentProperties;
     private AddEnvironmentPropertyComponent addPropertyComponent;
 
     /**
      * Default constructor.
-     *
-     * @param parentApp The parent application.
      */
-    public ExecutionEnvironmentBasePropertiesLayout(AdminUIMainView parentApp) {
-        super(parentApp);
+    public ExecutionEnvironmentBasePropertiesLayout() {
+        super();
 
         LOGGER.debug("Building " + DEBUG_ID_PREFIX + " ...");
 
         setId(DEBUG_ID_PREFIX.substring(0, DEBUG_ID_PREFIX.length() - 1));
-        setWidth("100%");
-        setImmediate(true);
+        setSizeFull();
         setMargin(true);
         setSpacing(true);
 
         setColumns(4);
         setRows(6);
 
-        addComponent(getNameField(), 0, 0, 1, 0);
+        addComponent(getNameField(), 0, 0, 2, 0);
         addComponent(getGroupBox(), 3, 0);
-        addComponent(getAccessPointBox(), 0, 1, 1, 1);
-        addComponent(getAccessPointBasePathField(), 0, 2, 1, 2);
-        addComponent(getPathSelectorButton(), 2, 2);
-        addComponent(getCheckBoxesLayout(), 3, 1, 3, 2);
-        addComponent(getMaxTasksField(), 0, 3, 1, 3);
-        addComponent(getDescriptionArea(), 0, 4, 1, 4);
+        //
+        addComponent(getAccessPointBox(), 0, 1, 2, 1);
+        addComponent(getCheckBoxesLayout(), 3, 1);
+        //
 
-        NativeButton addPropertyButton = new NativeButton();
+        addComponent(getAccessPointBasePathField(), 0, 2, 2, 2);
+        addComponent(getPathSelectorButton(), 3, 2);
+        //
+        addComponent(getMaxTasksField(), 0, 3, 2, 3);
+        //
+        addComponent(getDescriptionArea(), 0, 4, 2, 5);
+
+        //add property selection
+        Button addPropertyButton = new Button();
         addPropertyButton.setIcon(new ThemeResource(IconContainer.ADD));
         addPropertyButton.addClickListener(new Button.ClickListener() {
 
             @Override
             public void buttonClick(Button.ClickEvent event) {
                 addPropertyComponent.reset();
-                addPropertyComponent.getPopupView().setPopupVisible(true);
+                addPropertyComponent.showWindow();
             }
         });
 
@@ -109,20 +111,17 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
         layout.setSizeFull();
         layout.setExpandRatio(getEnvironmentPropertiesSelect(), .95f);
         layout.setExpandRatio(addPropertyButton, .05f);
-        addPropertyComponent = new AddEnvironmentPropertyComponent();
-        addComponent(addPropertyComponent.getPopupView(), 0, 5, 1, 5);
+        addComponent(layout, 3, 4, 3, 5);
 
-        addComponent(layout, 2, 4, 3, 4);
+        //add popup to layout
+        addPropertyComponent = new AddEnvironmentPropertyComponent(this);
 
-        setComponentAlignment(addPropertyComponent.getPopupView(), Alignment.MIDDLE_CENTER);
-
-        setComponentAlignment(getPathSelectorButton(), Alignment.BOTTOM_RIGHT);
-
-        setColumnExpandRatio(0, 0.69f);
-        setColumnExpandRatio(1, 0.01f);
-        setColumnExpandRatio(2, 0.01f);
-        setColumnExpandRatio(3, 0.19f);
-        setRowExpandRatio(5, 0f);
+        setComponentAlignment(getPathSelectorButton(), Alignment.BOTTOM_LEFT);
+        setColumnExpandRatio(0, 0.2f);
+        setColumnExpandRatio(1, 0.2f);
+        setColumnExpandRatio(2, 0.2f);
+        setColumnExpandRatio(3, 0.2f);
+        setRowExpandRatio(5, 1f);
     }
 
     public TwinColSelect getEnvironmentPropertiesSelect() {
@@ -136,6 +135,7 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
             environmentProperties.setRows(8);
             environmentProperties.setImmediate(true);
             environmentProperties.addStyleName(CSSTokenContainer.BOLD_CAPTION);
+            environmentProperties.addStyleName("colored");
         }
 
         return environmentProperties;
@@ -155,21 +155,9 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
             accessPointBox = new ComboBox("ACCESS POINT");
             accessPointBox.setId(DEBUG_ID_PREFIX + id);
             accessPointBox.setWidth("100%");
-            accessPointBox.setImmediate(true);
             accessPointBox.setNullSelectionAllowed(false);
             accessPointBox.setRequired(true);
             accessPointBox.addStyleName(CSSTokenContainer.BOLD_CAPTION);
-            List<StagingAccessPointConfiguration> accessPoints = StagingConfigurationPersistence.getSingleton().findAllAccessPointConfigurations();
-            String first = null;
-            for (StagingAccessPointConfiguration accessPoint : accessPoints) {
-                accessPointBox.addItem(accessPoint.getUniqueIdentifier());
-                accessPointBox.setItemCaption(accessPoint.getUniqueIdentifier(), accessPoint.getName());
-                if (first == null) {
-                    first = accessPoint.getUniqueIdentifier();
-                }
-            }
-
-            accessPointBox.select(first);
         }
         return accessPointBox;
     }
@@ -193,12 +181,12 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
      *
      * @return The path selector button.
      */
-    public NativeButton getPathSelectorButton() {
+    public Button getPathSelectorButton() {
         if (pathSelectorButton == null) {
             String id = "apPathSelectorButton";
             LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
-            pathSelectorButton = new NativeButton("Select Path");
+            pathSelectorButton = new Button("Select Path");
             pathSelectorButton.setId(DEBUG_ID_PREFIX + id);
             pathSelectorButton.setImmediate(true);
 
@@ -253,9 +241,9 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
         getAccessPointBox().select(pValue.getStagingAccessPointId());
         getDescriptionArea().setValue(pValue.getDescription());
 
-        for (ExecutionEnvironmentProperty prop : pValue.getProvidedEnvironmentProperties()) {
+        pValue.getProvidedEnvironmentProperties().forEach((prop) -> {
             getEnvironmentPropertiesSelect().select(prop.getId());
-        }
+        });
     }
 
     @Override
@@ -279,9 +267,12 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
             }
         }
 
-        accessPointBox.setNullSelectionItemId(first);
         accessPointBox.select(first);
 
+        reloadEnvironmentPropertiesList();
+    }
+
+    private void reloadEnvironmentPropertiesList() {
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
         List<ExecutionEnvironmentProperty> props;
@@ -290,6 +281,8 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
         } catch (UnauthorizedAccessAttemptException ex) {
             props = new LinkedList<>();
             LOGGER.error("Failed to obtain ExecutionEnvironmentProperties.", ex);
+        } finally {
+            mdm.close();
         }
         //sort alphabetically by name
         Collections.sort(props, new Comparator<ExecutionEnvironmentProperty>() {
@@ -309,5 +302,21 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
     @Override
     public String getNameFieldLabel() {
         return "ENVIRONMENT NAME";
+    }
+
+    @Override
+    public void fireEnvironmentPropertyCreatedEvent(ExecutionEnvironmentProperty pProperty) {
+        Object selection = getEnvironmentPropertiesSelect().getValue();;
+        reloadEnvironmentPropertiesList();
+        if (selection != null) {
+            if (selection instanceof Set) {
+                Set set = (Set) selection;
+                for (Object o : set) {
+                    getEnvironmentPropertiesSelect().select(o);
+                }
+            } else {
+                getEnvironmentPropertiesSelect().select(selection);
+            }
+        }
     }
 }

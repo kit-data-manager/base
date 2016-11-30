@@ -20,9 +20,11 @@ package edu.kit.dama.ui.admin.utils;
  * @author dx6468
  */
 public class CSSTokenContainer {
+
     public final static String BOLD_CAPTION = "myboldcaption";
     public final static String GREY_CAPTION = "mygreycaption";
-    public final static String ORANGE_BOLD_CENTERED_LABEL = "myorangeboldcenteredlabel";
-    public final static String CENTERED_IMG = "mycenteredimg";
+    public final static String ORANGE_BOLD_CENTERED_LABEL = "orangeboldcenteredlabel";
+    public final static String RED_BOLD_CENTERED_LABEL = "redboldcenteredlabel";
+    public final static String GREEN_BOLD_CENTERED_LABEL = "greenboldcenteredlabel";
     public final static String FILTER_POSITION = "myfilterposition";
 }

@@ -21,14 +21,13 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>MetaDataManagement</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>edu.kit.dama.rest</groupId>
     <artifactId>REST-Sharing</artifactId>
     <packaging>jar</packaging>
-    <version>1.3</version>
     <name>REST-Sharing</name>
   
     <description>Implementation of the Sharing REST interface.</description>
@@ -58,12 +57,12 @@
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>ServiceBase</artifactId>
-            <version>1.3</version>
+            <version>${project.kit.datamanager.version}</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>SharingRestInterface</artifactId>
-            <version>1.3</version>
+            <version>${project.kit.datamanager.version}</version>
         </dependency>
     </dependencies>
 </project>

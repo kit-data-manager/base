@@ -11,12 +11,13 @@ Prerequisites
 In order to be able to provide KIT Data Manager services you'll need at least the following software components installed: 
 
 * Java SE Development Kit 8
-* Apache Tomcat 7
+* Apache Tomcat 7 (Tomcat 8 is currently not supported)
 * PostgreSQL 9.1
-* Apache Http Server (for sample WebDAV access to data)
+* RabbitMQ 3.6.5
+* Elasticsearch 5.0 
 
 In principal it is possible to install KIT Data Manager on every operating system. For simplicity, this documentation only covers the installation on a Unix-based system 
-(namely Ubuntu 14.04 LTS) in detail.
+(namely Ubuntu 16.04 LTS) in detail.
 
 Software Installation
 ~~~~~~~~~~~~~~~~~~~~~
@@ -30,7 +31,7 @@ Reading package lists... Done
 Building dependency tree       
 Reading state information... Done
 postgresql is already the newest version.
-user@localhost:/home/user$ sudo apt-get install openjdk-7-jdk
+user@localhost:/home/user$ sudo apt-get install openjdk-8-jdk
 Reading package lists... Done
 Building dependency tree       
 Reading state information... Done
@@ -40,21 +41,78 @@ Reading package lists... Done
 Building dependency tree       
 Reading state information... Done
 tomcat7 is already the newest version.
-user@localhost:/home/user$ sudo apt-get install apache2 apache2-utils
-Reading package lists... Done
-Building dependency tree       
-Reading state information... Done
-apache2 is already the newest version.
+user@localhost:/home/user$ sudo apt-get install rabbitmq-server
+Reading package lists...
+Building dependency tree...
+Reading state information...
+rabbitmq-server is already the newest version.
 user@localhost:/home/user$
 --------------------------------------
-Now you have installed all software packages you need to run KIT Data Manager. Not later than now you should extract your KIT Data Manager binary distribution archive 
+As elasticsearch is not available via a software repository it has to be downloaded
+and configured first.
+
+Elasticsearch
+^^^^^^^^^^^^^
+If Elasticsearch is already installed this section might be skipped. 
+
+[NOTE]
+*_Cluster name_* and *_hostname_* needed to be known during further installation steps.
+
+
+*Step1:* Download newest Version (5.0) of Elasticsearch (Tested with version 5.0.0).
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.0.0.deb
+--------------------------------------
+
+*Step 2:* Install Elasticsearch
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo dpkg -i elasticsearch-5.0.0.deb
+--------------------------------------
+
+*Step 3:* Configuring Elasticsearch
+The Elasticsearch configuration file (elasticsearch.yml) in the _/etc/elasticsearch_ directory
+has to be modified:
+To avoid conflicts with other installations a unique clustername has to be chosen.
+Look for the corresponding line remove the leading # and change the value:
+
+cluster.name: KITDataManager@`hostname`
+
+
+Set `hostname` to the hostname of the host running elasticsearch or to another, unique value and keep the value of 'cluster.name' for later use.
+
+*Step 4:* Configure Elasticsearch as daemon and start service
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo /bin/systemctl daemon-reload
+user@localhost:/home/user$ sudo /bin/systemctl enable elasticsearch.service
+user@localhost:/home/user$ sudo /bin/systemctl start elasticsearch.service
+--------------------------------------
+That's it. Now continue setting up KIT Data Manager to index metadata to Elasticsearch. 
+
+[IMPORTANT]
+In the newest version (5.0.0) the ports (9200 and 9300) for accessing Elasticsearch 
+are only accessible from localhost. Dowever, everyone who is able to access Elasticsearch 
+has all privileges, e.g. also deleting the index. For production environments further security measures are recommended.
+
+External Links
+++++++++++++++
+For more detailed information on how to setup Elasticsearch on Ubuntu please refer to the following
+links.
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-elasticsearch-on-ubuntu-14-04[Installation and configuration of Elasticsearch]
+
+Setup KIT Data Manager
+^^^^^^^^^^^^^^^^^^^^^^
+Now you have installed and configured all software packages you need to run KIT Data Manager. Not later than now you should extract your KIT Data Manager binary distribution archive 
 to a preferred location which will be referred below as `$KITDM_LOCATION`. Afterwards change the ownership to tomcat7:tomcat7. 
 
 [source,sh]
 --------------------------------------
 user@localhost:/home/user$ cd $KITDM_LOCATION
 user@localhost:/home/user$ unzip KITDM-<Version>.zip
-user@localhost:/home/user$ sudo chown tomcat7:tomcat7 KITDM
+user@localhost:/home/user$ sudo chown -R tomcat7:tomcat7 KITDM
 user@localhost:/home/user$
 --------------------------------------
 
@@ -75,8 +133,9 @@ Now set a password for the database user `postgres` and keep it in mind for late
 
 [source,sh]
 --------------------------------------
-user@localhost:/home/user$ sudo -u postgres createdb datamanager
-user@localhost:/home/user$ 
+postgres=#create database datamanager;
+CREATE DATABASE
+postgres=#\q
 --------------------------------------
 
 A database named `datamanager` has been created and can be set up. For this purpose, a file named `$KITDM_LOCATION/sql/schema.sql` is provided as part of your KIT Data 
@@ -85,13 +144,11 @@ Manager distribution. Apply the SQL statements in this file to the database by t
 [source,sh]
 --------------------------------------
 user@localhost:/home/user$ sudo -u postgres psql -U postgres -d datamanager -f $KITDM_LOCATION/sql/schema.sql
-SET
-SET
-SET
-SET
-SET
-CREATE EXTENSION
+CREATE TABLE
+CREATE SEQUENCE
+ALTER SEQUENCE
 [...]
+CREATE INDEX
 user@localhost:/home/user$ 
 --------------------------------------
 
@@ -104,38 +161,61 @@ by the following command:
 user@localhost:/home/user$ sudo -u postgres psql -U postgres -d datamanager -f $KITDM_LOCATION/sql/sampledata.sql
 SET
 SET
-SET
-SET
-SET
-SET
-INSERT 0 1
 [...]
+INSERT 0 1
 user@localhost:/home/user$ 
 --------------------------------------
 
-In the next step you have to deploy the KIT Data Manager Web application on the local Tomcat server. Therefor, copy the file `$KITDM_LOCATION/webapp/KITDM.xml` to 
-`$TOMCAT_HOME/conf/Catalina/localhost`. In our case this would be `/var/lib/tomcat7/conf/Catalina/localhost/`. 
+In the next step you have to deploy the KIT Data Manager and WebDav Web applications on the local Tomcat server. Therefor, copy the files `$KITDM_LOCATION/webapp/KITDM.xml` and `$KITDM_LOCATION/webapp/webdav.xml` to 
+`$CATALINA_HOME/conf/Catalina/localhost/`. In our case this would be `/var/lib/tomcat7/conf/Catalina/localhost/`. 
 
 [source,sh]
 --------------------------------------
-user@localhost:/home/user$ sudo cp $KITDM_LOCATION/webapp/KITDM.xml /var/lib/tomcat7/conf/Catalina/localhost/
+user@localhost:/home/user$ sudo cp $KITDM_LOCATION/webapp/*.xml /var/lib/tomcat7/conf/Catalina/localhost/
 user@localhost:/home/user$ 
 --------------------------------------
 
-Finally, you have to modify `/var/lib/tomcat7/conf/Catalina/localhost/KITDM.xml` in order to make `KITDM_LOCATION` point to the absolute value of `$KITDM_LOCATION`. The appended path component `KITDM` should exist and points
-to the folder containing the actual web application.
+[[WebDavLibraries]]
+Now, the custom WebDav implementation must be 'deployed' to Tomcat. Therefor, execute the following commands:
+
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo cp $KITDM_LOCATION/tomcat-ext/*.jar /usr/share/tomcat7/lib/
+user@localhost:/home/user$ sudo chown tomcat7:tomcat7 /usr/share/tomcat7/lib/*.jar
+user@localhost:/home/user$ 
+--------------------------------------
+
+This will copy a couple of libraries to your Tomcat installation, which should be: 
+
+* commons-codec-1.7.jar
+* logback-classic-1.0.11.jar
+* logback-core-1.0.11.jar
+* postgresql-9.1-901.jdbc4.jar
+* slf4j-api-1.7.5.jar
+* tomcat-ext-1.1.1.jar
+
+[NOTE]
+The library versions as well as the JDBC driver (postgresql-9.1-901.jdbc4.jar) may differ, depending on the KIT DM version and your local installation. 
+
+Finally, you have to modify `/var/lib/tomcat7/conf/Catalina/localhost/KITDM.xml` and `/var/lib/tomcat7/conf/Catalina/localhost/webdav.xml` in order to make `KITDM_LOCATION` point to the absolute value of `$KITDM_LOCATION`. 
+Inside `/var/lib/tomcat7/conf/Catalina/localhost/webdav.xml` also set the correct values for `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` to be able to access the user database. 
+The default values according to the above configuration options are DB_HOST=localhost and DB_NAME=datamanager.Typically, DB_PORT should be 5432 for PostgreSQL, but might be different if this port was already in 
+use during installation. DB_USER and DB_PASSWORD must be set to the previously created/chosen values.
+ 
 Now, your KIT Data Manager services are ready for further configuration.
 
 Basic Configuration
 ~~~~~~~~~~~~~~~~~~~
 
-All configuration files of KIT Data Manager are located inside the web application folder, by default at `$KITDM_LOCATION/KITDM/WEB-INF/classes/`. Relevant configuration files are: 
+All configuration files of KIT Data Manager itself are located inside the web application folder, by default at `$KITDM_LOCATION/KITDM/WEB-INF/classes/`. Relevant configuration files are: 
 
 META-INF/persistence.xml::
-   Contains all JPA persistence units for database access. Values that must be changed are `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`.
+   Contains all JPA persistence units for database access. Values that must be changed are `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`. The default values according to the above configuration options are
+   DB_HOST=localhost and DB_NAME=datamanager. Typically, DB_PORT should be 5432 for PostgreSQL, but might be different if this port was already in use during installation. DB_USER and DB_PASSWORD must be set to the 
+   previously created/chosen values.
 datamanager.xml::
-   Contains all KIT Data Manager settings. Typically, most of them can remain unchanged, except settings containing placeholder variables (e.g. `KITDM_LOCATION`, `HOSTNAME` and `ARCHIVE_STORAGE`). Please refer to the comments
-   in the config file for more information.
+   Contains all KIT Data Manager settings. Typically, most of them can remain unchanged, except settings containing placeholder variables (e.g. `KITDM_LOCATION`, `HOSTNAME`,  and `ARCHIVE_STORAGE`). Database settings,
+   e.g. for setting up the scheduler persistence backend, are typically the same as in the previous configuration file. Elasticsearch settings also has to be adapted. For more information, please refer to the comments inside datamanager.xml for more information.
 logback.xml::
    The configuration of the logging framework. By default, all warnings and error messages are logged into the Tomcat temp folder located e.g. at `/tmp/tomcat7-tomcat7-tmp/` or `$CATALINA_HOME/temp/`, 
    but you can also set another value instead of `${java.io.tmpdir}/datamanager.log` as log file location at any time.
@@ -143,185 +223,93 @@ logback.xml::
 [NOTE]
 Please go through all files at least during your first installation to check which settings are in there and which you have to change in order to get your KIT Data Manager instance running.
 
-In order to be able to use KIT Data Manager as a repository system, at least one access point must be configured to allow data ingest and download. From KIT Data Manager 1.2 there are two options: 
+In order to be able to use KIT Data Manager as a repository system, at least one access point must be configured to allow data ingest and download. Since version 1.4 the default (and recommended) way to transfer data to and from 
+KIT Data Manager is via the provided WebDav servlet as it offers several advantages:
 
-1. Use the included Tomcat WebDav servlet.
-2. Use WebDav provided by a web server, e.g. an Apache HTTP server.
+1. The configuration effort, e.g. installing additional software packages, open ports and permission management, is reduced to a minimum.
+2. The KIT Data Manager user management is seamlessly integrated with the WebDav servlet.
+3. The WebDav servlet offers built-in authorization of resource access for KIT Data Manager users and groups.
 
-The first option is way easier to setup as there is no need for an additional service and there is no need to cope with any access permission issues as the servlet is running as the same user as the
-KIT Data Manager instance. However, there are also drawbacks, e.g. is it awkward to add new WebDav users as they have to be added to the tomcat-users.xml file and Tomcat has to be restarted to
-apply the changes. 
-Using a separate service, e.g. provided by an Apache HTTP server, allows to secure the access using HTTPS, to integrate LDAP authentification and it provides much more flexibility. Therefore, it is 
-recommended to use the second option for production environments.
-
-Setting up a WebDav Access Point using the Tomcat WebDav Servlet
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Setting up the Tomcat WebDav servlet is basically quite easy as almost everything comes with the default KIT Data Manager distribution. 
-
-The first step is to deploy the servlet in Tomcat. Therefore, just copy the folder 'webdav' which is located at `$KITDM_LOCATION` to `$TOMCAT_HOME/webapps`. Afterwards, a WebDav user has to be added in order
-to allow access. Therefor, the file `$TOMCAT_HOME/conf/tomcat-users.xml` has to be modified as follows:
+The first step in order to enable WebDav access was already done in the last section by copying and modifying the file `$KITDM_LOCATION/webapp/webdav.xml` and the libraries located in 'tomcat-ext'. 
+In the next step please check `$KITDM_LOCATION/webdav/WEB-INF/web.xml`. Typically, no changes are necessary here but the inline comments may help to understand which configuration options there are if 
+customization gets necessary. The most relevant settings are in the section `<login-config>`. In this section the realm-name, which is set to `kitdm`, and the auth-method, which is set to DIGEST, are defined. 
+Both values should remain unchanged if there is no necessity to change it. The reason therefor is, that if they change they must also be changed in the according section of `datamanager.xml`. 
+[[WebDavConfig]]
+There you'll find the configuration section:
 
 [source, xml]
 --------------------------------------
-<tomcat-users>
-   <!--[...]-->
-   <role rolename="webdav"/>
-   <user username="webdav" password="webdav" roles="webdav"/>
-</tomcat-users>
+<authenticator class="edu.kit.dama.rest.util.auth.impl.HTTPAuthenticator">
+     <authenticatorId>webdav</authenticatorId>
+     <!--The HTTP realm needed if type is 'DIGEST'.-->
+     <realm>kitdm</realm>
+     <!--The type that must be either BASIC or DIGEST.-->
+     <type>DIGEST</type>
+ </authenticator>
 --------------------------------------
 
-These entries are adding a WebDav role, defined in `$TOMCAT_HOME/webapps/webdav/WEB-INF/web.xml`, which is allowed to access to WebDav servlet. Furthermore, a user owning the WebDav role is added. The username 
-`webdav` and the password `webdav` can be chosen arbitrarily. After restarting the Tomcat server the WebDav servlet should be accessible. 
+The values of 'realm' and 'type' must match the configuration in the `web.xml` as the HTTPAuthenticator is used to generate the WebDav credentials for the KIT Data Manager users that are later used to authenticate. If there is a 
+configuration mismatch, authentication will fail.
 
-The final step is now to register a new staging access point using WebDav access. Therefore, please proceed to <<AnchorAPRegistration,the end of the next chapter>> and follow these final instructions.
-
-Setting up a WebDav Access Point using an Apache HTTP server
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The Apache Http server package has been already installed in the first step of this installation instruction. Therefore, the following section only covers the setup of WebDav.
-
-The first step is setting up WebDav starting with enabling the WebDav modules:
-
-[source,sh]
---------------------------------------
-user@localhost:/home/user$ sudo a2enmod dav
-Enabling module dav.
-user@localhost:/home/user$ sudo a2enmod dav_fs
-Enabling module dav_fs.
-user@localhost:/home/user$
---------------------------------------
-
-The next step is creating a user database file containing all authorized WebDav users. You may replace the username `webdav` by a username of your choice.
-
-[source,sh]
---------------------------------------
-user@localhost:/home/user$ sudo htpasswd -c /etc/apache2/dav_users.db webdav
-New password: 
-Re-type new password: 
-Adding password for user webdav
-user@localhost:/home/user$ sudo chgrp www-data /etc/apache2/dav_users.db
-user@localhost:/home/user$
---------------------------------------
-
-This step may be executed multiple times if multiple accounts should be allowed to ingest files via WebDav. However, in production environments more sophisticated setups using 
-e.g. LDAP for authentication are recommended. 
-
-The following steps are relatively complex, Linux distribution-dependent and might not be necessary in every case. The challenge to solve is, that by default there is one 
-user running Tomcat (tomcat7 by default) and another user running the Apache Http server (www-data by default), both in groups with the same names. For data transfer tasks
-KIT Data Manager running in Tomcat has to create the destination folders which are filled via (ingest) or for (download) WebDav transfers afterwards. Hence, all files must 
-be accessible by both users, tomcat7 and www-data. Of course, the most simple solution is to run Tomcat and Apache Http server by the same user, but this is not feasible in 
-many cases and may cause security issues. Therefore, in the following lines another setup based on group permissions will be presented.
-
-At first, the folder which will be accessible via WebDav is created and proper permissions are assigned.
-
-[source,sh]
---------------------------------------
-user@localhost:/home/user$ sudo mkdir /var/www/webdav
-user@localhost:/home/user$ sudo chgrp www-data /var/www/webdav
-user@localhost:/home/user$ sudo chmod 2770 /var/www/webdav
---------------------------------------
-
-Now, the folder `/var/www/webdav` is owned by the group `www-data`, has full access for the owner and the owner's group and has the group sticky bit set, which takes care 
-that the group ownership is applied to all files and folders created below `/var/www/webdav/`. Apart from the ownership also access permissions have to be kept for newly 
-created files and folders. For this purpose `umask` is used. Applying a umask for the Apache process under Ubuntu is done quite easyby adding `umask 007` at the 
-end of `/etc/apache2/envvars`, either manually or by using the following call: 
-
-[source,sh]
---------------------------------------
-user@localhost:/home/user$ echo 'umask 007' | sudo tee --append /etc/apache2/envvars
-umask 007
-user@localhost:/home/user$
---------------------------------------
-
-Please check afterwards, if the line was added and if it is the only entry setting the umask. Afterwards, permissions 770 will be assigned to all files and folders 
-created by the Apache process providing WebDav access. Finally, both users (the one running Tomcat and the one running the Apache Http server) must be in the same group, 
-in our case `www-data` is used. Therefore, the user running Tomcat has to be added to `www-data` in order to complete the setup: 
-
-[source,sh]
---------------------------------------
-user@localhost:/home/user$ sudo adduser tomcat7 www-data
-Adding user tomcat7 to group www-data
-Done.
-user@localhost:/home/user$
---------------------------------------
-
-Finally, you have to configure WebDav in Apache. Therefor, please add the following section to the configuration `/etc/apache2/sites-enabled/000-default.conf`: 
-
-[source,xml]
---------------------------------------
-<VirtualHost *:80>  
-  //[...]
-  Alias /webdav "/var/www/webdav/"
-
-  <Directory "/var/www/webdav/">
-    DAV on
-    Options Indexes FollowSymLinks
-    AuthType Basic
-    AuthName WebDav
-    AuthUserFile /etc/apache2/dav_users.db
-    Require valid-user
-    AllowOverride none 
-  </Directory>
-  //[...]
-</VirtualHost>
---------------------------------------
-
-All these changes take effect after restarting Tomcat and Apache Http server. 
-
-The final part of the system-level portion of the setup is the execution of regularly executed tasks taking care of performing e.g. staging operations to/from the repository managed storage. 
-In order to register and execute these tasks it is recommended to use the internal job scheduler which can be configured using the administration backend of KIT Data Manager. 
-Please refer to the <<ChapterJobScheduling,according section>> for details. 
-
-[NOTE]
-Please be aware that the Cron-based execution of recurring tasks described in the following section is a deprecated feature which will disappear in one of the next versions of KIT Data Manager. 
-Therefore, you should consider to use the internal job scheduler.
-
-An alternative option is creating a Cron job using the provided script called `TransferFinalizer.sh` available at 
-`$KITDM_LOCATION/scripts/`. At first, set the correct value of $KITDM_LOCATION in the script. Then, please pay attention that the scripts are executed by the user running 
-the KIT Data Manager Web application, in our case this should be `tomcat7`. Therefore, the Cron job must be assigned to this user as follows:
-
-[source,sh]
---------------------------------------
-user@localhost:/home/user$ sudo -u tomcat7 crontab -e
-#Press i to enter insert mode and put the following lines at the end.#
-##Modify the the base path $KITDM_LOCATION according to your local setup!##
-
-*/5 * * * * $KITDM_LOCATION/scripts/TransferFinalizer.sh -t DOWNLOAD > /dev/null 2>&1
-*/10 * * * * $KITDM_LOCATION/scripts/TransferFinalizer.sh -t INGEST > /dev/null 2>&1
-
-#Press ESC for leaving the insert mode and press :wq to save and quit
-user@localhost:/home/user$
---------------------------------------
-
-[WARNING]
-Don't forget to set $KITDM_LOCATION inside the TransferFinalizer.sh script when using this option for executing recurring jobs. Otherwise, all staging operations will fail.
-[[AnchorAPRegistration]]
-Now, a new access point using the created WebDav service can be registered using the administration backend of KIT Data Manager. For this purpose please browse to
-`http://localhost:8080/KITDM` in the browser of your KIT Data Manager machine and login. By default the administrator email is `dama@kit.edu` and the password is `dama14`. 
-Open the settings page using the button with the gears image:Settings_Button.png[Settings_Button, width="30"] and select the tab `Staging Access Point Configuration`, which looks as follows:
+The final step is now to register a new staging access point using WebDav access using the administration backend of KIT Data Manager. For this purpose please browse to
+`http://localhost:8080/KITDM` at your KIT Data Manager machine and login. By default the administrator email is `dama@kit.edu` and the password is `dama14`. 
+Open the settings page using the button with the gears image:Settings_Button.png[Settings_Button, width="30"] and select the tab `Staging Access Points`, which looks as follows:
 
 [[AdminUI_AP]]
 .Staging access point configuration tab in the administration backend.
-image::AdminUI_AP.png[AdminUI_AP]
+image::screenshots/StagingAccessPointConfiguration_Selection.png[AdminUI_AP]
 
 At first, insert `edu.kit.dama.staging.ap.impl.BasicStagingAccessPoint` as access point Implementation Class. Clicking the button next to the input fields will create
 a new access point. Now, please insert all values as shown in the screenshot in order to configure the access point properly. Pay special attention to the Remote Base URL, 
 which has to correspond to the FQDN of your machine running KIT Data Manager. 
 
 [NOTE]
-If the Tomcat Servlet-based WebDav access is used the `LOCAL BASE PATH` must be set to `$TOMCAT_HOME/webapps/webdav` where `$TOMCAT_HOME` has to be replaced according to your local Tomcat installation location.
+If the Tomcat Servlet-based WebDav access is used the `LOCAL BASE PATH` must be set to `$KITDM_LOCATION/webdav` by default.
 
-Finally, commit all changes using the Commit button on the lower right. 
-Now, you should be able to use KIT Data Manager as a repository system including the ingest and the download of data.
+Finally, commit all changes using the Commit button on the lower right. Now, you should be able to use KIT Data Manager as a repository system including the ingest and the download of data.
 
 Enhanced Configuration
 ~~~~~~~~~~~~~~~~~~~~~~
+
+[[ChapterORCIDLogin]]
+ORCiD Login and Registration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Since KIT Data Manager 1.4 user registration and login via ORCiD is supported. In order to enable ORCiD service access a couple of working steps are required. First, please go to  
+link:https://orcid.org[ORCiD.org] and enable public API access for your account. You should be able to find it unter 'For Researchers" -> 'Developer Tools'. Provide application name, e.g. MyRepository, your website URL, 
+e.g. http://myinstitution.org, a short description of your application and at least one redirect URI, which is the base URL of your KIT Data Manager instance, e.g. https://myhost:8080/KITDM You may also provide multiple redirect
+URIs later in order to support other applications, too. 
+
+After providing all information, you'll find Client ID and Client secret on the ORCiD page. Now, add these two tokens to 'datamanager.xml' into the according fields ('login.orcid.clientid' and 'login.orcid.clientsecret')
+of the 'authorization' section. After (re-)starting your Tomcat instance you should see the optional ORCiD login when entering 'https://myhost:8080/KITDM'.
+
+[NOTE]
+From the configuration and implementation perspective, also B2ACCESS login is possible in the current version. However, as B2ACCESS is by default configured not to send any information helping to identify the user this 
+feature has been disabled for the time being.
 
 [[ChapterAuthorizationLessAccess]]
 Authorization-less Access to Data Organization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Section <<SectionRESTBasedDownload,REST-based Data Download>> describes a feature allowing to download data directly via the Data Organization REST endpoint. By default, this feature is disabled in order to avoid 
 open access to repository content by accident. In order to enable the authorization-less access to defined nodes via the Data Organization REST endpoint you have to modify `$KITDM_LOCATION/KITDM/WEB-INF/web.xml`
-and uncomment/change one or more of the following `init-param` nodes. Please refer to the inline documentation or the <<SectionRESTBasedDownload,according section>> in the architecture decription for details.
+and uncomment/change one or more of the following `init-param` nodes. 
+
+There are four different parameter blocks, each for one `authorization-less access` type. You should decide which of them you really need as they require to organize you Digital Objects accordingly. The following table shows
+all options, sample values and a short description.
+
+[cols="m,n,o", options="header"]
+|============================================================================================================================
+|Parameter Name|Example Value|Description
+|public.view.names|public;public2|List of Data Organization views that are publicly accessible. In the example, all elements stored in views named `public` and `public2` of all Digital Objects in the repository system are publicly accessible. Attention: You should never provide the `default` view here as this would open the entire data of a Digital Object.
+|public.attribute.key|isOpen|A single attribute, which sets a node (either collection or file node) to be publicly accessible if an attribute with the provided name has been assigned to the node. In the example, all Data Organization nodes having the attribute `isOpen` assigned are publicly accessible. The attribute value is currently not evaluated.
+|public.collection.node.access.allowed|false|Either `true` or `false`. Mainly for testing purposes to allow authorization-less access to entire collection nodes in all Digital Objects and all Data Organization views. It is recommended NOT to enable this option. 
+|public.file.node.filter|(.*)\.jpg$|Regular expression granting public access to all file nodes in all Digital Objects and all Data Organization views for which the node name fulfills the regular expression. In the example, all nodes with the extension `jpg` are publicly available.
+|============================================================================================================================
+
+[NOTE]
+Please refer to the inline documentation or the <<SectionRESTBasedDownload,according section>> in the architecture decription for details.
+
+The following snippet shows the according configuration section in the KIT Data Manager's web.xml. 
 
 [source, xml]
 --------------------------------------
@@ -379,7 +367,7 @@ Basically, the ingest of custom Data Organization trees makes use of the default
 
 Add a StagingProcessor::
    Therefor, you can use the AdminUI as described in <<ChapterStagingProcessorConfiguration,this section>>. Add a new StagingProcessor using the implementation class 
-   `edu.kit.dama.staging.processor.impl.ReferenceTreeIngestProcessor`. After adding a new processor select the CheckBoxes `Default`, `INGEST SUPPORTED` and `DOWNLOAD SUPPORTED`. The `PROCESSOR TYPE` must be set to `POST_ARCHIVING`.
+   `edu.kit.dama.staging.processor.impl.ReferenceTreeIngestProcessor`. After adding a new processor select the CheckBoxes `Default` and `INGEST SUPPORTED`.
    Finish the configuration by clicking `Commit`. Now, this processor will check for each ingest if there is a custom Data Organization description provided.
 
 Add a custom AdalapiProtocolConfiguration::
@@ -391,8 +379,11 @@ Add a custom AdalapiProtocolConfiguration::
 [cols="m,n,o,p,q", options="header"]
 |============================================================================================================================
 |id|authenticatorclass|customproperties|identifier|protocolclass
-|1|edu.kit.dama.staging.adalapi.authenticator.KITDMAuthenticator|{"repository.context":"empty"}|http@remotehost|edu.kit.dama.staging.adalapi.protocol.SimpleHttp
+|1|edu.kit. dama.staging. adalapi.authenticator. KITDMAuthenticator|{"repository.context":"empty"}|http@remotehost|edu.kit. dama.staging. adalapi.protocol. SimpleHttp
 |============================================================================================================================
+
+[NOTE]
+Please note that authenticatorclass and protocol class contain spaces in order to improve the readability of both values. Please remove the spaces when adding the values to the database.
 
 For the time being the only two ways to add a new `AdalapiProtocolConfiguration` is manually adding a table row via SQL statement or programatically adding an entry via Java APIs. 
 Furthermore, the exact values as shown above must be used. The only fields that change are the `id`, which has to be unique, and the `identifier` which also has to be unique and must be generated based on the URL that should be accessed. 
@@ -461,8 +452,7 @@ user@localhost:/home/user$ sudo -u postgres pg_dump -U postgres -h localhost -d 
 user@localhost:/home/user$
 --------------------------------------
 
-In the next step, the libraries of your KIT Data Manager installation have to be updated. If you are updating from KIT Data Manager version 1.0 please download the update package 
-KITDM-Update-<VERSION>.zip to `$KITDM_LOCATION` and continue as follows:
+In the next step, the libraries of your KIT Data Manager installation have to be updated. Please download the update package KITDM-Update-<VERSION>.zip to `$KITDM_LOCATION` and continue as follows:
 
 [source,sh]
 --------------------------------------
@@ -620,13 +610,12 @@ Current list of entities (KIT DM 1.2) that has to be registered in the persisten
 |image:gear_preferences.png[ConfigurationUpdate]|No|Update entity list in persistence.xml, persistence unit MDM-Core according to the list below. |None.
 |============================================================================================================================
 
-
 Additional section that has to be added to datamanger.xml in order to configure the transition type handler of the metadata management:
 
 [source, xml]
 --------------------------------------
 <!--[...]-->
-<metadataManagement>
+<metaDataManagement>
  <transitionTypes>
   <NONE>
    <handlerClass>edu.kit.dama.mdm.tools.NullTransitionTypeHandler</handlerClass>
@@ -638,11 +627,11 @@ Additional section that has to be added to datamanger.xml in order to configure 
    <handlerClass>edu.kit.dama.mdm.content.util.ElasticsearchTransitionTypeHandler</handlerClass>
   </ELASTICSEARCH>
  </transitionTypes>
-</metadataManagement>
+</metaDataManagement>
 <!--[...]-->
 --------------------------------------
 
-Current list of entities (KIT DM 1.2) that has to be registered in the persistence.xml for persistence unit MDM-Core:
+Current list of entities (KIT DM 1.3) that has to be registered in the persistence.xml for persistence unit MDM-Core:
 
 [source, xml]
 --------------------------------------
@@ -690,3 +679,316 @@ Current list of entities (KIT DM 1.2) that has to be registered in the persisten
 <!--[...]-->
 </persistence-unit>
 --------------------------------------
+
+[underline]*Update 1.3 -> 1.4*
+
+
+[cols="1,1,6,2", options="header"]
+|============================================================================================================================
+|Type|Optional|Todo|Side Effects
+|image:data.png[DatabaseUpdate]|No|Apply script `sql/update.1.3-1.4.sql`|This script adds new columns to tables MetaDataSchema, DigitalObject and StagingProcessor. Furthermore it fixes a type in table DataWorkflowTask. Finally, the script adds system users and groups introduced in version 1.4.
+|image:gear_preferences.png[ConfigurationUpdate]|No|New sections 'authorization' and 'audit' added to datamanager.xml, major cleanup of file structure.|None.
+|image:gear_preferences.png[ConfigurationUpdate]|No|Update entity list in persistence.xml, persistence unit MDM-Core according to the list below. |None.
+|============================================================================================================================
+
+
+Due to a huge number of changes in the structure of 'datamanager.xml' it is recommended to use the sample file below and merge all settings from the old configuration 
+(database connections, elasticsearch settings, staging settings) manually:
+
+[source, xml]
+--------------------------------------
+<!--KIT Data Manager configuration file. This file contains all general properties used to configure your KIT Data Manager instance. 
+-->
+<config>
+<general>
+	<repositoryName>KIT Data Manager</repositoryName>
+	<repositoryLogoUrl>http://datamanager.kit.edu/dama/logo_default.png</repositoryLogoUrl>
+	<!--Can be accessed e.g. by GUIs to send system mail. Please replace $HOSTNAME by the local hostname.-->
+	<systemMailAddress>${general.mail.sender}</systemMailAddress>
+	<mailServer>${general.mail.server}</mailServer>
+	<globalSecret>qr2I9Hyp0CBhUUXj</globalSecret>
+	<!--The base URL of your application server, e.g. http://localhost:8080. Please replace $HOSTNAME by the local hostname. -->
+	<baseUrl>${general.base.url}</baseUrl>
+	<!--Enable/Disable production mode to show/hide additional logging output.-->
+	<productionMode>true</productionMode>
+</general>
+
+<!--
+SimpleMonitoring-related settings.
+-->
+<simon>
+	<!--The path where the configuration files for the SimpleMonitoring are located. Please replace $KITDM_LOCATION by the absolut path of your KIT Data Manager installation.-->
+	<configLocation>${simon.config.location}</configLocation>
+</simon>
+<!--
+Elasticsearch-related settings.
+-->
+<elasticsearch>
+	<!--The cluster name used by KIT Data Manager to publish metadata. (default: KITDataManager)-->
+	<cluster>${elasticsearch.cluster}</cluster>
+	<!--The hostname of the node where metadata should be published to. (default: localhost)-->
+	<host>${elasticsearch.host}</host>
+	<!--The port of the Elasticsearch instance. (default: 9300)-->
+	<port>${elasticsearch.port}</port>
+	<!--The default index that is access for metadata publishing/querying. 
+	The index to which metadata is published depends on the published metadata schema. (default: dc)
+	-->
+	<index>${elasticsearch.default.index}</index>
+	<!--The elasticsearch document key which contains the fulltext representation of an entire document. 
+	The availability of this key depends on the metadata stored in the document. 
+	The default value is 'es.fulltext', this property should not be changed, 
+	-->
+	<!--fulltextKey>es.fulltext</fulltextKey-->
+</elasticsearch>
+<!--
+MetaDataManagement-related settings.
+-->
+<metaDataManagement>
+    <persistenceImplementations>
+      <persistenceImplementation>
+        <!--Name of the persistence implementation-->
+        <name>JPA</name>
+        <!--Implementation class of the persistence implementation-->
+        <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+        <persistenceUnits>
+          <!-- A list of persistence units (configured endpoints) to store metadata. 
+          In case of the default JPA implementation these persistence units are 
+          actual persistence units configured in a persistence.xml file using the 
+		  MetaDataManagement implementation defined above. JPA persistence units not using 
+		  this implementation are not listed here. For other implementations of the 
+		  MetaDataManagement, these persistence units are probably mapped to something different.
+
+          Attention: 
+		  
+		  PersistenceUnit labels should be the same for all implementations 
+          in order to be able to switch implementations.
+		  
+                    The default persistence unit can be marked by an attribute 'default=true', 
+                    otherwise the first entry is interpreted as default persistence unit used by the 
+                    implementation if no persistence unit is specified.
+                    -->
+                    <persistenceUnit authorization="true">${persistence.authorizationPU}</persistenceUnit>  
+                    <persistenceUnit>DataOrganizationPU</persistenceUnit>
+                    <!--Default persistence unit if the used persistence unit is not explicitly named.-->
+                    <persistenceUnit default="true">MDM-Core</persistenceUnit>  
+                    <persistenceUnit staging="true">${persistence.stagingPU}</persistenceUnit>
+                </persistenceUnits>
+            </persistenceImplementation>  
+        </persistenceImplementations>
+
+        <!--Transition type definitions and their handler implementations used by the base metadata REST 
+        endpoint to handle transition information provided as JSON structure.-->
+        <transitionTypes>
+            <NONE>
+                <handlerClass>edu.kit.dama.mdm.tools.NullTransitionTypeHandler</handlerClass>
+            </NONE>
+            <DATAWORKFLOW>
+                <handlerClass>edu.kit.dama.mdm.dataworkflow.tools.DataWorkflowTransitionTypeHandler</handlerClass>
+            </DATAWORKFLOW>
+            <ELASTICSEARCH>
+                <handlerClass>edu.kit.dama.mdm.content.util.ElasticsearchTransitionTypeHandler</handlerClass>
+            </ELASTICSEARCH>
+        </transitionTypes>
+    </metaDataManagement>  
+    <!--
+    Staging-related settings.
+    -->
+    <staging>   
+        <adapters>
+            <dataOrganizationAdapter class="edu.kit.dama.staging.adapters.DefaultDataOrganizationServiceAdapter" target="LOCAL"/>        
+            <ingestInformationServiceAdapter class="edu.kit.dama.staging.adapters.DefaultIngestInformationServiceAdapter" target="LOCAL"/>
+            <downloadInformationServiceAdapter class="edu.kit.dama.staging.adapters.DefaultDownloadInformationServiceAdapter" target="LOCAL"/>
+            <storageVirtualizationAdapter class="edu.kit.dama.staging.adapters.DefaultStorageVirtualizationAdapter" target="LOCAL">
+                <!--The Url where the managed repository storage (archive) is located. All data ingested into the repository system will be located here.
+                Currently, the DefaultStorageVirtualizationAdapter only supports locally accessible Urls. However, this can be remote storages mounted
+                into the local filesystem. Please replace $ARCHIVE_STORAGE by the absolute path of your archive location, e.g. file:///mnt/archive/
+                Attention: Please pay attention to provide three (!) slashes. Otherwise, all data transfer services of KIT Data Manager won't work.
+                -->
+                <archiveUrl>${staging.archive.url}</archiveUrl>
+                <!--Pattern that is used to structure the data at 'archiveUrl'. Valid variables are:
+                     $year: The current year, e.g. 2015
+                     $month: The current month, e.g. 9
+                     $day: The day of the month, e.g. 1
+                     $owner: The userId of the user who has ingested the data, e.g. admin
+                     $group: The groupId of the group on whose behalf the user has ingested the data, e.g. USERS
+                -->
+                <pathPattern>${staging.archive.path.pattern}</pathPattern>
+            </storageVirtualizationAdapter>
+        </adapters>
+        <!--Possible overwrite for persistence unit defined in persistence section.-->
+        <!--persistenceUnit>${persistence.stagingPU}</persistenceUnit-->   
+        <remoteAccess>
+            <!--The remove access Url of the staging service (currently not used). Please replace $HOSTNAME by the local hostname.-->
+            <restUrl>${staging.rest.url}</restUrl>
+        </remoteAccess>
+        <!--The max. number of single files that is transferred in parallel to/from the archive location to access point locations. 
+    This number refers to one single staging operation (ingest/download). If there are two staging operations running in parallel, 
+        two times 'maxParallelTransfers' are used.-->  
+        <maxParallelTransfers>10</maxParallelTransfers>
+        <!--The max. number of simultaneous ingest/download operations. This setting is used by the TransferFinalizer tool. The tool itself 
+        handles one ingest/download per execution. However, by running the TransferFinalizer as Cron job multiple instances may run in 
+        parallel. As soon as maxParallelIngests/maxParallelDownloads is reached TransferFinalizer will return without doing anything.-->
+        <maxParallelIngests>2</maxParallelIngests>
+        <maxParallelDownloads>2</maxParallelDownloads>
+        <!--The max. lifetime in seconds before completed/failed ingests/downloads are removed from the database by the TransferFinalizer. 
+        The default value is one week.-->
+        <maxIngestLifetime>604800</maxIngestLifetime>
+        <maxDownloadLifetime>604800</maxDownloadLifetime>
+    </staging>
+
+    <scheduler>
+        <!--Connection information for the JobStore used to hold information about scheduled jobs. Typically, the same information also used
+        in the persistence.xml can be applied here in order to keep everything together in one place.-->
+        <jobStoreConnectionDriver>${persistence.connection.driver}</jobStoreConnectionDriver>
+        <jobStoreConnectionString>${persistence.connection.string}</jobStoreConnectionString>
+        <jobStoreUser>${persistence.database.user}</jobStoreUser>
+        <jobStorePassword>${persistence.database.user.password}</jobStorePassword>
+        <!--Wait for running tasks if the scheduler is shutting down, e.g. due to shutting down the application server. default: true-->
+        <waitOnShutdown>true</waitOnShutdown>
+        <!--Delay in seconds before the scheduler starts the execution of tasks. This delay is useful as services needed to perform tasks
+        may not be running, yet, when the scheduler starts. The default value is 5 seconds.-->
+        <startDelaySeconds>5</startDelaySeconds>
+        <!--Add default schedules during the first startup of the scheduler. These schedules are executing transfer finalization 
+        (ingest/download) every 60/30 seconds. The default value is true.-->
+        <addDefaultSchedules>true</addDefaultSchedules>
+    </scheduler>
+
+    <authorization>
+        <login>
+            <orcid>
+                <!--Configuration for ORCiD login. The ORCiD login is only enabled if id and secret are provided.
+                Furthermore, the base Url of the repository instance, e.g. http://localhost:8080/KITDM,  has to be registered as 
+                valid redirection of the ORCiD OAuth2 login. -->
+                <clientid>ORCID_CLIENT_ID</clientid>
+                <clientsecret>ORCID_CLIENT_SECRET</clientsecret>
+            </orcid>
+            <b2access>
+                <!--Configuration for B2Access login. The B2Access login is only enabled if id and secret are provided.
+                Furthermore, the base Url of the repository instance, e.g. http://localhost:8080/KITDM,  has to be registered as 
+                valid redirection of the B2Access OAuth2 login. -->
+                <clientid>NOT_SUPPORTED_YET</clientid>
+                <clientsecret>NOT_SUPPORTED_YET</clientsecret>
+            </b2access>
+        </login>
+        <rest>
+            <!--Configuration of available authenticators. An authenticator allows to secure the access to 
+            KITDM RESTful web services. By default, the access is secured via OAuth using fixed consumer key and secret.
+            The user credentials are stored as ServiceAccessToken entities with the default serviceId 'restServiceAccess'.
+            -->
+            <authenticators>
+                <!--The authenticator element and its implementation class-->
+                <authenticator class="edu.kit.dama.rest.util.auth.impl.OAuthAuthenticator">
+                    <!--The id used as serviceId in associatedService AccessToken entities.-->
+                    <authenticatorId>restServiceAccess</authenticatorId>
+                    <!--Regular expression allowing to enable this authenticator for specific services. The value below 
+                    enables the authenticator for all services, but it is also imaginable to enable an authenticator 
+                    only for one specific service. 
+                    The expression is applied to the base URL of the request and does not include the resource portion.-->
+                    <enableFor>(.*)</enableFor>                       			<!--enableFor>(.*)(basemetadata|sharing|dataorganization|staging|usergroup|dataworkflow|scheduler)(.*)</enableFor-->
+                    <!--Authenticator-specific properties, in this case these are OAuth consumer key and secret. -->
+                    <defaultConsumerKey>key</defaultConsumerKey>
+                    <defaultConsumerSecret>secret</defaultConsumerSecret>
+                </authenticator>
+                <!--HTTP Authenticator for WebDav access. Please keep in mind that the settings here (realm, type) must match the settings in the web.xml of the WebDav servlet.-->
+                <authenticator class="edu.kit.dama.rest.util.auth.impl.HTTPAuthenticator">
+                    <authenticatorId>webdav</authenticatorId>
+                    <!--The HTTP realm needed if type is 'DIGEST'.-->
+                    <realm>kitdm</realm>
+                    <!--The type that must be either BASIC or DIGEST.-->
+                    <type>DIGEST</type>
+                </authenticator>
+                <!--Helper authenticator to support ORCID login.-->
+                <authenticator class="edu.kit.dama.rest.util.auth.impl.BearerTokenAuthenticator">
+                    <authenticatorId>ORCID</authenticatorId>
+                </authenticator>
+                <!--Helper authenticator to support B2ACCESS login.-->
+                <!--B2Access is NOT officially supported, yet. Thus, this setting has no effect.             
+                <authenticator class="edu.kit.dama.rest.util.auth.impl.BearerTokenAuthenticator">
+                    <authenticatorId>B2ACCESS</authenticatorId>
+                </authenticator>
+                -->
+            </authenticators>
+        </rest>
+        <!--The default persistence unit for KIT Data Manager Authorization services.
+        Due to its complexity, the generic nature of KIT Data Manager MetaDataManagement is not feasible for Authorization services.
+        Therefore, they will be configured separately also in future releases.
+        -->
+        <defaultPU>AuthorizationPU</defaultPU>
+    </authorization>
+
+    <audit>
+        <!--Audit message publisher implementation. This publisher is contacted by the audit component as soon as an audit message occurs. 
+        It is the responsibility of the publisher to distribute the messages to connected consumers. By default, KITDM used a RabbitMQ based
+        publisher in order to allow asynchronous, reliable publishing of audit messages. The according receiver is implemented as ServletContextListener
+        publishing all received events to connected message consumers.-->
+        <publisher class="edu.kit.dama.mdm.audit.impl.RabbitMQPublisher">
+            <!--Each publisher might have custom properties, in this case they are the RabbitMQ server hostname and the RabbitMQ exchange used 
+            to publish audit messages.-->
+            <hostname>${rabbitmq.host}</hostname>
+            <exchange>audit</exchange>
+        </publisher>
+   
+        <!--Configuration of connected audit message consumers. Received audit messages are forwarded to the consumer which is responsible for
+        handling the message according to its implementation.-->
+        <consumers>
+            <consumer class="edu.kit.dama.mdm.audit.impl.ConsoleConsumer"/>
+            <consumer class="edu.kit.dama.mdm.audit.impl.DatabaseConsumer"/>
+        </consumers>
+    </audit>
+</config>
+--------------------------------------
+
+Current list of entities (KIT DM 1.4) that has to be registered in the persistence.xml for persistence unit MDM-Core:
+
+[source, xml]
+--------------------------------------
+ <!-- ********************************************************************
+    ***                           MDM-Core                                ***
+    *************************************************************************-->
+<persistence-unit name="MDM-Core" transaction-type="RESOURCE_LOCAL">
+<!--[...]-->
+     <class>edu.kit.dama.authorization.entities.impl.Group</class>
+        <class>edu.kit.dama.authorization.entities.impl.User</class>
+        <class>edu.kit.dama.authorization.entities.impl.Membership</class>
+        <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
+        <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
+        <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
+        <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
+        <class>edu.kit.dama.authorization.entities.impl.Grant</class>
+        <class>edu.kit.dama.mdm.base.OrganizationUnit</class>
+        <class>edu.kit.dama.mdm.base.Study</class>
+        <class>edu.kit.dama.mdm.base.Investigation</class>
+        <class>edu.kit.dama.mdm.base.DigitalObject</class>
+        <class>edu.kit.dama.mdm.base.Participant</class>
+        <class>edu.kit.dama.mdm.base.Relation</class>
+        <class>edu.kit.dama.mdm.base.Task</class>
+        <class>edu.kit.dama.mdm.base.UserData</class>
+        <class>edu.kit.dama.mdm.base.MetaDataSchema</class>
+        <class>edu.kit.dama.mdm.base.DigitalObjectType</class>
+        <class>edu.kit.dama.mdm.base.ObjectTypeMapping</class>
+        <class>edu.kit.dama.mdm.base.DigitalObjectTransition</class>
+        <class>edu.kit.dama.mdm.base.ObjectViewMapping</class>
+        <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+        <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
+        <class>edu.kit.dama.mdm.dataworkflow.ExecutionEnvironmentConfiguration</class>
+        <class>edu.kit.dama.mdm.dataworkflow.properties.ExecutionEnvironmentProperty</class>
+        <class>edu.kit.dama.mdm.dataworkflow.DataWorkflowTask</class>
+        <class>edu.kit.dama.mdm.dataworkflow.DataWorkflowTaskConfiguration</class>
+        <class>edu.kit.dama.mdm.dataworkflow.DataWorkflowTransition</class>
+        <class>edu.kit.dama.mdm.dataworkflow.properties.StringValueProperty</class>
+        <class>edu.kit.dama.mdm.dataworkflow.properties.LinuxSoftwareMapProperty</class>
+        <class>edu.kit.dama.mdm.admin.ServiceAccessToken</class>
+        <class>edu.kit.dama.mdm.admin.UserGroup</class>
+        <class>edu.kit.dama.mdm.admin.UserProperty</class>
+        <class>edu.kit.dama.mdm.admin.UserPropertyCollection</class>
+        <class>edu.kit.dama.mdm.content.MetadataIndexingTask</class>
+        <class>edu.kit.dama.mdm.content.ElasticsearchTransition</class>
+        <class>edu.kit.dama.staging.entities.AdalapiProtocolConfiguration</class>
+        <class>edu.kit.dama.mdm.audit.types.AuditEvent</class>
+<!--[...]-->
+</persistence-unit>
+--------------------------------------
+
+[NOTE]
+Also consider to update to the custom WebDav implementation provided with KIT DM 1.4. Therefor, please follow the instructions beginning with <<WebDavLibraries,deploying tomcat-ext>>, followed by copying and configuring the provided webdav.xml
+Finally, you should compare your configuration with the <<WebDavConfig, configuration described in the installation chapter>>. Afterwards, you should be able to add WebDav credentials in the <<ChapterProfile,profile tab>> of the AdminUI.

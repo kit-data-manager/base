@@ -88,7 +88,10 @@
             <param-name>public.view.names</param-name>
             <param-value>public</param-value>
         </init-param-->
-        <!--Access to all nodes having an attribute with the mentioned key assigned is allowed without any authorization. (Can be used for fine-grained selection) -->
+        <!--Access to all nodes having an attribute with the mentioned key assigned is allowed without any authorization. (Can be used for fine-grained selection) 
+        Attention: Enabling the attribute check adds an overhead of approximately 600 ms per download call. This is due to lazy loading of attributes. If response time matters, please
+        consider using another option, e.g. a dedicated views.
+        -->
         <!--init-param>
             <param-name>public.attribute.key</param-name>
             <param-value>public</param-value>
@@ -98,7 +101,7 @@
             <param-name>public.collection.node.access.allowed</param-name>
             <param-value>false</param-value>
         </init-param-->
-        <!--Access file nodes is allowed if node name matches the provided pattern, e.g. (.*)\.jpg$ for all nodes ending with .jpg
+        <!--Access to file nodes is allowed if node name matches the provided pattern, e.g. (.*)\.jpg$ for all nodes ending with .jpg
         Note that special characters are only escaped with one slash, not with two as if the pattern is provided as string!-->
         <!--init-param>
             <param-name>public.file.node.filter</param-name>
@@ -146,6 +149,24 @@
         <servlet-name>DataWorkflowServiceAdapter</servlet-name>
         <url-pattern>/rest/dataworkflow/*</url-pattern>
     </servlet-mapping> 
+    <!--Audit REST interface-->
+    <servlet>
+        <servlet-name>AuditServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.audit.services.impl</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AuditServiceAdapter</servlet-name>
+        <url-pattern>/rest/audit/*</url-pattern>
+    </servlet-mapping> 
     <!--Job Scheduler REST interface-->
     <servlet>
         <servlet-name>SchedulerServiceAdapter</servlet-name>
@@ -160,9 +181,27 @@
         <servlet-name>SchedulerServiceAdapter</servlet-name>
         <url-pattern>/rest/scheduler/*</url-pattern>
     </servlet-mapping>
+    <!--OAI-PMH interface-->
+    <servlet>
+        <servlet-name>OAIPMHServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.mdm.content.oaipmh.service</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>OAIPMHServiceAdapter</servlet-name>
+        <url-pattern>/rest/*</url-pattern>
+    </servlet-mapping>
 	
     <!-- Job-Scheduler initialization -->
     <listener>
         <listener-class>edu.kit.dama.scheduler.servlet.JobSchedulerInitializerListener</listener-class>
+    </listener>
+    <!-- RabbitMQ initialization -->
+    <listener>
+        <listener-class>edu.kit.dama.mdm.audit.servlet.RabbitMQInitializerListener</listener-class>
     </listener>
 </web-app>

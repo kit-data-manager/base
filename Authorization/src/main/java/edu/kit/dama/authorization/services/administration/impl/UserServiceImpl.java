@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,71 +40,88 @@ import org.slf4j.LoggerFactory;
  */
 public class UserServiceImpl implements IUserService {
 
-  private final static Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
 
-  @Override
-  @SecuredMethod(roleRequired = Role.MANAGER)
-  public final void register(UserId userId, Role maximumRole, @Context IAuthorizationContext ctx) throws UnauthorizedAccessAttemptException, EntityAlreadyExistsException {
-    LOGGER.debug("Registering user {} with maximum role {}", new Object[]{userId, maximumRole});
-    EntityManager em = PU.entityManager();
-    try {
-      LOGGER.debug(" - Checking for existing user");
-      FindUtil.findUser(em, userId);
-      em.close();
-      throw new EntityAlreadyExistsException("There is already a user with "
-              + "userId=" + userId.getStringRepresentation() + " registered!");
-    } catch (EntityNotFoundException ex) {
-      LOGGER.debug(" - Creating new user");
-      User user = new User(userId.getStringRepresentation(), maximumRole);
-      EntityTransaction transaction = em.getTransaction();
-      transaction.begin();
-      try {
-        LOGGER.debug(" - Persisting user");
-        em.persist(user);
-        em.flush();
-        transaction.commit();
-        em.close();
-        LOGGER.debug("Successfully registered user with user id {} and maximum role {}", new Object[]{userId, maximumRole});
-      } finally {
-        PU.handleUnexpectedPersistenceExceptionInTransaction(new PersistenceException("Failed to register user with id " + userId + " and maximum role " + maximumRole), em);
-      }
+    @Override
+    @SecuredMethod(roleRequired = Role.MANAGER)
+    public final void register(UserId userId, Role maximumRole, @Context IAuthorizationContext ctx) throws UnauthorizedAccessAttemptException, EntityAlreadyExistsException {
+        LOGGER.debug("Registering user {} with maximum role {}", new Object[]{userId, maximumRole});
+        EntityManager em = PU.entityManager();
+        try {
+            LOGGER.debug(" - Checking for existing user");
+            FindUtil.findUser(em, userId);
+            throw new EntityAlreadyExistsException("There is already a user with "
+                    + "userId=" + userId.getStringRepresentation() + " registered!");
+        } catch (EntityNotFoundException ex) {
+            try {
+                LOGGER.debug(" - Creating new user");
+                User user = new User(userId.getStringRepresentation(), maximumRole);
+                EntityTransaction transaction = em.getTransaction();
+                transaction.begin();
+                LOGGER.debug(" - Persisting user");
+                em.persist(user);
+                em.flush();
+                transaction.commit();
+                LOGGER.debug("Successfully registered user with user id {} and maximum role {}", new Object[]{userId, maximumRole});
+            } catch (PersistenceException except) {
+                PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+                throw new PersistenceException("Failed to register user with id " + userId, except);
+            }
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
+        }
     }
-  }
 
-  @Override
-  @SecuredMethod(roleRequired = Role.MEMBER)
-  public final IRoleRestriction getRoleRestriction(UserId userId, @Context IAuthorizationContext ctx)
-          throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-    LOGGER.debug("Getting role restriction for user with id {}", userId);
-    EntityManager em = PU.entityManager();
-    LOGGER.debug(" - Finding user");
-    User user = FindUtil.findUser(em, userId);
-    em.close();
-    LOGGER.debug("Returning maximum role {}", user.getMaximumRole());
-    return user.getMaximumRole();
-  }
-
-  @Override
-  @SecuredMethod(roleRequired = Role.MANAGER)
-  public final void setRoleRestriction(UserId userId, Role maximumRole, @Context IAuthorizationContext ctx)
-          throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-    LOGGER.debug("Setting role restriction for user with id {}", userId);
-    EntityManager em = PU.entityManager();
-    EntityTransaction transaction = em.getTransaction();
-    transaction.begin();
-    try {
-      LOGGER.debug(" - Finding user");
-      User user = FindUtil.findUser(em, userId);
-      LOGGER.debug(" - Changing maximum role from {} to {}", new Object[]{user.getMaximumRole(), maximumRole});
-      user.setMaximumRole(maximumRole);
-      LOGGER.debug(" - Merging user to database");
-      em.merge(user);
-      transaction.commit();
-      em.close();
-      LOGGER.debug("Role restriction for user {} successfully set to role {}", new Object[]{userId, maximumRole});
-    } catch (PersistenceException except) {
-      PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
-      throw new PersistenceException("Failed to set role restriction for user with id " + userId + " to " + maximumRole, except);
+    @Override
+    @SecuredMethod(roleRequired = Role.MEMBER)
+    public final IRoleRestriction getRoleRestriction(UserId userId, @Context IAuthorizationContext ctx)
+            throws UnauthorizedAccessAttemptException, EntityNotFoundException {
+        LOGGER.debug("Getting role restriction for user with id {}", userId);
+        EntityManager em = PU.entityManager();
+        try {
+            LOGGER.debug(" - Finding user");
+            User user = FindUtil.findUser(em, userId);
+            LOGGER.debug("Returning maximum role {}", user.getMaximumRole());
+            return user.getMaximumRole();
+        } catch (PersistenceException except) {
+            PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+            throw new PersistenceException("Failed to get role restriction of user " + userId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
+        }
     }
-  }
+
+    @Override
+    @SecuredMethod(roleRequired = Role.MANAGER)
+    public final void setRoleRestriction(UserId userId, Role maximumRole, @Context IAuthorizationContext ctx)
+            throws UnauthorizedAccessAttemptException, EntityNotFoundException {
+        LOGGER.debug("Setting role restriction for user with id {}", userId);
+        EntityManager em = PU.entityManager();
+        try {
+            EntityTransaction transaction = em.getTransaction();
+            transaction.begin();
+            LOGGER.debug(" - Finding user");
+            User user = FindUtil.findUser(em, userId);
+            LOGGER.debug(" - Changing maximum role from {} to {}", new Object[]{user.getMaximumRole(), maximumRole});
+            user.setMaximumRole(maximumRole);
+            LOGGER.debug(" - Merging user to database");
+            em.merge(user);
+            transaction.commit();
+            LOGGER.debug("Role restriction for user {} successfully set to role {}", new Object[]{userId, maximumRole});
+        } catch (PersistenceException except) {
+            PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+            throw new PersistenceException("Failed to set role restriction for user with id " + userId + " to " + maximumRole, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
+        }
+    }
 }

@@ -60,7 +60,8 @@ import org.slf4j.LoggerFactory;
     @XmlNamedObjectGraph(
             name = "simple",
             attributeNodes = {
-                @XmlNamedAttributeNode("userId")
+                @XmlNamedAttributeNode("userId"),
+                @XmlNamedAttributeNode("distinguishedName")
             }),
     @XmlNamedObjectGraph(
             name = "default",
@@ -102,7 +103,7 @@ public class UserData implements Serializable, IDefaultUserData, FetchGroupTrack
      * UID should be the date of the last change in the format yyyyMMdd.
      */
     private static final long serialVersionUID = 20111201L;
-    public static final UserData NO_USER = factoryNoUser();
+    public static final UserData WORLD_USER = factoryWorldUser();
     // <editor-fold defaultstate="collapsed" desc="declaration of variables">
     /**
      * Identification number of the user. primary key of the data set.
@@ -311,7 +312,7 @@ public class UserData implements Serializable, IDefaultUserData, FetchGroupTrack
      * @return The current role.
      */
     public final Role getCurrentRole() {
-        if (NO_USER.equals(this) || "NoUser".equals(getDistinguishedName())) {
+        if (WORLD_USER.equals(this) || "NoUser".equals(getDistinguishedName())) {
             return Role.NO_ACCESS;
         }
         if (currentRole == null) {
@@ -354,13 +355,12 @@ public class UserData implements Serializable, IDefaultUserData, FetchGroupTrack
      *
      * @return The dummy user.
      */
-    private static UserData factoryNoUser() {
+    private static UserData factoryWorldUser() {
         UserData noUser = new UserData();
         noUser.setUserId(0l);
-        noUser.setDistinguishedName(new UserId("NoUser").getStringRepresentation());
-        noUser.setFirstName("No");
-        noUser.setLastName("User");
-        noUser.setEmail("NoUser");
+        noUser.setDistinguishedName(new UserId(Constants.WORLD_USER_ID).getStringRepresentation());
+        noUser.setFirstName("Public");
+        noUser.setLastName("Access");
         return noUser;
     }
 

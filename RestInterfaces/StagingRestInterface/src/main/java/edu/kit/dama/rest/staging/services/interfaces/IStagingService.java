@@ -381,10 +381,49 @@ public interface IStagingService extends ICommonRestInterface {
             @javax.ws.rs.core.Context HttpContext hc);
 
     /**
-     * Create a new download entity via POST request. This basic interface
-     * definition only allows to set the digital object id of the download and
-     * the unique identifier of the AccessPoint to use. Currently, there is no
-     * way to select parts of a digital object to download.
+     * Create a new download entity via POST request. This interface method
+     * allows to download a digital object by its id using an AccessPoint
+     * defined by its unique identifier. The download can either contain an
+     * entire data organization view of the object or a part of it. Which data
+     * is downloaded is defined by the argument 'dataOrganizationTree' which
+     * must be provided as JSON object in the form:
+     *
+     * <pre>
+     * {
+     *"objectId":"1234-5678-abcd",
+     *"viewName":"custom",
+     *"children":[
+     *    {
+     *       "nodeId":100,
+     *       "type":"CollectionNode"
+     *   },{
+     *      "name":"CustomCollection",
+     *      "type":"CollectionNode",
+     *      "children":[
+     *          {
+     *              "nodeId":300,
+     *              "type":"FileNode",
+     *          },
+     *          {
+     *             "nodeId":400,
+     *             "type":"FileNode"
+     *          }
+     *      ]
+     *    }
+     * ]
+     * }
+     * </pre>
+     *
+     * Mandatory fields in this structure are objectId and viewName. If only
+     * these two fields are provided, the data organization view 'viewName' of
+     * the object with the id 'objectId' is downloaded. Otherwise, the structure
+     * defined by the tree is downloaded. As one can see in the example above,
+     * the structure defines a hierarchy of collection- and filenodes. If a node
+     * refers to an existing node, the type and the nodeId has to be provided.
+     * For FileNodes this is the only way to provide a node. For CollectionNodes
+     * it is also possible to omit the nodeId and to provide the 'name'
+     * attribute. This bascially allows to create a virtual hierarchy that
+     * results on a real file hierarchy at download time.
      *
      * @summary Create a new download entity.
      *
@@ -394,11 +433,15 @@ public interface IStagingService extends ICommonRestInterface {
      * (unique identifier of a digital object, e.g.
      * efb7aabd-5f35-41fc-8750-90de31b9231e) or the primary key (the database
      * primary key/the base id of the object, e.g. 4711). In future versions
-     * this parameter may change to support only the numeric identifier.
-     * @param accessPointId The id or unique identifier (e.g. 1 or
+     * this parameter may change to support only the numeric identifier. If the
+     * parameter <i>dataOrganizationTree</i> is provided, this argument may be
+     * omitted. If not, this objectId and the objectId in the
+     * <i>dataOrganizationTree</i> must point to the same object.
+     * @param accessPoint The id or unique identifier (e.g. 1 or
      * 86ad265e-ddf3-45fc-9c2e-c9c5bdb978b2) of the AccessPoint to use to
      * perform this download. In future versions this parameter may change to
      * support only the numeric identifier.
+     * @param dataOrganizationTree The dataOrganizationTree JSON object.
      * @param stagingProcessors A JSON array in the form [1,2,3] containing ids
      * of staging processors associtated with this download. The content of this
      * element won't affect the assignment of staging processors marked as
@@ -417,7 +460,8 @@ public interface IStagingService extends ICommonRestInterface {
     IEntityWrapper<? extends IDefaultDownloadInformation> createDownload(
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("objectId") String objectId,
-            @FormParam("accessPoint") String accessPointId,
+            @FormParam("accessPoint") String accessPoint,
+            @FormParam("dataOrganizationTree") String dataOrganizationTree,
             @FormParam("stagingProcessors") String stagingProcessors,
             @javax.ws.rs.core.Context HttpContext hc);
 

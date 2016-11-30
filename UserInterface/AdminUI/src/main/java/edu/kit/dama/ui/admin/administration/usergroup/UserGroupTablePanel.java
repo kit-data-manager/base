@@ -17,19 +17,22 @@ package edu.kit.dama.ui.admin.administration.usergroup;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.Property;
+import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.Table;
+import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.mdm.admin.UserGroup;
-import edu.kit.dama.ui.admin.container.UserGroupContainer;
-import edu.kit.dama.ui.admin.exception.EnumParameterNotFoundException;
+import edu.kit.dama.mdm.core.IMetaDataManager;
+import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.ui.admin.exception.MsgBuilder;
-import edu.kit.dama.ui.admin.exception.NoteBuilder;
 import edu.kit.dama.ui.admin.filter.FilterProperties;
 import edu.kit.dama.ui.admin.filter.UserGroupFilter;
 import edu.kit.dama.ui.admin.utils.IconContainer;
+import edu.kit.dama.ui.admin.utils.UIComponentTools;
+import edu.kit.dama.ui.admin.utils.UIHelper;
 import java.util.HashMap;
 import java.util.List;
 import org.slf4j.Logger;
@@ -39,16 +42,19 @@ import org.slf4j.LoggerFactory;
  *
  * @author dx6468
  */
-public class UserGroupTablePanel extends CustomComponent {
+public final class UserGroupTablePanel extends CustomComponent {
 
-    private static final Logger LOGGER
-            = LoggerFactory.getLogger(UserGroupTablePanel.class);
-    public final static String DEBUG_ID_PREFIX
-            = UserGroupTablePanel.class.getName() + "_";
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserGroupTablePanel.class);
+    public final static String DEBUG_ID_PREFIX = UserGroupTablePanel.class.getName() + "_";
+
+    public final static String ID_COLUMN_ID = "ID";
+    public final static String GROUPID_COLUMN_ID = "GROUPID";
+    public final static String NAME_COLUMN_ID = "NAME";
+    public final static String DESCRIPTION_COLUMN_ID = "DESCRIPTION";
 
     private final UserGroupAdministrationTab userGroupAdministrationTab;
     private Table userGroupTable;
-    private final HashMap<UserGroupContainer.Property, FilterProperties<String, UserGroupFilter.SearchSpace>> filters;
+    private final HashMap<String, FilterProperties<String, UserGroupFilter.SearchSpace>> filters;
 
     public enum UserGroupEffectivity {
 
@@ -70,207 +76,180 @@ public class UserGroupTablePanel extends CustomComponent {
         setCompositionRoot(getUserGroupTable());
     }
 
-    /**
-     *
-     * @return
-     */
-    public final Table getUserGroupTable() {
+    protected final Table getUserGroupTable() {
         if (userGroupTable == null) {
-            buildUserGroupTable();
-        }
-        return userGroupTable;
-    }
+            String id = "userGroupTable";
+            LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
-    /**
-     *
-     */
-    private void buildUserGroupTable() {
-        String id = "userGroupTable";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
+            userGroupTable = new Table();
+            userGroupTable.setId(DEBUG_ID_PREFIX + id);
+            userGroupTable.setSizeFull();
+            userGroupTable.setSelectable(true);
+            userGroupTable.setNullSelectionAllowed(true);
 
-        userGroupTable = new Table();
-        userGroupTable.setId(DEBUG_ID_PREFIX + id);
-        userGroupTable.setSizeFull();
-        userGroupTable.setImmediate(true);
-        userGroupTable.setSelectable(true);
-        userGroupTable.setNullSelectionAllowed(true);
-        userGroupTable.setContainerDataSource(new UserGroupContainer());
-        userGroupTable.setVisibleColumns(UserGroupContainer.COLUMN_ORDER);
-        userGroupTable.setColumnHeaders(UserGroupContainer.COLUMN_HEADERS);
+            IndexedContainer c = new IndexedContainer();
 
-        userGroupTable.addItemSetChangeListener(new Container.ItemSetChangeListener() {
+            c.addContainerProperty(ID_COLUMN_ID, Long.class, null);
+            c.addContainerProperty(GROUPID_COLUMN_ID, String.class, null);
+            c.addContainerProperty(NAME_COLUMN_ID, String.class, null);
+            c.addContainerProperty(DESCRIPTION_COLUMN_ID, String.class, null);
 
-            @Override
-            public void containerItemSetChange(Container.ItemSetChangeEvent event) {
+            userGroupTable.setContainerDataSource(c);
+            userGroupTable.setColumnHeader(ID_COLUMN_ID, "ID");
+            userGroupTable.setColumnHeader(GROUPID_COLUMN_ID, "GROUP ID");
+            userGroupTable.setColumnHeader(NAME_COLUMN_ID, "GROUP NAME");
+            userGroupTable.setColumnHeader(DESCRIPTION_COLUMN_ID, "GROUP DESCRIPTION");
+
+            userGroupTable.addItemSetChangeListener((Container.ItemSetChangeEvent event) -> {
                 userGroupTable.refreshRowCache();
-            }
-        });
+            });
 
-        userGroupTable.addValueChangeListener(new Table.ValueChangeListener() {
+            userGroupTable.addValueChangeListener((Property.ValueChangeEvent event) -> {
+                //update form if selected user changes
+                UserGroup selectedGroup = getSelectedUserGroup();
+                if (selectedGroup == null) {
+                    //no group selected, use session context
+                    userGroupAdministrationTab.getUserGroupForm().update(UIHelper.getSessionUserRole());
+                } else {
+                    //group selected, use group-related context
+                    userGroupAdministrationTab.getUserGroupForm().update(UIHelper.getSessionContext(new GroupId(selectedGroup.getGroupId())).getRoleRestriction());
+                }
+            });
 
-            @Override
-            public void valueChange(Property.ValueChangeEvent event) {
-                Role loggedInUserRole = userGroupAdministrationTab.getParentApp()
-                        .getLoggedInUser().getCurrentRole();
-                userGroupAdministrationTab.getUserGroupForm().update(loggedInUserRole);
-            }
-        });
-
-        userGroupTable.addHeaderClickListener(new Table.HeaderClickListener() {
-
-            @Override
-            public void headerClick(Table.HeaderClickEvent event) {
+            userGroupTable.addHeaderClickListener((Table.HeaderClickEvent event) -> {
                 if (!event.isDoubleClick()) {
                     return;
                 }
                 if (userGroupTable.getColumnIcon(event.getPropertyId()) == null) {
                     return;
                 }
-                try {
-                    UserGroupContainer.Property property = UserGroupContainer.Property.getEnumByKey(
-                            (String) event.getPropertyId());
-                    removeTableFilter(property);
-                } catch (EnumParameterNotFoundException ex) {
-                    userGroupAdministrationTab.getParentApp().showError("Unknown error occurred "
-                            + "while removing the table filter. " + NoteBuilder.CONTACT);
-                    LOGGER.error("Failed to remove the table filter. Cause: " + ex.getMessage(), ex);
-                }
-            }
-        });
-        reloadUserGroupTable();
+                removeTableFilter((String) event.getPropertyId());
+            });
+            reloadUserGroupTable();
+        }
+        return userGroupTable;
     }
 
-    /**
-     *
-     */
-    public final void reloadUserGroupTable() {
-        getUserGroupTable().removeAllItems();
+    protected final void reloadUserGroupTable() {
+        getUserGroupTable().getContainerDataSource().removeAllItems();
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+        mdm.setAuthorizationContext(UIHelper.getSessionContext());
         try {
-            List<UserGroup> userGroups = userGroupAdministrationTab.getParentApp()
-                    .getMetaDataManager().find(UserGroup.class);
-            for (UserGroup userGroup : userGroups) {
-                getUserGroupTable().addItem(userGroup);
-            }
+            List<UserGroup> userGroups = mdm.find(UserGroup.class);
+            userGroups.forEach((userGroup) -> {
+                getUserGroupTable().getContainerDataSource().addItem(userGroup.getId());
+                getUserGroupTable().getContainerDataSource().getContainerProperty(userGroup.getId(), ID_COLUMN_ID).setValue(userGroup.getId());
+                getUserGroupTable().getContainerDataSource().getContainerProperty(userGroup.getId(), GROUPID_COLUMN_ID).setValue(userGroup.getGroupId());
+                getUserGroupTable().getContainerDataSource().getContainerProperty(userGroup.getId(), NAME_COLUMN_ID).setValue(userGroup.getGroupName());
+                getUserGroupTable().getContainerDataSource().getContainerProperty(userGroup.getId(), DESCRIPTION_COLUMN_ID).setValue(userGroup.getDescription());
+            });
         } catch (UnauthorizedAccessAttemptException ex) {
+            UIComponentTools.showWarning("You are not authorized to list all groups.");
             String object = "information about user groups";
-            userGroupAdministrationTab.getParentApp().showWarning("Group-table not reloadable! Cause: "
-                    + NoteBuilder.unauthorizedGetRequest(object));
             LOGGER.warn("Failed to reload '" + getUserGroupTable().getId() + "'. Cause: "
                     + MsgBuilder.unauthorizedGetRequest(object), ex);
+        } finally {
+            mdm.close();
         }
     }
 
-    /**
-     *
-     * @return
-     */
-    public UserGroupEffectivity validateSelectedUserGroup() {
+    protected final UserGroupEffectivity validateSelectedUserGroup() {
         if (getSelectedUserGroup() == null) {
             return UserGroupEffectivity.NO;
         }
-        Role loggedInUserRole = userGroupAdministrationTab.getParentApp().getLoggedInUser()
-                .getCurrentRole();
-        String loggedInUserGroupId = userGroupAdministrationTab.getParentApp()
-                .getLoggedInUser().getCurrentGroup().getStringRepresentation();
-        if (loggedInUserRole.equals(Role.ADMINISTRATOR) || (loggedInUserRole.equals(Role.MANAGER)
-                && loggedInUserGroupId.equals(getSelectedUserGroup().getGroupId()))) {
+        //if user is administrator, continue
+        if (UIHelper.getSessionUserRole().equals(Role.ADMINISTRATOR)) {
             return UserGroupEffectivity.VALID;
         } else {
-            return UserGroupEffectivity.INVALID;
+            //otherwise, if user is at least manager in the selected group, continue
+            String groupId = getSelectedUserGroup().getGroupId();
+            if (UIHelper.getSessionContext(new GroupId(groupId)).getRoleRestriction().atLeast(Role.MANAGER)) {
+                return UserGroupEffectivity.VALID;
+            } else {
+                //user is not at least manager
+                return UserGroupEffectivity.INVALID;
+            }
         }
     }
 
-    /**
-     *
-     * @param originalUserGroup
-     * @param changedUserGroup
-     */
-    public void updateTableEntry(UserGroup originalUserGroup, UserGroup changedUserGroup) {
-        getUserGroupTable().getContainerDataSource().removeItem(originalUserGroup);
-        getUserGroupTable().select(null);
-        addTableEntry(changedUserGroup);
+    protected final void updateTableEntry(UserGroup userGroup) {
+        getUserGroupTable().getContainerDataSource().getContainerProperty(userGroup.getId(), NAME_COLUMN_ID).setValue(userGroup.getGroupName());
+        getUserGroupTable().getContainerDataSource().getContainerProperty(userGroup.getId(), DESCRIPTION_COLUMN_ID).setValue(userGroup.getDescription());
     }
 
-    /**
-     *
-     * @param userGroup
-     */
-    public void addTableEntry(UserGroup userGroup) {
-        getUserGroupTable().getContainerDataSource().addItem(userGroup);
-        getUserGroupTable().sort(new Object[]{UserGroupContainer.Property.ID.propertyId}, 
-                new boolean[]{false});
-        getUserGroupTable().select(userGroup);
+    protected final void addTableEntry(UserGroup userGroup) {
+        getUserGroupTable().getContainerDataSource().addItem(userGroup.getId());
+        getUserGroupTable().getContainerDataSource().getContainerProperty(userGroup.getId(), ID_COLUMN_ID).setValue(userGroup.getId());
+        getUserGroupTable().getContainerDataSource().getContainerProperty(userGroup.getId(), GROUPID_COLUMN_ID).setValue(userGroup.getGroupId());
+        getUserGroupTable().getContainerDataSource().getContainerProperty(userGroup.getId(), NAME_COLUMN_ID).setValue(userGroup.getGroupName());
+        getUserGroupTable().getContainerDataSource().getContainerProperty(userGroup.getId(), DESCRIPTION_COLUMN_ID).setValue(userGroup.getDescription());
+        getUserGroupTable().select(userGroup.getId());
     }
 
-    /**
-     *
-     * @return
-     */
-    public UserGroup getSelectedUserGroup() {
-        return (UserGroup) getUserGroupTable().getValue();
+    protected UserGroup getSelectedUserGroup() {
+        Long id = (Long) getUserGroupTable().getValue();
+        if (id != null) {
+            IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+            mdm.setAuthorizationContext(UIHelper.getSessionContext());
+            try {
+                return mdm.find(UserGroup.class, id);
+            } catch (UnauthorizedAccessAttemptException ex) {
+                //not authorized
+            } finally {
+                mdm.close();
+            }
+        }
+        return null;
     }
 
-    /**
-     *
-     * @param property
-     */
-    public void removeTableFilter(UserGroupContainer.Property property) {
+    protected void removeAllTableFilters() {
         // Remove all existing container filters
-        UserGroupContainer container = (UserGroupContainer) getUserGroupTable().getContainerDataSource();
+        IndexedContainer container = (IndexedContainer) getUserGroupTable().getContainerDataSource();
+        container.removeAllContainerFilters();
+        // Remove filter icon from corresponding table columns
+        filters.keySet().forEach((property) -> {
+            getUserGroupTable().setColumnIcon(property, null);
+        });
+        // Sort all table entries by first column
+        getUserGroupTable().sort(new Object[]{getUserGroupTable().getVisibleColumns()[0]}, new boolean[]{true});
+        // Select first table entry
+        getUserGroupTable().select(getUserGroupTable().firstItemId());
+    }
+
+    protected void addTableFilter(String filterExpression, String columnId, UserGroupFilter.SearchSpace searchSpace) {
+        // Add requested filter
+        IndexedContainer container = (IndexedContainer) getUserGroupTable().getContainerDataSource();
+        UserGroupFilter userGroupFilter = new UserGroupFilter(filterExpression, columnId, searchSpace);
+        container.addContainerFilter(userGroupFilter);
+
+        filters.put(columnId, new FilterProperties<>(filterExpression, searchSpace));
+        // Set filter icon at corresponding table columns if missing
+        ThemeResource filterAddIcon = new ThemeResource(IconContainer.FILTER_ADD);
+        if (!filterAddIcon.equals(getUserGroupTable().getColumnIcon(columnId))) {
+            // Set missing filterAddIcon
+            getUserGroupTable().setColumnIcon(columnId, filterAddIcon);
+        }
+    }
+
+    private void removeTableFilter(String columnId) {
+        // Remove all existing container filters
+        IndexedContainer container = (IndexedContainer) getUserGroupTable().getContainerDataSource();
         container.removeAllContainerFilters();
         // Add all filters except of the filter supposed to be deleted
-        filters.remove(property);
-        for (UserGroupContainer.Property iProperty : filters.keySet()) {
+        filters.remove(columnId);
+        filters.keySet().forEach((iProperty) -> {
             String filterExpression = filters.get(iProperty).filterExpression;
             UserGroupFilter.SearchSpace searchSpace = filters.get(iProperty).searchSpace;
             addTableFilter(filterExpression, iProperty, searchSpace);
-        }
+        });
         // Remove filter icon from corresponding table column
-        getUserGroupTable().setColumnIcon(property.propertyId, null);
+        getUserGroupTable().setColumnIcon(columnId, null);
         // Disable button-icon for filter removing in case all filters have been removed
         if (filters.isEmpty()) {
-            userGroupAdministrationTab.getUserGroupSearch().getRemoveAllFiltersButton().setEnabled(false);
+            userGroupAdministrationTab.getRemoveAllFiltersButton().setEnabled(false);
         }
         // Select first table entry
         getUserGroupTable().select(getUserGroupTable().firstItemId());
     }
 
-    /**
-     *
-     */
-    public void removeAllTableFilters() {
-        // Remove all existing container filters
-        UserGroupContainer container = (UserGroupContainer) getUserGroupTable().getContainerDataSource();
-        container.removeAllContainerFilters();
-        // Remove filter icon from corresponding table columns
-        for (UserGroupContainer.Property property : filters.keySet()) {
-            getUserGroupTable().setColumnIcon(property.propertyId, null);
-        }
-        // Sort all table entries by first column
-        getUserGroupTable().sort(new Object[]{getUserGroupTable().getVisibleColumns()[0]},
-                new boolean[]{true});
-        // Select first table entry
-        getUserGroupTable().select(getUserGroupTable().firstItemId());
-    }
-
-    /**
-     *
-     * @param filterExpression
-     * @param property
-     * @param searchSpace
-     */
-    public void addTableFilter(String filterExpression, UserGroupContainer.Property property,
-            UserGroupFilter.SearchSpace searchSpace) {
-        // Add requested filter
-        UserGroupContainer container = (UserGroupContainer) getUserGroupTable().getContainerDataSource();
-        UserGroupFilter userGroupFilter = new UserGroupFilter(filterExpression, property.propertyId, searchSpace);
-        container.addContainerFilter(userGroupFilter);
-        filters.put(property, new FilterProperties<>(filterExpression, searchSpace));
-        // Set filter icon at corresponding table columns if missing
-        ThemeResource filterAddIcon = new ThemeResource(IconContainer.FILTER_ADD);
-        if (!filterAddIcon.equals(getUserGroupTable().getColumnIcon(property.propertyId))) {
-            // Set missing filterAddIcon
-            getUserGroupTable().setColumnIcon(property.propertyId, filterAddIcon);
-        }
-    }
 }

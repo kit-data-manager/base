@@ -15,7 +15,7 @@
  */
 package edu.kit.dama.sample;
 
-import edu.kit.dama.rest.staging.client.impl.StagingServiceRESTClient;
+import edu.kit.dama.rest.staging.client.impl.StagingRestClient;
 import edu.kit.dama.rest.staging.types.IngestInformationWrapper;
 import edu.kit.dama.staging.entities.ingest.INGEST_STATUS;
 import edu.kit.dama.staging.exceptions.StagingIntitializationException;
@@ -40,7 +40,7 @@ public class BasicDataIngest extends BaseMetadataCreation {
         //perform the base metadata creation from the super class in order to have a digital object we can ingest data for
         createBaseMetadata();
 
-        StagingServiceRESTClient stagingClient = new StagingServiceRESTClient(restBaseUrl + "/rest/staging/", context);
+        StagingRestClient stagingClient = new StagingRestClient(restBaseUrl + "/rest/staging/", context);
 
         //At first we have to obtain the StagingAccessPoint in order to be able to schedule an ingest.
         //For convenience we expect to have exactly one AccessPoint as set up during the default installation.

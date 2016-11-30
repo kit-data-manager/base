@@ -17,26 +17,28 @@ package edu.kit.dama.ui.admin.administration.user;
 
 import com.vaadin.data.Container;
 import com.vaadin.data.Property;
+import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.CustomComponent;
+import com.vaadin.ui.Label;
 import com.vaadin.ui.Table;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.authorization.entities.UserId;
-import edu.kit.dama.authorization.exceptions.AuthorizationException;
 import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.authorization.services.administration.UserServiceLocal;
 import edu.kit.dama.mdm.base.UserData;
-import edu.kit.dama.ui.admin.container.UserDataContainer;
-import edu.kit.dama.ui.admin.exception.EnumParameterNotFoundException;
+import edu.kit.dama.mdm.core.IMetaDataManager;
+import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.ui.admin.exception.MsgBuilder;
 import edu.kit.dama.ui.admin.exception.NoteBuilder;
 import edu.kit.dama.ui.admin.filter.FilterProperties;
 import edu.kit.dama.ui.admin.filter.UserDataFilter;
 import edu.kit.dama.ui.admin.utils.IconContainer;
+import edu.kit.dama.ui.admin.utils.UIComponentTools;
+import edu.kit.dama.ui.admin.utils.UIHelper;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -51,12 +53,19 @@ public class UserDataTablePanel extends CustomComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserDataTablePanel.class);
     public static final String DEBUG_ID_PREFIX = UserDataTablePanel.class.getName() + "_";
+    public final static String ID_COLUMN_ID = "ID";
+    public final static String USERID_COLUMN_ID = "USERID";
+    public final static String FIRST_NAME_COLUMN_ID = "FIRSTNAME";
+    public final static String LAST_NAME_COLUMN_ID = "LASTNAME";
+    public final static String EMAIL_COLUMN_ID = "EMAIL";
+    public final static String VALID_FROM_COLUMN_ID = "VALIDFROM";
+    public final static String VALID_UNTIL_COLUMN_ID = "VALIDUNTIL";
 
     private final UserDataAdministrationTab userDataAdministrationTab;
     private Table userDataTable;
-    private final HashMap<UserDataContainer.Property, FilterProperties<String, UserDataFilter.SearchSpace>> filters;
+    private final HashMap<String, FilterProperties<String, UserDataFilter.SearchSpace>> filters;
 
-    public enum UserDataEffictivity {
+    public enum UserDataEffectivity {
 
         /**
          * No user selected. => No user data available.
@@ -94,137 +103,124 @@ public class UserDataTablePanel extends CustomComponent {
 
         setId(DEBUG_ID_PREFIX.substring(0, DEBUG_ID_PREFIX.length() - 1));
         setSizeFull();
-        setImmediate(true);
         setCompositionRoot(getUserDataTable());
     }
 
-    /**
-     *
-     * @return
-     */
-    public final Table getUserDataTable() {
+    protected final Table getUserDataTable() {
         if (userDataTable == null) {
-            buildTable();
-        }
-        return userDataTable;
-    }
+            String id = "userDataTable";
+            LOGGER.debug("Building " + DEBUG_ID_PREFIX + " ...");
 
-    /**
-     *
-     */
-    private void buildTable() {
-        String id = "userDataTable";
-        LOGGER.debug("Building " + DEBUG_ID_PREFIX + " ...");
+            userDataTable = new Table();
 
-        userDataTable = new Table() {
+            userDataTable.setId(DEBUG_ID_PREFIX + id);
+            userDataTable.setSizeFull();
+            userDataTable.setSelectable(true);
+            userDataTable.setNullSelectionAllowed(true);
 
-            @Override
-            protected String formatPropertyValue(Object rowId, Object colId,
-                    Property property) {
-                Object v = property.getValue();
-                if (v instanceof Date) {
-                    Date dateValue = (Date) v;
-                    return new SimpleDateFormat("dd.MM.yyyy").format(dateValue);
+            IndexedContainer c = new IndexedContainer();
+
+            c.addContainerProperty(ID_COLUMN_ID, Long.class, null);
+            c.addContainerProperty(USERID_COLUMN_ID, String.class, null);
+            c.addContainerProperty(FIRST_NAME_COLUMN_ID, String.class, null);
+            c.addContainerProperty(LAST_NAME_COLUMN_ID, String.class, null);
+            c.addContainerProperty(EMAIL_COLUMN_ID, String.class, null);
+            c.addContainerProperty(VALID_FROM_COLUMN_ID, Date.class, null);
+            c.addContainerProperty(VALID_UNTIL_COLUMN_ID, Date.class, null);
+
+            userDataTable.setContainerDataSource(c);
+            userDataTable.setColumnHeader(ID_COLUMN_ID, "ID");
+            userDataTable.setColumnHeader(USERID_COLUMN_ID, "DISTINGUISHED NAME");
+            userDataTable.setColumnHeader(FIRST_NAME_COLUMN_ID, "FIRST NAME");
+            userDataTable.setColumnHeader(LAST_NAME_COLUMN_ID, "LAST NAME");
+            userDataTable.setColumnHeader(EMAIL_COLUMN_ID, "EMAIL");
+            userDataTable.setColumnHeader(VALID_FROM_COLUMN_ID, "VALID FROM");
+            userDataTable.setColumnHeader(VALID_UNTIL_COLUMN_ID, "VALID UNTIL");
+
+            Table.ColumnGenerator dateGenerator = (Table source, Object itemId, Object columnId) -> {
+                Date date = (Date) source.getContainerDataSource().getContainerProperty(itemId, columnId).getValue();
+                Label cellContent = new Label();
+                if (date != null) {
+                    cellContent.setValue(new SimpleDateFormat("dd.MM.yyyy").format(date));
+                } else {
+                    cellContent.setValue("-");
                 }
-                return super.formatPropertyValue(rowId, colId, property);
-            }
+                return cellContent;
+            };
 
-        };
+            userDataTable.addGeneratedColumn(VALID_FROM_COLUMN_ID, dateGenerator);
+            userDataTable.addGeneratedColumn(VALID_UNTIL_COLUMN_ID, dateGenerator);
 
-        userDataTable.setId(DEBUG_ID_PREFIX + id);
-        userDataTable.setImmediate(true);
-        userDataTable.setSizeFull();
-        userDataTable.setSelectable(true);
-        userDataTable.setNullSelectionAllowed(true);
-        userDataTable.setContainerDataSource(new UserDataContainer());
-        userDataTable.setVisibleColumns(UserDataContainer.COLUMN_ORDER);
-        userDataTable.setColumnHeaders(UserDataContainer.COLUMN_HEADERS);
+            userDataTable.addValueChangeListener((Property.ValueChangeEvent event) -> {
+                userDataAdministrationTab.getUserDataForm().update(UIHelper.getSessionUserRole());
+            });
 
-        userDataTable.addValueChangeListener(new Property.ValueChangeListener() {
-
-            @Override
-            public void valueChange(Property.ValueChangeEvent event) {
-                Role loggedInUserRole = userDataAdministrationTab.getParentApp()
-                        .getLoggedInUser().getCurrentRole();
-                userDataAdministrationTab.getUserDataForm().update(loggedInUserRole);
-            }
-        });
-
-        userDataTable.addItemSetChangeListener(new Container.ItemSetChangeListener() {
-
-            @Override
-            public void containerItemSetChange(Container.ItemSetChangeEvent event) {
+            userDataTable.addItemSetChangeListener((Container.ItemSetChangeEvent event) -> {
                 userDataTable.refreshRowCache();
-            }
-        });
+            });
 
-        userDataTable.addHeaderClickListener(new Table.HeaderClickListener() {
-
-            @Override
-            public void headerClick(Table.HeaderClickEvent event) {
+            userDataTable.addHeaderClickListener((Table.HeaderClickEvent event) -> {
                 if (!event.isDoubleClick()) {
                     return;
                 }
                 if (userDataTable.getColumnIcon(event.getPropertyId()) == null) {
                     return;
                 }
-                try {
-                    UserDataContainer.Property property = UserDataContainer.Property.getEnumByKey(
-                            (String) event.getPropertyId());
-                    removeTableFilter(property);
-                } catch (EnumParameterNotFoundException ex) {
-                    userDataAdministrationTab.getParentApp().showError("Unknown error occurred "
-                            + "while removing the table filter. " + NoteBuilder.CONTACT);
-                    LOGGER.error("Failed to remove the table filter. Cause: " + ex.getMessage(), ex);
-                }
-            }
-        });
 
-        reloadUserDataTable();
+                removeTableFilter((String) event.getPropertyId());
+            });
+
+            reloadUserDataTable();
+        }
+        return userDataTable;
     }
 
-    /**
-     *
-     */
-    public final void reloadUserDataTable() {
-        getUserDataTable().removeAllItems();
+    protected final void reloadUserDataTable() {
+        getUserDataTable().getContainerDataSource().removeAllItems();
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+        mdm.setAuthorizationContext(UIHelper.getSessionContext());
         try {
-            List<UserData> allUsersData = userDataAdministrationTab.getParentApp()
-                    .getMetaDataManager().find(UserData.class);
-            for (UserData userData : allUsersData) {
-                getUserDataTable().addItem(userData);
-            }
+            List<UserData> allUsersData = mdm.find(UserData.class);
+            allUsersData.forEach((userData) -> {
+                getUserDataTable().getContainerDataSource().addItem(userData.getUserId());
+                getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), ID_COLUMN_ID).setValue(userData.getUserId());
+                getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), USERID_COLUMN_ID).setValue(userData.getDistinguishedName());
+                getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), FIRST_NAME_COLUMN_ID).setValue(userData.getFirstName());
+                getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), LAST_NAME_COLUMN_ID).setValue(userData.getLastName());
+                getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), EMAIL_COLUMN_ID).setValue(userData.getEmail());
+                getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), VALID_FROM_COLUMN_ID).setValue(userData.getValidFrom());
+                getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), VALID_UNTIL_COLUMN_ID).setValue(userData.getValidUntil());
+            });
         } catch (UnauthorizedAccessAttemptException ex) {
             String object = "information about users";
-            userDataAdministrationTab.getParentApp().showWarning("User-table not reloadable! Cause: "
+            UIComponentTools.showWarning("User-table not reloadable! Cause: "
                     + NoteBuilder.unauthorizedGetRequest(object));
             LOGGER.error("Failed to reload '" + getUserDataTable().getId() + "'. Cause: "
                     + MsgBuilder.unauthorizedGetRequest(object), ex);
+        } finally {
+            mdm.close();
         }
     }
 
-    /**
-     *
-     * @return
-     */
-    public UserDataEffictivity validateSelectedUserData() {
-        if (getSelectedUserData() == null) {
-            return UserDataEffictivity.NO;
+    protected final UserDataEffectivity validateSelectedUserData() {
+        UserData selection = getSelectedUserData();
+        if (selection == null) {
+            return UserDataEffectivity.NO;
         }
 
-        UserData loggedInUser = userDataAdministrationTab.getParentApp().getLoggedInUser();
-        if (loggedInUser.getDistinguishedName().equals(getSelectedUserData().getDistinguishedName())) {
-            return UserDataEffictivity.LOGGED_IN_USER;
+        UserData loggedInUser = UIHelper.getSessionUser();
+        if (loggedInUser.getDistinguishedName().equals(selection.getDistinguishedName())) {
+            return UserDataEffectivity.LOGGED_IN_USER;
         }
 
-        UserId userId = new UserId(getSelectedUserData().getDistinguishedName());
+        UserId userId = new UserId(selection.getDistinguishedName());
         try {
-            IAuthorizationContext authCtx = userDataAdministrationTab.getParentApp().getAuthorizationContext();
+            IAuthorizationContext authCtx = UIHelper.getSessionContext();
             Role userRole = (Role) UserServiceLocal.getSingleton().getRoleRestriction(userId, authCtx);
             if (userRole.atMost(Role.NO_ACCESS)) {
-                return UserDataEffictivity.DISABLED_USER;
+                return UserDataEffectivity.DISABLED_USER;
             } else {
-                return UserDataEffictivity.VALID;
+                return UserDataEffectivity.VALID;
             }
         } catch (EntityNotFoundException ex) {
             String object = "user '" + userId.getStringRepresentation() + "'";
@@ -234,114 +230,92 @@ public class UserDataTablePanel extends CustomComponent {
             String object = "the maximum role of " + userId.getStringRepresentation();
             LOGGER.warn("Failed to check if selected user is disabled. Cause: "
                     + NoteBuilder.unauthorizedChangeRequest(object), ex);
-        } catch (AuthorizationException ex) {
-            LOGGER.warn("Failed to check if selected user is disabled. Cause: "
-                    + MsgBuilder.unauthorizedContext(), ex);
         }
-        return UserDataEffictivity.INVALID;
+        return UserDataEffectivity.INVALID;
     }
 
-    /**
-     * Returns a collection of all userDataTable items.
-     *
-     * @return allTableItems - collection of all userDataTable items
-     */
-    public final Collection<UserData> getAllTableItems() {
-        Collection<UserData> allTableItems = (Collection<UserData>) getUserDataTable().getItemIds();
-        return allTableItems;
+    protected final void updateTableEntry(UserData userData) {
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), FIRST_NAME_COLUMN_ID).setValue(userData.getFirstName());
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), LAST_NAME_COLUMN_ID).setValue(userData.getLastName());
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), VALID_FROM_COLUMN_ID).setValue(userData.getValidFrom());
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), VALID_UNTIL_COLUMN_ID).setValue(userData.getValidUntil());
+        getUserDataTable().refreshRowCache();
     }
 
-    /**
-     *
-     * @param originalUserData
-     * @param changedUserData
-     */
-    public void updateTableEntry(UserData originalUserData, UserData changedUserData) {
-        getUserDataTable().getContainerDataSource().removeItem(originalUserData);
-        getUserDataTable().select(null);
-        addTableEntry(originalUserData, changedUserData);
+    protected final void addTableEntry(UserData userData) {
+        getUserDataTable().getContainerDataSource().addItem(userData.getUserId());
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), ID_COLUMN_ID).setValue(userData.getUserId());
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), USERID_COLUMN_ID).setValue(userData.getDistinguishedName());
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), FIRST_NAME_COLUMN_ID).setValue(userData.getFirstName());
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), LAST_NAME_COLUMN_ID).setValue(userData.getLastName());
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), EMAIL_COLUMN_ID).setValue(userData.getEmail());
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), VALID_FROM_COLUMN_ID).setValue(userData.getValidFrom());
+        getUserDataTable().getContainerDataSource().getContainerProperty(userData.getUserId(), VALID_UNTIL_COLUMN_ID).setValue(userData.getValidUntil());
+        getUserDataTable().select(userData.getUserId());
     }
 
-    /**
-     *
-     * @param originalUserData
-     * @param changedUserData
-     */
-    public void addTableEntry(UserData originalUserData, UserData changedUserData) {
-        getUserDataTable().getContainerDataSource().addItem(changedUserData);
-        getUserDataTable().sort(new Object[]{UserDataContainer.Property.USER_ID.propertyId}, 
-                new boolean[]{false});
-        getUserDataTable().select(changedUserData);
+    protected final UserData getSelectedUserData() {
+        Long id = (Long) getUserDataTable().getValue();
+        if (id != null) {
+            IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+            mdm.setAuthorizationContext(UIHelper.getSessionContext());
+            try {
+                return mdm.find(UserData.class, id);
+            } catch (UnauthorizedAccessAttemptException ex) {
+                //not authorized
+            } finally {
+                mdm.close();
+            }
+        }
+        return null;
     }
 
-    /**
-     *
-     * @return
-     */
-    public UserData getSelectedUserData() {
-        return (UserData) getUserDataTable().getValue();
-    }
-
-    /**
-     *
-     * @param property
-     */
-    public void removeTableFilter(UserDataContainer.Property property) {
+    protected final void removeTableFilter(String columnId) {
         // Remove all existing container filters
-        UserDataContainer container = (UserDataContainer) getUserDataTable().getContainerDataSource();
+        IndexedContainer container = (IndexedContainer) getUserDataTable().getContainerDataSource();
         container.removeAllContainerFilters();
         // Add all filters except of the filter supposed to be deleted
-        filters.remove(property);
-        for (UserDataContainer.Property iProperty : filters.keySet()) {
-            String filterExpression = filters.get(iProperty).filterExpression;
+        filters.remove(columnId);
+        filters.keySet().forEach((iProperty) -> {
+            String filterExpression = filters.get(columnId).filterExpression;
             UserDataFilter.SearchSpace searchSpace = filters.get(iProperty).searchSpace;
-            addTableFilter(filterExpression, iProperty, searchSpace);
-        }
+            addTableFilter(filterExpression, columnId, searchSpace);
+        });
         // Remove filter icon from corresponding table column
-        getUserDataTable().setColumnIcon(property.propertyId, null);
+        getUserDataTable().setColumnIcon(columnId, null);
         // Disable button-icon for filter removing in case all filters have been removed
         if (filters.isEmpty()) {
-            userDataAdministrationTab.getUserDataSearch().getRemoveAllFiltersButton().setEnabled(false);
+            userDataAdministrationTab.getRemoveAllFiltersButton().setEnabled(false);
         }
         // Select first table entry
         getUserDataTable().select(getUserDataTable().firstItemId());
     }
 
-    /**
-     *
-     */
-    public void removeAllTableFilters() {
+    protected final void removeAllTableFilters() {
         // Remove all existing container filters
-        UserDataContainer container = (UserDataContainer) getUserDataTable().getContainerDataSource();
+        IndexedContainer container = (IndexedContainer) getUserDataTable().getContainerDataSource();
         container.removeAllContainerFilters();
         // Remove filter icon from corresponding table columns
-        for (UserDataContainer.Property property : filters.keySet()) {
-            getUserDataTable().setColumnIcon(property.propertyId, null);
-        }
+        filters.keySet().forEach((property) -> {
+            getUserDataTable().setColumnIcon(property, null);
+        });
         // Sort all table entries by first column
         getUserDataTable().sort(new Object[]{getUserDataTable().getVisibleColumns()[0]}, new boolean[]{true});
         // Select first table entry
         getUserDataTable().select(getUserDataTable().firstItemId());
     }
 
-    /**
-     *
-     * @param filterExpression
-     * @param property
-     * @param searchSpace
-     */
-    public void addTableFilter(String filterExpression, UserDataContainer.Property property,
-            UserDataFilter.SearchSpace searchSpace) {
+    protected final void addTableFilter(String filterExpression, String columnId, UserDataFilter.SearchSpace searchSpace) {
         // Add requested filter
-        UserDataContainer container = (UserDataContainer) getUserDataTable().getContainerDataSource();
-        UserDataFilter userDataFilter = new UserDataFilter(filterExpression, property.propertyId, searchSpace);
+        IndexedContainer container = (IndexedContainer) getUserDataTable().getContainerDataSource();
+        UserDataFilter userDataFilter = new UserDataFilter(filterExpression, columnId, searchSpace);
         container.addContainerFilter(userDataFilter);
-        filters.put(property, new FilterProperties<>(filterExpression, searchSpace));
+        filters.put(columnId, new FilterProperties<>(filterExpression, searchSpace));
         // Set filter icon at corresponding table columns if missing
         ThemeResource filterAddIcon = new ThemeResource(IconContainer.FILTER_ADD);
-        if (!filterAddIcon.equals(getUserDataTable().getColumnIcon(property.propertyId))) {
+        if (!filterAddIcon.equals(getUserDataTable().getColumnIcon(columnId))) {
             // Set missing filterAddIcon
-            getUserDataTable().setColumnIcon(property.propertyId, filterAddIcon);
+            getUserDataTable().setColumnIcon(columnId, filterAddIcon);
         }
     }
 }

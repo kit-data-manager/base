@@ -68,14 +68,6 @@ public final class TransitionTypeHandlerFactory {
             return new NullTransitionTypeHandler();
         }
         
-        Iterator key = subset.getKeys();
-               while(key.hasNext()){
-                   String k = (String)key.next();
-                   
-                   System.out.println("KEE " + k+ "- " +subset.getProperty(k));
-               }
-               
-        
         try {
             String handlerClass = subset.getString("handlerClass");
             if (handlerClass == null) {

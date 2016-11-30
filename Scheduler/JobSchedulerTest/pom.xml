@@ -21,7 +21,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>Scheduler</artifactId>
-        <version>1.1</version>
+        <version>1.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -43,13 +43,13 @@
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>REST-SchedulerService</artifactId>
-            <version>1.1</version>
+            <version>${project.kit.datamanager.version}</version>
         </dependency>
         
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>SchedulerManager</artifactId>
-            <version>1.1</version>
+            <version>${project.kit.datamanager.version}</version>
         </dependency>
     
     </dependencies>

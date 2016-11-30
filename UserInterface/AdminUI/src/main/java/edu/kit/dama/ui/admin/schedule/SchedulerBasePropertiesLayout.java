@@ -15,23 +15,21 @@
  */
 package edu.kit.dama.ui.admin.schedule;
 
-import com.vaadin.server.Page;
 import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.GridLayout;
-import com.vaadin.ui.NativeButton;
 import com.vaadin.ui.Table;
 import com.vaadin.ui.TextField;
+import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.Window;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.scheduler.SchedulerManagement;
-import edu.kit.dama.scheduler.api.impl.QuartzIntervalTrigger;
 import edu.kit.dama.scheduler.api.schedule.SimpleSchedule;
 import edu.kit.dama.scheduler.api.trigger.JobTrigger;
 import edu.kit.dama.scheduler.manager.ISchedulerManager;
 import edu.kit.dama.ui.admin.AbstractBasePropertiesLayout;
-import edu.kit.dama.ui.admin.AdminUIMainView;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.schedule.trigger.AddTriggerComponent;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
@@ -39,7 +37,6 @@ import edu.kit.dama.ui.admin.utils.IconContainer;
 import static edu.kit.dama.ui.admin.workflow.DataWorkflowBasePropertiesLayout.LOGGER;
 import edu.kit.dama.ui.commons.util.UIUtils7;
 import edu.kit.dama.ui.components.ConfirmationWindow7;
-import edu.kit.dama.ui.components.IConfirmationWindowListener7;
 import java.util.Date;
 import java.util.List;
 
@@ -55,25 +52,23 @@ public final class SchedulerBasePropertiesLayout extends AbstractBasePropertiesL
     private TextField groupField;
     private Table triggerTable;
     private final AddTriggerComponent addTriggerComponent;
+    private Window addTriggerWindow = null;
 
     /**
      * Default constructor.
-     *
-     * @param parentApp The parent application.
      */
-    public SchedulerBasePropertiesLayout(AdminUIMainView parentApp) {
-        super(parentApp);
+    public SchedulerBasePropertiesLayout() {
+        super();
         LOGGER.debug("Building " + DEBUG_ID_PREFIX + " ...");
 
         setId(DEBUG_ID_PREFIX.substring(0, DEBUG_ID_PREFIX.length() - 1));
-        //setWidth("100%");
+
         setSizeFull();
-        setImmediate(true);
         setMargin(true);
         setSpacing(true);
 
         setColumns(3);
-        setRows(4);
+        setRows(3);
         //first row
         addComponent(getIdField(), 0, 0);
         addComponent(getGroupField(), 1, 0);
@@ -81,37 +76,25 @@ public final class SchedulerBasePropertiesLayout extends AbstractBasePropertiesL
 
         //second row
         addComponent(getDescriptionArea(), 0, 1, 2, 1);
-        NativeButton addTriggerButton = new NativeButton();
+        Button addTriggerButton = new Button();
         addTriggerButton.setDescription("Add a new trigger.");
         addTriggerButton.setIcon(new ThemeResource(IconContainer.ADD));
-        addTriggerButton.addClickListener(new Button.ClickListener() {
-
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                addTrigger();
-            }
+        addTriggerButton.addClickListener((Button.ClickEvent event) -> {
+            addTrigger();
         });
 
-        NativeButton removeTriggerButton = new NativeButton();
+        Button removeTriggerButton = new Button();
         removeTriggerButton.setDescription("Remove the selected trigger.");
         removeTriggerButton.setIcon(new ThemeResource(IconContainer.DELETE));
-        removeTriggerButton.addClickListener(new Button.ClickListener() {
-
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                removeTrigger();
-            }
+        removeTriggerButton.addClickListener((Button.ClickEvent event) -> {
+            removeTrigger();
         });
 
-        NativeButton refreshTriggerButton = new NativeButton();
+        Button refreshTriggerButton = new Button();
         refreshTriggerButton.setDescription("Refresh the list of triggers.");
         refreshTriggerButton.setIcon(new ThemeResource(IconContainer.REFRESH));
-        refreshTriggerButton.addClickListener(new Button.ClickListener() {
-
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                reloadTriggers();
-            }
+        refreshTriggerButton.addClickListener((Button.ClickEvent event) -> {
+            reloadTriggers();
         });
 
         VerticalLayout buttonLayout = new VerticalLayout(addTriggerButton, refreshTriggerButton, removeTriggerButton);
@@ -130,14 +113,10 @@ public final class SchedulerBasePropertiesLayout extends AbstractBasePropertiesL
 
         //third row
         addComponent(triggerLayout, 0, 2, 2, 2);
-        //fourth row
         addTriggerComponent = new AddTriggerComponent(this);
-        addComponent(addTriggerComponent.getPopupView(), 0, 3);
 
-        setRowExpandRatio(0, .09f);
         setRowExpandRatio(1, .3f);
         setRowExpandRatio(2, .6f);
-        setRowExpandRatio(3, .01f);
     }
 
     @Override
@@ -182,11 +161,18 @@ public final class SchedulerBasePropertiesLayout extends AbstractBasePropertiesL
         try {
             LOGGER.debug("Adding trigger to job with id '{}'", getIdField().getValue());
             manager.addTrigger(getIdField().getValue(), pTrigger);
-            addTriggerComponent.getPopupView().setPopupVisible(false);
             reloadTriggers();
         } catch (Throwable t) {
             LOGGER.error("Failed to add trigger.", t);
             ConfirmationWindow7.showConfirmation("Error", "Failed to add trigger for internal reasons. Cause: " + t.getMessage(), ConfirmationWindow7.OPTION_TYPE.OK_OPTION, ConfirmationWindow7.MESSAGE_TYPE.ERROR, null);
+        }
+    }
+
+    public final void hideAddTriggerWindow() {
+        if (addTriggerWindow != null) {
+            addTriggerWindow.setVisible(false);
+            UI.getCurrent().removeWindow(addTriggerWindow);
+            addTriggerWindow = null;
         }
     }
 
@@ -270,8 +256,17 @@ public final class SchedulerBasePropertiesLayout extends AbstractBasePropertiesL
             ConfirmationWindow7.showConfirmation("Information", "Triggers can only be added to committed jobs. Please commit the job before you continue.", ConfirmationWindow7.OPTION_TYPE.OK_OPTION, ConfirmationWindow7.MESSAGE_TYPE.INFORMATION, null);
             return;
         }
-        addTriggerComponent.reset();
-        addTriggerComponent.getPopupView().setPopupVisible(true);
+        if (addTriggerWindow == null) {
+            addTriggerWindow = new Window("Add Trigger");
+            addTriggerWindow.setWidth(400.0f, Unit.PIXELS);
+            addTriggerComponent.reset();
+            addTriggerWindow.setContent(addTriggerComponent);
+            addTriggerWindow.center();
+            addTriggerWindow.addCloseListener((Window.CloseEvent e) -> {
+                hideAddTriggerWindow();
+            });
+            UI.getCurrent().addWindow(addTriggerWindow);
+        }//otherwise, there is already a window open
     }
 
     /**
@@ -284,23 +279,19 @@ public final class SchedulerBasePropertiesLayout extends AbstractBasePropertiesL
             LOGGER.debug("Nothing selected.");
             return;
         }
-        ConfirmationWindow7.showConfirmation("Remove Trigger", "Do you really want to remove the trigger '" + selection + "' from job '" + getIdField().getValue() + "'?", ConfirmationWindow7.OPTION_TYPE.YES_NO_OPTION, new IConfirmationWindowListener7() {
-
-            @Override
-            public void fireConfirmationWindowCloseEvent(ConfirmationWindow7.RESULT pResult) {
-                switch (pResult) {
-                    case YES:
-                        ISchedulerManager manager = SchedulerManagement.getSchedulerManagement().getSchedulerManager();
-                        LOGGER.debug("Removing trigger with id '{}'", selection);
-                        try {
-                            if (manager.removeTrigger(selection)) {
-                                LOGGER.debug("Trigger with id '{}' successfully removed.", selection);
-                            }
-                            reloadTriggers();
-                        } catch (UnauthorizedAccessAttemptException ex) {
-                            LOGGER.error("Not authorized to remove trigger with id '" + selection + "'.", ex);
+        ConfirmationWindow7.showConfirmation("Remove Trigger", "Do you really want to remove the trigger '" + selection + "' from job '" + getIdField().getValue() + "'?", ConfirmationWindow7.OPTION_TYPE.YES_NO_OPTION, (ConfirmationWindow7.RESULT pResult) -> {
+            switch (pResult) {
+                case YES:
+                    ISchedulerManager manager = SchedulerManagement.getSchedulerManagement().getSchedulerManager();
+                    LOGGER.debug("Removing trigger with id '{}'", selection);
+                    try {
+                        if (manager.removeTrigger(selection)) {
+                            LOGGER.debug("Trigger with id '{}' successfully removed.", selection);
                         }
-                }
+                        reloadTriggers();
+                    } catch (UnauthorizedAccessAttemptException ex) {
+                        LOGGER.error("Not authorized to remove trigger with id '" + selection + "'.", ex);
+                    }
             }
         });
     }

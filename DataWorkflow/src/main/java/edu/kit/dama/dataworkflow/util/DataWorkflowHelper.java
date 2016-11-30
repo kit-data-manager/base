@@ -237,7 +237,7 @@ public final class DataWorkflowHelper {
      */
     public static UserData getContact(DataWorkflowTask pTask) {
         //setting default user mail value
-        UserData result = UserData.NO_USER;
+        UserData result = UserData.WORLD_USER;
 
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         IAuthorizationContext ctx = getTaskContext(pTask);

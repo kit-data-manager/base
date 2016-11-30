@@ -15,14 +15,16 @@
  */
 package edu.kit.dama.util;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
 import edu.kit.dama.commons.exceptions.InitializationError;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,9 +47,7 @@ public final class DataManagerSettings {
     public final static String ELASTIC_SEARCH_DEFAULT_HOST_ID = "elasticsearch.host";//localhost;
     public final static String ELASTIC_SEARCH_DEFAULT_INDEX_ID = "elasticsearch.index";//kitdatamanager;
     public final static String ELASTIC_SEARCH_FULLTEXT_SEARCH_KEY_ID = "elasticsearch.fulltextKey";//es.fulltext;
-    //Property keys for persistence section
-    public final static String PERSISTENCE_STAGING_PU_ID = "persistence.stagingPU";//StagingUnit;
-    public final static String PERSISTENCE_AUTHORIZATION_PU_ID = "persistence.authorizationPU";//AuthorizationPU;
+
     //Property keys for staging section
     public final static String STAGING_MAX_PARALLEL_TRANSFERS = "staging.maxParallelTransfers";//10;
     public final static String STAGING_MAX_PARALLEL_INGESTS = "staging.maxParallelIngests";//2;
@@ -59,14 +59,23 @@ public final class DataManagerSettings {
     public static final String SIMON_CONFIG_LOCATION_ID = "simon.configLocation";
 
     //Property keys for general section
+    public final static String GENERAL_REPOSITORY_NAME = "general.repositoryName";
+    public final static String GENERAL_REPOSITORY_LOGO_URL = "general.repositoryLogoUrl";
     public final static String GENERAL_SYSTEM_MAIL_ADDRESS = "general.systemMailAddress";
     public final static String GENERAL_MAIL_SERVER = "general.mailServer";
     public final static String GENERAL_GLOBAL_SECRET = "general.globalSecret";//qr2I9Hyp0CBhUUXj
-    public static final String GENERAL_BASE_URL_ID = "general.baseUrl"; //"http://localhost:8080/";
+    public static final String GENERAL_BASE_URL_ID = "general.baseUrl"; //"http://localhost:8080/KITDM";
     public static final String PRODUCTION_MODE_ID = "general.productionMode"; //"true";
 
+    public static final String AUTHORIZATION_CONFIG_ROOT = "authorization";
+    public static final String AUDIT_CONFIG_ROOT = "audit";
+
     public static final String DATA_ORGANIZATION_CONFIG_ROOT = "dataOrganization";
-    public static final String METADATA_MANAGEMENT_CONFIG_ROOT = "metadataManagement";
+
+    public static final String METADATA_MANAGEMENT_CONFIG_ROOT = "metaDataManagement";
+
+    public static final String PERSISTENCE_AUTHORIZATION_PU_ID = "authorization.defaultPU";
+    public static final String PERSISTENCE_STAGING_PU_ID = "staging.defaultPU";
 
     // Global production mode switch, disables e.g. serialization/deserialization c
     // class instance checks
@@ -84,16 +93,7 @@ public final class DataManagerSettings {
      * URL obtained from {@link #getConfigurationURL()}.
      */
     private void initialize() {
-        System.err.println("Initializing KIT Data Manager settings");
-        try {
-            LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-            StatusPrinter.print(lc);
-
-        } catch (ClassCastException cce) {
-            //ignore this...
-            System.err.println("Failed to check logback settings. Probably another slf4j adapter is used.");
-            cce.printStackTrace();
-        }
+        LOGGER.info("Initializing KIT Data Manager settings");
         URL configUrl = null;
         try {
             configUrl = getConfigurationURL();
@@ -101,10 +101,54 @@ public final class DataManagerSettings {
             settings = new XMLConfiguration(configUrl);
             LOGGER.debug("Loading productionMode property");
             productionMode = getBooleanProperty(PRODUCTION_MODE_ID, true);
+            //Read default persistence units for staging and authorization services
+            loadDefaultPersistenceUnits();
             LOGGER.debug("Configuration initialized successfully.");
         } catch (ConfigurationException e) {
             //initialization not possible, quit everything.
             throw new InitializationError("Failed to load KIT Data Manager settings from URL " + configUrl, e);
+        }
+    }
+
+    /**
+     * Load the default persistence units from the datamanager.xml settings
+     * file. The main reason for reading these entries at this point is due to
+     * the fact, that the authorization service is not based on the default
+     * metadata management of KIT Data Manager and has therefore no dependency
+     * to the metadata management, where all other persistence settings are
+     * read. Furthermore, for backwards compatibility it is required that
+     * authorization and staging persistence unit ids are accessible by the keys
+     * PERSISTENCE_AUTHORIZATION_PU_ID and PERSISTENCE_STAGING_PU_ID via the
+     * datamanager settings.
+     */
+    private void loadDefaultPersistenceUnits() {
+        List<HierarchicalConfiguration> persistenceUnitsList = settings.configurationsAt(METADATA_MANAGEMENT_CONFIG_ROOT + ".persistenceImplementations.persistenceImplementation.persistenceUnits.persistenceUnit");
+        if (persistenceUnitsList == null) {
+            persistenceUnitsList = new LinkedList<>();
+        }
+        LOGGER.debug("Configuration contains {} persistence units.", persistenceUnitsList.size());
+        boolean haveStagingPU = false;
+        boolean haveAuthorizationPU = false;
+        for (HierarchicalConfiguration item : persistenceUnitsList) {
+            String value = item.getString(".");
+            String stagingAttribute = item.getString("[@staging]");
+            String authorizationAttribute = item.getString("[@authorization]");
+            if (Boolean.parseBoolean(stagingAttribute)) {
+                if (!haveStagingPU) {
+                    settings.addProperty(PERSISTENCE_STAGING_PU_ID, value);
+                    haveStagingPU = true;
+                } else {
+                    LOGGER.warn("Default staging persistence unit already set to '{}'. Ignoring duplicate annotation of persistence unit '{}'", settings.getString(PERSISTENCE_STAGING_PU_ID), value);
+                }
+            }
+            if (Boolean.parseBoolean(authorizationAttribute)) {
+                if (!haveAuthorizationPU) {
+                    settings.addProperty(PERSISTENCE_AUTHORIZATION_PU_ID, value);
+                    haveAuthorizationPU = true;
+                } else {
+                    LOGGER.warn("Default authorization persistence unit already set to '{}'. Ignoring duplicate annotation of persistence unit '{}'", settings.getString(PERSISTENCE_AUTHORIZATION_PU_ID), value);
+                }
+            }
         }
     }
 
@@ -265,6 +309,27 @@ public final class DataManagerSettings {
             LOGGER.warn("No configuration node found for subpath '" + pConfiguration + "'");
             return null;
         }
+    }
+
+    /**
+     * Get a list of sub-configurations located at path pConfiguration or an
+     * empty list if no sub-configurations were found. Valid paths are relative
+     * to the root node 'config', e.g.
+     * <i>dataOrganization.dataOrganizerAdapter</i> or
+     * <i>staging</i>.
+     *
+     * @param pConfiguration The sub-configuration's path.
+     *
+     * @return The list of sub-configurations.
+     */
+    public List<Configuration> getSubConfigurations(String pConfiguration) {
+        List<Configuration> result = new ArrayList<>();
+        try {
+            result = settings.configurationsAt(pConfiguration);
+        } catch (IllegalArgumentException ex) {
+            LOGGER.warn("No configuration nodes found for subpath '" + pConfiguration + "'");
+        }
+        return result;
     }
 
     /**

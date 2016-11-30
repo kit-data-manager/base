@@ -15,15 +15,12 @@
  */
 package edu.kit.dama.sample;
 
-import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
-import edu.kit.dama.mdm.dataorganization.entity.core.IFileNode;
+import edu.kit.dama.commons.types.DigitalObjectId;
 import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
-import edu.kit.dama.mdm.dataorganization.impl.staging.CollectionNodeImpl;
-import edu.kit.dama.mdm.dataorganization.impl.staging.FileNodeImpl;
-import edu.kit.dama.mdm.dataorganization.impl.staging.FileTreeImpl;
 import edu.kit.dama.mdm.dataorganization.impl.staging.LFNImpl;
+import edu.kit.dama.mdm.dataorganization.impl.util.DataOrganizationTreeBuilder;
 import edu.kit.dama.mdm.dataorganization.impl.util.Util;
-import edu.kit.dama.rest.staging.client.impl.StagingServiceRESTClient;
+import edu.kit.dama.rest.staging.client.impl.StagingRestClient;
 import edu.kit.dama.rest.staging.types.IngestInformationWrapper;
 import edu.kit.dama.staging.entities.ingest.INGEST_STATUS;
 import edu.kit.dama.staging.exceptions.StagingIntitializationException;
@@ -60,7 +57,7 @@ public class CustomDataOrganizationIngest extends BaseMetadataCreation {
         //perform the base metadata creation from the super class in order to have a digital object we can ingest data for
         createBaseMetadata();
 
-        StagingServiceRESTClient stagingClient = new StagingServiceRESTClient(restBaseUrl + "/rest/staging/", context);
+        StagingRestClient stagingClient = new StagingRestClient(restBaseUrl + "/rest/staging/", context);
 
         //At first we have to obtain the StagingAccessPoint in order to be able to schedule an ingest.
         //For convenience we expect to have exactly one AccessPoint as set up during the default installation.
@@ -101,17 +98,13 @@ public class CustomDataOrganizationIngest extends BaseMetadataCreation {
         //    +-Paper2.pdf (http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.461.71&rep=rep1&type=pdf)
         //
         //Please be aware that the LFNs must be valid URLs!
-        IFileTree tree = new FileTreeImpl();
-        tree.setViewName(Constants.DEFAULT_VIEW);
-        ICollectionNode collectionNode = new CollectionNodeImpl();
-        collectionNode.setName("papers");
-        IFileNode fileNode1 = new FileNodeImpl(new LFNImpl("https://www.researchgate.net/profile/T_Jejkal/publication/224226353_Perspective_of_the_Large_Scale_Data_Facility_(LSDF)_Supporting_Nuclear_Fusion_Applications/links/0912f509a04be916b9000000.pdf"));
-        fileNode1.setName("Paper1.pdf");
-        IFileNode fileNode2 = new FileNodeImpl(new LFNImpl("http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.461.71&rep=rep1&type=pdf"));
-        fileNode2.setName("Paper2.pdf");
-        collectionNode.addChild(fileNode1);
-        collectionNode.addChild(fileNode2);
-        tree.getRootNode().addChild(collectionNode);
+        IFileTree tree = new DataOrganizationTreeBuilder().
+                create(new DigitalObjectId(wrapper.getEntities().get(0).getDigitalObjectId()), Constants.DEFAULT_VIEW).
+                createAndEnterCollection("papers").
+                addFile(new LFNImpl("https://www.researchgate.net/profile/T_Jejkal/publication/224226353_Perspective_of_the_Large_Scale_Data_Facility_(LSDF)_Supporting_Nuclear_Fusion_Applications/links/0912f509a04be916b9000000.pdf"), "Paper1.pdf").
+                addFile(new LFNImpl("http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.461.71&rep=rep1&type=pdf"), "Paper2.pdf").
+                leaveCollection().
+                buildTree();
 
         //Now, we store a JSON representation of the created file tree in a file named 'default_view.json'. 
         //The pattern for the file must be the name of the data organization view provided for the contained file tree (in out case this is Constants.DEFAULT_VIEW) followed by _view.json

@@ -16,20 +16,22 @@
 package edu.kit.dama.ui.admin.workflow.property;
 
 import com.vaadin.data.Property;
+import com.vaadin.server.Sizeable;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
-import com.vaadin.ui.NativeButton;
-import com.vaadin.ui.PopupView;
+import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.Window;
 import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.mdm.dataworkflow.properties.ExecutionEnvironmentProperty;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
+import edu.kit.dama.ui.admin.workflow.IEnvironmentPropertyCreationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,9 +45,10 @@ public class AddEnvironmentPropertyComponent {
 
     private VerticalLayout mainLayout;
     private VerticalLayout propertyEditorLayout;
-    private PopupView propertyPopup;
+    private Window propertyWindow;
     private ComboBox propertyTypeSelectionBox;
     private AbstractPropertyConfigurationPanel currentPanel = null;
+    private IEnvironmentPropertyCreationListener listener;
 
     enum ENVIRONMENT_PROPERTY_TYPE {
 
@@ -67,7 +70,8 @@ public class AddEnvironmentPropertyComponent {
     /**
      * Default constructor.
      */
-    public AddEnvironmentPropertyComponent() {
+    public AddEnvironmentPropertyComponent(IEnvironmentPropertyCreationListener listener) {
+        this.listener = listener;
         buildMainLayout();
     }
 
@@ -101,8 +105,8 @@ public class AddEnvironmentPropertyComponent {
             }
         });
 
-        final NativeButton createButton = new NativeButton("Create");
-        final NativeButton cancelButton = new NativeButton("Cancel");
+        final Button createButton = new Button("Create");
+        final Button cancelButton = new Button("Cancel");
 
         Button.ClickListener listener = new Button.ClickListener() {
 
@@ -111,7 +115,8 @@ public class AddEnvironmentPropertyComponent {
                 if (createButton.equals(event.getButton())) {
                     createProperty();
                 }
-                propertyPopup.setPopupVisible(false);
+                UI.getCurrent().removeWindow(propertyWindow);
+                propertyWindow = null;
             }
         };
 
@@ -156,6 +161,23 @@ public class AddEnvironmentPropertyComponent {
         }
     }
 
+    public void showWindow() {
+        if (propertyWindow == null) {
+            propertyWindow = new Window("Add Property");
+            propertyWindow.setWidth(400.0f, Sizeable.Unit.PIXELS);
+            propertyWindow.setContent(mainLayout);
+            propertyWindow.center();
+            propertyWindow.addCloseListener(new Window.CloseListener() {
+                @Override
+                public void windowClose(Window.CloseEvent e) {
+                    UI.getCurrent().removeWindow(propertyWindow);
+                    propertyWindow = null;
+                }
+            });
+            UI.getCurrent().addWindow(propertyWindow);
+        }//otherwise, there is already a window open
+    }
+
     /**
      * Reset the current panel.
      */
@@ -179,7 +201,10 @@ public class AddEnvironmentPropertyComponent {
                 IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
                 mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
                 try {
-                    mdm.save(property);
+                    property = mdm.save(property);
+                    if (listener != null) {
+                        listener.fireEnvironmentPropertyCreatedEvent(property);
+                    }
                 } catch (UnauthorizedAccessAttemptException ex) {
                     //whatever
                     LOGGER.error("Not authorized to commit new properties.", ex);
@@ -191,19 +216,5 @@ public class AddEnvironmentPropertyComponent {
                 LOGGER.warn("Property validation failed.");
             }
         }
-    }
-
-    /**
-     * Get the popup view containing this component.
-     *
-     * @return The popup view.
-     */
-    public final PopupView getPopupView() {
-        if (propertyPopup == null) {
-            propertyPopup = new PopupView(null, mainLayout);
-            propertyPopup.setHideOnMouseOut(false);
-        }
-
-        return propertyPopup;
     }
 }

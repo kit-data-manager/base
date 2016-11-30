@@ -33,7 +33,6 @@ import javax.persistence.*;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
@@ -60,39 +59,65 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
             name = "simple",
             attributeNodes = {
                 @XmlNamedAttributeNode("id")
-            }),
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("status"),
-                @XmlNamedAttributeNode("lastUpdate"),
-                @XmlNamedAttributeNode("expiresAt"),
-                @XmlNamedAttributeNode("transferId"),
-                @XmlNamedAttributeNode("digitalObjectUuid"),
-                @XmlNamedAttributeNode("ownerUuid"),
-                @XmlNamedAttributeNode("clientAccessUrl"),
-                @XmlNamedAttributeNode("stagingUrl"),
-                @XmlNamedAttributeNode("storageUrl"),
-                @XmlNamedAttributeNode("accessPointId"),
-                @XmlNamedAttributeNode("errorMessage"),
+                @XmlNamedAttributeNode("id")
+                ,
+                @XmlNamedAttributeNode("status")
+                ,
+                @XmlNamedAttributeNode("lastUpdate")
+                ,
+                @XmlNamedAttributeNode("expiresAt")
+                ,
+                @XmlNamedAttributeNode("transferId")
+                ,
+                @XmlNamedAttributeNode("digitalObjectUuid")
+                ,
+                @XmlNamedAttributeNode("ownerUuid")
+                ,
+                @XmlNamedAttributeNode("clientAccessUrl")
+                ,
+                @XmlNamedAttributeNode("stagingUrl")
+                ,
+                @XmlNamedAttributeNode("storageUrl")
+                ,
+                @XmlNamedAttributeNode("accessPointId")
+                ,
+                @XmlNamedAttributeNode("errorMessage")
+                ,
                 @XmlNamedAttributeNode(value = "stagingProcessors", subgraph = "simple")
-            }),
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "complete",
             attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("status"),
-                @XmlNamedAttributeNode("lastUpdate"),
-                @XmlNamedAttributeNode("expiresAt"),
-                @XmlNamedAttributeNode("transferId"),
-                @XmlNamedAttributeNode("digitalObjectUuid"),
-                @XmlNamedAttributeNode("ownerUuid"),
-                @XmlNamedAttributeNode("clientAccessUrl"),
-                @XmlNamedAttributeNode("stagingUrl"),
-                @XmlNamedAttributeNode("storageUrl"),
-                @XmlNamedAttributeNode("accessPointId"),
-                @XmlNamedAttributeNode("errorMessage"),
+                @XmlNamedAttributeNode("id")
+                ,
+                @XmlNamedAttributeNode("status")
+                ,
+                @XmlNamedAttributeNode("lastUpdate")
+                ,
+                @XmlNamedAttributeNode("expiresAt")
+                ,
+                @XmlNamedAttributeNode("transferId")
+                ,
+                @XmlNamedAttributeNode("digitalObjectUuid")
+                ,
+                @XmlNamedAttributeNode("ownerUuid")
+                ,
+                @XmlNamedAttributeNode("clientAccessUrl")
+                ,
+                @XmlNamedAttributeNode("stagingUrl")
+                ,
+                @XmlNamedAttributeNode("storageUrl")
+                ,
+                @XmlNamedAttributeNode("accessPointId")
+                ,
+                @XmlNamedAttributeNode("errorMessage")
+                ,
                 @XmlNamedAttributeNode(value = "stagingProcessors")
             })})
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -176,15 +201,15 @@ public class IngestInformation implements IDefaultIngestInformation, ITransferIn
     @OneToMany(fetch = FetchType.EAGER)
     @XmlElement(name = "stagingProcessor")
     private Set<StagingProcessor> stagingProcessors = new HashSet<>();
-    @Transient
-    @XmlTransient
-    private Set<StagingProcessor> clientSideStagingProcessors = null;
-    @Transient
-    @XmlTransient
-    private Set<StagingProcessor> serverSideStagingProcessors = null;
-    @Transient
-    @XmlTransient
-    private Set<StagingProcessor> postArchivingStagingProcessors = null;
+//    @Transient
+//    @XmlTransient
+//    private Set<StagingProcessor> clientSideStagingProcessors = null;
+//    @Transient
+//    @XmlTransient
+//    private Set<StagingProcessor> serverSideStagingProcessors = null;
+//    @Transient
+//    @XmlTransient
+//    private Set<StagingProcessor> postArchivingStagingProcessors = null;
 
     /**
      * Constructor only for bean-compliance. This constructor should no be used
@@ -423,11 +448,7 @@ public class IngestInformation implements IDefaultIngestInformation, ITransferIn
         return accessPointId;
     }
 
-    /**
-     * Set a list of staging processors.
-     *
-     * @param stagingProcessors A list of staging processors.
-     */
+    @Override
     public void setStagingProcessors(Set<StagingProcessor> stagingProcessors) {
         this.stagingProcessors = stagingProcessors;
     }
@@ -447,136 +468,147 @@ public class IngestInformation implements IDefaultIngestInformation, ITransferIn
             stagingProcessors.clear();
         }
 
-        if (serverSideStagingProcessors != null) {
-            serverSideStagingProcessors.clear();
-        }
-
-        if (clientSideStagingProcessors != null) {
-            clientSideStagingProcessors.clear();
-        }
-
-        if (postArchivingStagingProcessors != null) {
-            postArchivingStagingProcessors.clear();
-        }
+//        if (serverSideStagingProcessors != null) {
+//            serverSideStagingProcessors.clear();
+//        }
+//
+//        if (clientSideStagingProcessors != null) {
+//            clientSideStagingProcessors.clear();
+//        }
+//
+//        if (postArchivingStagingProcessors != null) {
+//            postArchivingStagingProcessors.clear();
+//        }
     }
 
+//    /**
+//     * Add a client-side staging processor.
+//     *
+//     * @param pProcessor The processor to add.
+//     */
+//    public final void addClientSideStagingProcessor(StagingProcessor pProcessor) {
+//        stagingProcessors.add(pProcessor);
+//        if (clientSideStagingProcessors == null) {
+//            clientSideStagingProcessors = new HashSet<>();
+//        }
+//        clientSideStagingProcessors.add(pProcessor);
+//    }
+//
+//    /**
+//     * Get all client-side staging processors.
+//     *
+//     * @return All client-side staging processors.
+//     */
+//    public final StagingProcessor[] getClientSideStagingProcessor() {
+//        if (clientSideStagingProcessors == null) {
+//            clientSideStagingProcessors = new HashSet<>();
+//            for (StagingProcessor processor : stagingProcessors) {
+//                if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY)) {
+//                    clientSideStagingProcessors.add(processor);
+//                }
+//            }
+//        }
+//        return clientSideStagingProcessors.toArray(new StagingProcessor[clientSideStagingProcessors.size()]);
+//    }
+//
+//    /**
+//     * Add a server-side staging processor.
+//     *
+//     * @param pProcessor The processor to add.
+//     */
+//    public final void addServerSideStagingProcessor(StagingProcessor pProcessor) {
+//        if (pProcessor == null || pProcessor.getType() == null || !pProcessor.getType().isServerSideProcessor()) {
+//            throw new IllegalArgumentException("Provided processor must not be null and must be of type PROCESSOR_TYPE.SERVER_SIDE_ONLY or PROCESSOR_TYPE.CLIENT_AND_SERVER_SIDE or PROCESSOR_TYPE.POST_ARCHIVING");
+//        }
+//
+//        if (StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY.equals(pProcessor.getType())) {
+//            stagingProcessors.add(pProcessor);
+//            if (serverSideStagingProcessors == null) {
+//                serverSideStagingProcessors = new HashSet<>();
+//            }
+//            serverSideStagingProcessors.add(pProcessor);
+//        } else if (StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.equals(pProcessor.getType())) {
+//            addPostArchivingStagingProcessor(pProcessor);
+//        }
+//    }
+//
+//    /**
+//     * Get all server-side staging processors excluding all processors with type
+//     * StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.
+//     *
+//     * @return All server-side staging processors which are not executes after
+//     * archiving.
+//     */
+//    public final StagingProcessor[] getServerSideStagingProcessor() {
+//        return getServerSideStagingProcessor(true);
+//    }
+//
+//    /**
+//     * Get all server-side staging processors either with or without processors
+//     * of type StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.
+//     *
+//     * @param pExcludePostArchiving TRUE = Exclude all processors of type
+//     * StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.
+//     *
+//     * @return All server-side staging processors.
+//     */
+//    public final StagingProcessor[] getServerSideStagingProcessor(boolean pExcludePostArchiving) {
+//        if (serverSideStagingProcessors == null) {
+//            serverSideStagingProcessors = new HashSet<>();
+//            for (StagingProcessor processor : stagingProcessors) {
+//                if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.CLIENT_SIDE_ONLY)) {
+//                    if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING) || !pExcludePostArchiving) {
+//                        //add processor if it is not of type POST_ARCHIVING or if POST_ARCHIVING processors should not be excluded
+//                        serverSideStagingProcessors.add(processor);
+//                    }
+//                }
+//            }
+//        }
+//        return serverSideStagingProcessors.toArray(new StagingProcessor[serverSideStagingProcessors.size()]);
+//    }
+//
+//    /**
+//     * Add a post-archiving staging processor.
+//     *
+//     * @param pProcessor The processor to add.
+//     */
+//    public final void addPostArchivingStagingProcessor(StagingProcessor pProcessor) {
+//        if (pProcessor == null || !StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.equals(pProcessor.getType())) {
+//            throw new IllegalArgumentException("Provided processor must not be null and must be of type PROCESSOR_TYPE.POST_ARCHIVING");
+//        }
+//        stagingProcessors.add(pProcessor);
+//        if (postArchivingStagingProcessors == null) {
+//            postArchivingStagingProcessors = new HashSet<>();
+//        }
+//        postArchivingStagingProcessors.add(pProcessor);
+//    }
+//
+//    /**
+//     * Get all post-archiving staging processors.
+//     *
+//     * @return All post-archiving staging processors.
+//     */
+//    public final StagingProcessor[] getPostArchivingStagingProcessor() {
+//        if (postArchivingStagingProcessors == null) {
+//            postArchivingStagingProcessors = new HashSet<>();
+//            for (StagingProcessor processor : stagingProcessors) {
+//                if (processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING)) {
+//                    postArchivingStagingProcessors.add(processor);
+//                }
+//            }
+//        }
+//        return postArchivingStagingProcessors.toArray(new StagingProcessor[postArchivingStagingProcessors.size()]);
+//    }
     /**
-     * Add a client-side staging processor.
+     * Add a staging processor.
      *
      * @param pProcessor The processor to add.
      */
-    public final void addClientSideStagingProcessor(StagingProcessor pProcessor) {
+    public final void addStagingProcessor(StagingProcessor pProcessor) {
+        if (pProcessor == null) {
+            throw new IllegalArgumentException("Provided processor must not be null.");
+        }
         stagingProcessors.add(pProcessor);
-        if (clientSideStagingProcessors == null) {
-            clientSideStagingProcessors = new HashSet<>();
-        }
-        clientSideStagingProcessors.add(pProcessor);
-    }
-
-    /**
-     * Get all client-side staging processors.
-     *
-     * @return All client-side staging processors.
-     */
-    public final StagingProcessor[] getClientSideStagingProcessor() {
-        if (clientSideStagingProcessors == null) {
-            clientSideStagingProcessors = new HashSet<>();
-            for (StagingProcessor processor : stagingProcessors) {
-                if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY)) {
-                    clientSideStagingProcessors.add(processor);
-                }
-            }
-        }
-        return clientSideStagingProcessors.toArray(new StagingProcessor[clientSideStagingProcessors.size()]);
-    }
-
-    /**
-     * Add a server-side staging processor.
-     *
-     * @param pProcessor The processor to add.
-     */
-    public final void addServerSideStagingProcessor(StagingProcessor pProcessor) {
-        if (pProcessor == null || pProcessor.getType() == null || !pProcessor.getType().isServerSideProcessor()) {
-            throw new IllegalArgumentException("Provided processor must not be null and must be of type PROCESSOR_TYPE.SERVER_SIDE_ONLY or PROCESSOR_TYPE.CLIENT_AND_SERVER_SIDE or PROCESSOR_TYPE.POST_ARCHIVING");
-        }
-
-        if (StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY.equals(pProcessor.getType())) {
-            stagingProcessors.add(pProcessor);
-            if (serverSideStagingProcessors == null) {
-                serverSideStagingProcessors = new HashSet<>();
-            }
-            serverSideStagingProcessors.add(pProcessor);
-        } else if (StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.equals(pProcessor.getType())) {
-            addPostArchivingStagingProcessor(pProcessor);
-        }
-    }
-
-    /**
-     * Get all server-side staging processors excluding all processors with type
-     * StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.
-     *
-     * @return All server-side staging processors which are not executes after
-     * archiving.
-     */
-    public final StagingProcessor[] getServerSideStagingProcessor() {
-        return getServerSideStagingProcessor(true);
-    }
-
-    /**
-     * Get all server-side staging processors either with or without processors
-     * of type StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.
-     *
-     * @param pExcludePostArchiving TRUE = Exclude all processors of type
-     * StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.
-     *
-     * @return All server-side staging processors.
-     */
-    public final StagingProcessor[] getServerSideStagingProcessor(boolean pExcludePostArchiving) {
-        if (serverSideStagingProcessors == null) {
-            serverSideStagingProcessors = new HashSet<>();
-            for (StagingProcessor processor : stagingProcessors) {
-                if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.CLIENT_SIDE_ONLY)) {
-                    if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING) || !pExcludePostArchiving) {
-                        //add processor if it is not of type POST_ARCHIVING or if POST_ARCHIVING processors should not be excluded
-                        serverSideStagingProcessors.add(processor);
-                    }
-                }
-            }
-        }
-        return serverSideStagingProcessors.toArray(new StagingProcessor[serverSideStagingProcessors.size()]);
-    }
-
-    /**
-     * Add a post-archiving staging processor.
-     *
-     * @param pProcessor The processor to add.
-     */
-    public final void addPostArchivingStagingProcessor(StagingProcessor pProcessor) {
-        if (pProcessor == null || !StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING.equals(pProcessor.getType())) {
-            throw new IllegalArgumentException("Provided processor must not be null and must be of type PROCESSOR_TYPE.POST_ARCHIVING");
-        }
-        stagingProcessors.add(pProcessor);
-        if (postArchivingStagingProcessors == null) {
-            postArchivingStagingProcessors = new HashSet<>();
-        }
-        postArchivingStagingProcessors.add(pProcessor);
-    }
-
-    /**
-     * Get all post-archiving staging processors.
-     *
-     * @return All post-archiving staging processors.
-     */
-    public final StagingProcessor[] getPostArchivingStagingProcessor() {
-        if (postArchivingStagingProcessors == null) {
-            postArchivingStagingProcessors = new HashSet<>();
-            for (StagingProcessor processor : stagingProcessors) {
-                if (processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.POST_ARCHIVING)) {
-                    postArchivingStagingProcessors.add(processor);
-                }
-            }
-        }
-        return postArchivingStagingProcessors.toArray(new StagingProcessor[postArchivingStagingProcessors.size()]);
     }
 
     @Override

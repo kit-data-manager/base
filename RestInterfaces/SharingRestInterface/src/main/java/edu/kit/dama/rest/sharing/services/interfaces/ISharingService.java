@@ -254,6 +254,7 @@ public interface ISharingService extends ICommonRestInterface {
             @javax.ws.rs.core.Context HttpContext hc
     );
 
+        
     /**
      * Revoke the grant with the provided id.
      *

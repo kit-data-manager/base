@@ -1,21 +1,21 @@
-/**
- * Copyright (C) 2014 Karlsruhe Institute of Technology
+/*
+ * Copyright 2016 Karlsruhe Institute of Technology.
  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package edu.kit.dama.mdm.base;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.kit.dama.authorization.annotations.SecurableResourceIdField;
 import edu.kit.dama.authorization.entities.ISecurableResource;
 import edu.kit.dama.authorization.entities.SecurableResourceId;
@@ -27,77 +27,123 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import javax.persistence.*;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedAttributeNode;
+import javax.persistence.NamedEntityGraph;
+import javax.persistence.NamedEntityGraphs;
+import javax.persistence.NamedSubgraph;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import org.eclipse.persistence.annotations.BatchFetch;
 import org.eclipse.persistence.annotations.BatchFetchType;
+import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
+import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
+import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 import org.eclipse.persistence.queries.FetchGroupTracker;
 import org.eclipse.persistence.sessions.Session;
 
 /**
  *
- * @author hartmann-v
+ * @author jejkal
  */
 @Entity
-//@XmlNamedObjectGraphs({
-//    @XmlNamedObjectGraph(
-//            name = "simple",
-//            attributeNodes = {
-//                @XmlNamedAttributeNode("baseId")
-//            }),
-//    @XmlNamedObjectGraph(
-//            name = "default",
-//            attributeNodes = {
-//                @XmlNamedAttributeNode("baseId"),
-//                @XmlNamedAttributeNode("digitalObjectIdentifier"),
-//                @XmlNamedAttributeNode("label"),
-//                @XmlNamedAttributeNode("note"),
-//                @XmlNamedAttributeNode(value = "investigation", subgraph = "simple"),
-//                @XmlNamedAttributeNode(value = "uploader", subgraph = "simple"),
-//                @XmlNamedAttributeNode(value = "experimenters", subgraph = "simple"),
-//                @XmlNamedAttributeNode("startDate"),
-//                @XmlNamedAttributeNode("endDate"),
-//                @XmlNamedAttributeNode("uploadDate")
-//            })})
-@XmlAccessorType(XmlAccessType.FIELD)
+@Table(name = "DigitalObject")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "OBJ_TYPE")
+@DiscriminatorValue(value = "DEFAULT")
 @XmlRootElement
+@XmlNamedObjectGraphs({
+    @XmlNamedObjectGraph(
+            name = "simple",
+            attributeNodes = {
+                @XmlNamedAttributeNode("baseId")
+            })
+    ,
+    @XmlNamedObjectGraph(
+            name = "default",
+            attributeNodes = {
+                @XmlNamedAttributeNode("baseId")
+                ,
+                @XmlNamedAttributeNode("digitalObjectIdentifier")
+                ,
+                @XmlNamedAttributeNode("label")
+                ,
+                @XmlNamedAttributeNode("note")
+                ,
+                @XmlNamedAttributeNode(value = "investigation", subgraph = "simple")
+                ,
+                @XmlNamedAttributeNode(value = "uploader", subgraph = "simple")
+                ,
+                @XmlNamedAttributeNode(value = "experimenters", subgraph = "simple")
+                ,
+                @XmlNamedAttributeNode("startDate")
+                ,
+                @XmlNamedAttributeNode("endDate")
+                ,
+                @XmlNamedAttributeNode("uploadDate")
+            })})
 @NamedEntityGraphs({
     @NamedEntityGraph(
             name = "DigitalObject.simple",
             includeAllAttributes = false,
             attributeNodes = {
-                @NamedAttributeNode("baseId"),
-                @NamedAttributeNode("digitalObjectIdentifier")}),
+                @NamedAttributeNode("baseId")
+                ,
+                @NamedAttributeNode("digitalObjectIdentifier")})
+    ,
     @NamedEntityGraph(
             name = "DigitalObject.default",
             includeAllAttributes = false,
             attributeNodes = {
-                @NamedAttributeNode("baseId"),
-                @NamedAttributeNode("digitalObjectIdentifier"),
-                @NamedAttributeNode("label"),
-                @NamedAttributeNode("note"),
-                @NamedAttributeNode(value = "investigation", subgraph = "DigitalObject.default.Investigation.simple"),
-                @NamedAttributeNode(value = "uploader", subgraph = "DigitalObject.default.Uploader.simple"),
-                @NamedAttributeNode(value = "experimenters", subgraph = "DigitalObject.default.Experimenters.simple"),
-                @NamedAttributeNode("startDate"),
-                @NamedAttributeNode("endDate"),
-                @NamedAttributeNode("uploadDate")
-            },
+                @NamedAttributeNode("baseId")
+                ,
+                @NamedAttributeNode("digitalObjectIdentifier")
+                ,
+                @NamedAttributeNode("label")
+                ,
+                @NamedAttributeNode("note")
+                ,
+                @NamedAttributeNode(value = "investigation", subgraph = "DigitalObject.default.Investigation.simple")
+                ,
+                @NamedAttributeNode(value = "uploader", subgraph = "DigitalObject.default.Uploader.simple")
+                ,
+                @NamedAttributeNode(value = "experimenters", subgraph = "DigitalObject.default.Experimenters.simple")
+                ,
+                @NamedAttributeNode("startDate")
+                ,
+                @NamedAttributeNode("endDate")
+                ,
+                @NamedAttributeNode("uploadDate")},
             subgraphs = {
                 @NamedSubgraph(
                         name = "DigitalObject.default.Investigation.simple",
                         attributeNodes = {
                             @NamedAttributeNode("investigationId")}
-                ),
+                )
+                ,
                 @NamedSubgraph(
                         name = "DigitalObject.default.Uploader.simple",
                         attributeNodes = {
                             @NamedAttributeNode("userId")}
-                ),
+                )
+                ,
                 @NamedSubgraph(
                         name = "DigitalObject.default.Experimenters.simple",
                         attributeNodes = {
@@ -122,6 +168,7 @@ public class DigitalObject implements Serializable, IDefaultDigitalObject, IDigi
      * Reference to the DigitalObject.
      */
     @Transient
+
     private DigitalObjectId digitalObjectId;
     /**
      * Digital Object Identity (DOI) of the dataset. The DOI should be unique
@@ -268,8 +315,10 @@ public class DigitalObject implements Serializable, IDefaultDigitalObject, IDigi
     }
 
     @Override
+    @XmlTransient
+    @JsonIgnore
     public DigitalObjectId getDigitalObjectId() {
-        // due to dirty hacks in the JPA the method setDigitalObjectIdentifier()
+        // due to dirty hacks in JPA the method setDigitalObjectIdentifier()
         // is not used if instance was restored from database.
         if ((digitalObjectId == null) && (digitalObjectIdentifier != null)) {
             setDigitalObjectIdentifier(digitalObjectIdentifier);
@@ -415,6 +464,11 @@ public class DigitalObject implements Serializable, IDefaultDigitalObject, IDigi
         return getVisible();
     }
 
+    /**
+     * Get visibility of the DigitalObject.
+     *
+     * @return visibility of DigitalObject
+     */
     public Boolean getVisible() {
         return (visible == null) || visible;
     }

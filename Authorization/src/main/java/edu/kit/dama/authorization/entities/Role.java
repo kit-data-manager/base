@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,85 +21,85 @@ package edu.kit.dama.authorization.entities;
  */
 public enum Role implements IRoleRestriction<Role> {
 
-  /**
-   *0
-   */
-  NO_ACCESS,
-  /**
-   *1
-   */
-  MEMBERSHIP_REQUESTED,
-  /**
-   *2
-   */
-  UNALLOC_02,
-  /**
-   *3
-   */
-  GUEST,
-  /**
-   *4
-   */
-  UNALLOC_04,
-  /**
-   *5
-   */
-  UNALLOC_05,
-  /**
-   *6
-   */
-  MEMBER,
-  /**
-   *7
-   */
-  UNALLOC_07,
-  /**
-   *8
-   */
-  UNALLOC_08,
-  /**
-   *9
-   */
-  MANAGER,
-  /**
-   *10
-   */
-  UNALLOC_10,
-  /**
-   *11
-   */
-  UNALLOC_11,
-  /**
-   *12
-   */
-  ADMINISTRATOR;
+    /**
+     * 0
+     */
+    NO_ACCESS,
+    /**
+     * 1
+     */
+    MEMBERSHIP_REQUESTED,
+    /**
+     * 2
+     */
+    UNALLOC_02,
+    /**
+     * 3
+     */
+    GUEST,
+    /**
+     * 4
+     */
+    UNALLOC_04,
+    /**
+     * 5
+     */
+    UNALLOC_05,
+    /**
+     * 6
+     */
+    MEMBER,
+    /**
+     * 7
+     */
+    UNALLOC_07,
+    /**
+     * 8
+     */
+    UNALLOC_08,
+    /**
+     * 9
+     */
+    MANAGER,
+    /**
+     * 10
+     */
+    UNALLOC_10,
+    /**
+     * 11
+     */
+    CURATOR,
+    /**
+     * 12
+     */
+    ADMINISTRATOR;
 
-  @Override
-  public boolean atLeast(Role role) {
-    return (this.compareTo(role) >= 0);
-  }
+    @Override
+    public boolean atLeast(Role role) {
+        return (this.compareTo(role) >= 0);
+    }
 
-  @Override
-  public boolean atMost(Role role) {
-    return (this.compareTo(role) <= 0);
-  }
+    @Override
+    public boolean atMost(Role role) {
+        return (this.compareTo(role) <= 0);
+    }
 
-  @Override
-  public boolean moreThan(Role role) {
-    return (this.compareTo(role) > 0);
-  }
+    @Override
+    public boolean moreThan(Role role) {
+        return (this.compareTo(role) > 0);
+    }
 
-  @Override
-  public boolean lessThan(Role role) {
-    return (this.compareTo(role) < 0);
-  }
+    @Override
+    public boolean lessThan(Role role) {
+        return (this.compareTo(role) < 0);
+    }
 
-  /**
-   * Get a list of valid (currently defined) roles.
-   *
-   * @return A list of currently defined roles.
-   */
-  public static Role[] getValidRoles() {
-    return new Role[]{NO_ACCESS, GUEST, MEMBER, MANAGER, ADMINISTRATOR};
-  }
+    /**
+     * Get a list of valid (currently defined) roles.
+     *
+     * @return A list of currently defined roles.
+     */
+    public static Role[] getValidRoles() {
+        return new Role[]{NO_ACCESS, MEMBERSHIP_REQUESTED, GUEST, MEMBER, MANAGER, CURATOR, ADMINISTRATOR};
+    }
 }

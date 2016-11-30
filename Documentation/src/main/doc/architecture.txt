@@ -1,11 +1,11 @@
 Architecture Overview
 ---------------------
-In the following chapters basic components and concepts of the architecture of KIT Data Manager are described briefly. Basically, the presented components are responsible for 
+In the following chapters basic components and concepts of KIT Data Manager's architecture are described briefly. Basically, the presented components are responsible for 
 abstracting from underlaying infrastructure and for providing a common service layer for integrating community-specific respository solutions.
 
 [[FigureArchitecture]]
 .Basic architecture of KIT Data Manager.
-image::Architecture.png[Modules]
+image::Architecture.png[Architecture, width="600px", align="center"]
 
 The <<FigureArchitecture,figure above>> shows a quite general view on the differnt layers and services provided by KIT Data Manager. The following table gives a short impression 
 about the resposibilities of each service and in which chapter(s) the services are explained in detail.
@@ -18,34 +18,31 @@ about the resposibilities of each service and in which chapter(s) the services a
 |Search|<<ChapterMetadataManagement,Metadata Management>>,<<ChapterDataOrganization,Data Organization>>|Search for metadata.
 |Staging|<<ChapterStaging,Staging>>, <<ChapterDataOrganization,Data Organization>>|Accessing and managing (file-based) data.
 |Data Processing|<<ChapterDataWorkflow,Data Workflow>>|Processing of data stored in a KIT Data Manager repository.
-|Lifecycle Management|Not available, yet.|Services for managing a data lifecycle.
-|Policy Enforcement|Not available, yet.|Services for enforcing policies on data.
+|Audit|<<ChapterAudit,Audit>>|Capturing of audit information for repository resources.
 |============================================================================================================================
 
-Before describing each single component let's take a short look at the main idea behind KIT Data Manager: to provide
-a generic architecture for building up repository systems for arbitrary scientific communities. To be able to cope with the tasks of a repository system (e.g. content preservation,
+Before describing each service let's take a short look at a core concept of KIT Data Manager: the Digital Object. To be able to cope with the tasks of a repository system (e.g. content preservation,
 bit preservation, curation...) there is the need to think in structured, `Digital Object`-based rather than in unstructured, File-based dimensions. Of course, in many cases there 
 are files managed by KIT Data Manager on the lowest layer (see <<ChapterDataOrganization,Data Organization>>) but they are only one possible representation of the content of a Digital Object. 
-The Digital Object and everything related to it is described by a huge amount of metadata in order to enable software systems to interpret Digital Objects, their content and their 
-provenance. However, while reading the following chapters bear always in mind that everything in KIT Data Manager is related to structured data entities called
-Digital Objects consisting of metadata and data.
+The Digital Object and everything related to it is described by a huge amount of metadata (see <<ChapterMetadataManagement,Metadata Management>>) in order to enable software systems to retrieve and interpret Digital Objects, 
+their content and their provenance. However, while reading the following chapters bear always in mind that the core element of KIT Data Manager is the Digital Objects consisting of metadata and data.
 
 [[ChapterAuthorization]]
 Authorization
 ~~~~~~~~~~~~~
-One of the core components which concerns almost every part of KIT Data Manager is the Authorization. It is based on users, groups and an effective role and determines if the 
-access to a secured resource (e.g. Digital Objects) or operation (e.g. adding users) is granted or not. Authorization decisions in KIT Data Manager are always based on a 
-specific context the user is currently working in. This context consists of:
+One of the core services, which concerns almost every part of KIT Data Manager, is the Authorization. It is based on users, groups and an effective role and determines if the 
+access to a secured resource (e.g. a Digital Objects) or operation (e.g. adding users to a group) is granted or not. Authorization decisions in KIT Data Manager are always based on a 
+specific context used to issue the request. This context consists of:
 
 UserId::
    An internal user identifier. This identifier is unique for each user and is assigned during registration, e.g. via a Community-specific Web frontend. 
    For real world applications, the user identifier should be obtained from another, central source like an LDAP database in order 
    to provide a common source of authentification for data and metadata access.
 GroupId::
-   An internal group id. This idenfier is unique for each user group of a KIT Data Manager instance. Available groups can be managed by higher level services. 
+   An internal group id. This identifier is unique for each user group of a KIT Data Manager instance. Available groups can be managed by higher level services. 
    By default, there is only one group with the id `USERS` which contains all registered users.
 
-The final part needed for authorization decisions is the `Role`. A role forms, together with UserId and GroupId, the `AuthorizationContext` that is used to access 
+The final part needed for authorization decisions is the `Role`. A role defines, together with UserId and GroupId, the `AuthorizationContext` that is used to access 
 resources or functionalities. Currently, there are the following roles available:
 
 [cols="m,n", options="header"]
@@ -55,9 +52,12 @@ resources or functionalities. Currently, there are the following roles available
 |MEMBERSHIP_REQUESTED|This is an intermediate role used in special cases. 
  Users with this role have requested the membership for e.g. a group but are not activated, yet.
 |GUEST|Using an AuthorizationContext with the role `GUEST` grants read access to public accessible resources. Modifications of resources are not allowed.
-|MEMBER|An AuthorizationContext with this role can be used to read and modify resources. This role should be used in most cases.
+|MEMBER|An AuthorizationContext with this role can be used to read and create resources. This role should be used in most cases.
 |MANAGER|An AuthorizationContext with the role `MANAGER` can be used for operations that require special access to resources and 
-functionalities on a group level, e.g. assign new memberships to a group or deleting resources owned by a specific group.
+functionalities on a group level, e.g. assign new memberships to a group.
+|CURATOR|The CURATOR role is intended to be used for curation tasks, e.g. updating metadata, data formats or removing entities. Currently, the CURATOR role 
+is not used explicitly and update can be performed by everybody posessing at least the role MEMBER. For future versions such operations will be reserved for
+the CURATOR role in order to avoid uncontrolled modification of repository content.
 |ADMINISTRATOR|The role `ADMINISTRATOR` is used for operations that require special access on a global level. Typically, the 
 administrator role should be used sparingly and only for a small amount of administrator users.
 |============================================================================================================================
@@ -72,13 +72,13 @@ allowed to do anything and won't be able to gain more permissions on group- or r
 To determine the actual role within a specific context, a user has a group-specific role and the MAX_ROLE. The effective role is the group role unless MAX_ROLE is smaller. 
 In this case MAX_ROLE is the effective role.
 
-Additionally, there can be resource-specific roles issued separately. By default, each resource with restricted access can be accessed by all members of the creator's group 
-with the role MANAGER (read and modify). For sharing purposes it is also possible to issue additional permissions for another groups (called `ResourceReferences`) 
-or to single users (called `Grants`). This allows a user who is no member of the creator's group to access a single resource with a specific role.
+Additionally, there can be resource-specific roles issued separately. By default, each resource with restricted access can be accessed (read and modify) by all 
+members of the group the resource has been created in. For sharing purposes it is also possible to issue additional permissions for another groups (called `ResourceReferences`) 
+or to single users (called `Grants`). This allows a user who is not a member of the creating group to access a single resource with an assigned role.
 
 Apart from access to resources also access to operations can be restricted. For basic services and components of KIT Data Manager the restriction for operations is 
-roughly oriented on the role definition presented above. This means, that the role GUEST is needed to perform read operations, MEMBER is needed for basic write operations
-and the MANAGER role entitles the user to remove data (to a very limited extent).
+roughly oriented on the role definition presented above. This means, that the role GUEST is required for read operations, MEMBER is required for basic write operations
+and the MANAGER role entitles the caller to remove data (to a very limited extent).
 
 [[ChapterMetadataManagement]]
 Metadata Management 
@@ -86,8 +86,8 @@ Metadata Management
 The core of the metadata management of KIT Data Manager is the metadata model, which is presented in the <<MetadataModel,figure below>>. 
 
 [[MetadataModel]]
-.Metadata model of KIT Data Manager. An important point in this model is taken by the Digital Object which is, as part of the Base Metadata, providing the Digital Object ID (OID). This OID is used to refer to the according Digital Object by other linked entities, e.g. Staging or Data Organization Metadata.
-image::MetaData.png[Metadata model]
+.Metadata model of KIT Data Manager. An important aspect of this model is covered by the Digital Object which provides the Digital Object ID (OID). This OID is used to refer to the according Digital Object by other linked entities, e.g. Staging or Data Organization Metadata.
+image::MetaData.png[Metadata model, width="500px", align="center"]
 
 The metadata model constists of three parts which can be described as follows:
 
@@ -115,8 +115,24 @@ image::BaseMetadata.png[BaseMetadata, width="700px", align="center"]
 
 Administrative and Data Organization Metadata of KIT Data Manager are stored in relational databases using well defined schemas and can be accessed using Java or REST service APIs.
 For content metadata there is no fixed API or schema available as content metadata strongly differs depending on the community and supported use cases. Rather there are basic workflows
-available that can be implemented in order to extract, register and retrieve content metadata. How access to this metadata is realized depending on the system(s) in which the metadata
-are registered. 
+available that can be implemented in order to extract, register and retrieve content metadata. How access to this metadata is realized depends on the system(s) in which the metadata
+are registered. More details on enhance metadata handling can be found in <<ChapterEnhancedMetadataArchitecture,the according chapter>>.
+
+For harvesting metadata directly KIT Data Manager provides an OAI-PMH interface available at `http://localhost:8080/KITDM/oaipmh` by default. Harvestable are all Digital Objects readable by the user with the userid 'OAI-PMH'
+and all Digital Objects readable by the user group with the groupid 'WORLD'. 
+
+Furthermore, it is possible to publish a Digital Object by granting access to userid 'WORLD' or groupid 'WORLD'. By doing to, everybody can access the Digital Object's landing page via `http://localhost:8080/KITDM?landing&oid=<OBJECT_ID>`
+A sample landing page for object 3b1243b2-df09-4a98-ad87-21b7cda74be9 may look as follows: 
+
+[[LandingPage]]
+.The landing page for a public Digital Object. It allows to read/download metadata in different formats and to download public data associated with the Digital Object. 
+image::screenshots/Landing.png[LandingPage, width="500px", align="center"]
+
+If a Digital Object is not published, the user is requested to login in order to be able to see the landing page, which is of course only possible if the user is authorized to access the Digital Object.
+
+[NOTE]
+It is recommended to create a view named 'public' for storing published data of a Digital Object. If this view does not exists, publishing a Digital Objects will result in full access to the 'default' Data Organization view, which
+might not be wanted in every case.
 
 [[ChapterStaging]]
 Staging
@@ -159,7 +175,7 @@ location, e.g. for data processing. In order to be able to provide supplementary
 <2> Contains generated data, e.g. extracted metadata or processing results
 <3> Contains KIT Data Manager-related settings, e.g. credentials for third-party transfers.
 
-<<Staging,The graphic>> below shows the general Staging workflow. At the beginning, the `Staging Service` is accessed using a `Transfer Service Interface`, which might be 
+<<Staging,The graphic>> below shows the general Staging workflow. At the beginning, the `Staging Service` is accessed using an appropriate client, which might be 
 a commandline client, a Web portal or something comparable. In case of downloading data the Staging operation is scheduled and will data be made available asynchronously 
 by the Staging Service as this preparation may take a while (e.g. when restoring data from tape). In case of an ingest the cache is prepared immediately. 
 As soon as the preparation of the data transfer operation is finished, the data is accessible from the cache by a data consumer or can be transferred to the cache by a data producer. 
@@ -181,31 +197,29 @@ to one Digital Object or to transform a Digital Object's data into another forma
 
 [[DataOrganization]]
 .The graphic shows exemplarily different views for the Data Organization of a Digital Object. On the left hand side the default view with all contained files is shown. The second view contains only the data files, the third view contains a compressed version of the default view. Finally, the view on the right hand side contains generated files with a preview of the images contained in the default view that can be mapped by their names to each other.
-image::DataOrganization.png[DataOrganization, width="600px", align="center"]
+image::DataOrganization.png[DataOrganization, width="400px", align="center"]
 
-Apart from the basic file-based use case it is also possible to provide a custom Data Organization tree during ingest. This allows to register Data Organization trees where single nodes may refer to data located elsewhere.
+Apart from the basic file-based use case it is also possible to provide a custom Data Organization tree during ingest. This allows to register Data Organization trees where single nodes may refer to data located elsewhere, e.g. in another repository or on a web server.
 For standard workflows, e.g. for ingest and dowload, this enhanced scenario implies some differences: 
 
 Ingest::
    Instead of ingesting a file tree, one or more JSON file(s) containing a defined structure is/are ingested. An according StagingProcessor implemented by the class `edu.kit.dama.staging.processor.impl.ReferenceTreeIngestProcessor` 
-   has to be configured properly in beforehand. This StagingProcessor will parse and register the Data Organization information provided by the JSON file(s). 
+   has to be configured properly in beforehand. This StagingProcessor will parse and register the Data Organization information provided by the JSON file(s). For more details please refern to the link:https://github.com/kit-data-manager/base/tree/master/Samples[Samples module]
+   where the example `CustomDataOrganizationIngest` shows how to ingest a custom Data Organization and describes what are requirements and rules.
 Download::
-   For download there are multiple options. The easiest way for supporting transparent access to remotely stored data is to refer to data openly accessible via HTTP. In that case, the LFNs available in the Data Organization nodes can be 
+   For download there are also multiple options. The easiest way for supporting transparent access to remotely stored data is to refer to data openly accessible via HTTP. In that case, the LFNs available in the Data Organization nodes can be 
    directly accessed by the user to obtain the data. Furthermore, the REST-based Data Download described in the following section fully supports streaming of data from HTTP LFNs. Finally, also the Staging Service allows to stage data
-   only accessible via HTTP the same way as it is done for locally available data. However, this requires a bit more configuration effort.
+   accessible via HTTP the same way as it is done for locally available data. However, this requires a bit more configuration effort.
 
 For more information on how to enable the support for ingesting custom Data Organization trees please refer to the section  <<ChapterCustomDataOrganization,Support for Ingest of Custom Data Organization Trees>>.
-
-For details on how to perform the ingest of a custom Data Organization tree please refer to the link:https://github.com/kit-data-manager/base/tree/master/Sample[Sample module] of KIT Data Manager. Here, the 
-example `CustomDataOrganizationIngest` shows how to ingest a custom Data Organization and describes what are requirements and rules.
 
 [[SectionRESTBasedDownload]]
 REST-based Data Download
 ^^^^^^^^^^^^^^^^^^^^^^^^
-For obtaining data represented in the Data Organization typically the Staging Service is used for transferring data to a location accessible using one of the configured StagingAccessPoints. 
+For obtaining data represented in the Data Organization typically the Staging Service is used to transfer the data to a location accessible using one of the configured StagingAccessPoints. 
 An alternative that can be used for smaller downloads and for direct access avoiding the asynchronous staging process the Data Organization REST service offers direct access to the content 
-of single nodes. Typically, this feature is used the same way as any other REST endpoint and the access is authorized via OAuth. The URL for downloading the content of a Data Organization node 
-is build as follows: 
+of single nodes. Typically, this feature is used the same way as any other REST endpoint and the access is authorized via OAuth or any other configure authentication mechanism. 
+The URL for downloading the content of a Data Organization node is build as follows: 
 
 `http://kitdm-host:8080/KITDM/rest/dataorganization/organization/download/{objectId}/{path}?groupId=USERS&viewName=default` 
 
@@ -223,19 +237,19 @@ KIT DM instance. The second part of the URL defines the accessed digital object 
 
 The arguments provided in the URL are optional and define the group used to authorize the access to the associated Digital Object and the Data Organization view that will be accessed. By default these values are `USERS` and `default`.
 
-As mentioned before, access to the REST-based data download is authorized via OAuth and the standard KIT DM authorization mechanisms based on the Digital Object the Data Organization is associated with. However, there may be scenarios where one wants to 
-provide open access to repository content, e.g. for showing an image, stored in the repository, on a web page. For this purpose the Data Organization offers the so called `authorization-less access`. The concept of this feature is to provide open access
-to a particular part of the Data Organization of a Digital Object without any user or group based authentification and authorization. Of course, this feature should be used with care in order to avoid opening data that should not be accessible by everybody.
+As mentioned before, access to the REST-based data download is authorized e.g. via OAuth. However, there may be scenarios where one wants to provide open access to repository content, e.g. for showing an image, stored in the 
+repository, on a web page. For this purpose the Data Organization offers the so called `authorization-less access`. The concept of this feature is to provide open access to a particular part of the Data Organization of a 
+Digital Object without any user or group based authentification and authorization. Of course, this feature should be used with care in order to avoid opening data that should not be accessible by everybody.
 
-Currently, there are four different kinds of 
+Currently, there are four different kinds of `authorization-less access`:
 
-[cols="m,n,o", options="header"]
+[cols="m,n", options="header"]
 |============================================================================================================================
-|Parameter Name|Example Value|Description
-|public.view.names|public;public2|List of Data Organization views that are publicly accessible. In the example, all elements stored in views named `public` and `public2` of all Digital Objects in the repository system are publicly accessible. Attention: You should never provide the `default` view here as this would open the entire data of a Digital Object.
-|public.attribute.key|isOpen|A single attribute, which sets a node (either collection or file node) to be publicly accessible if an attribute with the provided name has been assigned to the node. In the example, all Data Organization nodes having the attribute `isOpen` assigned are publicly accessible. The attribute value is currently not evaluated.
-|public.collection.node.access.allowed|false|Either `true` or `false`. Mainly for testing purposes to allow authorization-less access to entire collection nodes in all Digital Objects and all Data Organization views. It is recommended NOT to enable this option. 
-|public.file.node.filter|(.*)\.jpg$|Regular expression granting public access to all file nodes in all Digital Objects and all Data Organization views for which the node name fulfills the regular expression. In the example, all nodes with the extension `jpg` are publicly available.
+|Type|Description
+|Data Organization View|Allows to provide one or more Data Organization views that are publicly accessible. List of Data Organization views that are publicly accessible. Attention: You should never define the `default` view publicly available using this feature as this would grant access to the data of all Digital Objects.
+|Data Organization Attribute| Allows to define an attribute that, if assigned to a Data Organization node, allows public access. The advantage of this approach is its fine-grained applicability on single collection nodes or file nodes also allowing to public single files of a Digital Object.
+|Collection Node|For testing only! This option grants access to all collection nodes in all Digital Objects. It should never be enabled in production environments.
+|File Node Filter|Allows to provide a regular expression granting public access to all file nodes in all Digital Objects and all Data Organization views for which the node name fulfills the regular expression.  
 |============================================================================================================================
 
 For setting up `authorization-less access` for the Data Organization service please refer to chapter <<ChapterAuthorizationLessAccess,Authorization-less Access to Data Organization>>.
@@ -358,3 +372,26 @@ image::TaskStatus.png[TaskStatus]
 Summarizing, the Data Workflow Service offer a great potential for processing Digital Objects in an automated way including the tracking of provenance information for better reproducability. For more details
 on how to setup execution environments, workflow tasks and triggering them, please refer to the chapters <<ChapterInstallation,Installation>> of KIT Data Manager and <<ChapterSettings,Settings>> 
 of the Administration UI.
+
+[[ChapterAudit]]
+Audit
+~~~~~
+The Audit Service provides functionalities to capture audit information about changes of resources stored in the repository system. One example for using audit information is the documentation of the lifecycle of a Digital Object, 
+starting with the creation and ingestion of content, modification of metdata, the validation of content and/or metadata and the migration or replication. Finally, the audit information may also contain deaccession and deletion of the resource.
+
+In KIT Data Manager there are two ways how audit events are triggered: internally and externally. Internal audit events are statically integrated into KIT Data Manager workflows in order to ensure that they are triggered as soon as they occur,
+e.g. the successful creation of a Digital Object via REST endpoint. For performance reasons internal events are only triggered in REST endpoints. If a Digital Object is created directly using the MetadataManagement Java API, an according
+audit event has to be triggered manually. Currently, internal audit events are generated if a Study, an Investigation or a Digital Object are created and modified. Other audit events might be added in future. 
+For more information on how to to this please refer to the the according sample in the link:https://github.com/kit-data-manager/base/tree/master/Samples[Samples module] of KIT Data Manager.
+
+The setup of the Audit component is shown in figure <<FigureAuditWorkflow,AuditWorkflow>>.
+
+[[FigureAuditWorkflow]]
+.Workflow of publishing and consuming audit events. An event is produced by an EventProducer, e.g. by a REST service during the creation of a digital object. The event is published using the configured EventPublisher. Currently, the default EventPublisher is realized by RabbitMQ. For the configured EventPublisher there should be an according EventReceiver, in our case there is a RabbitMQ receiver configured as servlet running in the local Tomcat container. The EventReceiver is then responsible to distribute received events to configured consumers, in the example there is a consumer writing all events to a logfile and another consumer writing the same events to a database.
+image::audit-workflow.png[AuditWorkflow, width="600px", align="center"]
+
+The reason why the current implementation of the Audit workflow is implemented using RabbitMQ is that RabbitMQ allows an asynchronous publishing of messages from different sources and takes care of persisting undelivered messages on its own. 
+Therefore, RabbitMQ is expected to scale very well and the influence of publishing audit events should be very low. 
+
+[NOTE]
+By default, audit events are distributed via a locally running RabbitMQ server. If no server is installed or not properly configured audit events are logged via logback to the configured logfile (e.g. $CATALINA_HOME/temp//datamanager.log).

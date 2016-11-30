@@ -30,7 +30,7 @@ public class BaseMetaDataHelper {
   private static final String DUMMY_INVESTIGATION_LABEL = "Dummy investigation for study: ";
   private static final String DUMMY_DIGITAL_OBJECT_LABEL = "Dummy digital object for investigation: ";
 
-// <editor-fold defaultstate="collapsed" desc="Deklaration of the namespaces">
+// <editor-fold defaultstate="collapsed" desc="Declaration of the namespaces">
   /**
    * prefix of namespaces for kit data manager metadata.
    */
@@ -40,14 +40,51 @@ public class BaseMetaDataHelper {
    * signature for base meta data (digital object).
    */
   private static final String POSTFIX_DAMA_NAMESPACE_BASEMETADATA = "basemetadata/";
+
   /**
-   * signature for meta data.
+   * signature for base meta data (digital object).
+   * @deprecated Use METS format instead (since KIT Data Manager 1.4)
    */
+  @Deprecated 
   private static final String POSTFIX_DAMA_NAMESPACE_METADATA = "metadata/";
+  /**
+   * signature for base meta data (digital object).
+   */
+  private static final String POSTFIX_DAMA_NAMESPACE_DATAORGANIZATION = "dataorganization/";
   /**
    * version of the namespaces. (all dama namespaces should use the same version.
    */
-  private static final String VERSION_DAMA_NAMESPACE = "2012-04";
+  private static final String ACTUAL_VERSION = "2015-08";
+  /**
+   * version of the namespaces. (all dama namespaces should use the same version.
+   */
+  private static final String VERSION_2012 = "2012-04";
+  /**
+   * version of the basemetadata. (Attention: all dama namespaces should use the same version.
+   */
+  private static final String VERSION_BASEMETADATA = ACTUAL_VERSION;
+  /**
+   * version of the basemetadata. (Attention: all dama namespaces should use the same version.
+   * @deprecated Use METS format instead (since KIT Data Manager 1.4)
+   */
+  @Deprecated
+  private static final String VERSION_METADATA = VERSION_2012;
+  /**
+   * version of the dataorganization. (Attention: all dama namespaces should use the same version.
+   */
+  private static final String VERSION_DATAORGANIZATION = ACTUAL_VERSION;
+  /**
+   * element name of the metadata.
+   */
+  public static final String BASEMETADATA_ROOT_ELEMENT = "basemetadata";
+  /**
+   * element name of data organization.
+   */
+  public static final String DATAORGANIZATION_ROOT_ELEMENT = "dataOrganization";
+  /**
+   * element name of the content metadata.
+   */
+  public static final String CONTENTMETADATA_ROOT_ELEMENT = "contentmd";
   /**
    * prefix for the base metadata namespace.
    */
@@ -58,14 +95,29 @@ public class BaseMetaDataHelper {
   public static final String CSMD_NAMESPACE_PREFIX = "csmd";
   /**
    * Namespace for the base meta data (digital object).
-   * http://datamanager.kit.edu/dama/basemetadata/2012-04)
+   * http://datamanager.kit.edu/dama/basemetadata/2015-08/basemetadata.xsd)
    */
-  public static final String DAMA_NAMESPACE_BASEMETADATA = PREFIX_DAMA_NAMESPACE + POSTFIX_DAMA_NAMESPACE_BASEMETADATA + VERSION_DAMA_NAMESPACE;
+  public static final String DAMA_NAMESPACE_BASEMETADATA = PREFIX_DAMA_NAMESPACE + POSTFIX_DAMA_NAMESPACE_BASEMETADATA;
   /**
-   * Namespace for the kit data manager meta data.
-   * (http://datamanager.kit.edu/dama/metadata/2012-04)
+   * Namespace for the meta data.
+   * http://datamanager.kit.edu/dama/metadata/2012-04/metadata.xsd)
+   * @deprecated Use METS format instead (since KIT Data Manager 1.4)
    */
-  public static final String DAMA_NAMESPACE_METADATA = PREFIX_DAMA_NAMESPACE + POSTFIX_DAMA_NAMESPACE_METADATA + VERSION_DAMA_NAMESPACE;
+  @Deprecated 
+  public static final String DAMA_NAMESPACE_METADATA = PREFIX_DAMA_NAMESPACE + POSTFIX_DAMA_NAMESPACE_METADATA + VERSION_METADATA;
+  /**
+   * XSD file for basemetadata.
+   */
+  public static final String BASEMETADATA_XSD = PREFIX_DAMA_NAMESPACE + POSTFIX_DAMA_NAMESPACE_BASEMETADATA + VERSION_BASEMETADATA + "/basemetadata.xsd";
+  /**
+   * Namespace for the data organization (digital object).
+   * http://datamanager.kit.edu/dama/dataorganization/)
+   */
+  public static final String DAMA_NAMESPACE_DATAORGANIZATION = PREFIX_DAMA_NAMESPACE + POSTFIX_DAMA_NAMESPACE_DATAORGANIZATION;
+  /**
+   * XSD file for data organization.
+   */
+  public static final String DATAORGANIZATION_XSD = PREFIX_DAMA_NAMESPACE + POSTFIX_DAMA_NAMESPACE_DATAORGANIZATION + VERSION_DATAORGANIZATION + "/dataorganization.xsd";
 // </editor-fold>
 
   /**

@@ -26,17 +26,20 @@ import org.apache.maven.model.Dependency;
 public class ReleaseConfiguration {
 
     private String configurationName;
-    private String baseDirectory;
+    private String sourceDirectory;
+    private String destinationDirectory;
     private String[] inputDirectories = new String[]{};
     private String[] inputFiles = new String[]{};
 
     private String[] directoriesToIgnore = new String[]{};
     private String[] filesToIgnore = new String[]{};
+    private String[] filesToRemove = new String[]{};
 
     private String[] modulesToRemove = new String[]{};
     private String[] profilesToRemove = new String[]{};
+    private String[] pluginsToRemove = new String[]{};
     private String[] propertiesToRemove = new String[]{};
-    private Map<String, String> propertiesToSet = new HashMap<>();
+    private final Map<String, String> propertiesToSet = new HashMap<>();
     private Dependency[] localDependencies = new Dependency[]{};
 
     private String scmConnection;
@@ -54,12 +57,20 @@ public class ReleaseConfiguration {
         this.configurationName = configurationName;
     }
 
-    public String getBaseDirectory() {
-        return baseDirectory;
+    public String getSourceDirectory() {
+        return sourceDirectory;
     }
 
-    public void setBaseDirectory(String baseDirectory) {
-        this.baseDirectory = baseDirectory;
+    public void setSourceDirectory(String sourceDirectory) {
+        this.sourceDirectory = sourceDirectory;
+    }
+
+    public String getDestinationDirectory() {
+        return destinationDirectory;
+    }
+
+    public void setDestinationDirectory(String destinationDirectory) {
+        this.destinationDirectory = destinationDirectory;
     }
 
     public String[] getInputDirectories() {
@@ -102,6 +113,16 @@ public class ReleaseConfiguration {
         }
     }
 
+    public String[] getFilesToRemove() {
+        return filesToRemove;
+    }
+
+    public void setFilesToRemove(String[] filesToRemove) {
+        if (filesToRemove != null) {
+            this.filesToRemove = filesToRemove;
+        }
+    }
+
     public String[] getModulesToRemove() {
         return modulesToRemove;
     }
@@ -120,6 +141,16 @@ public class ReleaseConfiguration {
     public void setProfilesToRemove(String[] profilesToRemove) {
         if (profilesToRemove != null) {
             this.profilesToRemove = profilesToRemove;
+        }
+    }
+
+    public String[] getPluginsToRemove() {
+        return pluginsToRemove;
+    }
+
+    public void setPluginsToRemove(String[] pluginsToRemove) {
+        if (pluginsToRemove != null) {
+            this.pluginsToRemove = pluginsToRemove;
         }
     }
 
@@ -191,4 +222,3 @@ public class ReleaseConfiguration {
         return propertiesToSet;
     }
 }
-

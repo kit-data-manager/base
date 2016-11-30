@@ -109,7 +109,7 @@ public abstract class AbstractMetadataExtractor extends AbstractStagingProcessor
     /**
      * Subdir for metadata in the generated folder.
      */
-    protected final String METADATA_FOLDER_NAME = "metadata";
+    protected static final String METADATA_FOLDER_NAME = "metadata";
 
     /**
      * Default constructor.
@@ -384,9 +384,9 @@ public abstract class AbstractMetadataExtractor extends AbstractStagingProcessor
         } catch (ParserConfigurationException ex) {
             throw new MetaDataExtractionException("Failed to generate target document.", ex);
         }
-        Element root = completeDocument.createElementNS(BaseMetaDataHelper.DAMA_NAMESPACE_BASEMETADATA, BaseMetaDataHelper.DAMA_NAMESPACE_PREFIX);
+        Element root = completeDocument.createElementNS(BaseMetaDataHelper.DAMA_NAMESPACE_BASEMETADATA, BaseMetaDataHelper.BASEMETADATA_ROOT_ELEMENT);
         root.appendChild(completeDocument.importNode(digitalObjectElement, true));
-        Node csmdRoot = root.appendChild(completeDocument.createElementNS(BaseMetaDataHelper.DAMA_NAMESPACE_METADATA, BaseMetaDataHelper.CSMD_NAMESPACE_PREFIX));
+        Node csmdRoot = root.appendChild(completeDocument.createElementNS(BaseMetaDataHelper.DAMA_NAMESPACE_METADATA, BaseMetaDataHelper.CONTENTMETADATA_ROOT_ELEMENT));
         if (rootElement != null) {
             csmdRoot.appendChild(completeDocument.importNode(rootElement, true));
         }

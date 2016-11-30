@@ -56,6 +56,8 @@ import edu.kit.dama.util.SystemUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -443,10 +445,15 @@ public final class StagingService {
                 container.setDestination(localPath.toURI().toURL());
                 LOGGER.debug("Transfer container successfully created.");
                 boolean preProcessingSucceeded = true;
-                LOGGER.debug("Executing {} staging processors", ingest.getServerSideStagingProcessor().length);
-                for (StagingProcessor processor : ingest.getServerSideStagingProcessor()) {
+
+                List<AbstractStagingProcessor> processorInstances = new ArrayList<>();
+                StagingProcessor[] processors = ingest.getStagingProcessors().toArray(new StagingProcessor[]{});
+                Arrays.sort(processors, StagingProcessor.DEFAULT_PRIORITY_COMPARATOR);
+
+                LOGGER.debug("Performing pre-transfer processing of {} configured staging processors.", processors.length);
+                for (StagingProcessor processor : processors) {
                     if (processor.isDisabled()) {
-                        LOGGER.info("Pre-Archiving StagingProcessor with id {} is disabled. Skipping execution.", processor.getUniqueIdentifier());
+                        LOGGER.info("StagingProcessor with id {} is disabled. Skipping execution.", processor.getUniqueIdentifier());
                         continue;
                     }
 
@@ -454,10 +461,11 @@ public final class StagingService {
                         LOGGER.debug(" - Try to execute processor {} ({})", new Object[]{processor.getName(), processor.getUniqueIdentifier()});
                         AbstractStagingProcessor sProcessor = processor.createInstance();
                         LOGGER.debug(" - Executing processor for local path {}", localPath.getAbsolutePath());
-                        sProcessor.performPostTransferProcessing(container);
+                        sProcessor.performPreTransferProcessing(container);
                         LOGGER.debug(" - Finishing processor execution");
-                        sProcessor.finalizePostTransferProcessing(container);
+                        sProcessor.finalizePreTransferProcessing(container);
                         LOGGER.debug(" - Processor successfully executed");
+                        processorInstances.add(sProcessor);
                     } catch (ConfigurationException ex) {
                         LOGGER.error("Failed to configure StagingProcessor " + processor.getName() + " (" + processor.getUniqueIdentifier() + ")", ex);
                         ingest.setStatus(INGEST_STATUS.INGEST_FAILED.getId());
@@ -495,6 +503,7 @@ public final class StagingService {
                         IDataOrganizationNode dataNode = Util.getNodeByName(virtualizedFileTree.getRootNode(), Constants.STAGING_DATA_FOLDER_NAME);
                         LOGGER.debug("Obtaining 'generated' node.");
                         IDataOrganizationNode generatedNode = Util.getNodeByName(virtualizedFileTree.getRootNode(), Constants.STAGING_GENERATED_FOLDER_NAME);
+
                         boolean dataStored;
                         //store 'data' view
                         if (dataNode == null || !(dataNode instanceof ICollectionNode)) {
@@ -514,7 +523,7 @@ public final class StagingService {
                         }
 
                         if (dataStored) {
-                            LOGGER.debug("Successfully stored 'data'content as view 'default'.");
+                            LOGGER.debug("Successfully stored 'data' content as view 'default'.");
                             if (generatedNode == null || !(generatedNode instanceof ICollectionNode) || ((ICollectionNode) generatedNode).getChildren().isEmpty()) {
                                 LOGGER.info("Node for 'generated' content not found or is empty. Skip registering view 'generated'.");
                             } else {
@@ -539,24 +548,17 @@ public final class StagingService {
 
                             //Perform post-archive processors as soon as archiving has finished. Normally, these processors should not produce errors as the archiving is alread finished.
                             //Therefore, errors are logged but won't result in a failed ingest any longer.
-                            LOGGER.debug("Executing {} post-archiving staging processors", ingest.getPostArchivingStagingProcessor().length);
-                            for (StagingProcessor processor : ingest.getPostArchivingStagingProcessor()) {
-                                if (processor.isDisabled()) {
-                                    LOGGER.info("Post-Archiving StagingProcessor with id {} is disabled. Skipping execution.", processor.getUniqueIdentifier());
-                                    continue;
-                                }
+                            LOGGER.debug("Performing post-transfer processing of {} configured staging processors.", processorInstances.size());
+
+                            for (AbstractStagingProcessor sProcessor : processorInstances) {
                                 try {
-                                    LOGGER.debug(" - Try to execute processor {} ({})", new Object[]{processor.getName(), processor.getUniqueIdentifier()});
-                                    AbstractStagingProcessor sProcessor = processor.createInstance();
                                     LOGGER.debug(" - Executing processor for local path {}", localPath.getAbsolutePath());
                                     sProcessor.performPostTransferProcessing(container);
                                     LOGGER.debug(" - Finishing processor execution");
                                     sProcessor.finalizePostTransferProcessing(container);
                                     LOGGER.debug(" - Processor successfully executed");
-                                } catch (ConfigurationException ex) {
-                                    LOGGER.error("Failed to configure StagingProcessor " + processor.getName() + " (" + processor.getUniqueIdentifier() + ")", ex);
                                 } catch (StagingProcessorException ex) {
-                                    LOGGER.error("Failed to perform StagingProcessor " + processor.getName() + " (" + processor.getUniqueIdentifier() + ")", ex);
+                                    LOGGER.error("Failed to perform post-transfer processing of staging processor " + sProcessor.getName() + " (" + sProcessor.getUniqueIdentifier() + ")", ex);
                                 }
                             }
                         } else {
@@ -842,8 +844,12 @@ public final class StagingService {
                 container.setDestination(localStagingPath.toURI().toURL());
                 LOGGER.debug("Transfer container successfully created.");
                 boolean postProcessingSucceeded = true;
-                LOGGER.debug("Executing {} staging processors", pDownloadInfo.getServerSideStagingProcessor().length);
-                for (StagingProcessor processor : pDownloadInfo.getServerSideStagingProcessor()) {
+
+                StagingProcessor[] processors = pDownloadInfo.getStagingProcessors().toArray(new StagingProcessor[]{});
+                Arrays.sort(processors, StagingProcessor.DEFAULT_PRIORITY_COMPARATOR);
+
+                LOGGER.debug("Executing {} staging processors", processors.length);
+                for (StagingProcessor processor : processors) {
                     if (processor.isDisabled()) {
                         LOGGER.info("StagingProcessor with id {} is disabled. Skipping execution.", processor.getUniqueIdentifier());
                         continue;

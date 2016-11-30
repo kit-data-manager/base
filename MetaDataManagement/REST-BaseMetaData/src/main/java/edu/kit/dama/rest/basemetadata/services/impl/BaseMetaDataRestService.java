@@ -23,6 +23,9 @@ import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
 import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.commons.exceptions.ConfigurationException;
+import edu.kit.dama.mdm.audit.types.AuditDetail;
+import edu.kit.dama.mdm.audit.types.AuditEvent;
+import edu.kit.dama.mdm.audit.util.AuditUtils;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.authorization.SecureMetaDataManager;
 import edu.kit.dama.mdm.base.DigitalObject;
@@ -147,6 +150,21 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             }
             study.setManager(managerUser);
             study = mdm.save(study);
+
+            AuditUtils.audit(study.getUniqueIdentifier(),
+                    ctx.getUserId().toString(),
+                    hc.getRequest().getAbsolutePath().toString(),
+                    hc.getRequest().getHeaderValue("User-Agent"),
+                    "audit.study",
+                    AuditEvent.TYPE.CREATION,
+                    AuditEvent.TRIGGER.INTERNAL,
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "topic", topic),
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "note", note),
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "legalNote", legalNote),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "managerUserId", (managerUserId != null) ? Long.toString(managerUserId) : ""),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "startDate", (startDate != null) ? Long.toString(startDate) : ""),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "endDate", (endDate != null) ? Long.toString(endDate) : ""));
+
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Study.default");
             return new StudyWrapper(mdm.find(Study.class, study.getStudyId()));
         } catch (UnauthorizedAccessAttemptException ex) {
@@ -221,6 +239,20 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             investigation.setStudy(study);
             LOGGER.debug(" - Saving investigation");
             investigation = mdm.save(investigation);
+
+            AuditUtils.audit(investigation.getUniqueIdentifier(),
+                    ctx.getUserId().toString(),
+                    hc.getRequest().getAbsolutePath().toString(),
+                    hc.getRequest().getHeaderValue("User-Agent"),
+                    "audit.investigation",
+                    AuditEvent.TYPE.CREATION,
+                    AuditEvent.TRIGGER.INTERNAL,
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "topic", topic),
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "note", note),
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "description", description),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "startDate", (startDate != null) ? Long.toString(startDate) : ""),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "endDate", (endDate != null) ? Long.toString(endDate) : ""));
+
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.default");
             return new InvestigationWrapper(mdm.find(Investigation.class, investigation.getInvestigationId()));
         } catch (UnauthorizedAccessAttemptException ex) {
@@ -253,8 +285,22 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             }
             LOGGER.debug("Persisting updated study.");
             study = mdm.save(study);
-            //@TODO: check whether wer have to get the study again to obtain the Study.default graph
-            return new StudyWrapper(mdm.find(Study.class, study));
+
+            AuditUtils.audit(study.getUniqueIdentifier(),
+                    ctx.getUserId().toString(),
+                    hc.getRequest().getAbsolutePath().toString(),
+                    hc.getRequest().getHeaderValue("User-Agent"),
+                    "audit.study",
+                    AuditEvent.TYPE.CONTENT_MODIFICATION,
+                    AuditEvent.TRIGGER.INTERNAL,
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "topic", topic),
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "note", note),
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "legalNote", legalNote),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "startDate", (startDate != null) ? Long.toString(startDate) : ""),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "endDate", (endDate != null) ? Long.toString(endDate) : ""));
+
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Study.default");
+            return new StudyWrapper(mdm.find(Study.class, study.getStudyId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to udpate study.", ex);
             throw new WebApplicationException(Response.Status.UNAUTHORIZED);
@@ -381,6 +427,19 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             object.setInvestigation(investigation);
             object = mdm.save(object);
 
+            AuditUtils.audit(object.getDigitalObjectIdentifier(),
+                    ctx.getUserId().toString(),
+                    hc.getRequest().getAbsolutePath().toString(),
+                    hc.getRequest().getHeaderValue("User-Agent"),
+                    "audit.digitalObject",
+                    AuditEvent.TYPE.CREATION,
+                    AuditEvent.TRIGGER.INTERNAL,
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "label", label),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "uploaderId", (uploaderId == null) ? "" : Long.toString(uploaderId)),
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "note", note),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "startDate", (startDate == null) ? "" : Long.toString(startDate)),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "endDate", (endDate == null) ? "" : Long.toString(endDate)));
+
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.default");
             return new DigitalObjectWrapper(mdm.find(DigitalObject.class, object.getBaseId()));
         } catch (UnauthorizedAccessAttemptException ex) {
@@ -413,6 +472,20 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             }
             investigation = mdm.save(investigation);
 
+            AuditUtils.audit(investigation.getUniqueIdentifier(),
+                    ctx.getUserId().toString(),
+                    hc.getRequest().getAbsolutePath().toString(),
+                    hc.getRequest().getHeaderValue("User-Agent"),
+                    "audit.investigation",
+                    AuditEvent.TYPE.CONTENT_MODIFICATION,
+                    AuditEvent.TRIGGER.INTERNAL,
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "topic", topic),
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "note", note),
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "description", description),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "startDate", (startDate != null) ? Long.toString(startDate) : ""),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "endDate", (endDate != null) ? Long.toString(endDate) : ""));
+
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.default");
             return new InvestigationWrapper(mdm.find(Investigation.class, investigation.getInvestigationId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to update investigation by id.", ex);
@@ -502,6 +575,7 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             if (object == null) {
                 throw new WebApplicationException(new Exception("DigitalObject for id " + id + " not found"), Response.Status.NOT_FOUND);
             }
+
             return new DigitalObjectWrapper(object);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to get digital object by id.", ex);
@@ -551,8 +625,22 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
             if (endDate != null && endDate != -1) {
                 object.setEndDate(new Date(endDate));
             }
+
             object = mdm.save(object);
-            return new DigitalObjectWrapper(object);
+            AuditUtils.audit(object.getDigitalObjectIdentifier(),
+                    ctx.getUserId().toString(),
+                    hc.getRequest().getAbsolutePath().toString(),
+                    hc.getRequest().getHeaderValue("User-Agent"),
+                    "audit.digitalObject",
+                    AuditEvent.TYPE.CONTENT_MODIFICATION,
+                    AuditEvent.TRIGGER.INTERNAL,
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "label", label),
+                    AuditDetail.factoryArgumentDetail(String.class.getCanonicalName(), "note", note),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "startDate", (startDate == null) ? "" : Long.toString(startDate)),
+                    AuditDetail.factoryArgumentDetail(Long.class.getCanonicalName(), "endDate", (endDate == null) ? "" : Long.toString(endDate)));
+
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.default");
+            return new DigitalObjectWrapper(mdm.find(DigitalObject.class, object.getBaseId()));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to update digital object by id.", ex);
             throw new WebApplicationException(Response.Status.UNAUTHORIZED);
@@ -707,20 +795,19 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
     @Override
     public IEntityWrapper<? extends IDefaultMetaDataSchema> createMetadataSchema(String groupId, String identifier, String schemaUrl, HttpContext hc) {
-        MetaDataSchema schema = new MetaDataSchema(identifier);
 
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
 
         try {
             //check for existing schemas
-            List<MetaDataSchema> existingSchema = mdm.find(schema, schema);
-            if (!existingSchema.isEmpty()) {
-                LOGGER.info("Metadata schema for id {} already exists. Returning existing entity.", identifier);
-                schema = existingSchema.get(0);
-            } else {
+            MetaDataSchema schema = mdm.findSingleResult("SELECT s FROM MetaDataSchema s WHERE s.schemaIdentifier=?1", new Object[]{identifier}, MetaDataSchema.class);
+            if (schema == null) {
+                schema = new MetaDataSchema(identifier);
                 //not existing, save
                 schema.setMetaDataSchemaUrl(schemaUrl);
+                //TODO: Set correct namespace
+                schema.setNamespace("");
                 schema = mdm.save(schema);
             }
 

@@ -141,7 +141,7 @@ public abstract class AbstractStagingAccessPoint implements IConfigurable {
         }
 
         if (!edu.kit.dama.util.FileUtils.isAccessible(new File(localBasePath), 1000)) {
-            throw new ConfigurationException("Provided 'LOCAL BASE PATH' or its parent seems not to be writable.");
+            throw new ConfigurationException("Provided 'LOCAL BASE PATH' with value " + localBasePath + " or its parent seems not to be writable.");
         }
 
         URL remoteBaseUrl;

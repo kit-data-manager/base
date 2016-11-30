@@ -56,19 +56,19 @@ limitations under the License.
     <!--
     MetaDataManagement related config.
     -->
-    <MetaDataManagement>
-        <PersistenceImplementations>
-            <PersistenceImplementation>
-                <Name>JPA</Name>
-                <Class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</Class>
-                <PersistenceUnits>
+    <metaDataManagement>
+        <persistenceImplementations>
+            <persistenceImplementation>
+                <name>JPA</name>
+                <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+                <persistenceUnits>
                     <!-- All databases which have to be supported by this implementation. 
                     Attention: Labels should be the same for all implementations. -->
-                    <PersistenceUnit>Staging_Test</PersistenceUnit>  
-                </PersistenceUnits>
-            </PersistenceImplementation>  
-        </PersistenceImplementations>
-    </MetaDataManagement>  
+                    <persistenceUnit>Staging_Test</persistenceUnit>  
+                </persistenceUnits>
+            </persistenceImplementation>  
+        </persistenceImplementations>
+    </metaDataManagement>  
     <!--
     JPA-related settings.
     -->

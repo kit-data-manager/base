@@ -1,5 +1,0 @@
-Appendix: KIT Data Manager Extensions
--------------------------------------
-The following chapters decribe optional extension modules for KIT Data Manager. They cover information about concepts, installation and usage for these extensions.
-
-include::ext_enhancedmetadata.txt[]

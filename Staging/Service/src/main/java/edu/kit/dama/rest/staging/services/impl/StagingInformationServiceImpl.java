@@ -29,6 +29,9 @@ import edu.kit.lsdf.adalapi.AbstractFile;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
+import edu.kit.dama.mdm.dataorganization.impl.util.Util;
+import edu.kit.dama.mdm.dataorganization.service.core.DataOrganizerFactory;
+import edu.kit.dama.mdm.dataorganization.service.exception.InvalidNodeIdException;
 import edu.kit.dama.mdm.tools.DigitalObjectSecureQueryHelper;
 import edu.kit.dama.rest.base.types.CheckServiceResponse;
 import edu.kit.dama.rest.base.types.ServiceStatus;
@@ -72,6 +75,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,7 +104,7 @@ public class StagingInformationServiceImpl implements IStagingService {
     public Response checkService() {
         ServiceStatus status;
         try {
-            LOGGER.debug("Doing service check by getting one ingest");
+            LOGGER.debug("Doing service check by getting one ingest.");
             List<IngestInformation> ingests = IngestInformationServiceLocal.getSingleton().getAllIngestInformation(0, 1, AuthorizationContext.factorySystemContext());
             LOGGER.debug("Service check getting one ingest returned {} ingest.", ingests.size());
             status = ServiceStatus.OK;
@@ -131,7 +135,7 @@ public class StagingInformationServiceImpl implements IStagingService {
                     JSONArray a = new JSONArray(stagingProcessors);
                     for (int i = 0; i < a.length(); i++) {
                         Long id = a.getLong(i);
-                        LOGGER.debug("Checking staging processor for id {}", id);
+                        LOGGER.debug("Checking staging processor for id {}.", id);
                         StagingProcessor processor = mdm.find(StagingProcessor.class, id);
                         if (processor != null) {
                             LOGGER.debug("Staging processor found. Adding it to transfer.");
@@ -141,10 +145,10 @@ public class StagingInformationServiceImpl implements IStagingService {
                         }
                     }
                 } catch (JSONException ex) {
-                    LOGGER.error("Failed to deserialize json array", ex);
+                    LOGGER.error("Failed to deserialize json array.", ex);
                 }
             } catch (UnauthorizedAccessAttemptException ex) {
-                LOGGER.error("Unauthorized to obtain staging processor", ex);
+                LOGGER.error("Unauthorized to obtain staging processor.", ex);
             } finally {
                 mdm.close();
             }
@@ -166,14 +170,14 @@ public class StagingInformationServiceImpl implements IStagingService {
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
 
         if (ownerId != null) {
-            LOGGER.debug("Filtering ingest ids by owner {}", ownerId);
+            LOGGER.debug("Filtering ingest ids by owner {}.", ownerId);
             result = IngestInformationServiceLocal.getSingleton().getIngestInformationByOwner(ownerId.trim(), first, results, ctx);
         } else if (objectId != null) {
             DigitalObjectId digitalObjectIdentifier = getObjectIdentifierForId(objectId, ctx);
-            LOGGER.debug("Filtering ingest ids by digital object id {}", digitalObjectIdentifier);
+            LOGGER.debug("Filtering ingest ids by digital object id {}.", digitalObjectIdentifier);
             result = Arrays.asList(IngestInformationServiceLocal.getSingleton().getIngestInformationByDigitalObjectId(digitalObjectIdentifier, ctx));
         } else if (status != null && status != -1) {
-            LOGGER.debug("Filtering ingest ids by status {}", status);
+            LOGGER.debug("Filtering ingest ids by status {}.", status);
             result = IngestInformationServiceLocal.getSingleton().getIngestInformationByStatus(status, first, results, ctx);
         } else {
             //all arguments are null...return all entities
@@ -189,18 +193,18 @@ public class StagingInformationServiceImpl implements IStagingService {
         final Number result;
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
         if (ownerId != null) {
-            LOGGER.debug("Obtaining ingest information count for owner {}", ownerId);
+            LOGGER.debug("Obtaining ingest information count for owner '{}'.", ownerId);
             result = IngestInformationServiceLocal.getSingleton().getIngestInformationCountByOwner(ownerId.trim(), ctx);
         } else if (status != null && status != -1) {
-            LOGGER.debug("Obtaining ingest information count for status {}", status);
+            LOGGER.debug("Obtaining ingest information count for status {}.", status);
             result = IngestInformationServiceLocal.getSingleton().getIngestInformationCountByStatus(status, ctx);
         } else {
             //all arguments are null...return all entities
-            LOGGER.debug("Obtaining ingest information count without filtering");
+            LOGGER.debug("Obtaining ingest information count without filtering.");
             result = IngestInformationServiceLocal.getSingleton().getAllIngestInformationCount(ctx);
         }
 
-        LOGGER.debug("Obtained ingest information count is '{}'", result);
+        LOGGER.debug("Obtained ingest information count is '{}'.", result);
         return new IngestInformationWrapper((result == null) ? 0 : result.intValue());
     }
 
@@ -244,14 +248,14 @@ public class StagingInformationServiceImpl implements IStagingService {
         final List<DownloadInformation> result;
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
         if (ownerId != null) {
-            LOGGER.debug("Filtering download ids by owner {}", ownerId);
+            LOGGER.debug("Filtering download ids by owner '{}'.", ownerId);
             result = DownloadInformationServiceLocal.getSingleton().getDownloadInformationByOwner(ownerId.trim(), first, results, ctx);
         } else if (objectId != null) {
-            LOGGER.debug("Filtering download ids by digital object id {}", objectId);
+            LOGGER.debug("Filtering download ids by digital object id {}.", objectId);
             DigitalObjectId digitalObjectIdentifier = getObjectIdentifierForId(objectId, ctx);
             result = DownloadInformationServiceLocal.getSingleton().getDownloadInformationByDigitalObjectId(digitalObjectIdentifier, first, results, ctx);
         } else if (status != null && status != -1) {
-            LOGGER.debug("Filtering download ids by status {}", status);
+            LOGGER.debug("Filtering download ids by status {}.", status);
             result = DownloadInformationServiceLocal.getSingleton().getDownloadInformationByStatus(status, first, results, ctx);
         } else {
             //all arguments are null...return all entities
@@ -262,7 +266,7 @@ public class StagingInformationServiceImpl implements IStagingService {
     }
 
     @Override
-    public IEntityWrapper<? extends IDefaultDownloadInformation> createDownload(String groupId, String objectId, String accessPointId, String stagingProcessors, HttpContext hc) {
+    public IEntityWrapper<? extends IDefaultDownloadInformation> createDownload(String groupId, String objectId, String accessPointId, String dataOrganizationTree, String stagingProcessors, HttpContext hc) {
         TransferClientProperties props = new TransferClientProperties();
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
         props.setStagingAccessPointId(getAccessPointConfigurationForId(accessPointId, ctx).getUniqueIdentifier());
@@ -286,10 +290,10 @@ public class StagingInformationServiceImpl implements IStagingService {
                         }
                     }
                 } catch (JSONException ex) {
-                    LOGGER.error("Failed to deserialize json array", ex);
+                    LOGGER.error("Failed to deserialize json array.", ex);
                 }
             } catch (UnauthorizedAccessAttemptException ex) {
-                LOGGER.error("Unauthorized to obtain staging processor", ex);
+                LOGGER.error("Unauthorized to obtain staging processor.", ex);
             } finally {
                 mdm.close();
             }
@@ -298,13 +302,41 @@ public class StagingInformationServiceImpl implements IStagingService {
         try {
             LOGGER.debug("Obtaining digital object for download.");
             DigitalObjectId digitalObjectIdentifier = getObjectIdentifierForId(objectId, ctx);
-            LOGGER.debug("Calling scheduleDownload()");
-            final DownloadInformation result = DownloadInformationServiceLocal.getSingleton().scheduleDownload(digitalObjectIdentifier, props, ctx);
-            LOGGER.debug("Creating stream from result {}", result);
+            IFileTree treeToDownload = null;
+            if (dataOrganizationTree != null) {
+                try {
+                    treeToDownload = Util.jsonViewToFileTree(new JSONObject(dataOrganizationTree), false);
+                    DigitalObjectId treeObjectId = treeToDownload.getDigitalObjectId();
+                    if (!treeObjectId.equals(digitalObjectIdentifier)) {
+                        LOGGER.error("ObjectId in tree ({}) does not fit object id for baseId {} ({}).", treeObjectId, objectId, digitalObjectIdentifier);
+                        throw new WebApplicationException(Response.Status.BAD_REQUEST);
+                    }
+
+                    if (treeToDownload.getRootNode().getChildren().isEmpty()) {
+                        //probably only the view name is provided to download the entire tree
+                        String viewName = (treeToDownload.getViewName() != null) ? treeToDownload.getViewName() : Constants.DEFAULT_VIEW;
+                        LOGGER.debug("Empty file tree detected. Loading file tree for view '{}'.", viewName);
+                        treeToDownload = DataOrganizerFactory.getInstance().getDataOrganizer().loadFileTree(treeObjectId, viewName);
+                    }
+                } catch (InvalidNodeIdException ex) {
+                    LOGGER.error("Invalid node reference in file tree.", ex);
+                    throw new WebApplicationException(Response.Status.BAD_REQUEST);
+                } catch (JSONException ex) {
+                    LOGGER.error("Failed to deserialize file tree.", ex);
+                    throw new WebApplicationException(Response.Status.BAD_REQUEST);
+                } catch (edu.kit.dama.mdm.dataorganization.service.exception.EntityNotFoundException ex) {
+                    LOGGER.error("Failed to load file tree for provided view name.", ex);
+                    throw new WebApplicationException(Response.Status.BAD_REQUEST);
+                }
+            }
+
+            LOGGER.debug("Calling scheduleDownload().");
+            final DownloadInformation result = DownloadInformationServiceLocal.getSingleton().scheduleDownload(digitalObjectIdentifier, treeToDownload, props, ctx);
+            LOGGER.debug("Creating stream from DownloadInformation entity with id {}.", result.getId());
             return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new DownloadInformationWrapper(result));
         } catch (TransferPreparationException ex) {
-            LOGGER.error("Failed to obtain result.", ex);
-            throw new WebApplicationException(ex);
+            LOGGER.error("Failed to schedule download.", ex);
+            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -313,18 +345,18 @@ public class StagingInformationServiceImpl implements IStagingService {
         final Number result;
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
         if (ownerId != null) {
-            LOGGER.debug("Obtaining download information count for owner {}", ownerId);
+            LOGGER.debug("Obtaining download information count for owner '{}'.", ownerId);
             result = DownloadInformationServiceLocal.getSingleton().getDownloadInformationCountByOwner(ownerId, ctx);
         } else if (status != null && status != -1) {
-            LOGGER.debug("Obtaining download information count for status {}", status);
+            LOGGER.debug("Obtaining download information count for status {}.", status);
             result = DownloadInformationServiceLocal.getSingleton().getDownloadInformationCountByStatus(status, ctx);
         } else {
             //all arguments are null...return all entities
-            LOGGER.debug("Obtaining download information count without filtering");
+            LOGGER.debug("Obtaining download information count without filtering.");
             result = DownloadInformationServiceLocal.getSingleton().getAllDownloadInformationCount(ctx);
         }
 
-        LOGGER.debug("Obtained ingest information count is '{}'", result);
+        LOGGER.debug("Obtained ingest information count is '{}'.", result);
         return new DownloadInformationWrapper((result == null) ? 0 : result.intValue());
     }
 
@@ -370,25 +402,25 @@ public class StagingInformationServiceImpl implements IStagingService {
 
     @Override
     public IDefaultTransferTaskContainer getDownloadContainer(Long pId, HttpContext hc) {
-        LOGGER.debug("Obtaining download information for id {}", pId);
+        LOGGER.debug("Obtaining download information for id {}.", pId);
         IAuthorizationContext ctx = authorize(hc);
         DownloadInformation result = DownloadInformationServiceLocal.getSingleton().getDownloadInformationById(pId, ctx);
         final TransferTaskContainer container;
         try {
             URL stagingUrl = new URL(result.getStagingUrl());
-            LOGGER.debug("Obtaining base staging path for URL '{}'", stagingUrl.toString());
+            LOGGER.debug("Obtaining base staging path for URL '{}'.", stagingUrl.toString());
 
             AbstractStagingAccessPoint accessPoint = StagingConfigurationManager.getSingleton().getAccessPointById(result.getAccessPointId());
             File localStagingPath = accessPoint.getLocalPathForUrl(stagingUrl, ctx);
 
             IFileTree accessibleTree = DataOrganizationUtils.createTreeFromFile(result.getDigitalObjectId(), new AbstractFile(localStagingPath), stagingUrl, false);
-            LOGGER.debug(" - Creating transfer task container");
+            LOGGER.debug("Creating transfer task container.");
             container = TransferTaskContainer.factoryDownloadContainer(pId, accessibleTree, StagingConfigurationManager.getSingleton().getRestServiceUrl());
         } catch (MalformedURLException ex) {
             LOGGER.error("Failed to parse staging URL.", ex);
             throw new WebApplicationException(ex, 404);
         } catch (IOException ex) {
-            LOGGER.error("Failed to create transfer container", ex);
+            LOGGER.error("Failed to create transfer task container.", ex);
             throw new WebApplicationException(ex, 404);
         }
 
@@ -455,7 +487,7 @@ public class StagingInformationServiceImpl implements IStagingService {
         try {
             String objectId = s_id;
             try {
-                LOGGER.debug("Trying to parse provided object id {} as long value", s_id);
+                LOGGER.debug("Trying to parse provided object id {} as long value.", s_id);
                 long id = Long.parseLong(s_id);
                 LOGGER.debug("Parsing to long succeeded. Obtaining string identifier for long id.");
                 s_id = mdm.findSingleResult("SELECT o.digitalObjectIdentifier FROM DigitalObject o WHERE o.baseId=" + id, String.class);
@@ -471,10 +503,10 @@ public class StagingInformationServiceImpl implements IStagingService {
                 throw new WebApplicationException(404);
             }
         } catch (UnauthorizedAccessAttemptException ex) {
-            LOGGER.error("Context " + pCtx.toString() + " is not authorized to access object by id " + s_id);
+            LOGGER.error("Context " + pCtx.toString() + " is not authorized to access object with id '" + s_id + "'", ex);
             throw new WebApplicationException(401);
         } catch (EntityNotFoundException ex) {
-            LOGGER.error("No DigitalObject accessible by context " + pCtx + " found for provided id " + pId + ".");
+            LOGGER.error("No DigitalObject accessible by context " + pCtx + " found for provided id '" + pId + "'.", ex);
             throw new WebApplicationException(404);
         } finally {
             mdm.close();
@@ -495,21 +527,20 @@ public class StagingInformationServiceImpl implements IStagingService {
         String stagingPU = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.PERSISTENCE_STAGING_PU_ID, "StagingUnit");
         StagingAccessPointConfiguration result;
         try {
-            LOGGER.debug("Trying to parse provided access point id {} as long value", s_id);
+            LOGGER.debug("Trying to parse provided access point id {} as long value.", s_id);
             long id = Long.parseLong(s_id);
             LOGGER.debug("Parsing to long succeeded. Continuing with long identifier.");
             result = StagingConfigurationPersistence.getSingleton(stagingPU).findAccessPointConfigurationById(id);
         } catch (NumberFormatException ex) {
-            LOGGER.debug("Parsing to long failed, expecting string identifier");
+            LOGGER.debug("Parsing to long failed, expecting string identifier.");
             result = StagingConfigurationPersistence.getSingleton(stagingPU).findAccessPointConfigurationByUniqueIdentifier(s_id);
         }
 
         if (result == null) {
-            LOGGER.error("No StagingAccessPointConfiguration found for identifier " + s_id);
+            LOGGER.error("No StagingAccessPointConfiguration found for identifier '{}'.", s_id);
             throw new WebApplicationException(404);
         }
 
         return result;
     }
-
 }

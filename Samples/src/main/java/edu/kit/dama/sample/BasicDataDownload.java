@@ -15,7 +15,7 @@
  */
 package edu.kit.dama.sample;
 
-import edu.kit.dama.rest.staging.client.impl.StagingServiceRESTClient;
+import edu.kit.dama.rest.staging.client.impl.StagingRestClient;
 import edu.kit.dama.rest.staging.types.DownloadInformationWrapper;
 import edu.kit.dama.staging.entities.download.DOWNLOAD_STATUS;
 import edu.kit.dama.staging.exceptions.StagingIntitializationException;
@@ -41,7 +41,7 @@ public class BasicDataDownload extends BasicDataIngest {
         createBaseMetadata();
         ingestData();
 
-        StagingServiceRESTClient stagingClient = new StagingServiceRESTClient(restBaseUrl + "/rest/staging/", context);
+        StagingRestClient stagingClient = new StagingRestClient(restBaseUrl + "/rest/staging/", context);
 
         //At first we have to obtain the StagingAccessPoint in order to be able to create a download.
         //For convenience we expect to have exactly one AccessPoint as set up during the default installation.

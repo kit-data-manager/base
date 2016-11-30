@@ -19,8 +19,11 @@ import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.core.ResourceConfig;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
+import edu.kit.dama.authorization.entities.Role;
+import edu.kit.dama.authorization.entities.UserId;
 import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
+import edu.kit.dama.authorization.services.administration.ResourceServiceLocal;
 import edu.kit.dama.commons.types.DigitalObjectId;
 import edu.kit.dama.commons.types.ILFN;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
@@ -53,12 +56,13 @@ import edu.kit.dama.mdm.dataorganization.service.exception.InvalidNodeIdExceptio
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.base.types.CheckServiceResponse;
 import edu.kit.dama.rest.base.types.ServiceStatus;
-import edu.kit.dama.rest.dataorganization.services.impl.util.DownloadStreamWrapper;
 import edu.kit.dama.rest.dataorganization.services.impl.util.FileDownloadHandler;
 import edu.kit.dama.rest.dataorganization.services.impl.util.HttpDownloadHandler;
+import edu.kit.dama.rest.dataorganization.services.impl.util.PublicDownloadHandler;
 import edu.kit.dama.rest.dataorganization.types.ElementPath;
 import edu.kit.dama.rest.util.RestUtils;
 import edu.kit.dama.staging.util.DataOrganizationUtils;
+import edu.kit.dama.util.Constants;
 import java.io.File;
 import java.io.IOException;
 import java.io.PipedInputStream;
@@ -70,7 +74,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -273,13 +280,14 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
 
     @Override
     public Response downloadContent(String pGroupId, Long pBaseId, String pViewName, String pPath, HttpContext hc, ResourceConfig config) {
-
-        DigitalObjectId objectId = null;
+        DigitalObjectId objectId;
         boolean preliminaryAccess = false;
         IAuthorizationContext ctx = null;
         try {
             LOGGER.debug("Trying to obtain real authorization context for groupId {}.", pGroupId);
             ctx = RestUtils.authorize(hc, new GroupId(pGroupId));
+            //preliminaryAccess = true;
+            //ctx = AuthorizationContext.factorySystemContext();
             LOGGER.debug("Authorization context obtained. No preliminary access required.");
         } catch (WebApplicationException wae) {
             if (wae.getResponse().getStatus() == Status.UNAUTHORIZED.getStatusCode()) {
@@ -292,7 +300,6 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
                 throw wae;
             }
         }
-
         objectId = getDigitalObjectId(pBaseId, ctx);
 
         LOGGER.debug("Continuing with {} access to object with id {}", (preliminaryAccess) ? "preliminary" : "authorized", objectId);
@@ -306,11 +313,12 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
             final IDataOrganizationNode node;
             try {
                 LOGGER.debug("Getting node for element path {}, object with id '{}' and view '{}'", pPath, objectId, pViewName);
-                node = new ElementPath(pPath).getNodeForPath(objectId, pViewName);
+                ElementPath p = new ElementPath(pPath);
+                node = p.getNodeForPath(objectId, pViewName);
                 if (node != null) {
-                    LOGGER.debug("Obtained node {}", node);
+                    LOGGER.debug("Successfully obtained node for path {}.", pPath);
                 } else {
-                    LOGGER.warn("Obtained no node.");
+                    throw new EntityNotFoundException("Obtained no node for path '" + pPath + "'");
                 }
             } catch (EntityNotFoundException | InvalidNodeIdException ex) {
                 LOGGER.error("Failed to get node for path '" + pPath + "'.", ex);
@@ -322,8 +330,6 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
                 checkAuthorizationLessAccess(node, config);
                 LOGGER.debug("Node is eligible for authorization less access.");
             }
-
-            DownloadStreamWrapper wrapper = null;
             if (node instanceof IFileNode) {
                 LOGGER.debug("Obtaining LFN from file node {}", node.getName());
                 ILFN ilfn = ((IFileNode) node).getLogicalFileName();
@@ -334,27 +340,36 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
                 LOGGER.debug("LFN is {}.", ilfn);
 
                 URL lfnUrl = new URL(ilfn.asString());
+                Response response;
+
                 try {
-                    if ("file".equals(lfnUrl.getProtocol().toLowerCase())) {
-                        LOGGER.debug("Using file handler for providing download of URL {}.", lfnUrl);
-                        wrapper = new FileDownloadHandler().prepareStream(new File(lfnUrl.toURI()));
-                    } else if ("http".equals(lfnUrl.getProtocol().toLowerCase())) {
-                        //more flexible handling for http might be useful here
-                        LOGGER.debug("Using Http handler for providing download of URL {}.", lfnUrl);
-                        wrapper = new HttpDownloadHandler().prepareStream(lfnUrl);
+                    if (null != lfnUrl.getProtocol().toLowerCase()) {
+                        switch (lfnUrl.getProtocol().toLowerCase()) {
+                            case "file":
+                                LOGGER.debug("Using file handler for providing download of URL {}.", lfnUrl);
+                                response = new FileDownloadHandler().prepareStream(new File(lfnUrl.toURI()));
+                                break;
+                            case "http":
+                                //more flexible handling for http might be useful here
+                                LOGGER.debug("Using Http handler for providing download of URL {}.", lfnUrl);
+                                response = new HttpDownloadHandler().prepareStream(lfnUrl);
+                                break;
+                            default:
+                                //support for other protocols in future?
+                                LOGGER.error("No download handler available for protocol '{}'.", lfnUrl.getProtocol());
+                                //not implemented for this protocol type
+                                throw new WebApplicationException(501);
+                        }
                     } else {
-                        //support for other protocols in future?
-                        LOGGER.error("No download handler available for protocol '{}'.", lfnUrl.getProtocol());
-                        //not implemented for this protocol type
-                        throw new WebApplicationException(501);
+                        //'null' protocol URI not supported
+                        throw new URISyntaxException(lfnUrl.toString(), "No protocol.");
                     }
                 } catch (URISyntaxException use) {
-                    LOGGER.error("Direct data access is not available for LFNs in the form of '{}'", lfnUrl);
+                    LOGGER.error("Direct data access is not available for LFNs in the form of '" + lfnUrl + "'", use);
                     //not implemented for this LFN type
                     throw new WebApplicationException(501);
                 }
-
-                return Response.ok(wrapper.getOutputStream(), wrapper.getContentType()).build();
+                return response;
             } else if (node instanceof ICollectionNode) {
                 LOGGER.debug("Establishing piped streams.");
                 PipedInputStream in = new PipedInputStream();
@@ -388,7 +403,7 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
                 return Response.ok(in, MediaType.APPLICATION_OCTET_STREAM).header("Content-Disposition",
                         "attachment; filename=" + resultName + ".zip").build();
             } else {
-                LOGGER.error("Data access to nodes of type '{}' is currently not supported.", ((node != null) ? node.getClass().getCanonicalName() : "<NULL>"));
+                LOGGER.error("Data access to nodes of type '{}' is currently not supported.", node.getClass().getCanonicalName());
                 //not implemented for these nodes
                 throw new WebApplicationException(501);
             }
@@ -437,6 +452,83 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    /**
+     * Download the public content of a digital object identified by its digital
+     * object id. Compared to the normal download of digital object's content
+     * the workflow behind downloading published content behaves slightly
+     * different:
+     *
+     * <ul>
+     * <li>Use the objectId provided as path parameter, which is NOT the baseId,
+     * directly to obtain the according digital object. Then check whether the
+     * virtual user with the userId Constants.WORLD_USER_ID has at least GUEST
+     * permissions. If this is the case, the object is expected to be
+     * published.</li>
+     * <li>Check the list of available views for the object. By default,
+     * published data is located in a view named Constants.PUBLIC_VIEW. If this
+     * view does not exist, the content of view Constants.DEFAULT_VIEW is
+     * returned.</li>
+     * <li>Provide the byte stream to the zipped content of the root node of the
+     * previously determined public view and deliver it as
+     * APPLICATION_OCTET_STREAM.</li>
+     * </ul>
+     *
+     * To support the client, a header field 'Content-Disposition' looking as
+     * follows should be delivered:
+     *
+     * <i>attachment; filename=&lt;OBJECT_ID&gt;.zip</i>
+     *
+     * @param objectId The object id of the digital object the DataOrganization
+     * is associated with.
+     * @param config The config for init param check.
+     *
+     * @return A response object providing a stream to the according data
+     * provided by the call.
+     */
+    @GET
+    @Path(value = "/organization/public/{objectId}")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response downloadPublicContent(@PathParam("objectId") String objectId, @javax.ws.rs.core.Context ResourceConfig config, HttpContext hc) {
+        IAuthorizationContext ctx = new AuthorizationContext(new UserId(Constants.WORLD_USER_ID), new GroupId(Constants.WORLD_USER_ID), Role.GUEST);
+
+        DigitalObject object;
+        LOGGER.debug("Trying to get public content for digital object id with id {}", new Object[]{objectId});
+        IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
+        try {
+            LOGGER.debug("Checking access for public context.");
+            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.simple");
+            object = mdm.findSingleResult("SELECT o FROM DigitalObject o WHERE o.digitalObjectIdentifier=?1", new Object[]{objectId}, DigitalObject.class);
+            if (object == null) {
+                LOGGER.error("No published digital object for object id " + objectId + " found.");
+                return Response.status(Status.NOT_FOUND).build();
+            }
+
+            //check if single user grants are supported
+            if (!ResourceServiceLocal.getSingleton().grantsAllowed(object.getSecurableResourceId(), AuthorizationContext.factorySystemContext())) {
+                throw new UnauthorizedAccessAttemptException("Public access not available. Grants not allowed.");
+            }
+
+            //check role for user WORLD
+            Role publicRole = ResourceServiceLocal.getSingleton().getGrantRole(object.getSecurableResourceId(), ctx.getUserId(), AuthorizationContext.factorySystemContext());
+
+            if (!publicRole.atLeast(Role.GUEST)) {
+                throw new UnauthorizedAccessAttemptException("Public access not available. Granted role < GUEST.");
+            }
+        } catch (UnauthorizedAccessAttemptException | edu.kit.dama.authorization.exceptions.EntityNotFoundException ex) {
+            LOGGER.error("Failed to obtain object for object id " + objectId + ". Object seems not to be publicly available.", ex);
+            return Response.status(Status.NOT_FOUND).build();
+        } finally {
+            mdm.close();
+        }
+
+        try {
+            return new PublicDownloadHandler().prepareStream(object);
+        } catch (IOException ex) {
+            LOGGER.error("Failed to open data stream.", ex);
+            return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**
@@ -492,7 +584,6 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
         if (publicViews != null) {
             Collections.addAll(allowedViews, publicViews.trim().split(";"));
         }
-
         boolean collectionAccessAllowed = Boolean.parseBoolean(publicCollectionAccess);
 
         if (allowedViews.contains(pNode.getViewName())) {
@@ -501,22 +592,12 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
         } else {
             LOGGER.debug("Node with in view {} not eligable to authorization-less access by view name", pNode.getViewName());
         }
-
         if (!accessAllowed && publicAttribute != null) {
             for (IAttribute attrib : pNode.getAttributes()) {
                 if (attrib.getKey().equals(publicAttribute)) {
                     LOGGER.debug("Authorization-less access to node granted by existence of attribute {}", publicAttribute);
                     accessAllowed = true;
                 }
-            }
-        }
-
-        if (!accessAllowed) {
-            if (pNode instanceof ICollectionNode && collectionAccessAllowed) {
-                LOGGER.debug("Authorization-less access to node granted by type ICollectionNode");
-                accessAllowed = true;
-            } else {
-                LOGGER.debug("Node with name {} not eligable to authorization-less access by type ICollectionNode", pNode.getName());
             }
         }
 
@@ -528,7 +609,15 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
                 LOGGER.debug("Node with name {} not eligable to authorization-less access by file filter {}", pNode.getName(), publicFileNodeFilter);
             }
         }
-
+        //perform attribute check at the end as this check is the most expensive one
+        if (!accessAllowed) {
+            if (pNode instanceof ICollectionNode && collectionAccessAllowed) {
+                LOGGER.debug("Authorization-less access to node granted by type ICollectionNode");
+                accessAllowed = true;
+            } else {
+                LOGGER.debug("Node with name {} not eligable to authorization-less access by type ICollectionNode", pNode.getName());
+            }
+        }
         if (!accessAllowed) {
             throw new WebApplicationException(Status.FORBIDDEN);
         }

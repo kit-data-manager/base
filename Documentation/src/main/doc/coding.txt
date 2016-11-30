@@ -18,20 +18,21 @@ The typical access to KIT Data Manager services for basic (remote) use cases is 
 |DataOrganization Service|Access to the DataOrganization of Digital Objects as soon as it is extractred during ingest.
 |Sharing Service|Obtaining and changing access permissions for secured resources (e.g. Study, Investigation, Digital Object).
 |Data Workflow Service|Apply processing tasks or workflows to Digital Objects in the repository system.
+|Audit Service|Query and create audit events.
 |================================================================================================================================================
 
 You'll find the documentation of all of these services in your KIT Data Manager distribution. All these REST interfaces are secured via OAuth 1.0. 
 The OAuth implementation used for KIT Data Manager is kept rather simple for the time being. There is no management of different consumers, thus the 
-consumer key and secret are always the same and both have the value `secret`. In order to authorize the access to a service, you have to provide an 
+consumer key and secret are have the values mentioned below. In order to authorize the access to a service, you have to provide an 
 OAuth header with each REST call using the following OAuth parameters: 
 
 [cols="m,n", options="header"]
 |================================================================================================================================================
 |Parameter|Value
-|Consumer Key|secret
+|Consumer Key|key
 |Consumer Secret|secret
-|Access Token|Your Access Token Accessible via the administration backend at http://kitdm-host:8080/KITDM (default: admin) 
-|Access Key|Your Access Key Accessible via the administration backend at http://kitdm-host:8080/KITDM (default: dama14) 
+|Access Token|Your Access Token accessible via the administration backend at http://kitdm-host:8080/KITDM (default: admin) 
+|Access Key|Your Access Key accessible via the administration backend at http://kitdm-host:8080/KITDM (default: dama14) 
 |================================================================================================================================================
 
 For Java programmers there are client implementations available for all services covering authorization and access to the services. 
@@ -44,18 +45,20 @@ The implementation classes and default service base URLs are shown in the follow
 ||http://kitdm-host:8080/KITDM/rest/usergroup/
 |BaseMetaData Service|edu.kit.dama.rest.metadata.client.impl.BaseMetaDataRestClient
 ||http://kitdm-host:8080/KITDM/rest/basemetadata/
-|Staging Service|edu.kit.dama.rest.staging.client.impl.StagingServiceRESTClient
+|Staging Service|edu.kit.dama.rest.staging.client.impl.StagingRestClient
 ||http://kitdm-host:8080/KITDM/rest/staging/
 |DataOrganization Service|edu.kit.dama.rest.dataorganization.client.impl.DataOrganizationRestClient
 ||http://kitdm-host:8080/KITDM/rest/dataorganization/
-|Sharing Service|edu.kit.dama.rest.sharing.client.impl.SharingRESTClient
+|Sharing Service|edu.kit.dama.rest.sharing.client.impl.SharingRestClient
 ||http://kitdm-host:8080/KITDM/rest/sharing/
 |Data Workflow Service|edu.kit.dama.rest.dataworkflow.client.impl.DataWorkflowRestClient
 ||http://kitdm-host:8080/KITDM/rest/dataworkflow/
+|Audit Service|edu.kit.dama.rest.audit.client.impl.AuditRestClient
+||http://kitdm-host:8080/KITDM/rest/audit/
 |================================================================================================================================================
 
 [NOTE]
-You'll find some of the following and other examples withint the code base of KIT Data Manager in the link:https://github.com/kit-data-manager/base/tree/master/Sample[Sample module]
+You'll find some of the following and other examples withint the code base of KIT Data Manager in the link:https://github.com/kit-data-manager/base/tree/master/Samples[Samples module]
 
 In Java, the access to the different services looks quite similar. The following example shows how to create the BasicMetadata structure for a new Digital Object:
 
@@ -204,31 +207,24 @@ a usable StagingProcessor instance. However, if the validation succeeds the conf
   }
 --------------------------------------
 
-Finally, there are four methods for the actual execution. Two of them are for pre-transfer operations which are exectured in case of an ingest (on the user side) before the transfer starts. 
-To use pre-transfer operations special transfer clients are needed. Therefore, we skip these two methods for now.
-The two other methods are for post-transfer operations which are executed on the server side as before the ingest the archive location starts (see <<ChapterStaging,Staging>>). The first method 
-`performPostTransferProcessing(TransferTaskContainer pContainer)` is responsible for the actual execution of the processor. The provided `TransferTaskContainer` contains all
+Finally, there are four methods for the actual execution. Two of them are for pre-transfer operations which are executed in case of an ingest before the transfer from the upload cache to the repository storage starts. 
+The two other methods are for post-transfer operations which are executed after the ingest into the repository storage has finished (see <<ChapterStaging,Staging>>). The main difference between pre- and post-transfer 
+processing is, that pre-transfer processing is only available for ingests and is executed directly before the digital object has been ingested into the repository system. Therefor, there is no data organization information 
+available, yet. However, during pre-transfer processing  validation of the uploaded data and metadata extraction may take place as pre-transfer processing is allowed to fail. In contrast, post-transfer processing is executed 
+after the digital object has been integested into the repository system. Therefore, post-transfer processing should not fail as the content is already ingested.
+
+The first method `perform<Pre|Post>Processing(TransferTaskContainer pContainer)` is responsible for the actual execution of the processor in the according phase. The provided `TransferTaskContainer` contains all
 information available for the transfer itself as well as information about uploaded data. The data belonging to a single transfer is organized in a well-defined tree structure described in 
 chapter <<ChapterStaging,Staging>>. All data generated during an execution of a staging processor must be stored in the `generated` folder. The URL of this folder can be obtained
 from the TransferTaskContainer as it is shown in the example. Finally, the generated file must be added to the container in order to ingest it together with the data to access it later. 
-The second method `finalizePostTransferProcessing(TransferTaskContainer pContainer)` is meant to be used for cleanup purposes in case of a successful execution as this method is only called if the 
+The second method `finalize<Pre|Post>TransferProcessing(TransferTaskContainer pContainer)` is meant to be used for cleanup purposes in case of a successful execution as this method is only called if the 
 processor was executed without errors. In our example, no special cleanup is needed. 
 
 [source,java]
 --------------------------------------
   public void performPreTransferProcessing(TransferTaskContainer pContainer) 
   throws StagingProcessorException{
-    //not used as this processor is only applicable on the server-side
-  }
-
-  public void finalizePreTransferProcessing(TransferTaskContainer pContainer) 
-  throws StagingProcessorException{
-    //not used as this processor is only applicable on the server-side
-  }
-
-  public void performPostTransferProcessing(TransferTaskContainer pContainer) 
-  throws StagingProcessorException{
-    //Example 1: Read an uploaded file
+    //Example 1: Read an uploaded file.
     //Obtain the root node of the file tree uploaded by the user
     ICollectionNode root = pContainer.getFileTree().getRootNode();
     //Use helper class edu.​kit.​dama.​mdm.​dataorganization.​impl.​util.Util to get the subtree containing the uploaded data...
@@ -247,8 +243,11 @@ processor was executed without errors. In our example, no special cleanup is nee
       } catch (IOException ex) {
         throw new StagingProcessorException("Error reading file from URL " + metadataFile.getLogicalFileName().asString() + ".", ex);
       }
-    }
-    //Example 2: Generate a file
+    }   
+    //Example 2: Generate a file.
+    //Generating additional files must happen in the pre-transfer phase to allow 
+    //them to be ingested as generated content. Adding them in the post-transfer phase
+    //to the container won't be possible anymore.
     try{
       //Generated files should go into the 'generated' folder of the according ingest.
       //This folder can be obtained from the TransferTaskContainer: 
@@ -266,9 +265,19 @@ processor was executed without errors. In our example, no special cleanup is nee
     }
   }
 
+  public void finalizePreTransferProcessing(TransferTaskContainer pContainer) 
+  throws StagingProcessorException{
+     //not used here
+  }
+
+  public void performPostTransferProcessing(TransferTaskContainer pContainer) 
+  throws StagingProcessorException{
+    //not used here
+  }
+
   public void finalizePostTransferProcessing(TransferTaskContainer pContainer) 
   throws StagingProcessorException{
-     //not needed here
+     //not used here
   }
 }
 --------------------------------------
@@ -277,9 +286,6 @@ Finally, the processor has to be deployed and registered in your KIT Data Manage
 to be placed in the Web Application path of your KIT Data Manager deployment, typically this is `$CATALINA_HOME/webapps/KITDM/WEB-INF/lib/`. Afterwards, the Web Application server 
 (typically Apache Tomcat) or at least the KIT Data Manager Web Application have to be restarted. The registration and configuration of the deployed StagingProcessor can be done after a successful 
 restart using the administration user interface.
-
-[NOTE]
-Currently, staging processors are only supported for ingests. Adding this functionality to downloads is planned for future versions of KIT Data Manager.
 
 Server-sided Development
 ~~~~~~~~~~~~~~~~~~~~~~~~

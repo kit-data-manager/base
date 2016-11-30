@@ -58,7 +58,7 @@ public class DataOrganizerFactory {
     }
 
     /**
-     * Creates an instance of the configured DataOrganizer configured in a
+     * Creates an instance of the configured DataOrganizer defined in a
      * subsection of pConfig named 'dataOrganizerAdapter'. The root node of the
      * section also contains the implementation class. Depending on the
      * implementation, there might be further child nodes containing specific

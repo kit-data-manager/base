@@ -21,14 +21,13 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>MetaDataManagement</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>edu.kit.dama.rest</groupId>
     <artifactId>REST-DataWorkflow</artifactId>
     <packaging>jar</packaging>
-    <version>1.2</version>
     <name>REST-DataWorkflow</name>
   
     <description>Implementation of the DataWorkflow REST interface.</description>
@@ -58,17 +57,17 @@
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>ServiceBase</artifactId>
-            <version>1.3</version>
+            <version>${project.kit.datamanager.version}</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>DataWorkflowRestInterface</artifactId>
-            <version>1.2</version>
+            <version>${project.kit.datamanager.version}</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>DataWorkflow</artifactId>
-            <version>1.2</version>
+            <version>${project.kit.datamanager.version}</version>
         </dependency>
     </dependencies>
 </project>

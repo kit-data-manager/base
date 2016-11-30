@@ -68,7 +68,10 @@ public class DataOrganizationRestClient extends AbstractRestClient {
      * Download root node including path component.
      */
     private static final String DOWNLOAD_PATH = "/organization/download/{0}/{1}";
-
+    /**
+     * Download root node.
+     */
+    private static final String DOWNLOAD_PUBLISHED_DATA = "/organization/public/{0}";
     /**
      * 'url' for root children count.
      */
@@ -732,6 +735,70 @@ public class DataOrganizationRestClient extends AbstractRestClient {
     }
 
     /**
+     * Download the data of a digital object which has been published. Compared
+     * to the normal content download this call only succeeds if the object has
+     * been published. If this is the case, it returns the zipped content of the
+     * data organization view 'public', if it exists, otherwise the zipped
+     * content of the view 'default' is returned.
+     *
+     * @param digitalObjectId The digital object id of the published object.
+     * @param pDestination The destination folder where to store the downloaded
+     * file.
+     * @param pFilename The destination filename.
+     *
+     *
+     * @throws IOException if downloading the data fails.
+     */
+    public void downloadPublishedData(String digitalObjectId, File pDestination, String pFilename) throws IOException {
+        if (digitalObjectId == null) {
+            throw new IllegalArgumentException("Argument digitalObjectId must not be null");
+        }
+
+        String resourceUrl = RestClientUtils.encodeUrl(DOWNLOAD_PUBLISHED_DATA, digitalObjectId);
+        LOGGER.debug("Resource for path is: '{}'", resourceUrl);
+
+        LOGGER.debug("Requesting download stream.");
+        ClientResponse response = getWebResource(resourceUrl).get(ClientResponse.class);
+
+        String filename;
+        LOGGER.debug("Determining download filename.");
+        if (pFilename == null) {
+            LOGGER.debug("Evaluating Content-Disposition header.");
+            String content = response.getHeaders().getFirst("Content-Disposition");
+            if (content != null) {
+                LOGGER.debug("Content disposition header with value {} found. Trying to obtain filename.", content);
+                filename = content.substring(content.indexOf("=") + 1);
+                if (filename.isEmpty()) {
+                    throw new IllegalArgumentException("Invalid Content-Disposition header '" + content + "' results in empty filename.");
+                }
+                LOGGER.debug("Using filename '{}' from Content-Disposition header.", pFilename);
+            } else {
+                throw new IllegalArgumentException("Argument pFilename must not be 'null' if server does not return a proper Content-Disposition header.");
+            }
+        } else {
+            LOGGER.debug("Using user-provided filename '{}'", pFilename);
+            filename = pFilename;
+        }
+
+        LOGGER.debug("Reading input stream and writing content to file.");
+        InputStream in = response.getEntityInputStream();
+        FileOutputStream fout = new FileOutputStream(new File(pDestination, filename));
+        try {
+            byte[] buffer = new byte[1024];
+            int len = in.read(buffer);
+            while (len != -1) {
+                fout.write(buffer, 0, len);
+                len = in.read(buffer);
+            }
+        } finally {
+            LOGGER.debug("Closing streams.");
+            fout.flush();
+            fout.close();
+            in.close();
+        }
+    }
+
+    /**
      * Get the root node of the data organization associated with the provided
      * object id and the provided view identifier. The arguments pFirst and
      * pResults could be ignored in most cases as typically only one root node
@@ -813,16 +880,16 @@ public class DataOrganizationRestClient extends AbstractRestClient {
      *
      * @throws Exception If something fails.
      */
-    public static void main(String[] args) throws Exception {
-        SimpleRESTContext ctx = new SimpleRESTContext("admin", "dama14");
-        DataOrganizationRestClient client = new DataOrganizationRestClient("http://localhost:8080/KITDM/rest/dataorganization", ctx);
-        System.out.println("Getting root node");
-        client.downloadData(Constants.USERS_GROUP_ID, 34l, "default", "/", new File("."), null, ctx);
-
-        /*System.out.println("Get child count");
-         System.out.println(client.getChildCount("USERS", 4l, 100l, "default", ctx).getCount());
-
-         System.out.println("Get views");
-         System.out.println(client.getViews("USERS", 4l, ctx).getEntities());*/
-    }
+//    public static void main(String[] args) throws Exception {
+//        SimpleRESTContext ctx = new SimpleRESTContext("admin", "dama14");
+//        DataOrganizationRestClient client = new DataOrganizationRestClient("http://localhost:8080/KITDM/rest/dataorganization", ctx);
+//        System.out.println("Getting root node");
+//        client.downloadData(Constants.USERS_GROUP_ID, 34l, "default", "/", new File("."), null, ctx);
+//
+//        /*System.out.println("Get child count");
+//         System.out.println(client.getChildCount("USERS", 4l, 100l, "default", ctx).getCount());
+//
+//         System.out.println("Get views");
+//         System.out.println(client.getViews("USERS", 4l, ctx).getEntities());*/
+//    }
 }

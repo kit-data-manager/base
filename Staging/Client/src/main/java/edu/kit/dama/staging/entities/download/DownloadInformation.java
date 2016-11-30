@@ -60,21 +60,33 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
             name = "simple",
             attributeNodes = {
                 @XmlNamedAttributeNode("id")
-            }),
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("status"),
-                @XmlNamedAttributeNode("lastUpdate"),
-                @XmlNamedAttributeNode("expiresAt"),
-                @XmlNamedAttributeNode("transferId"),
-                @XmlNamedAttributeNode("digitalObjectUuid"),
-                @XmlNamedAttributeNode("ownerUuid"),
-                @XmlNamedAttributeNode("clientAccessUrl"),
-                @XmlNamedAttributeNode("stagingUrl"),
-                @XmlNamedAttributeNode("errorMessage"),
-                @XmlNamedAttributeNode("accessPointId"),
+                @XmlNamedAttributeNode("id")
+                ,
+                @XmlNamedAttributeNode("status")
+                ,
+                @XmlNamedAttributeNode("lastUpdate")
+                ,
+                @XmlNamedAttributeNode("expiresAt")
+                ,
+                @XmlNamedAttributeNode("transferId")
+                ,
+                @XmlNamedAttributeNode("digitalObjectUuid")
+                ,
+                @XmlNamedAttributeNode("ownerUuid")
+                ,
+                @XmlNamedAttributeNode("clientAccessUrl")
+                ,
+                @XmlNamedAttributeNode("stagingUrl")
+                ,
+                @XmlNamedAttributeNode("errorMessage")
+                ,
+                @XmlNamedAttributeNode("accessPointId")
+                ,
                 @XmlNamedAttributeNode(value = "stagingProcessors", subgraph = "simple")
             })
 })
@@ -146,12 +158,12 @@ public class DownloadInformation implements IDefaultDownloadInformation, ITransf
     @OneToMany(fetch = FetchType.EAGER)
     @XmlElement(name = "stagingProcessor")
     private Set<StagingProcessor> stagingProcessors = new HashSet<>();
-    @Transient
-    @XmlTransient
-    private Set<StagingProcessor> clientSideStagingProcessors = null;
-    @Transient
-    @XmlTransient
-    private Set<StagingProcessor> serverSideStagingProcessors = null;
+//    @Transient
+//    @XmlTransient
+//    private Set<StagingProcessor> clientSideStagingProcessors = null;
+//    @Transient
+//    @XmlTransient
+//    private Set<StagingProcessor> serverSideStagingProcessors = null;
 
     /**
      * Constructor only for bean-compliance. This constructor should no be used
@@ -403,11 +415,7 @@ public class DownloadInformation implements IDefaultDownloadInformation, ITransf
         return accessPointId;
     }
 
-    /**
-     * Set a list of staging processors.
-     *
-     * @param stagingProcessors A list of staging processors.
-     */
+    @Override
     public void setStagingProcessors(Set<StagingProcessor> stagingProcessors) {
         this.stagingProcessors = stagingProcessors;
     }
@@ -427,76 +435,87 @@ public class DownloadInformation implements IDefaultDownloadInformation, ITransf
             stagingProcessors.clear();
         }
 
-        if (serverSideStagingProcessors != null) {
-            serverSideStagingProcessors.clear();
-        }
-
-        if (clientSideStagingProcessors != null) {
-            clientSideStagingProcessors.clear();
-        }
+//        if (serverSideStagingProcessors != null) {
+//            serverSideStagingProcessors.clear();
+//        }
+//
+//        if (clientSideStagingProcessors != null) {
+//            clientSideStagingProcessors.clear();
+//        }
     }
 
+//    /**
+//     * Add a client-side staging processor.
+//     *
+//     * @param pProcessor The processor to add.
+//     */
+//    public final void addClientSideStagingProcessor(StagingProcessor pProcessor) {
+//        stagingProcessors.add(pProcessor);
+//        if (clientSideStagingProcessors == null) {
+//            clientSideStagingProcessors = new HashSet<>();
+//        }
+//        clientSideStagingProcessors.add(pProcessor);
+//    }
+//
+//    /**
+//     * Get all client-side staging processors.
+//     *
+//     * @return All client-side staging processors.
+//     */
+//    public final StagingProcessor[] getClientSideStagingProcessor() {
+//        if (clientSideStagingProcessors == null) {
+//            clientSideStagingProcessors = new HashSet<>();
+//            for (StagingProcessor processor : stagingProcessors) {
+//                if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY)) {
+//                    clientSideStagingProcessors.add(processor);
+//                }
+//            }
+//        }
+//        return clientSideStagingProcessors.toArray(new StagingProcessor[clientSideStagingProcessors.size()]);
+//    }
+//
+//    /**
+//     * Add a server-side staging processor.
+//     *
+//     * @param pProcessor The processor to add.
+//     */
+//    public final void addServerSideStagingProcessor(StagingProcessor pProcessor) {
+//        if (pProcessor == null || !StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY.equals(pProcessor.getType()) && !StagingProcessor.PROCESSOR_TYPE.CLIENT_AND_SERVER_SIDE.equals(pProcessor.getType())) {
+//            throw new IllegalArgumentException("Provided processor must not be null and must be of type PROCESSOR_TYPE.SERVER_SIDE_ONLY");
+//        }
+//        stagingProcessors.add(pProcessor);
+//        if (serverSideStagingProcessors == null) {
+//            serverSideStagingProcessors = new HashSet<>();
+//        }
+//        serverSideStagingProcessors.add(pProcessor);
+//    }
+//
+//    /**
+//     * Get all server-side staging processors.
+//     *
+//     * @return All server-side staging processors.
+//     */
+//    public final StagingProcessor[] getServerSideStagingProcessor() {
+//        if (serverSideStagingProcessors == null) {
+//            serverSideStagingProcessors = new HashSet<>();
+//            for (StagingProcessor processor : stagingProcessors) {
+//                if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.CLIENT_SIDE_ONLY)) {
+//                    serverSideStagingProcessors.add(processor);
+//                }
+//            }
+//        }
+//        return serverSideStagingProcessors.toArray(new StagingProcessor[serverSideStagingProcessors.size()]);
+//    }
     /**
-     * Add a client-side staging processor.
+     * Add a staging processor.
      *
      * @param pProcessor The processor to add.
      */
-    public final void addClientSideStagingProcessor(StagingProcessor pProcessor) {
-        stagingProcessors.add(pProcessor);
-        if (clientSideStagingProcessors == null) {
-            clientSideStagingProcessors = new HashSet<>();
-        }
-        clientSideStagingProcessors.add(pProcessor);
-    }
-
-    /**
-     * Get all client-side staging processors.
-     *
-     * @return All client-side staging processors.
-     */
-    public final StagingProcessor[] getClientSideStagingProcessor() {
-        if (clientSideStagingProcessors == null) {
-            clientSideStagingProcessors = new HashSet<>();
-            for (StagingProcessor processor : stagingProcessors) {
-                if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY)) {
-                    clientSideStagingProcessors.add(processor);
-                }
-            }
-        }
-        return clientSideStagingProcessors.toArray(new StagingProcessor[clientSideStagingProcessors.size()]);
-    }
-
-    /**
-     * Add a server-side staging processor.
-     *
-     * @param pProcessor The processor to add.
-     */
-    public final void addServerSideStagingProcessor(StagingProcessor pProcessor) {
-        if (pProcessor == null || !StagingProcessor.PROCESSOR_TYPE.SERVER_SIDE_ONLY.equals(pProcessor.getType()) && !StagingProcessor.PROCESSOR_TYPE.CLIENT_AND_SERVER_SIDE.equals(pProcessor.getType())) {
-            throw new IllegalArgumentException("Provided processor must not be null and must be of type PROCESSOR_TYPE.SERVER_SIDE_ONLY");
+    public final void addStagingProcessor(StagingProcessor pProcessor) {
+        if (pProcessor == null) {
+            throw new IllegalArgumentException("Provided processor must not be null.");
         }
         stagingProcessors.add(pProcessor);
-        if (serverSideStagingProcessors == null) {
-            serverSideStagingProcessors = new HashSet<>();
-        }
-        serverSideStagingProcessors.add(pProcessor);
-    }
-
-    /**
-     * Get all server-side staging processors.
-     *
-     * @return All server-side staging processors.
-     */
-    public final StagingProcessor[] getServerSideStagingProcessor() {
-        if (serverSideStagingProcessors == null) {
-            serverSideStagingProcessors = new HashSet<>();
-            for (StagingProcessor processor : stagingProcessors) {
-                if (!processor.getType().equals(StagingProcessor.PROCESSOR_TYPE.CLIENT_SIDE_ONLY)) {
-                    serverSideStagingProcessors.add(processor);
-                }
-            }
-        }
-        return serverSideStagingProcessors.toArray(new StagingProcessor[serverSideStagingProcessors.size()]);
     }
 
     @Override

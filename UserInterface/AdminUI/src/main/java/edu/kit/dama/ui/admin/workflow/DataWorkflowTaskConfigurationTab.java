@@ -15,13 +15,15 @@
  */
 package edu.kit.dama.ui.admin.workflow;
 
+import com.vaadin.data.Item;
+import com.vaadin.data.Property;
+import com.vaadin.data.util.HierarchicalContainer;
 import com.vaadin.server.AbstractErrorMessage;
 import com.vaadin.server.ErrorMessage;
 import com.vaadin.server.UserError;
-import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.GridLayout;
-import com.vaadin.ui.Label;
+import com.vaadin.ui.Tree;
 import edu.kit.dama.authorization.entities.IRoleRestriction;
 import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.authorization.entities.UserId;
@@ -35,19 +37,25 @@ import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.mdm.dataworkflow.DataWorkflowTaskConfiguration;
 import edu.kit.dama.mdm.dataworkflow.properties.ExecutionEnvironmentProperty;
 import edu.kit.dama.ui.admin.AbstractConfigurationTab;
-import edu.kit.dama.ui.admin.AdminUIMainView;
 import edu.kit.dama.ui.admin.exception.DBCommitException;
 import edu.kit.dama.ui.admin.exception.MsgBuilder;
 import edu.kit.dama.ui.admin.exception.NoteBuilder;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
+import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
+import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIUtils7;
 import edu.kit.dama.ui.components.ConfirmationWindow7;
-import edu.kit.dama.ui.components.IConfirmationWindowListener7;
+import static edu.kit.dama.ui.components.ConfirmationWindow7.RESULT.YES;
 import edu.kit.dama.util.Constants;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -66,10 +74,70 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
     private DataWorkflowBasePropertiesLayout basicPropertiesLayout;
     private boolean createNewWorkflowMode = false;
     private DataWorkflowTaskConfiguration selection;
+    private Tree elementTree;
 
-    public DataWorkflowTaskConfigurationTab(AdminUIMainView pParentApp) {
-        super(pParentApp);
+    public DataWorkflowTaskConfigurationTab() {
+        super();
         DEBUG_ID_PREFIX += hashCode() + "_";
+    }
+
+    public final Tree getElementTree() {
+        if (elementTree == null) {
+            String id = "elementList";
+            LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
+
+            elementTree = new Tree("AVAILABLE ELEMENTS");
+            elementTree.setId(DEBUG_ID_PREFIX + id);
+            HierarchicalContainer container = new HierarchicalContainer();
+            container.addContainerProperty("caption", String.class, null);
+            elementTree.setContainerDataSource(container);
+            elementTree.setItemCaptionPropertyId("caption");
+            elementTree.setHeight("100%");
+            elementTree.setWidth("300px");
+            elementTree.setNullSelectionAllowed(false);
+            elementTree.setImmediate(true);
+            elementTree.addStyleName(CSSTokenContainer.BOLD_CAPTION);
+
+            elementTree.addValueChangeListener(new Property.ValueChangeListener() {
+
+                @Override
+                public void valueChange(Property.ValueChangeEvent event) {
+                    Object value = event.getProperty().getValue();
+                    String selection;
+                    if (value instanceof Long) {
+                        selection = Long.toString((Long) value);
+                    } else {
+                        selection = (String) value;
+                    }
+
+                    ListSelection listSelection = validateListSelection(selection);
+
+                    switch (listSelection) {
+                        case NO:
+                            fireNoListEntrySelected();
+                            break;
+                        case NEW:
+                            fireNewInstanceSelected();
+                            break;
+                        case VALID:
+                            fireValidListEntrySelected();
+                            break;
+                        case INVALID:
+                            fireInvalidListEntrySelected();
+                            break;
+                        default:
+                            UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
+                                    + "element selection. " + NoteBuilder.CONTACT, -1);
+                            LOGGER.error("Failed to update " + this.getClass().getSimpleName()
+                                    + ". Cause: Undefined enum constant detected, namely '"
+                                    + listSelection.name() + "'.");
+                            break;
+                    }
+                }
+
+            });
+        }
+        return elementTree;
     }
 
     @Override
@@ -77,27 +145,29 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
         String id = "mainLayout";
         LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
-        mainLayout = new GridLayout(3, 6);
+        UIUtils7.GridLayoutBuilder mainLayoutBuilder = new UIUtils7.GridLayoutBuilder(2, 2);
+
+        // Add components to mainLayout
+        mainLayoutBuilder.fillColumn(getElementTree(), 0, 0, 1);
+        mainLayoutBuilder.fillRow(getPropertiesPanel(), 1, 0, 1);
+        mainLayoutBuilder.addComponent(getCommitChangesButton(), Alignment.BOTTOM_RIGHT, 1, 1, 1, 1);
+        mainLayout = mainLayoutBuilder.getLayout();
         mainLayout.setId(DEBUG_ID_PREFIX + id);
         mainLayout.setSizeFull();
         mainLayout.setImmediate(true);
         mainLayout.setSpacing(true);
         mainLayout.setMargin(true);
 
-        // Add components to mainLayout
-        mainLayout.addComponent(getElementList(), 0, 0, 0, 5);
-        mainLayout.addComponent(getPropertiesPanel(), 1, 0, 2, 3);
+        mainLayout.setColumnExpandRatio(1, 1f);
+        mainLayout.setRowExpandRatio(0, 1f);
 
-        mainLayout.addComponent(new Label("<hr/>", ContentMode.HTML), 1, 4, 2, 4);
-        mainLayout.addComponent(getCommitChangesButton(), 1, 5, 2, 5);
-
-        mainLayout.setComponentAlignment(getCommitChangesButton(), Alignment.BOTTOM_RIGHT);
-
-        mainLayout.setColumnExpandRatio(0, 0.3f);
-        mainLayout.setColumnExpandRatio(1, 0.69f);
-        mainLayout.setColumnExpandRatio(2, 0.01f);
         return mainLayout;
 
+    }
+
+    @Override
+    public String getSelectedItemId() {
+        return (String) getElementTree().getValue();
     }
 
     @Override
@@ -114,10 +184,76 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
             mdm.close();
         }
 
-        for (DataWorkflowTaskConfiguration configuration : configurations) {
-            getElementList().addItem(Long.toString(configuration.getId()));
-            getElementList().setItemCaption(Long.toString(configuration.getId()), getWorkflowConfigurationCaption(configuration));
+        Map<String, List<DataWorkflowTaskConfiguration>> elementMap = new HashMap<>();
+
+        for (DataWorkflowTaskConfiguration config : configurations) {
+            String name = config.getName();
+            List<DataWorkflowTaskConfiguration> configList = elementMap.get(name);
+            if (configList == null) {
+                configList = new ArrayList<>();
+                elementMap.put(name, configList);
+            }
+            configList.add(config);
         }
+
+        HierarchicalContainer container = (HierarchicalContainer) getElementTree().getContainerDataSource();
+        container.removeAllItems();
+
+        //add NEW element
+        container.addItem(NEW_UNIQUE_ID);
+        container.setChildrenAllowed(NEW_UNIQUE_ID, false);
+        container.getContainerProperty(NEW_UNIQUE_ID, "caption").setValue(NEW_ELEMENT_LABEL);
+        //add remaining elements
+        elementMap.entrySet().forEach((entry) -> {
+            List<DataWorkflowTaskConfiguration> elements = entry.getValue();
+            Collections.sort(elements, (DataWorkflowTaskConfiguration o1, DataWorkflowTaskConfiguration o2) -> Integer.compare(o1.getVersion(), o2.getVersion()));
+            //parentId is ELEMENT_NAME + ID_OF_FIRST_VERSION
+            String parentId = entry.getKey() + "@" + elements.get(0).getId();
+            Item parent = container.addItem(parentId);
+            parent.getItemProperty("caption").setValue(entry.getKey() + " ( " + elements.size() + " version" + ((elements.size() > 1) ? "s)" : ")"));
+            container.setChildrenAllowed(parentId, true);
+            for (DataWorkflowTaskConfiguration config : elements) {
+                Item child = container.addItem(config.getId());
+                container.setChildrenAllowed(config.getId(), false);
+                child.getItemProperty("caption").setValue(getWorkflowConfigurationCaption(config));
+                container.setParent(config.getId(), parentId);
+            }
+        });
+    }
+
+    /**
+     * Get the primary key for the provided node elementId. The elementId can be
+     * one of the following: 'null' for no selection, 'MINUS_ONE_ELEMENT' for
+     * 'NEW' selection, '1' for selection of a task version node, 'Task@1' for
+     * selection of a task parent node containing all versions.
+     */
+    private long getPrimaryKeyByElementId(String elementId) {
+        long value = 0;
+        if (null == elementId) {
+            //no selection
+            value = -1;
+        } else {
+            switch (elementId) {
+                case NEW_UNIQUE_ID:
+                    //we have the "NEW' node
+                    value = 0;
+                    break;
+                default:
+                    try {
+                        value = Long.parseLong(elementId);
+                        //if this works, the node is a task version node
+                    } catch (NumberFormatException ex) {
+                        //string selection
+                        int minusIdx = elementId.indexOf("@");
+                        if (minusIdx > -1) {
+                            value = Long.parseLong(elementId.substring(minusIdx + 1, elementId.length()));
+                            //if this works, the node is a task parent node
+                        }
+                    }
+                    break;
+            }
+        }
+        return value;
     }
 
     @Override
@@ -126,7 +262,7 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
         try {
-            result = mdm.find(DataWorkflowTaskConfiguration.class, Long.parseLong(pId)) != null;
+            result = mdm.find(DataWorkflowTaskConfiguration.class, getPrimaryKeyByElementId(pId)) != null;
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain data workflow configuration for id " + pId, ex);
         } finally {
@@ -141,7 +277,7 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
         try {
-            result = mdm.find(DataWorkflowTaskConfiguration.class, Long.parseLong(pId));
+            result = mdm.find(DataWorkflowTaskConfiguration.class, getPrimaryKeyByElementId(pId));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain data workflow configuration for id " + pId, ex);
         } finally {
@@ -155,6 +291,7 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
         //called if a valid element is selected.
         if (pSelection != null) {
             //Store all information of the selected workflow that may not change without changing also the version number.
+            //'selection' is later used to check whether the version number must be updated or not.
             selection = new DataWorkflowTaskConfiguration();
             selection.setId(pSelection.getId());
             selection.setName(pSelection.getName());
@@ -163,15 +300,15 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
         } else {
             //called if new element is selected
             DataWorkflowTaskConfiguration dummySelection = new DataWorkflowTaskConfiguration();
-            dummySelection.setName("DataWorkflow " + UUID.randomUUID().toString());
+            dummySelection.setName("NewDataWorkflowTask");
             dummySelection.setVersion(1);
             dummySelection.setContactUserId("admin");
             dummySelection.setApplicationPackageUrl("file:///");
             dummySelection.setGroupId(Constants.USERS_GROUP_ID);
-            dummySelection.setDisabled(Boolean.TRUE);
-            dummySelection.setDefaultTask(Boolean.FALSE);
+//            dummySelection.setDisabled(Boolean.TRUE);
+//            dummySelection.setDefaultTask(Boolean.FALSE);
             getBasicPropertiesLayout().updateSelection(dummySelection);
-
+            //no selection, new element creation
             selection = null;
         }
     }
@@ -184,6 +321,7 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
     @Override
     public void enableComponents(boolean pValue) {
         //nothing to do here
+
     }
 
     @Override
@@ -236,28 +374,15 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
                 LOGGER.debug("Creating new workflow.");
                 createNewWorkflowConfiguration(applicationName);
             } else {//if exists, ask for update...cancel if no update, update version otherwise 
-                ConfirmationWindow7.showConfirmation(
-                        "Update Workflow Configuration",
-                        "There is already a workflow configuration named '" + applicationName + "' registered. "
-                        + "If you continue, the existing configuration is updated to version " + (currentVersion + 1) + ". "
-                        + "Do you want to continue?", ConfirmationWindow7.OPTION_TYPE.YES_NO_OPTION, ConfirmationWindow7.MESSAGE_TYPE.WARNING, new IConfirmationWindowListener7() {
-                            @Override
-                            public void fireConfirmationWindowCloseEvent(ConfirmationWindow7.RESULT pResult) {
-                                switch (pResult) {
-                                    case YES:
-                                        updateWorkflowConfiguration(applicationName, currentVersion + 1);
-                                        break;
-                                    default:
-                                    //do nothing
-                                }
-                            }
-                        });
+                UIComponentTools.showWarning("There is already a workflow configuration named '" + applicationName + "' registered. "
+                        + "Please select another name to proceed.");
+                return;
             }
         } else {
             //'selection' should contain the name of the currently selected workflow, compare the name field with it.
             if (applicationName.equals(selection.getName())) {
                 //if names are equal, check whether update-relevant fields have changed (applicationUrl and arguments)
-                updateWorkflowConfiguration(applicationName, currentVersion);
+                updateWorkflowConfiguration(applicationName, currentVersion + 1);
             } else {
                 //if names are not equal, behave like creating a new workflow, check packageUrl and contactId, persist entity and reload.
                 createNewWorkflowConfiguration(applicationName);
@@ -276,11 +401,15 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
         boolean result = false;
 
         if (getWorkflowVersion(pName) > 0) {
-            ConfirmationWindow7.showConfirmation(
-                    "Create Workflow Configuration",
-                    "There is already a workflow configuration named '" + pName + "' registered. "
-                    + "Please select another name to proceed. ", ConfirmationWindow7.OPTION_TYPE.OK_OPTION, ConfirmationWindow7.MESSAGE_TYPE.WARNING, null);
+            UIComponentTools.showWarning("There is already a workflow configuration named '" + pName + "' registered. "
+                    + "Please select another name to proceed.");
             return;
+        }
+        if (pName.contains("@")) {
+            getBasicPropertiesLayout().getNameField().setComponentError(new UserError("Data workflow configuration names may not contain the @ character.", AbstractErrorMessage.ContentMode.TEXT, ErrorMessage.ErrorLevel.WARNING));
+            return;
+        } else {
+            getBasicPropertiesLayout().getNameField().setComponentError(null);
         }
 
         try {
@@ -288,20 +417,30 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
             selection = new DataWorkflowTaskConfiguration();
             selection.setName(pName);
             selection.setGroupId((String) getBasicPropertiesLayout().getGroupBox().getValue());
-            String contactUserId = getBasicPropertiesLayout().getContactIdField().getValue();
+            String contactUserId = (String) getBasicPropertiesLayout().getContactBox().getValue();
             if (!checkContactUserId(contactUserId)) {
                 return;
             }
-            getBasicPropertiesLayout().getContactIdField().setComponentError(null);
+
+            String applicationUrl = getBasicPropertiesLayout().getApplicationPackageUrlField().getValue();
+
+            try {
+                LOGGER.debug("Successfully validated application package URL {}", new URL(applicationUrl));
+            } catch (MalformedURLException ex) {
+                UIComponentTools.showWarning("The provided application package URL is invalid.");
+                return;
+            }
+
             selection.setApplicationPackageUrl(getBasicPropertiesLayout().getApplicationPackageUrlField().getValue());
+
             selection.setApplicationArguments(getBasicPropertiesLayout().getApplicationArgumentsField().getValue());
             selection.setVersion(1);
-            selection.setContactUserId(getBasicPropertiesLayout().getContactIdField().getValue());
+            selection.setContactUserId((String) getBasicPropertiesLayout().getContactBox().getValue());
             LOGGER.debug("Setting other attributes.");
             selection.setKeywords(getBasicPropertiesLayout().getKeywordsField().getValue());
             selection.setDescription(getBasicPropertiesLayout().getDescriptionArea().getValue());
-            selection.setDisabled(getBasicPropertiesLayout().getDisabledBox().getValue());
-            selection.setDefaultTask(getBasicPropertiesLayout().getDefaultBox().getValue());
+//            selection.setDisabled(getBasicPropertiesLayout().getDisabledBox().getValue());
+//            selection.setDefaultTask(getBasicPropertiesLayout().getDefaultBox().getValue());
             LOGGER.debug("Updating environment requirements.");
             selection.removeRequiredEnvironmentProperties();
             Set<Object> environmentProperties = (Set<Object>) getBasicPropertiesLayout().getEnvironmentPropertiesSelect().getValue();
@@ -351,18 +490,18 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
             //just reload the result.
             selection = mdm.find(DataWorkflowTaskConfiguration.class, selection.getId());
 
-            String contactUserId = getBasicPropertiesLayout().getContactIdField().getValue();
+            String contactUserId = (String) getBasicPropertiesLayout().getContactBox().getValue();
             if (!checkContactUserId(contactUserId)) {
                 return;
             }
-            getBasicPropertiesLayout().getContactIdField().setComponentError(null);
-            selection.setContactUserId(getBasicPropertiesLayout().getContactIdField().getValue());
+
+            selection.setContactUserId((String) getBasicPropertiesLayout().getContactBox().getValue());
             selection.setGroupId((String) getBasicPropertiesLayout().getGroupBox().getValue());
             LOGGER.debug("Setting other attributes.");
             selection.setKeywords(getBasicPropertiesLayout().getKeywordsField().getValue());
             selection.setDescription(getBasicPropertiesLayout().getDescriptionArea().getValue());
-            selection.setDisabled(getBasicPropertiesLayout().getDisabledBox().getValue());
-            selection.setDefaultTask(getBasicPropertiesLayout().getDefaultBox().getValue());
+//            selection.setDisabled(getBasicPropertiesLayout().getDisabledBox().getValue());
+//            selection.setDefaultTask(getBasicPropertiesLayout().getDefaultBox().getValue());
 
             LOGGER.debug("Updating environment requirements.");
             selection.removeRequiredEnvironmentProperties();
@@ -377,8 +516,17 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
             }
             LOGGER.debug("Checking whether to perform an update or an upgrade.");
 
-            if (selection.getApplicationPackageUrl().equals(getBasicPropertiesLayout().getApplicationPackageUrlField().getValue())
-                    && selection.getApplicationArguments().equals(getBasicPropertiesLayout().getApplicationArgumentsField().getValue())) {
+            String appPkg1 = selection.getApplicationPackageUrl();
+            String appPkg2 = getBasicPropertiesLayout().getApplicationPackageUrlField().getValue();
+
+            if (appPkg1 == null || appPkg2 == null) {
+                throw new DBCommitException("Package Url must not be null.");
+            }
+
+            String arg1 = selection.getApplicationArguments() == null ? "" : selection.getApplicationArguments();
+            String arg2 = getBasicPropertiesLayout().getApplicationArgumentsField().getValue() == null ? "" : getBasicPropertiesLayout().getApplicationArgumentsField().getValue();
+
+            if (appPkg1.equals(appPkg2) && arg1.equals(arg2)) {
                 //simple update
                 LOGGER.debug("No upgrade-relevant fields have been modified. Updating existing workflow configuration.");
                 selection = mdm.save(selection);
@@ -395,7 +543,7 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
             }
             result = true;
         } catch (DBCommitException ex) {
-            getParentApp().showError("Failed to update data workflow configuration! Cause: " + ex.getMessage());
+            UIComponentTools.showError("Failed to update data workflow configuration! Cause: " + ex.getMessage());
             String object = "the changed workflow configuration '" + pName + "'";
             LOGGER.error(MsgBuilder.commitFailed(object) + "Cause: " + ex.getMessage(), ex);
         } catch (UnauthorizedAccessAttemptException ex) {
@@ -429,18 +577,21 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
                 IRoleRestriction<Role> role = UserServiceLocal.getSingleton().getRoleRestriction(new UserId(pUserId), AuthorizationContext.factorySystemContext());
                 if (!role.atLeast(Role.MEMBER)) {
                     LOGGER.warn("Invalid contact userId '{}'. MaxRole is lower than MEMBER.", pUserId);
-                    getBasicPropertiesLayout().getContactIdField().setComponentError(new UserError("User has insufficient permissions (role < MEMBER).", AbstractErrorMessage.ContentMode.TEXT, ErrorMessage.ErrorLevel.WARNING));
+                    getBasicPropertiesLayout().getContactBox().setComponentError(new UserError("User has insufficient permissions (role < MEMBER).", AbstractErrorMessage.ContentMode.TEXT, ErrorMessage.ErrorLevel.WARNING));
                     result = false;
                 }
             } catch (UnauthorizedAccessAttemptException ex) {
                 LOGGER.error("Failed to check contact userId. SystemContext is not authorized.", ex);
-                getBasicPropertiesLayout().getContactIdField().setComponentError(new UserError("Failed to check for user id '" + pUserId + "'", AbstractErrorMessage.ContentMode.TEXT, ErrorMessage.ErrorLevel.WARNING));
+                getBasicPropertiesLayout().getContactBox().setComponentError(new UserError("Failed to check for user id '" + pUserId + "'", AbstractErrorMessage.ContentMode.TEXT, ErrorMessage.ErrorLevel.WARNING));
                 result = false;
             } catch (EntityNotFoundException ex) {
                 LOGGER.warn("Invalid contact userId '{}'. UserId not found.", pUserId);
-                getBasicPropertiesLayout().getContactIdField().setComponentError(new UserError("No valid user id '" + pUserId + "'", AbstractErrorMessage.ContentMode.TEXT, ErrorMessage.ErrorLevel.WARNING));
+                getBasicPropertiesLayout().getContactBox().setComponentError(new UserError("No valid user id '" + pUserId + "'", AbstractErrorMessage.ContentMode.TEXT, ErrorMessage.ErrorLevel.WARNING));
                 result = false;
             }
+        }
+        if (result) {
+            getBasicPropertiesLayout().getContactBox().setComponentError(null);
         }
         return result;
     }
@@ -461,7 +612,7 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
         mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
         List<DataWorkflowTaskConfiguration> result = new LinkedList<>();
         try {
-            result = mdm.findResultList("SELECT w FROM DataWorkflowTaskConfiguration w WHERE w.name='" + pConfigurationName + "'", DataWorkflowTaskConfiguration.class);
+            result = mdm.findResultList("SELECT w FROM DataWorkflowTaskConfiguration w WHERE w.name=?1", new Object[]{pConfigurationName}, DataWorkflowTaskConfiguration.class);
         } catch (UnauthorizedAccessAttemptException ex) {
             //error ... cannot continue
             return -1;
@@ -472,30 +623,25 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
         if (result.isEmpty()) {
             return 0;
         }
-
-        Collections.sort(result, new Comparator<DataWorkflowTaskConfiguration>() {
-
-            @Override
-            public int compare(DataWorkflowTaskConfiguration o1, DataWorkflowTaskConfiguration o2) {
-                return Integer.compare(o1.getVersion(), o2.getVersion());
-            }
-        });
+        Collections.sort(result, (DataWorkflowTaskConfiguration o1, DataWorkflowTaskConfiguration o2) -> Integer.compare(o1.getVersion(), o2.getVersion()));
 
         return result.get(result.size() - 1).getVersion();
     }
 
     @Override
     public void addNewElementInstance(DataWorkflowTaskConfiguration pElementToAdd) {
-        getElementList().addItem(Long.toString(pElementToAdd.getId()));
-        getElementList().setItemCaption(Long.toString(pElementToAdd.getId()), getWorkflowConfigurationCaption(pElementToAdd));
-        getElementList().select(Long.toString(pElementToAdd.getId()));
+        fillElementList();
+        Object parent = elementTree.getParent(pElementToAdd.getId());
+        elementTree.expandItemsRecursively(parent);
+        elementTree.select(pElementToAdd.getId());
     }
 
     @Override
-    public void updateElementInstance(DataWorkflowTaskConfiguration pElementToAdd) {
-        getElementList().addItem(Long.toString(pElementToAdd.getId()));
-        getElementList().setItemCaption(Long.toString(pElementToAdd.getId()), getWorkflowConfigurationCaption(pElementToAdd));
-        getElementList().select(Long.toString(pElementToAdd.getId()));
+    public void updateElementInstance(DataWorkflowTaskConfiguration pElementToUpdate) {
+        fillElementList();
+        Object parent = elementTree.getParent(pElementToUpdate.getId());
+        elementTree.expandItemsRecursively(parent);
+        elementTree.select(pElementToUpdate.getId());
     }
 
     /**
@@ -513,7 +659,7 @@ public class DataWorkflowTaskConfigurationTab extends AbstractConfigurationTab<D
     @Override
     public DataWorkflowBasePropertiesLayout getBasicPropertiesLayout() {
         if (basicPropertiesLayout == null) {
-            basicPropertiesLayout = new DataWorkflowBasePropertiesLayout(getParentApp());
+            basicPropertiesLayout = new DataWorkflowBasePropertiesLayout();
         }
         return basicPropertiesLayout;
     }

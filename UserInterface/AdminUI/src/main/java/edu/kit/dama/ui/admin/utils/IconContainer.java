@@ -22,6 +22,7 @@ package edu.kit.dama.ui.admin.utils;
 public class IconContainer {
 
     public final static String FIND = "img/find.png";
+    public final static String EDIT = "img/edit.png";
     public final static String ADD = "img/add.png";
     public final static String REFRESH = "img/recycle.png";
     public final static String DELETE = "img/delete.png";

@@ -24,6 +24,7 @@ import edu.kit.dama.util.PropertiesUtil;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Comparator;
 import java.util.Properties;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -73,44 +74,48 @@ import org.eclipse.persistence.sessions.Session;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class StagingProcessor implements IDefaultStagingProcessor, FetchGroupTracker, Serializable {
 
-    /**
-     *
-     */
-    public enum PROCESSOR_TYPE {
-
-        /**
-         * Processor that is executed only on the client side by a transfer
-         * client capable of executing StagingProcessors, e.g. to check data
-         * before transfer.
-         */
-        CLIENT_SIDE_ONLY,
-        /**
-         * Processor that is executed only on the server side, e.g. to extract
-         * metadata. Executing these processors takes place before archiving,
-         * therefor, not access to the DataOrganization is possible for
-         * SERVER_SIDE_ONLY processors.
-         */
-        SERVER_SIDE_ONLY,
-        /**
-         * Processor that is executed on the client side by a transfer client
-         * capable of executing StagingProcessors and on the server side, e.g.
-         * compare data before and after the transfer. Executing these
-         * processors takes place before archiving, therefor, not access to the
-         * DataOrganization is possible for CLIENT_AND_SERVER_SIDE processors.
-         */
-        CLIENT_AND_SERVER_SIDE,
-        /**
-         * Processor that is executed on the server side after archiving took
-         * place. These special processors can be used if e.g. an existing
-         * DataOrganization is needed or the final destination of files must be
-         * known.
-         */
-        POST_ARCHIVING;
-        
-        public boolean isServerSideProcessor() {
-            return !CLIENT_SIDE_ONLY.equals(this);
+//    public enum PROCESSOR_TYPE {
+//
+//        /**
+//         * Processor that is executed only on the client side by a transfer
+//         * client capable of executing StagingProcessors, e.g. to check data
+//         * before transfer.
+//         */
+//        CLIENT_SIDE_ONLY,
+//        /**
+//         * Processor that is executed only on the server side, e.g. to extract
+//         * metadata. Executing these processors takes place before archiving,
+//         * therefor, NO access to the DataOrganization is possible for
+//         * SERVER_SIDE_ONLY processors.
+//         */
+//        SERVER_SIDE_ONLY,
+//        /**
+//         * Processor that is executed on the client side by a transfer client
+//         * capable of executing StagingProcessors and on the server side, e.g.
+//         * compare data before and after the transfer. Executing these
+//         * processors takes place before archiving, therefor, NO access to the
+//         * DataOrganization is possible for CLIENT_AND_SERVER_SIDE processors.
+//         */
+//        CLIENT_AND_SERVER_SIDE,
+//        /**
+//         * Processor that is executed on the server side bewfore and after
+//         * archiving took place. These special processors can be used if e.g. an
+//         * existing DataOrganization is needed or the final destination of files
+//         * must be known.
+//         */
+//        POST_ARCHIVING;
+//
+//        public boolean isServerSideProcessor() {
+//            return !CLIENT_SIDE_ONLY.equals(this);
+//        }
+//    }
+    public final static Comparator<StagingProcessor> DEFAULT_PRIORITY_COMPARATOR = new Comparator<StagingProcessor>() {
+        @Override
+        public int compare(StagingProcessor o2, StagingProcessor o1) {
+            return Byte.compare((o1.getPriority() != null) ? o1.getPriority() : 0, (o2.getPriority() != null) ? o2.getPriority() : 0);
         }
-    }
+    };
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -121,10 +126,11 @@ public class StagingProcessor implements IDefaultStagingProcessor, FetchGroupTra
     @Column(length = 1024)
     private String properties;
     private String groupId = null;
-    @Enumerated(EnumType.STRING)
-    private PROCESSOR_TYPE type;
+//    @Enumerated(EnumType.STRING)
+//    private PROCESSOR_TYPE type;
     @Column(length = 1024)
     private String description;
+    private Byte priority = 0;
     private Boolean defaultOn = false;
     private Boolean disabled = false;
     private Boolean ingestProcessingSupported = false;
@@ -190,20 +196,19 @@ public class StagingProcessor implements IDefaultStagingProcessor, FetchGroupTra
         return name;
     }
 
-    /**
-     * Set the type.
-     *
-     * @param type The type.
-     */
-    public void setType(PROCESSOR_TYPE type) {
-        this.type = type;
-    }
-
-    @Override
-    public PROCESSOR_TYPE getType() {
-        return type;
-    }
-
+//    /**
+//     * Set the type.
+//     *
+//     * @param type The type.
+//     */
+//    public void setType(PROCESSOR_TYPE type) {
+//        this.type = type;
+//    }
+//
+//    @Override
+//    public PROCESSOR_TYPE getType() {
+//        return type;
+//    }
     /**
      * Set the unique identifier.
      *
@@ -230,6 +235,20 @@ public class StagingProcessor implements IDefaultStagingProcessor, FetchGroupTra
     @Override
     public String getDescription() {
         return description;
+    }
+
+    @Override
+    public Byte getPriority() {
+        return priority;
+    }
+
+    /**
+     * Set the priority.
+     *
+     * @param priority The priority.
+     */
+    public void setPriority(Byte priority) {
+        this.priority = priority;
     }
 
     /**

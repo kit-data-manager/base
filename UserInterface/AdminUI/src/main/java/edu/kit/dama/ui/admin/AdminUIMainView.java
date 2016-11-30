@@ -17,43 +17,50 @@ package edu.kit.dama.ui.admin;
 
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
+import com.vaadin.data.Property;
 import com.vaadin.event.LayoutEvents;
-import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.server.DefaultErrorHandler;
-import com.vaadin.server.Page;
+import static com.vaadin.server.DefaultErrorHandler.doDefault;
+import com.vaadin.server.ExternalResource;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
+import com.vaadin.server.VaadinSession;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
-import com.vaadin.ui.Button;
+import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Component;
-import com.vaadin.ui.GridLayout;
+import com.vaadin.ui.HorizontalLayout;
+import com.vaadin.ui.Image;
 import com.vaadin.ui.Label;
-import com.vaadin.ui.Notification;
-import com.vaadin.ui.PasswordField;
-import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
-import edu.kit.dama.authorization.entities.GroupId;
-import edu.kit.dama.authorization.entities.IAuthorizationContext;
-import edu.kit.dama.authorization.entities.UserId;
+import edu.kit.dama.authorization.entities.ReferenceId;
+import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
-import edu.kit.dama.authorization.exceptions.AuthorizationException;
-import edu.kit.dama.authorization.util.AuthorizationUtil;
+import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
+import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
+import edu.kit.dama.authorization.services.administration.ResourceServiceLocal;
+import edu.kit.dama.mdm.base.DigitalObject;
+import edu.kit.dama.mdm.base.UserData;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
-import edu.kit.dama.mdm.admin.ServiceAccessToken;
-import edu.kit.dama.mdm.admin.util.ServiceAccessUtil;
-import edu.kit.dama.mdm.base.UserData;
+import edu.kit.dama.ui.admin.login.AbstractLoginComponent;
+import edu.kit.dama.ui.admin.login.OrcidLoginComponent;
+import edu.kit.dama.ui.admin.login.EmailPasswordLoginComponent;
+import edu.kit.dama.ui.admin.utils.UIComponentTools;
+import edu.kit.dama.ui.admin.utils.UIHelper;
 import edu.kit.dama.ui.simon.panel.SimonMainPanel;
 import edu.kit.dama.ui.simon.util.SimonConfigurator;
-import edu.kit.dama.ui.commons.util.UIUtils7;
 import edu.kit.dama.util.Constants;
 import edu.kit.dama.util.DataManagerSettings;
 import edu.kit.dama.util.StackTraceUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.annotation.WebServlet;
 import org.apache.commons.configuration.ConfigurationException;
@@ -62,51 +69,97 @@ import org.slf4j.LoggerFactory;
 
 @Theme("mytheme")
 @SuppressWarnings("serial")
-public class AdminUIMainView extends UI implements IRegistrationCallback {
+public class AdminUIMainView extends UI {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdminUIMainView.class);
 
     public enum VIEW {
 
-        LOGIN, SIMON, INFORMATION, PROFILE, SETTINGS
+        LOGIN, SIMON, INFORMATION, PROFILE, SETTINGS, LANDING
     }
 
-    private UserData loggedInUser = UserData.NO_USER;
-    private GridLayout loginForm;
+    private VerticalLayout loginForm;
+    private AbstractLoginComponent loginComponent;
+    private AbstractLoginComponent[] loginComponents = null;
+    private HorizontalLayout header = null;
     private Label title = null;
+    private Image logo = null;
     private SimonMainPanel simonPanel = null;
     private ProfileView profileView = null;
     private InformationView informationView = null;
     private LoginInformationBar loginInformationBar = null;
     private DataManagerSettingsPanel datamanagerSettings = null;
+    private LandingPageComponent landingPage;
     private VerticalLayout mainLayout;
-    private TextField email;
-    private PasswordField password;
     private Component viewComponent;
-    private IMetaDataManager mdm;
     private VIEW currentView;
-
-    @Override
-    public void fireRegistrationSucceededEvent(Component pParent, UserData pUser) {
-        mainLayout.replaceComponent(pParent, loginForm);
-        email.setValue(pUser.getEmail());
-    }
-
-    @Override
-    public void fireRegistrationCanceledEvent(Component pParent) {
-        mainLayout.replaceComponent(pParent, loginForm);
-    }
+    private boolean INITIALIZING = true;
 
     @WebServlet(value = "/*", asyncSupported = true)
     @VaadinServletConfiguration(productionMode = false, ui = AdminUIMainView.class, widgetset = "edu.kit.dama.ui.admin.AppWidgetSet")
     public static class Servlet extends VaadinServlet {
+
+        @Override
+        public void destroy() {
+            //destroy also all metadata management instances on redeployment in order to close all database connections
+            MetaDataManagement.getMetaDataManagement().destroy();
+            super.destroy();
+        }
+
     }
 
     @Override
     protected void init(VaadinRequest request) {
-        mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
-        mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
+        try {
+            //might be OAuth redirect
+            String pendingAuthId = null;
+            AbstractLoginComponent.AUTH_MODE type = AbstractLoginComponent.AUTH_MODE.LOGIN;
+            if (VaadinSession.getCurrent().getAttribute("auth_pending") != null) {
+                pendingAuthId = (String) VaadinSession.getCurrent().getAttribute("auth_pending");
+            } else if (VaadinSession.getCurrent().getAttribute("registration_pending") != null) {
+                pendingAuthId = (String) VaadinSession.getCurrent().getAttribute("registration_pending");
+                type = AbstractLoginComponent.AUTH_MODE.REGISTRATION;
+            }
 
+            doBasicSetup();
+
+            boolean isLandingPage = request.getParameter("landing") != null;
+            String landingObjectId = request.getParameter("oid");
+            //setup header
+            setupHeader(isLandingPage, landingObjectId);
+
+            //setup login form
+            setupLoginForm(type, pendingAuthId, request);
+            if (pendingAuthId != null && !type.equals(AbstractLoginComponent.AUTH_MODE.REGISTRATION)) {
+                //auth will redirect to start page so we'll stop here
+                return;
+            }
+
+            mainLayout = new VerticalLayout();
+            mainLayout.setMargin(false);
+            mainLayout.setSizeFull();
+
+            //setup login bar
+            loginInformationBar = new LoginInformationBar(this);
+            loginInformationBar.reload();
+
+            setContent(mainLayout);
+            setSizeFull();
+            if (isLandingPage) {
+                //setup landing page
+                LOGGER.debug("Showing landing page.");
+                setupLandingPage(request);
+            } else {
+                refreshMainLayout();
+            }
+            INITIALIZING = false;
+        } catch (Throwable t) {
+            LOGGER.error("Failed to init app.", t);
+        }
+    }
+
+    private void doBasicSetup() {
+        //configure SiMon
         try {
             String path = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.SIMON_CONFIG_LOCATION_ID, null);
             if (path == null || !new File(path).exists()) {
@@ -117,6 +170,8 @@ public class AdminUIMainView extends UI implements IRegistrationCallback {
         } catch (ConfigurationException ex) {
             LOGGER.error("Failed to initialize SimpleMonitoring", ex);
         }
+
+        //set error handler in order to catch unhandled exceptions
         UI.getCurrent().setErrorHandler(new DefaultErrorHandler() {
             @Override
             public void error(com.vaadin.server.ErrorEvent event) {
@@ -128,129 +183,196 @@ public class AdminUIMainView extends UI implements IRegistrationCallback {
                 LOGGER.error("An unhandled exception has occured!", event.getThrowable());
                 // Display the error message in a custom fashion
                 mainLayout.addComponent(errorLabel, 0);
+
                 // Do the default error handling (optional)
                 doDefault(event);
             }
         });
-
-        mainLayout = new VerticalLayout();
-        mainLayout.setMargin(false);
-        setupLoginForm();
-
-        InputStream versionFile = null;
-        String version = "UNKNOWN";
-        try {
-            versionFile = InformationView.class.getClassLoader().getResourceAsStream("version.txt");
-            byte[] versionData = new byte[1024];
-            versionFile.read(versionData);
-            version = new String(versionData);
-        } catch (IOException ex) {
-            //failed to determine version number
-        } finally {
-            if (versionFile != null) {
-                try {
-                    versionFile.close();
-                } catch (IOException ex) {
-                }
-            }
-        }
-
-        title = new Label("<h1>KIT Data Manager Administration</h1><h5>Build " + version + "</h5>", ContentMode.HTML);
-        title.setDescription("Click to return to main page.");
-        title.setWidth("50%");
-        title.addStyleName("title");
-        title.addStyleName("myclickablecomponent");
-        loginInformationBar = new LoginInformationBar(this);
-        loginInformationBar.setLoggedInUser(loggedInUser);
-        mainLayout.setSizeFull();
-        setContent(mainLayout);
-        setSizeFull();
-        refreshMainLayout();
     }
 
-    public IMetaDataManager getMetaDataManager() {
-        return mdm;
+    private void setupHeader(boolean landingPage, String landingObjectId) {
+        if (!landingPage) {
+            String repositoryName = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.GENERAL_REPOSITORY_NAME, "Repository");
+            title = new Label("<h1>" + repositoryName + " Administration</h1><h5>Build " + readVersion() + "</h5>", ContentMode.HTML);
+            title.setDescription("Click to return to main page.");
+            title.setWidth("50%");
+            title.addStyleName("title");
+            title.addStyleName("myclickablecomponent");
+
+            logo = new Image();
+            String logoUrl;
+            try {
+                logoUrl = new URL(DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.GENERAL_REPOSITORY_LOGO_URL, "http://datamanager.kit.edu/dama/logo_default.png")).toString();
+            } catch (MalformedURLException ex) {
+                logoUrl = URI.create("http://datamanager.kit.edu/dama/logo_default.png").toString();
+            }
+            logo.setSource(new ExternalResource(logoUrl));
+
+            header = new HorizontalLayout(logo, title);
+            header.setComponentAlignment(logo, Alignment.MIDDLE_CENTER);
+            header.setComponentAlignment(title, Alignment.MIDDLE_CENTER);
+        } else {
+            title = new Label("<h1>Landing Page for Object #" + landingObjectId + "</h1><h5>Build " + readVersion() + "</h5>", ContentMode.HTML);
+            title.setWidth("50%");
+            title.addStyleName("title");
+            title.addStyleName("myclickablecomponent");
+
+            logo = new Image();
+            String logoUrl;
+            try {
+                logoUrl = new URL(DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.GENERAL_REPOSITORY_LOGO_URL, "http://datamanager.kit.edu/dama/logo_default.png")).toString();
+            } catch (MalformedURLException ex) {
+                logoUrl = URI.create("http://datamanager.kit.edu/dama/logo_default.png").toString();
+            }
+            logo.setSource(new ExternalResource(logoUrl));
+
+            header = new HorizontalLayout(logo, title);
+            header.setComponentAlignment(logo, Alignment.MIDDLE_CENTER);
+            header.setComponentAlignment(title, Alignment.MIDDLE_CENTER);
+        }
+    }
+
+    private void setupLandingPage(VaadinRequest request) {
+        String oid = (String) request.getParameter("oid");
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+        DigitalObject result = null;
+        Role viewRole = Role.GUEST;
+        boolean objectNotFound = false;
+        boolean extendedAccess = false;
+        try {
+            mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
+            //check if object exists
+            result = mdm.findSingleResult("SELECT o FROM DigitalObject o WHERE o.digitalObjectIdentifier=?1", new Object[]{oid}, DigitalObject.class);
+            if (result == null) {
+                //object does not exist
+                objectNotFound = true;
+            } else {
+                //object does exist, check permission for current context
+                try {
+                    viewRole = ResourceServiceLocal.getSingleton().getGrantRole(result.getSecurableResourceId(), UIHelper.getSessionContext().getUserId(), AuthorizationContext.factorySystemContext());
+                } catch (UnsupportedOperationException | EntityNotFoundException nogrants) {
+                    //no grant found, check group role
+                    try {
+                        viewRole = (Role) ResourceServiceLocal.getSingleton().getReferenceRestriction(new ReferenceId(result.getSecurableResourceId(), UIHelper.getSessionGroupId()), AuthorizationContext.factorySystemContext());
+                    } catch (EntityNotFoundException ex) {
+                        viewRole = Role.NO_ACCESS;
+                    }
+                }
+            }
+
+            if (objectNotFound) {
+                //object not found, if user logged in, show error...otherwise show login page
+                if (UIHelper.getSessionUser().getDistinguishedName().equals(Constants.WORLD_USER_ID)) {
+                    VaadinSession.getCurrent().setAttribute("from", UIHelper.getWebAppUrl().toString() + "?landing&oid=" + oid);
+                    updateView(VIEW.LOGIN);
+                    return;
+                } else {
+                    throw new UnauthorizedAccessAttemptException("No object found for object id " + oid);
+                }
+            } else {
+                //object not found, if role >= GUEST, show landing page...otherwise show login page if anonymous access
+                if (!viewRole.atLeast(Role.GUEST)) {
+                    VaadinSession.getCurrent().setAttribute("from", UIHelper.getWebAppUrl().toString() + "?landing&oid=" + oid);
+                    updateView(VIEW.LOGIN);
+                    return;
+                }
+            }
+            //http://localhost:8080/KITDM/?landing&oid=3b1243b2-df09-4a98-ad87-21b7cda74be9catch (UnauthorizedAccessAttemptException | ParserConfigurationException ex) {
+        } catch (UnauthorizedAccessAttemptException ex) {
+            //not found, should result in error page
+            LOGGER.error("Failed to access digital object with id " + oid, ex);
+            result = null;
+        } finally {
+            mdm.close();
+        }
+
+        if (landingPage == null) {
+            landingPage = new LandingPageComponent();
+        }
+        landingPage.update(result, extendedAccess);
+        updateView(VIEW.LANDING);
     }
 
     /**
      * Setup the login form including its logic.
      */
-    private void setupLoginForm() {
-        email = UIUtils7.factoryTextField("Email", "Please enter your email.", "300px", true, -1, 255);
-        password = UIUtils7.factoryPasswordField("Password", "300px", true, -1, 255);
-        Button login = new Button("Login");
-        login.setClickShortcut(KeyCode.ENTER);
-        login.setWidth("100px");
-        Button register = new Button("Register");
-        register.setWidth("100px");
-        loginForm = new UIUtils7.GridLayoutBuilder(2, 3).addComponent(email, 0, 0, 2, 1).addComponent(password, 0, 1, 2, 1).addComponent(login, 0, 2, 1, 1).addComponent(register, 1, 2, 1, 1).getLayout();
-        loginForm.setComponentAlignment(login, Alignment.MIDDLE_LEFT);
-        loginForm.setComponentAlignment(register, Alignment.MIDDLE_RIGHT);
+    private void setupLoginForm(AbstractLoginComponent.AUTH_MODE type, String pendingAuth, VaadinRequest request) {
+        ComboBox authSelection = new ComboBox();
+        authSelection.setWidth("400px");
+        authSelection.setNullSelectionAllowed(false);
+        authSelection.setStyleName("auth_selection");
+        Label spacer = new Label("<br/>", ContentMode.HTML);
+        spacer.setWidth("400px");
 
-        //login listener
-        login.addClickListener(new Button.ClickListener() {
+        String orcidClientId = DataManagerSettings.getSingleton().getStringProperty(OrcidLoginComponent.ORCID_CLIENT_ID_PROPERTY, null);
+        String orcidClientSecret = DataManagerSettings.getSingleton().getStringProperty(OrcidLoginComponent.ORCID_CLIENT_SECRET_PROPERTY, null);
 
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                if (!UIUtils7.validate(loginForm)) {
-                    new Notification("Login Failed",
-                            "Please correct the error(s) above.", Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
-                    return;
-                }
-                String userMail = email.getValue();
-                String userPassword = password.getValue();
-                IMetaDataManager manager = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
-                manager.setAuthorizationContext(AuthorizationContext.factorySystemContext());
+        /// String b2AccessClientId = DataManagerSettings.getSingleton().getStringProperty(B2AccessLoginComponent.B2ACCESS_CLIENT_ID_PROPERTY, null);
+        // String b2AccessClientSecret = DataManagerSettings.getSingleton().getStringProperty(B2AccessLoginComponent.B2ACCESS_CLIENT_SECRET_PROPERTY, null);
+        List<AbstractLoginComponent> components = new ArrayList<>();
+
+        if (orcidClientId != null && !orcidClientId.equals("ORCID_CLIENT_ID") && orcidClientSecret != null && !orcidClientSecret.equals("ORCID_CLIENT_SECRET")) {
+            components.add(new OrcidLoginComponent());
+        }
+
+        /*B2Access is currently not supported. 
+        if (b2AccessClientId != null && b2AccessClientSecret != null) {
+            components.add(new B2AccessLoginComponent());
+        }*/
+        components.add(new EmailPasswordLoginComponent());
+
+        loginComponents = components.toArray(new AbstractLoginComponent[]{});
+
+        //default login component has index 0
+        loginComponent = loginComponents[0];
+        for (AbstractLoginComponent component : loginComponents) {
+            //add new login component
+            authSelection.addItem(component.getLoginIdentifier());
+            authSelection.setItemCaption(component.getLoginIdentifier(), component.getLoginLabel());
+
+            if (pendingAuth != null && pendingAuth.equals(component.getLoginIdentifier())) {
+                //login or registration process in pending, continue process
+                loginComponent = component;
                 try {
-                    LOGGER.debug("Getting access token for user {}", userMail);
-                    ServiceAccessToken token = ServiceAccessUtil.getAccessToken(manager, userMail, Constants.MAIN_LOGIN_SERVICE_ID);
-                    if (token == null) {
-                        new Notification("Login Failed",
-                                "No login information found for email " + userMail + ".", Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
-                        return;
-                    } else {
-                        LOGGER.debug("Access token sucessfully obtained. Checking password.");
+                    switch (type) {
+                        case REGISTRATION:
+                            loginComponent.doRegistration(request);
+                            break;
+                        default:
+                            loginComponent.doLogin(request);
+                            break;
                     }
 
-                    if (!userPassword.equals(token.getSecret())) {
-                        new Notification("Login Failed",
-                                "Wrong password for email " + userMail + ".", Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
-                    } else {
-                        LOGGER.debug("Password is correct. Getting user information.");
-                        //login successful
-                        UserData template = new UserData();
-                        template.setDistinguishedName(token.getUserId());
-                        List<UserData> result = manager.find(template, template);
-                        if (result.isEmpty() || result.size() > 1) {
-                            throw new Exception("Invalid number of user entries (" + result.size() + ") found for userId " + token.getUserId() + ". Please contact a system administrator.");
-                        }
-                        LOGGER.debug("User information obtained. Setting logged in user and updating main layout.");
-                        //done
-                        loggedInUser = result.get(0);
-                        loginInformationBar.setLoggedInUser(loggedInUser);
-                        refreshMainLayout();
+                } catch (UnauthorizedAccessAttemptException ex) {
+                    //failed to continue auth...cancel.
+                    String message = "Failed to continue pending " + (AbstractLoginComponent.AUTH_MODE.LOGIN.equals(type) ? "login" : "registration") + " for authentication #" + pendingAuth + ".";
+                    LOGGER.error(message, ex);
+                    UIComponentTools.showError(message);
+                    VaadinSession.getCurrent().setAttribute("auth_pending", null);
+                    VaadinSession.getCurrent().setAttribute("registration_pending", null);
+                    loginComponent.reset();
+                }
+            }
+        }
+
+        authSelection.select(loginComponent.getLoginIdentifier());
+
+        authSelection.addValueChangeListener((Property.ValueChangeEvent event) -> {
+            String value = (String) event.getProperty().getValue();
+            if (value != null) {
+                for (AbstractLoginComponent component : loginComponents) {
+                    if (value.equals(component.getLoginIdentifier())) {
+                        loginForm.replaceComponent(loginComponent, component);
+                        loginComponent = component;
                     }
-                } catch (Exception ex) {
-                    new Notification("Login Failed",
-                            "Failed to access login database. Please contact an administrator.", Notification.Type.ERROR_MESSAGE).show(Page.getCurrent());
-                    LOGGER.error("Failed to access login database.", ex);
-                } finally {
-                    manager.close();
                 }
             }
         });
 
-        //register listener
-        register.addClickListener(new Button.ClickListener() {
-
-            @Override
-            public void buttonClick(Button.ClickEvent event) {
-                RegistrationFormView registerForm = new RegistrationFormView(AdminUIMainView.this);
-                mainLayout.replaceComponent(loginForm, registerForm);
-            }
-        });
-        loginForm.setSpacing(true);
-        loginForm.setMargin(true);
+        loginForm = new VerticalLayout(authSelection, spacer, loginComponent);
+        loginForm.setComponentAlignment(authSelection, Alignment.TOP_CENTER);
+        loginForm.setComponentAlignment(spacer, Alignment.TOP_CENTER);
+        loginForm.setComponentAlignment(loginComponent, Alignment.TOP_CENTER);
     }
 
     /**
@@ -272,7 +394,7 @@ public class AdminUIMainView extends UI implements IRegistrationCallback {
             case INFORMATION:
                 loginInformationBar.setVisible(true);
                 if (informationView == null) {
-                    informationView = new InformationView(this);
+                    informationView = new InformationView();
                 }
                 viewComponent = informationView;
                 break;
@@ -283,63 +405,46 @@ public class AdminUIMainView extends UI implements IRegistrationCallback {
             case PROFILE:
                 loginInformationBar.setVisible(true);
                 if (profileView == null) {
-                    profileView = new ProfileView(this);
+                    profileView = new ProfileView();
                 }
+                profileView.reload();
                 viewComponent = profileView;
                 break;
             case SETTINGS:
                 loginInformationBar.setVisible(true);
                 if (datamanagerSettings == null) {
-                    datamanagerSettings = new DataManagerSettingsPanel(this);
-                } else {
-                    datamanagerSettings.updateTab(DataManagerSettingsPanel.Tab.ALL);
+                    datamanagerSettings = new DataManagerSettingsPanel();
                 }
+                /* if (!datamanagerSettings.getUserAdministrationTab().equals(datamanagerSettings.getMainComponentContainer().getSelectedTab())) {
+                    datamanagerSettings.getMainComponentContainer().setSelectedTab(datamanagerSettings.getUserAdministrationTab());
+                }
+                datamanagerSettings.getUserAdministrationTab().reload();*/
                 viewComponent = datamanagerSettings;
+                break;
+            case LANDING:
+                loginInformationBar.setVisible(false);
+                if (landingPage == null) {
+                    landingPage = new LandingPageComponent();
+                }
+                viewComponent = landingPage;
                 break;
         }
 
-        mainLayout.addComponent(title);
+        mainLayout.addComponent(header);
         mainLayout.addComponent(loginInformationBar);
         mainLayout.addComponent(viewComponent);
-        mainLayout.setExpandRatio(title, .09f);
+        mainLayout.setExpandRatio(header, .09f);
         mainLayout.setExpandRatio(loginInformationBar, .11f);
         mainLayout.setExpandRatio(viewComponent, .8f);
-        mainLayout.setComponentAlignment(title, Alignment.MIDDLE_CENTER);
+        mainLayout.setComponentAlignment(header, Alignment.MIDDLE_CENTER);
         mainLayout.setComponentAlignment(viewComponent, Alignment.MIDDLE_CENTER);
         mainLayout.setComponentAlignment(loginInformationBar, Alignment.TOP_RIGHT);
 
-        mainLayout.addLayoutClickListener(new LayoutEvents.LayoutClickListener() {
-
-            @Override
-            public void layoutClick(LayoutEvents.LayoutClickEvent event) {
-                if (title.equals(event.getClickedComponent())) {
-                    refreshMainLayout();
-                }
+        mainLayout.addLayoutClickListener((LayoutEvents.LayoutClickEvent event) -> {
+            if (header.equals(event.getClickedComponent()) || title.equals(event.getClickedComponent()) || logo.equals(event.getClickedComponent())) {
+                refreshMainLayout();
             }
         });
-    }
-
-    /**
-     * Show an error dialog.
-     *
-     * @param message The message.
-     */
-    public void showError(String message) {
-        new Notification("Error", message, Notification.Type.ERROR_MESSAGE).show(Page.getCurrent());
-    }
-
-    /**
-     * Show a warning dialog.
-     *
-     * @param message The message.
-     */
-    public void showWarning(String message) {
-        new Notification("Warning", message, Notification.Type.WARNING_MESSAGE).show(Page.getCurrent());
-    }
-
-    @Override
-    public void showNotification(String message) {
-        new Notification("Information", message, Notification.Type.TRAY_NOTIFICATION).show(Page.getCurrent());
     }
 
     /**
@@ -349,7 +454,7 @@ public class AdminUIMainView extends UI implements IRegistrationCallback {
      */
     protected void refreshMainLayout() {
         LOGGER.debug("Refreshing main layout.");
-        if (UserData.NO_USER.equals(loggedInUser)) {
+        if (UserData.WORLD_USER.equals(UIHelper.getSessionUser())) {
             LOGGER.debug("Updating login view.");
             updateView(VIEW.LOGIN);
         } else {
@@ -359,59 +464,17 @@ public class AdminUIMainView extends UI implements IRegistrationCallback {
         }
     }
 
-    /**
-     * Get the currently logged in user.
-     *
-     * @return The logged in user.
-     */
-    public UserData getLoggedInUser() {
-        return loggedInUser;
-    }
-
-    /**
-     * Get the current authorization context defined by the logged in user and
-     * the group selection in the loginInformationBar. The according role is
-     * queried from the database in each call.
-     *
-     * @return The AuthorizationContext.
-     *
-     * @throws AuthorizationException If authorization fails.
-     */
-    public IAuthorizationContext getAuthorizationContext() throws AuthorizationException {
-        return AuthorizationUtil.getAuthorizationContext(new UserId(getLoggedInUser().getDistinguishedName()), new GroupId(loginInformationBar.getSelectedGroup()));
-    }
-
-    /**
-     * Get the current authorization context defined by the logged in user and
-     * the provided group. This method is intended to be used if another context
-     * is temporary needed to authorize a single operation that is coupled to
-     * the provided group. The according role is queried from the database in
-     * each call.
-     *
-     * @param pCurrentGroup The groupId to create the AuthorizationContext for.
-     *
-     * @return The AuthorizationContext.
-     *
-     * @throws AuthorizationException If authorization fails.
-     */
-    public IAuthorizationContext getAuthorizationContext(GroupId pCurrentGroup) throws AuthorizationException {
-        return AuthorizationUtil.getAuthorizationContext(new UserId(getLoggedInUser().getDistinguishedName()), pCurrentGroup);
+    protected void sessionGroupChanged() {
+        if (!INITIALIZING) {
+            refreshMainLayout();
+        }
     }
 
     /**
      * Perform Logout and switch view to login form.
      */
     protected void logout() {
-        loggedInUser = UserData.NO_USER;
-        loginInformationBar.setLoggedInUser(loggedInUser);
-        password.setValue("");
-        //reset all panels
-        informationView = null;
-        profileView = null;
-        datamanagerSettings = null;
-        refreshMainLayout();
-        new Notification("Logout",
-                "You've been logged out successfully.", Notification.Type.TRAY_NOTIFICATION).show(Page.getCurrent());
+        UIHelper.logout(UIHelper.getWebAppUrl().toString());
     }
 
     /**
@@ -423,4 +486,26 @@ public class AdminUIMainView extends UI implements IRegistrationCallback {
         }
         return currentView;
     }
+
+    private String readVersion() {
+        InputStream versionFile = null;
+        String version = "UNKNOWN";
+        try {
+            versionFile = InformationView.class.getClassLoader().getResourceAsStream("version.txt");
+            byte[] versionData = new byte[1024];
+            int size = versionFile.read(versionData);
+            version = new String(versionData, 0, size);
+        } catch (IOException ex) {
+            //failed to determine version number
+        } finally {
+            if (versionFile != null) {
+                try {
+                    versionFile.close();
+                } catch (IOException ex) {
+                }
+            }
+        }
+        return version;
+    }
+
 }

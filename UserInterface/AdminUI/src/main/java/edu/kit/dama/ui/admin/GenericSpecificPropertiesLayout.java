@@ -20,7 +20,7 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
 import edu.kit.dama.commons.types.IConfigurable;
-import static edu.kit.dama.ui.admin.administration.user.MembershipsView.LOGGER;
+import static edu.kit.dama.ui.admin.administration.user.MembershipRoleEditorWindow.LOGGER;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.commons.util.UIUtils7;
@@ -54,7 +54,7 @@ public class GenericSpecificPropertiesLayout extends VerticalLayout {
         LOGGER.debug("Building " + debugIdPrefix + " ...");
 
         propertiesFields = new LinkedList<>();
-        noPropertiesAvailableLabel = new Label("NO PROPERTIES AVAILABLE");
+        noPropertiesAvailableLabel = new Label("NO EXTENDED PROPERTIES AVAILABLE");
         noPropertiesAvailableLabel.setSizeUndefined();
 
         setId(debugIdPrefix);
@@ -100,10 +100,12 @@ public class GenericSpecificPropertiesLayout extends VerticalLayout {
 
     /**
      * Fill the layout depending on the provided configurable and properties.
-     * 
-     * @param pConfigurable The configurable used to obtain all supported property keys and their descriptions.
-     * @param pProperties A set of key-value pairs for the provided configurable.
-     * 
+     *
+     * @param pConfigurable The configurable used to obtain all supported
+     * property keys and their descriptions.
+     * @param pProperties A set of key-value pairs for the provided
+     * configurable.
+     *
      * @throws UIComponentUpdateException If pConfigurable is null.
      */
     public void updateComponents(IConfigurable pConfigurable, Properties pProperties) throws UIComponentUpdateException {

@@ -15,8 +15,6 @@
  */
 package edu.kit.dama.staging.entities.interfaces;
 
-import edu.kit.dama.staging.entities.StagingProcessor.PROCESSOR_TYPE;
-
 /**
  *
  * @author jejkal
@@ -51,19 +49,25 @@ public interface IDefaultStagingProcessor extends ISimpleStagingProcessor {
      */
     String getGroupId();
 
-    /**
-     * Get the type.
-     *
-     * @return The type.
-     */
-    PROCESSOR_TYPE getType();
-
+//    /**
+//     * Get the type.
+//     *
+//     * @return The type.
+//     */
+//    PROCESSOR_TYPE getType();
     /**
      * Set the description.
      *
      * @return The description.
      */
     String getDescription();
+
+    /**
+     * Set the priority.
+     *
+     * @return The priority.
+     */
+    Byte getPriority();
 
     /**
      * Check if this processor is selected by default.

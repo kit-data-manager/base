@@ -89,13 +89,18 @@ public class MetaDataSchema implements Serializable, IDefaultMetaDataSchema, Fet
     private String schemaIdentifier = null;
 
     /**
-     * MetaDataSchema. MetaDataSchema depends on participant (organization
-     * unit/user) and the context. Nevertheless there will be a limited number
-     * of possible metaDataSchemas.
+     * MetaDataSchema URL pointing to the schema.
      */
+    @Column(nullable = false)
     private String metaDataSchemaUrl;
-  // </editor-fold>
 
+    /**
+     * The metadata namespace.
+     */
+    @Column(nullable = false)
+    private String namespace = null;
+
+    // </editor-fold>
     // <editor-fold defaultstate="collapsed" desc="constructors">
     /**
      * Default constructor. Not accessible from outside.
@@ -112,7 +117,7 @@ public class MetaDataSchema implements Serializable, IDefaultMetaDataSchema, Fet
      * namespace.
      */
     public MetaDataSchema(String schemaIdentifier) {
-        this.schemaIdentifier = schemaIdentifier;
+        this(schemaIdentifier, "", "");
     }
 
     /**
@@ -123,11 +128,25 @@ public class MetaDataSchema implements Serializable, IDefaultMetaDataSchema, Fet
      * @param metaDataSchemaUrl Url of the meta data schema.
      */
     public MetaDataSchema(String schemaIdentifier, String metaDataSchemaUrl) {
+        this(schemaIdentifier, "", metaDataSchemaUrl);
+
+    }
+
+    /**
+     * Create a new MetaDataSchema.
+     *
+     * @param schemaIdentifier The identifiert which may be used as/like a
+     * namespace.
+     * @param namespace The namespace.
+     * @param metaDataSchemaUrl Url of the meta data schema.
+     */
+    public MetaDataSchema(String schemaIdentifier, String namespace, String metaDataSchemaUrl) {
         this.schemaIdentifier = schemaIdentifier;
+        this.namespace = namespace;
         this.metaDataSchemaUrl = metaDataSchemaUrl;
 
     }
-  // </editor-fold>
+    // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="setters and getters">
     @Override
@@ -159,6 +178,24 @@ public class MetaDataSchema implements Serializable, IDefaultMetaDataSchema, Fet
         this.schemaIdentifier = schemaIdentifier;
     }
 
+    public String getNamespace() {
+        return namespace;
+    }
+
+    /**
+     * Set the namespace.
+     *
+     * @param namespace The namespace.
+     */
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
+
+    /**
+     * Get the namespace.
+     *
+     * @return The namespace.
+     */
     @Override
     public String getMetaDataSchemaUrl() {
         return metaDataSchemaUrl;
@@ -177,7 +214,7 @@ public class MetaDataSchema implements Serializable, IDefaultMetaDataSchema, Fet
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder("MetaDataSchema\n----\n");
-        buffer.append("MetaDataSchema ID: ").append(getId()).append(" --- ").append(getSchemaIdentifier()).append(" --- ").append(getMetaDataSchemaUrl());
+        buffer.append("MetaDataSchema ID: ").append(getId()).append(" --- ").append(getSchemaIdentifier()).append(" --- ").append(getNamespace()).append(" --- ").append(getMetaDataSchemaUrl());
 
         return buffer.toString();
     }
@@ -200,6 +237,11 @@ public class MetaDataSchema implements Serializable, IDefaultMetaDataSchema, Fet
             } else {
                 equals = equals && (otherMetaDataSchema.metaDataSchemaUrl == null);
             }
+            if (equals && (namespace != null)) {
+                equals = equals && (namespace.equals(otherMetaDataSchema.namespace));
+            } else {
+                equals = equals && (otherMetaDataSchema.namespace == null);
+            }
         } else {
             equals = false;
         }
@@ -212,6 +254,7 @@ public class MetaDataSchema implements Serializable, IDefaultMetaDataSchema, Fet
         int hash = 7;
         hash = 37 * hash + (this.schemaIdentifier != null ? this.schemaIdentifier.hashCode() : 0);
         hash = 37 * hash + (this.metaDataSchemaUrl != null ? this.metaDataSchemaUrl.hashCode() : 0);
+        hash = 37 * hash + (this.namespace != null ? this.namespace.hashCode() : 0);
         return hash;
     }
 

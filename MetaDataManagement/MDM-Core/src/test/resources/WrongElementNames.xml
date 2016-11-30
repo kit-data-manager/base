@@ -17,34 +17,34 @@ limitations under the License.
 
 <AnyLabel>
   <MDM>
-    <PersistenceImplementations>
-      <PersistenceImplementation>
-        <Name>JPA</Name>
+    <persistenceImplementations>
+      <persistenceImplementation>
+        <name>JPA</name>
         <Default/>
-        <Class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</Class>
-        <PersistenceUnits>
+        <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+        <persistenceUnits>
           <!-- All databases which have to be supported by this implementation. 
                Attention: Labels should be the same for all implementations. -->
-          <PersistenceUnit>MDM-Core</PersistenceUnit>  
-          <PersistenceUnit>MDM-Core-Test</PersistenceUnit>  
-          <PersistenceUnit>MDM-DigitalObjects</PersistenceUnit>  
-          <PersistenceUnit>MDM-DigitalObjects-Test</PersistenceUnit>  
-          <PersistenceUnit>MDM-Microscopy</PersistenceUnit>  
-          <PersistenceUnit>MDM-Microscopy-Test</PersistenceUnit>  
-          <PersistenceUnit>MDM-Lifecycle</PersistenceUnit>  
-          <PersistenceUnit>MDM-Lifecycle-Test</PersistenceUnit>  
-          <PersistenceUnit>MDM-Admin</PersistenceUnit>  
-          <PersistenceUnit>MDM-Admin-Test</PersistenceUnit>  
-          <PersistenceUnit>MDM-DataIngest</PersistenceUnit>  
-          <PersistenceUnit>MDM-DataIngest-Test</PersistenceUnit>  
-          <PersistenceUnit>MDM-DataWorkflow</PersistenceUnit>  
-          <PersistenceUnit>MDM-DataWorkflow-Test</PersistenceUnit>  
-          <PersistenceUnit>MDM-DataOrganization</PersistenceUnit>  
-          <PersistenceUnit>MDM-DataOrganization-Test</PersistenceUnit>  
-          <PersistenceUnit>MDM-Query</PersistenceUnit>  
-          <PersistenceUnit>MDM-Query-Test</PersistenceUnit>  
-        </PersistenceUnits>
-      </PersistenceImplementation>  
-    </PersistenceImplementations>
+          <persistenceUnit>MDM-Core</persistenceUnit>  
+          <persistenceUnit>MDM-Core-Test</persistenceUnit>  
+          <persistenceUnit>MDM-DigitalObjects</persistenceUnit>  
+          <persistenceUnit>MDM-DigitalObjects-Test</persistenceUnit>  
+          <persistenceUnit>MDM-Microscopy</persistenceUnit>  
+          <persistenceUnit>MDM-Microscopy-Test</persistenceUnit>  
+          <persistenceUnit>MDM-Lifecycle</persistenceUnit>  
+          <persistenceUnit>MDM-Lifecycle-Test</persistenceUnit>  
+          <persistenceUnit>MDM-Admin</persistenceUnit>  
+          <persistenceUnit>MDM-Admin-Test</persistenceUnit>  
+          <persistenceUnit>MDM-DataIngest</persistenceUnit>  
+          <persistenceUnit>MDM-DataIngest-Test</persistenceUnit>  
+          <persistenceUnit>MDM-DataWorkflow</persistenceUnit>  
+          <persistenceUnit>MDM-DataWorkflow-Test</persistenceUnit>  
+          <persistenceUnit>MDM-DataOrganization</persistenceUnit>  
+          <persistenceUnit>MDM-DataOrganization-Test</persistenceUnit>  
+          <persistenceUnit>MDM-Query</persistenceUnit>  
+          <persistenceUnit>MDM-Query-Test</persistenceUnit>  
+        </persistenceUnits>
+      </persistenceImplementation>  
+    </persistenceImplementations>
   </MDM>  
 </AnyLabel>

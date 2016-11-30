@@ -17,6 +17,7 @@ package edu.kit.dama.rest.staging.client.impl;
 
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
 import edu.kit.dama.rest.AbstractRestClient;
 import edu.kit.dama.rest.staging.types.TransferTaskContainer;
 import edu.kit.dama.rest.staging.types.DownloadInformationWrapper;
@@ -27,6 +28,7 @@ import edu.kit.dama.mdm.dataorganization.impl.staging.AttributeImpl;
 import edu.kit.dama.mdm.dataorganization.impl.staging.DataOrganizationNodeImpl;
 import edu.kit.dama.mdm.dataorganization.impl.staging.FileNodeImpl;
 import edu.kit.dama.mdm.dataorganization.impl.staging.LFNImpl;
+import edu.kit.dama.mdm.dataorganization.impl.util.Util;
 import edu.kit.dama.rest.staging.types.StagingAccessPointConfigurationWrapper;
 import edu.kit.dama.rest.staging.types.StagingProcessorWrapper;
 import edu.kit.dama.util.Constants;
@@ -34,11 +36,14 @@ import java.net.URL;
 import java.util.List;
 import javax.ws.rs.core.MultivaluedMap;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author Torridity
+ * @author jejkal
+ * 
+ * @deprecated Will be replaced by edu.kit.dama.rest.staging.client.impl.StagingRestClient in order to follow the RESTful client naming conventions. Functionality is not affected.
  */
 public class StagingServiceRESTClient extends AbstractRestClient {
 
@@ -141,6 +146,11 @@ public class StagingServiceRESTClient extends AbstractRestClient {
      * The unique identifier of a staging access point.
      */
     protected static final String QUERY_PARAMETER_UNIQUE_IDENTIFIER = "uniqueIdentifier";
+    /**
+     * The dataOrganizationTree paramter.
+     */
+    protected static final String QUERY_PARAMETER_DATA_ORGANIZATION_TREE = "dataOrganizationTree";
+
     /**
      * StagingProcessor.
      */
@@ -866,7 +876,7 @@ public class StagingServiceRESTClient extends AbstractRestClient {
      * @return An IngestInformationWrapper.
      */
     public DownloadInformationWrapper createDownload(String objectId, String accessPoint) {
-        return createDownload(objectId, accessPoint, null, null, null);
+        return createDownload(objectId, accessPoint, null, null, null, null);
     }
 
     /**
@@ -880,7 +890,7 @@ public class StagingServiceRESTClient extends AbstractRestClient {
      * @return An IngestInformationWrapper.
      */
     public DownloadInformationWrapper createDownload(String objectId, String accessPoint, List<Long> stagingProcessorIds) {
-        return createDownload(objectId, accessPoint, stagingProcessorIds, null, null);
+        return createDownload(objectId, accessPoint, null, stagingProcessorIds, null, null);
     }
 
     /**
@@ -893,7 +903,7 @@ public class StagingServiceRESTClient extends AbstractRestClient {
      * @return An IngestInformationWrapper.
      */
     public DownloadInformationWrapper createDownload(String objectId, String accessPoint, String groupId) {
-        return createDownload(objectId, accessPoint, null, groupId, null);
+        return createDownload(objectId, accessPoint, (IFileTree) null, groupId);
     }
 
     /**
@@ -901,14 +911,13 @@ public class StagingServiceRESTClient extends AbstractRestClient {
      *
      * @param objectId id of the object.
      * @param accessPoint AccessPoint for transfer.
+     * @param dataOrganizationTree The data organization tree.
      * @param groupId GroupId used to create the download.
-     * @param pSecurityContext The security context.
-     *
      *
      * @return An IngestInformationWrapper.
      */
-    public DownloadInformationWrapper createDownload(String objectId, String accessPoint, String groupId, SimpleRESTContext pSecurityContext) {
-        return createDownload(objectId, accessPoint, null, groupId, pSecurityContext);
+    public DownloadInformationWrapper createDownload(String objectId, String accessPoint, IFileTree dataOrganizationTree, String groupId) {
+        return createDownload(objectId, accessPoint, dataOrganizationTree, null, groupId, null);
     }
 
     /**
@@ -923,7 +932,23 @@ public class StagingServiceRESTClient extends AbstractRestClient {
      * @return An IngestInformationWrapper.
      */
     public DownloadInformationWrapper createDownload(String objectId, String accessPoint, List<Long> stagingProcessorIds, String groupId) {
-        return createDownload(objectId, accessPoint, stagingProcessorIds, groupId, null);
+        return createDownload(objectId, accessPoint, null, stagingProcessorIds, groupId, null);
+    }
+
+    /**
+     * Create a new download for given object id and given AccessPoint.
+     *
+     * @param objectId id of the object.
+     * @param accessPoint AccessPoint for transfer.
+     * @param dataOrganizationTree The data organization tree.
+     * @param stagingProcessorIds The list of staging processor ids assigned to
+     * this download.
+     * @param groupId GroupId used to create the download.
+     *
+     * @return An IngestInformationWrapper.
+     */
+    public DownloadInformationWrapper createDownload(String objectId, String accessPoint, IFileTree dataOrganizationTree, List<Long> stagingProcessorIds, String groupId) {
+        return createDownload(objectId, accessPoint, dataOrganizationTree, stagingProcessorIds, groupId, null);
     }
 
     /**
@@ -951,7 +976,7 @@ public class StagingServiceRESTClient extends AbstractRestClient {
      * @return IngestInformationWrapper.
      */
     public DownloadInformationWrapper createDownload(String objectId, String accessPoint, List<Long> stagingProcessorIds, SimpleRESTContext pSecurityContext) {
-        return createDownload(objectId, accessPoint, stagingProcessorIds, null, pSecurityContext);
+        return createDownload(objectId, accessPoint, null, stagingProcessorIds, null, pSecurityContext);
     }
 
     /**
@@ -959,6 +984,23 @@ public class StagingServiceRESTClient extends AbstractRestClient {
      *
      * @param objectId id of the object.
      * @param accessPoint AccessPoint for transfer.
+     * @param dataOrganizationTree The data organization tree to download.
+     * @param stagingProcessorIds The list of staging processor ids assigned to
+     * this download.
+     * @param pSecurityContext The security context.
+     *
+     * @return IngestInformationWrapper.
+     */
+    public DownloadInformationWrapper createDownload(String objectId, String accessPoint, IFileTree dataOrganizationTree, List<Long> stagingProcessorIds, SimpleRESTContext pSecurityContext) {
+        return createDownload(objectId, accessPoint, dataOrganizationTree, stagingProcessorIds, null, pSecurityContext);
+    }
+
+    /**
+     * Create a new download for given object id and given AccessPoint.
+     *
+     * @param objectId id of the object.
+     * @param accessPoint AccessPoint for transfer.
+     * @param dataOrganizationTree The file tree to download.
      * @param stagingProcessorIds The list of staging processor ids assigned to
      * this download.
      * @param groupId GroupId used to create the download.
@@ -966,7 +1008,7 @@ public class StagingServiceRESTClient extends AbstractRestClient {
      *
      * @return An IngestInformationWrapper.
      */
-    public DownloadInformationWrapper createDownload(String objectId, String accessPoint, List<Long> stagingProcessorIds, String groupId, SimpleRESTContext pSecurityContext) {
+    public DownloadInformationWrapper createDownload(String objectId, String accessPoint, IFileTree dataOrganizationTree, List<Long> stagingProcessorIds, String groupId, SimpleRESTContext pSecurityContext) {
         DownloadInformationWrapper returnValue;
         MultivaluedMap formParams;
         MultivaluedMap queryParams = null;
@@ -990,6 +1032,10 @@ public class StagingServiceRESTClient extends AbstractRestClient {
 
         if (stagingProcessorIds != null) {
             formParams.add(QUERY_PARAMETER_STAGING_PROCESSORS, new JSONArray(stagingProcessorIds).toString());
+        }
+
+        if (dataOrganizationTree != null) {
+            formParams.add(QUERY_PARAMETER_DATA_ORGANIZATION_TREE, Util.fileTreeToJsonView(dataOrganizationTree).toString());
         }
 
         returnValue = performPostDownload(STAGING_ALL_DOWNLOADS, queryParams, formParams);

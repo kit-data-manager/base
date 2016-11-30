@@ -34,7 +34,6 @@ import org.apache.commons.configuration.XMLConfiguration;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerFactory;
 import org.quartz.impl.StdSchedulerFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +86,6 @@ public class JobSchedulerInitializerListener implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-
         LOGGER.debug("JobSchedulerInitializerListener servlet loaded, initializing scheduler.");
 
         loadConfiguration();
@@ -101,7 +99,7 @@ public class JobSchedulerInitializerListener implements ServletContextListener {
 
         try {
             LOGGER.debug("Try to build a Quartz StdSchedulerFactory.");
-            final SchedulerFactory sf = new StdSchedulerFactory(getQuertzProperties());
+            final SchedulerFactory sf = new StdSchedulerFactory(getQuartzProperties());
 
             LOGGER.debug("Try to get a scheduler object from SchedulerFactory.");
             scheduler = sf.getScheduler();
@@ -167,7 +165,7 @@ public class JobSchedulerInitializerListener implements ServletContextListener {
         }
     }
 
-    public Properties getQuertzProperties() {
+    public Properties getQuartzProperties() {
         Properties p = new Properties();
         p.put("org.quartz.scheduler.instanceName", "KITDMScheduler");
         p.put("org.quartz.scheduler.skipUpdateCheck", "true");

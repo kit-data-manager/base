@@ -29,10 +29,6 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,16 +39,16 @@ import org.slf4j.LoggerFactory;
  * @author jejkal
  */
 public final class ElasticsearchTransitionTypeHandler extends AbstractTransitionTypeHandler<JSONObject> {
-    
+
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ElasticsearchTransitionTypeHandler.class);
-    
+
     private String elasticHost = "localhost";
     private int elasticPort = 9300;
     private String elasticCluster = "KITDataManager";
     private String elasticIndex = "customtransitions";
-    
+
     public final static String TRANSITION_TYPE_ID = "transition";
-    
+
     @Override
     public boolean configure(Configuration pConfig) throws ConfigurationException {
         elasticHost = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_HOST_ID, "localhost");
@@ -61,19 +57,17 @@ public final class ElasticsearchTransitionTypeHandler extends AbstractTransition
         elasticIndex = pConfig.getString("index", "customtransitions").toLowerCase();
         return true;
     }
-    
+
     @Override
     public DigitalObjectTransition<JSONObject> factoryTransitionEntity() {
         return new ElasticsearchTransition();
     }
-    
+
     @Override
     public String getTransitionEntityId(JSONObject pTransitionEntity) throws PersistFailedException {
         LOGGER.debug("Trying to index entity '{}'", pTransitionEntity.toString());
         try {
-            Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", elasticCluster).build();
-            Client client = new TransportClient(settings)
-                    .addTransportAddress(new InetSocketTransportAddress(elasticHost, elasticPort));
+            Client client = ElasticHelper.getTransportClient(elasticHost, elasticPort, elasticCluster);
             String id = CryptUtil.stringToSHA1(pTransitionEntity.toString());
             IndexResponse response = client.prepareIndex(elasticIndex, TRANSITION_TYPE_ID, id).
                     setSource(pTransitionEntity.toString())
@@ -84,7 +78,7 @@ public final class ElasticsearchTransitionTypeHandler extends AbstractTransition
             throw new PersistFailedException("Failed to persist transition entity in elasticsearch index.", t);
         }
     }
-    
+
     @Override
     public JSONObject handleTransitionEntityData(String pTransitionEntityData) {
         try {
@@ -94,12 +88,10 @@ public final class ElasticsearchTransitionTypeHandler extends AbstractTransition
             throw new IllegalArgumentException("Invalid transition entity data '" + pTransitionEntityData + "' for elasticsearch handler", ex);
         }
     }
-    
+
     @Override
     public JSONObject loadTransitionEntity(String pTransitionEntityId) throws EntityNotFoundException {
-        Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", elasticCluster).build();
-        Client client = new TransportClient(settings)
-                .addTransportAddress(new InetSocketTransportAddress(elasticHost, elasticPort));
+        Client client = ElasticHelper.getTransportClient(elasticHost, elasticPort, elasticCluster);
         SearchRequestBuilder requestBuilder = client.prepareSearch(elasticIndex);
         requestBuilder.setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
         requestBuilder.setQuery(QueryBuilders.idsQuery(TRANSITION_TYPE_ID).addIds(pTransitionEntityId));
@@ -109,12 +101,12 @@ public final class ElasticsearchTransitionTypeHandler extends AbstractTransition
                 .setExplain(true)
                 .execute()
                 .actionGet();
-        
+
         if (response.getHits().getTotalHits() == 1) {
             return new JSONObject(response.getHits().getAt(0).getSourceAsString());
         } else {
             throw new EntityNotFoundException(" Query for transitionEntityId '" + pTransitionEntityId + "' returned " + response.getHits().getTotalHits() + " result(s), but expecting exactly 1. Returning null.");
         }
     }
-    
+
 }

@@ -16,17 +16,17 @@ limitations under the License.
 -->
 
 <DAMA>
-  <MetaDataManagement>
-    <PersistenceImplementations>
-      <PersistenceImplementation>
-        <Name>JPA</Name>
+  <metaDataManagement>
+    <persistenceImplementations>
+      <persistenceImplementation>
+        <name>JPA</name>
         <Default/>
-        <Class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</Class>
-        <PersistenceUnits>
+        <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+        <persistenceUnits>
           <!-- All databases which have to be supported by this implementation. 
                Attention: Labels should be the same for all implementations. -->
-        </PersistenceUnits>
-      </PersistenceImplementation>  
-    </PersistenceImplementations>
-  </MetaDataManagement>  
+        </persistenceUnits>
+      </persistenceImplementation>  
+    </persistenceImplementations>
+  </metaDataManagement>  
 </DAMA>

@@ -663,22 +663,22 @@ public class DataWorkflowRestClient extends AbstractRestClient {
      *
      * @param args Command line arguments.
      */
-    public static void main(String[] args) {
-        SimpleRESTContext ctx = new SimpleRESTContext("admin", "dama14");
-        DataWorkflowRestClient client = new DataWorkflowRestClient("http://localhost:8080/KITDM/rest/dataworkflow/", ctx);
-        //System.out.println(client.getTaskConfigurationById("USERS", 1l).getCount());
-        // System.out.println(client.getTaskById("USERS", 1l).getEntities().get(0).getObjectTransferMap());
-        Investigation inv = new Investigation();
-        inv.setInvestigationId(1l);
-
-        DataWorkflowTaskConfiguration config = new DataWorkflowTaskConfiguration();
-        config.setId(5l);
-        ExecutionEnvironmentConfiguration env = new ExecutionEnvironmentConfiguration();
-        env.setId(1l);
-        Properties inputMap = new Properties();
-        inputMap.put("786f1eeb-3d58-4a8b-bbba-7fc2bb1fcfff", "default");
-        DataWorkflowTask task = client.createTask("USERS", inv, config, env, null, inputMap, null, null, ctx).getEntities().get(0);
-        System.out.println(task.getId());
-        System.out.println(task.getLastUpdate());
-    }
+//    public static void main(String[] args) {
+//        SimpleRESTContext ctx = new SimpleRESTContext("admin", "dama14");
+//        DataWorkflowRestClient client = new DataWorkflowRestClient("http://localhost:8080/KITDM/rest/dataworkflow/", ctx);
+//        //System.out.println(client.getTaskConfigurationById("USERS", 1l).getCount());
+//        // System.out.println(client.getTaskById("USERS", 1l).getEntities().get(0).getObjectTransferMap());
+//        Investigation inv = new Investigation();
+//        inv.setInvestigationId(1l);
+//
+//        DataWorkflowTaskConfiguration config = new DataWorkflowTaskConfiguration();
+//        config.setId(5l);
+//        ExecutionEnvironmentConfiguration env = new ExecutionEnvironmentConfiguration();
+//        env.setId(1l);
+//        Properties inputMap = new Properties();
+//        inputMap.put("786f1eeb-3d58-4a8b-bbba-7fc2bb1fcfff", "default");
+//        DataWorkflowTask task = client.createTask("USERS", inv, config, env, null, inputMap, null, null, ctx).getEntities().get(0);
+//        System.out.println(task.getId());
+//        System.out.println(task.getLastUpdate());
+//    }
 }

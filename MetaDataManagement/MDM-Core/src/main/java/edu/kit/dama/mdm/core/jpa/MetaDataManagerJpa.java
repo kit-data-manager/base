@@ -118,11 +118,12 @@ public class MetaDataManagerJpa implements IMetaDataManager {
     @Override
     public final <T> List<T> find(final Class<T> entityClass) throws UnauthorizedAccessAttemptException {
         List<T> resultList = new ArrayList();
-        String queryString = "SELECT e FROM " + entityClass.getSimpleName() + " e";
+        String queryString = "SELECT e FROM " + EntityManagerHelper.getEntityTableName(entityClass) + " e";
         LOGGER.debug("Query string for all entities of one class: {}", queryString);
         try {
             //EntityGraph graph = entityManager.getEntityGraph("DigitalObjectTransition.simple");
             Query query = entityManager.createQuery(queryString, entityClass);
+
             // query.setHint("javax.persistence.fetchgraph", graph);
             applyProperties(query);
             resultList = query.getResultList();
@@ -325,17 +326,15 @@ public class MetaDataManagerJpa implements IMetaDataManager {
         T argumentNotNull = null;
         if (first != null) {
             argumentNotNull = first;
-        } else {
-            if (last != null) {
-                argumentNotNull = last;
-            }
+        } else if (last != null) {
+            argumentNotNull = last;
         }
         if (argumentNotNull == null) {
             // both instances are null nothing to do.
             return resultList;
         }
         StringBuilder queryString = new StringBuilder("SELECT e FROM ")
-                .append(argumentNotNull.getClass().getSimpleName())
+                .append(EntityManagerHelper.getEntityTableName(argumentNotNull.getClass()))
                 .append(" e");
         try {
             Metamodel metamodel = entityManager.getMetamodel();
@@ -367,13 +366,11 @@ public class MetaDataManagerJpa implements IMetaDataManager {
                         queryString.append(" e.").append(propertyName);
                         if ((firstValue != null) && (lastValue != null)) {
                             queryString.append(" BETWEEN '").append(firstValue).append("' AND '").append(lastValue).append("'");
+                        } else if (firstValue != null) {
+                            queryString.append(" >= '").append(firstValue).append("'");
                         } else {
-                            if (firstValue != null) {
-                                queryString.append(" >= '").append(firstValue).append("'");
-                            } else {
-                                // lastValue != null
-                                queryString.append(" <= '").append(lastValue).append("'");
-                            }
+                            // lastValue != null
+                            queryString.append(" <= '").append(lastValue).append("'");
                         }
                     }
                 } else {
@@ -435,20 +432,18 @@ public class MetaDataManagerJpa implements IMetaDataManager {
             } finally {
                 finalizeEntityManagerAccess("refresh", null, entity);
             }
-        } else {
-            if (contains(entity)) {
-                entityManaged = EntityManagerHelper.obtainManagedEntity(entityManager, entity);
-                try {
-                    entityManager.refresh(entityManaged, properties);
-                } catch (RuntimeException re) {
-                    LOGGER.error("Failed to refresh entity", re);
-                    throw re;
-                } finally {
-                    finalizeEntityManagerAccess("refresh", null, entityManaged);
-                }
-            } else {
-                throw new EntityNotFoundException("Cannot refresh non existing entity: " + entity);
+        } else if (contains(entity)) {
+            entityManaged = EntityManagerHelper.obtainManagedEntity(entityManager, entity);
+            try {
+                entityManager.refresh(entityManaged, properties);
+            } catch (RuntimeException re) {
+                LOGGER.error("Failed to refresh entity", re);
+                throw re;
+            } finally {
+                finalizeEntityManagerAccess("refresh", null, entityManaged);
             }
+        } else {
+            throw new EntityNotFoundException("Cannot refresh non existing entity: " + entity);
         }
         return entityManaged;
     }
@@ -674,6 +669,7 @@ public class MetaDataManagerJpa implements IMetaDataManager {
     }
 
     @Override
+    @SuppressWarnings(value = "FinalizeDeclaration")
     protected final void finalize() throws Throwable {
         if (!entityManagerClosed) {
             LOGGER.warn("EntityManager should be closed directly after use! I'm doing it for finalization.");
@@ -684,5 +680,6 @@ public class MetaDataManagerJpa implements IMetaDataManager {
 
     @Override
     public void setAuthorizationContext(IAuthorizationContext authorizationContext) {
+        //nothing is done here as this metadata manager is not secured.
     }
 }

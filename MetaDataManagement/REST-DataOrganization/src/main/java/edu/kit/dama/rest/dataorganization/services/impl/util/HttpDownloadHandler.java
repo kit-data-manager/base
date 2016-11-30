@@ -15,7 +15,6 @@
  */
 package edu.kit.dama.rest.dataorganization.services.impl.util;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,6 +22,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -42,7 +42,7 @@ public class HttpDownloadHandler implements IDownloadHandler<URL> {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpDownloadHandler.class);
 
     @Override
-    public DownloadStreamWrapper prepareStream(URL pUrl) throws IOException {
+    public Response prepareStream(URL pUrl) throws IOException {
         try {
             final CloseableHttpClient httpclient = HttpClients.custom()
                     .setRedirectStrategy(new LaxRedirectStrategy()) // adds HTTP REDIRECT support to GET and POST methods 
@@ -65,7 +65,6 @@ public class HttpDownloadHandler implements IDownloadHandler<URL> {
                 @Override
                 public void write(OutputStream os) throws IOException, WebApplicationException {
                     try {
-                        BufferedOutputStream bus = new BufferedOutputStream(os);
                         byte[] data = new byte[1024];
                         int bytesRead;
                         while ((bytesRead = is.read(data)) != -1) {
@@ -77,8 +76,7 @@ public class HttpDownloadHandler implements IDownloadHandler<URL> {
                     }
                 }
             };
-            // return null;
-            return new DownloadStreamWrapper(stream, contentType);
+            return Response.ok(stream, contentType).build();
         } catch (URISyntaxException ex) {
             throw new IOException("Failed to prepare download stream for URL " + pUrl, ex);
         }

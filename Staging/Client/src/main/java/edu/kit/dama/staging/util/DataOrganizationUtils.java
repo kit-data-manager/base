@@ -22,6 +22,7 @@ import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.lsdf.adalapi.AbstractFile;
 import edu.kit.lsdf.adalapi.exception.AdalapiException;
 import edu.kit.dama.commons.types.DigitalObjectId;
+import edu.kit.dama.commons.types.ILFN;
 import edu.kit.dama.mdm.dataorganization.entity.core.IAttribute;
 import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
@@ -30,6 +31,7 @@ import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
 import edu.kit.dama.mdm.dataorganization.impl.jpa.persistence.PersistenceFacade;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
+import edu.kit.dama.mdm.dataorganization.entity.impl.client.NodeId;
 import edu.kit.dama.mdm.dataorganization.impl.staging.AttributeImpl;
 import edu.kit.dama.mdm.dataorganization.impl.staging.CollectionNodeImpl;
 import edu.kit.dama.mdm.dataorganization.impl.staging.DataOrganizationNodeImpl;
@@ -38,6 +40,8 @@ import edu.kit.dama.mdm.dataorganization.impl.staging.FileTreeImpl;
 import edu.kit.dama.staging.entities.StagingFile;
 import edu.kit.dama.mdm.dataorganization.impl.staging.LFNImpl;
 import edu.kit.dama.mdm.dataorganization.impl.staging.ISelectable;
+import edu.kit.dama.mdm.dataorganization.impl.util.DataOrganizationTreeBuilder;
+import edu.kit.dama.mdm.dataorganization.impl.util.Util;
 import edu.kit.dama.util.Constants;
 import edu.kit.tools.url.URLCreator;
 import java.io.File;
@@ -281,6 +285,18 @@ public class DataOrganizationUtils {
      */
     private static void printTreeInternal(ICollectionNode pTree, String pPadding, StringBuilder pOutputHolder, boolean pDoubleLine, boolean pIncludeURL) {
         String name = pTree.getName();
+        if (name == null) {
+            try {
+                NodeId id = pTree.getTransientNodeId();
+                if (id != null) {
+                    name = "Node #" + id.getInTreeId();
+                }
+            } catch (UnsupportedOperationException ex) {
+                //no node id obtainable
+                name = "Unknown";
+            }
+        }
+
         String sPadding = pPadding;
         if (name == null) {
             name = "<null>";
@@ -324,9 +340,25 @@ public class DataOrganizationUtils {
                     printTreeInternal((ICollectionNode) file, sPadding + "|", pOutputHolder, pDoubleLine, pIncludeURL);
                 }
             } else {
-                pOutputHolder.append(sPadding).append("+-").append(file.getName());
+                String fileName = file.getName();
+                try {
+                    NodeId id = file.getTransientNodeId();
+                    if (id != null) {
+                        fileName = "Node #" + id.getInTreeId();
+                    }
+                } catch (UnsupportedOperationException ex) {
+                    //no node id obtainable
+                    fileName = "Unknown";
+                }
+
+                pOutputHolder.append(sPadding).append("+-").append(fileName);
                 if (pIncludeURL) {
-                    pOutputHolder.append(" (").append(((IFileNode) file).getLogicalFileName().asString()).append(")");
+                    ILFN logicalFileName = ((IFileNode) file).getLogicalFileName();
+                    if (logicalFileName != null) {
+                        pOutputHolder.append(" (").append(((IFileNode) file).getLogicalFileName().asString()).append(")");
+                    } else {
+                        pOutputHolder.append(" (No LFN assigned)");
+                    }
                 }
                 pOutputHolder.append("\n");
             }
@@ -986,7 +1018,15 @@ public class DataOrganizationUtils {
         Set<Entry<String, File>> entries = map.entrySet();
         try (ZipOutputStream zipOut = new ZipOutputStream(pOutputStream)) {
             for (Entry<String, File> entry : entries) {
-                zipOut.putNextEntry(new ZipEntry(entry.getKey()));
+
+                if (entry.getValue() == null) {
+                    //directory node
+                    zipOut.putNextEntry(new ZipEntry(entry.getKey() + "/"));
+                } else {
+                    //file node
+                    zipOut.putNextEntry(new ZipEntry(entry.getKey()));
+                }
+
                 if (entry.getValue() != null) {
                     try (final FileInputStream in = new FileInputStream(entry.getValue())) {
                         // Add ZIP entry to output stream.
@@ -1008,9 +1048,11 @@ public class DataOrganizationUtils {
      * Return the amount of data in bytes associated with the provided object
      * id. This method implies, that for each object there is an attribute
      * SIZE_KEY where the attribute value is the amount of contained bytes as
-     * long. The method will query for the root node of pObjectId (nodeDepth=0),
-     * obtains the attributes' value and returns its long representation. If
-     * nothing is found or something fails, 0 is returned.
+     * long and that each collection node contains the size of its children.
+     *
+     * The method will query for the root node of pObjectId (nodeDepth=0),
+     * obtains the size attributes' value and returns its long representation.
+     * If nothing is found or something fails, 0 is returned.
      *
      * @param pObjectId The id of the object to query for.
      *
@@ -1029,6 +1071,7 @@ public class DataOrganizationUtils {
 
         try {
             List<Object> result = doMdm.findResultList("SELECT a.value FROM Attribute a WHERE " + objectSelection + "a.key='" + SIZE_KEY + "' AND a.annotatedNode.nodeDepth=0");
+
             if (result.isEmpty()) {
                 return 0l;
             } else if (result.size() == 1) {

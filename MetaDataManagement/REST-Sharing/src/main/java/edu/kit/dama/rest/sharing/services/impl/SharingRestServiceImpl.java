@@ -366,8 +366,8 @@ public final class SharingRestServiceImpl implements ISharingService {
      */
     private SecurableResourceId factoryResourceId(String pDomain, String pDomainUniqueId) {
         if (pDomain == null || pDomainUniqueId == null) {
-            LOGGER.error("Arguments pDomain and pDomainUniqueId must not be null. Returning HTTP-400");
-            throw new WebApplicationException(400);
+            LOGGER.error("Arguments pDomain and pDomainUniqueId must not be null. Returning HTTP-BAD REQUEST (400)");
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
 
         return new SecurableResourceId(pDomain, pDomainUniqueId);

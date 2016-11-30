@@ -77,30 +77,45 @@ import org.eclipse.persistence.sessions.Session;
             name = "DataWorkflowTaskConfiguration.simple",
             includeAllAttributes = false,
             attributeNodes = {
-                @NamedAttributeNode("id")}),
+                @NamedAttributeNode("id")})
+    ,
     @NamedEntityGraph(
             name = "DataWorkflowTaskConfiguration.default",
             includeAllAttributes = false,
             attributeNodes = {
-                @NamedAttributeNode("id"),
-                @NamedAttributeNode("name"),
-                @NamedAttributeNode("description"),
-                @NamedAttributeNode("version"),
-                @NamedAttributeNode("creationDate"),
-                @NamedAttributeNode("keywords"),
-                @NamedAttributeNode("contactUserId"),
-                @NamedAttributeNode("groupId"),
-                @NamedAttributeNode("applicationPackageUrl"),
-                @NamedAttributeNode("applicationArguments"),
-                @NamedAttributeNode("defaultTask"),
-                @NamedAttributeNode("disabled"),
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode("name")
+                ,
+                @NamedAttributeNode("description")
+                ,
+                @NamedAttributeNode("version")
+                ,
+                @NamedAttributeNode("creationDate")
+                ,
+                @NamedAttributeNode("keywords")
+                ,
+                @NamedAttributeNode("contactUserId")
+                ,
+                @NamedAttributeNode("groupId")
+                ,
+                @NamedAttributeNode("applicationPackageUrl")
+                ,
+                @NamedAttributeNode("applicationArguments")
+                ,
+//               @NamedAttributeNode("defaultTask")
+//                ,
+//                @NamedAttributeNode("disabled")
+//                ,
                 @NamedAttributeNode(value = "requiredEnvironmentProperties", subgraph = "DataWorkflowTaskConfiguration.default.EnvironmentProperty.default"),},
             subgraphs = {
                 @NamedSubgraph(
                         name = "DataWorkflowTaskConfiguration.default.EnvironmentProperty.default",
                         attributeNodes = {
-                            @NamedAttributeNode("id"),
-                            @NamedAttributeNode("name"),
+                            @NamedAttributeNode("id")
+                            ,
+                            @NamedAttributeNode("name")
+                            ,
                             @NamedAttributeNode("description")
                         }
                 )
@@ -157,16 +172,16 @@ public class DataWorkflowTaskConfiguration implements IDefaultDataWorkflowConfig
      * Multiple arguments are separated by spaces.
      */
     private String applicationArguments;
-    /**
-     * Flag that indicated that this task is enabled by default, e.g. for new
-     * ingests.
-     */
-    private Boolean defaultTask = false;
-    /**
-     * Flag that indicated, that this task is disabeled, e.g. should be used any
-     * longer.
-     */
-    private Boolean disabled = false;
+//    /**
+//     * Flag that indicated that this task is enabled by default, e.g. for new
+//     * ingests.
+//     */
+//     private Boolean defaultTask = false;
+//    /**
+//     * Flag that indicated, that this task is disabeled, e.g. should be used any
+//     * longer.
+//     */
+//    private Boolean disabled = false;
 
     @OneToMany(fetch = FetchType.EAGER)
     @XmlElementWrapper(name = "executionEnvironmentProperties")
@@ -337,34 +352,33 @@ public class DataWorkflowTaskConfiguration implements IDefaultDataWorkflowConfig
         this.applicationPackageUrl = pApplicationPackageUrl;
     }
 
-    @Override
-    public Boolean isDefaultTask() {
-        return defaultTask;
-    }
-
-    /**
-     * Flag this task as default.
-     *
-     * @param defaultTask New default task flag value.
-     */
-    public void setDefaultTask(Boolean defaultTask) {
-        this.defaultTask = defaultTask;
-    }
-
-    @Override
-    public Boolean isDisabled() {
-        return disabled;
-    }
-
-    /**
-     * Flag this task as disabled.
-     *
-     * @param disabled New disabled flag value.
-     */
-    public void setDisabled(Boolean disabled) {
-        this.disabled = disabled;
-    }
-
+//    @Override
+//    public Boolean isDefaultTask() {
+//        return defaultTask;
+//    }
+//
+//    /**
+//     * Flag this task as default.
+//     *
+//     * @param defaultTask New default task flag value.
+//     */
+//    public void setDefaultTask(Boolean defaultTask) {
+//        this.defaultTask = defaultTask;
+//    }
+//
+//    @Override
+//    public Boolean isDisabled() {
+//        return disabled;
+//    }
+//
+//    /**
+//     * Flag this task as disabled.
+//     *
+//     * @param disabled New disabled flag value.
+//     */
+//    public void setDisabled(Boolean disabled) {
+//        this.disabled = disabled;
+//    }
     @Override
     public Set<ExecutionEnvironmentProperty> getRequiredEnvironmentProperties() {
         return requiredEnvironmentProperties;

@@ -76,8 +76,8 @@ public abstract class AbstractPropertyConfigurationPanel<C extends ExecutionEnvi
      * {@link #resetCustomComponents()}.
      */
     public final void reset() {
-        nameField.setValue("");
-        descriptionField.setValue("");
+        getNameField().setValue("");
+        getDescriptionField().setValue("");
         resetCustomComponents();
     }
 

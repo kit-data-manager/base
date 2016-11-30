@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>Staging</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,7 +28,6 @@
     <artifactId>StagingClient</artifactId>
     <name>StagingClient</name>
     <packaging>jar</packaging>
-    <version>1.3</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <projectName>StagingClient</projectName>
@@ -76,7 +75,7 @@
         <dependency>
             <groupId>edu.kit</groupId>
             <artifactId>ADALAPI</artifactId>
-            <version>2.2.2</version>
+            <version>2.3</version>
             <exclusions>
                 <!--must be excluded to allow GWT compilation-->
                 <!--see http://comments.gmane.org/gmane.org.google.gwt/56871-->
@@ -93,25 +92,25 @@
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Commons</artifactId>
-            <version>1.3</version>
+            <version>${project.kit.datamanager.version}</version>
             <type>jar</type>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>DataOrganization</artifactId>
-            <version>1.3</version>
+            <version>${project.kit.datamanager.version}</version>
             <type>jar</type>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>MDM-Core</artifactId>
-            <version>1.3</version>
+            <version>${project.kit.datamanager.version}</version>
             <type>jar</type>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>MDM-Admin</artifactId>
-            <version>1.3</version>
+            <version>${project.kit.datamanager.version}</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -122,12 +121,12 @@
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>ClientBase</artifactId>
-            <version>1.3</version>
+            <version>${project.kit.datamanager.version}</version>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
             <artifactId>UserGroupRestInterface</artifactId>
-            <version>1.3</version>
+            <version>${project.kit.datamanager.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

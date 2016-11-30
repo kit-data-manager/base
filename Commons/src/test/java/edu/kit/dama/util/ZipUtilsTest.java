@@ -47,10 +47,10 @@ public class ZipUtilsTest {
   @Parameterized.Parameters
   public static List<Object[]> testData() {
     return Arrays.asList(
-            //new Object[]{"first"}, //0  
+            new Object[]{"first"}, //0  
             new Object[]{"second"}, //1  
             new Object[]{"third"}, //2  
-           // new Object[]{"fourth"}, //3  
+            new Object[]{"fourth"}, //3  
             new Object[]{"fifth"}, //4  
             new Object[]{"sixth"} //5
     );

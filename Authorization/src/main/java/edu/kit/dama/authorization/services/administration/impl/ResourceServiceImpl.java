@@ -100,6 +100,11 @@ public class ResourceServiceImpl implements IResourceService {
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to register securable resource with id " + resourceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
@@ -109,10 +114,9 @@ public class ResourceServiceImpl implements IResourceService {
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Registering securable resource with resource id {} for group {} and role {}", new Object[]{resourceId, ownerGroup, roleRestriction});
         EntityManager em = PU.entityManager();
-
-        EntityTransaction transaction = em.getTransaction();
-        transaction.begin();
         try {
+            EntityTransaction transaction = em.getTransaction();
+            transaction.begin();
             LOGGER.debug(" - Finding group");
             Group group = FindUtil.findGroup(em, ownerGroup);
             SecurableResource resource = new SecurableResource(resourceId);
@@ -136,6 +140,11 @@ public class ResourceServiceImpl implements IResourceService {
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to register securable resource with id " + resourceId + " for group " + ownerGroup + " with role " + roleRestriction, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
@@ -145,35 +154,42 @@ public class ResourceServiceImpl implements IResourceService {
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Granting access to securable resource with resource id {} for user {} and role {}.", new Object[]{resourceId, userId, grantRole});
         EntityManager em = PU.entityManager();
-        boolean creationSuccessful = false;
-        EntityTransaction transaction = em.getTransaction();
-        transaction.begin();
         try {
-            LOGGER.debug(" - Creating securable resource");
-            SecurableResource resource = new SecurableResource(resourceId);
-            em.persist(resource);
-            em.flush();
-            transaction.commit();
-            em.close();
-            LOGGER.debug(" - Securable resource successfully created.");
-            creationSuccessful = true;
-        } catch (PersistenceException except) {
-            PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
-            throw new PersistenceException("Failed to grant access to securable resource with id " + resourceId + " for user " + userId + " with role " + grantRole, except);
-        }
-        if (creationSuccessful) {
+            boolean creationSuccessful = false;
+            EntityTransaction transaction = em.getTransaction();
+            transaction.begin();
             try {
-                ResourceServiceImpl rs = new ResourceServiceImpl();
-                LOGGER.debug(" - Allow grant for resource {} and role {}", new Object[]{resourceId, grantRole});
-                rs.allowGrants(resourceId, grantSetRole, authCtx);
-                LOGGER.debug(" - Adding grant for resource {} and user {} with role {}", new Object[]{resourceId, userId, grantRole});
-                rs.addGrant(resourceId, userId, grantRole, authCtx);
-                LOGGER.debug("Access to securable resource with resource id {} successully granted for user {} with role {}.", new Object[]{resourceId, userId, grantRole});
-            } catch (EntityAlreadyExistsException ex) {
-                LOGGER.warn("Grant not added. Entity already exists.", ex);
+                LOGGER.debug(" - Creating securable resource");
+                SecurableResource resource = new SecurableResource(resourceId);
+                em.persist(resource);
+                em.flush();
+                transaction.commit();
+                em.close();
+                LOGGER.debug(" - Securable resource successfully created.");
+                creationSuccessful = true;
+            } catch (PersistenceException except) {
+                PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+                throw new PersistenceException("Failed to grant access to securable resource with id " + resourceId + " for user " + userId + " with role " + grantRole, except);
             }
-        } else {
-            LOGGER.debug("Securable resource not created, skipping grant assignment.");
+            if (creationSuccessful) {
+                try {
+                    ResourceServiceImpl rs = new ResourceServiceImpl();
+                    LOGGER.debug(" - Allow grant for resource {} and role {}", new Object[]{resourceId, grantRole});
+                    rs.allowGrants(resourceId, grantSetRole, authCtx);
+                    LOGGER.debug(" - Adding grant for resource {} and user {} with role {}", new Object[]{resourceId, userId, grantRole});
+                    rs.addGrant(resourceId, userId, grantRole, authCtx);
+                    LOGGER.debug("Access to securable resource with resource id {} successully granted for user {} with role {}.", new Object[]{resourceId, userId, grantRole});
+                } catch (EntityAlreadyExistsException ex) {
+                    LOGGER.warn("Grant not added. Entity already exists.", ex);
+                }
+            } else {
+                LOGGER.warn("Securable resource not created, skipping grant assignment.");
+            }
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
@@ -183,9 +199,10 @@ public class ResourceServiceImpl implements IResourceService {
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Removing securable resource with resource id {} ", resourceId);
         EntityManager em = PU.entityManager();
-        EntityTransaction transaction = em.getTransaction();
-        transaction.begin();
+
         try {
+            EntityTransaction transaction = em.getTransaction();
+            transaction.begin();
             LOGGER.debug(" - Finding securable resource");
             SecurableResource resource = FindUtil.findResource(em, resourceId);
             LOGGER.debug(" - Removing {} resource references", resource.getResourceReferences().size());
@@ -201,6 +218,11 @@ public class ResourceServiceImpl implements IResourceService {
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to remove securable resource with id " + resourceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
@@ -240,7 +262,6 @@ public class ResourceServiceImpl implements IResourceService {
                 resource.getResourceReferences().add(resourceReference);
             }
             transaction.commit();
-            em.close();
             if (alreadyExists) {
                 throw new EntityAlreadyExistsException("There is already a reference with referenceId '" + referenceId + "'");
             } else {
@@ -249,6 +270,11 @@ public class ResourceServiceImpl implements IResourceService {
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to create resource reference with reference id " + referenceId + " and role " + roleRestriction, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
@@ -258,8 +284,9 @@ public class ResourceServiceImpl implements IResourceService {
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Deleting resource reference for resource reference id {}", referenceId);
         EntityManager em = PU.entityManager();
-        em.getTransaction().begin();
+
         try {
+            em.getTransaction().begin();
             LOGGER.debug(FINDING_RESOUCE_REFERENCE_STRING);
             ResourceReference reference = FindUtil.findResourceReference(em, referenceId);
             Group group = reference.getGroup();
@@ -272,11 +299,15 @@ public class ResourceServiceImpl implements IResourceService {
             resource.getResourceReferences().remove(reference);
 
             em.getTransaction().commit();
-            em.close();
             LOGGER.debug("Resource reference for reference id {} successfully removed.", referenceId);
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to remove resource reference with reference id " + referenceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
@@ -287,9 +318,9 @@ public class ResourceServiceImpl implements IResourceService {
         LOGGER.debug("Changing resource reference restriction for resource reference id {} to role {}", new Object[]{referenceId, newRoleRestriction});
         EntityManager em = PU.entityManager();
 
-        EntityTransaction transaction = em.getTransaction();
-        transaction.begin();
         try {
+            EntityTransaction transaction = em.getTransaction();
+            transaction.begin();
             LOGGER.debug(FINDING_RESOUCE_REFERENCE_STRING);
             ResourceReference reference = FindUtil.findResourceReference(em, referenceId);
             LOGGER.debug(" - Setting new role restriction");
@@ -303,6 +334,11 @@ public class ResourceServiceImpl implements IResourceService {
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to change resource reference restriction for reference id " + referenceId + " to role " + newRoleRestriction, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
@@ -312,10 +348,20 @@ public class ResourceServiceImpl implements IResourceService {
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Getting resource reference restriction for resource reference id {}", referenceId);
         EntityManager em = PU.entityManager();
-        LOGGER.debug(FINDING_RESOUCE_REFERENCE_STRING);
-        ResourceReference reference = FindUtil.findResourceReference(em, referenceId);
-        LOGGER.debug("Returning role restriction {}", reference.getRoleRestriction());
-        return reference.getRoleRestriction();
+        try {
+            LOGGER.debug(FINDING_RESOUCE_REFERENCE_STRING);
+            ResourceReference reference = FindUtil.findResourceReference(em, referenceId);
+            LOGGER.debug("Returning role restriction {}", reference.getRoleRestriction());
+            return reference.getRoleRestriction();
+        } catch (PersistenceException except) {
+            PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+            throw new PersistenceException("Failed to get reference restriction for reference id  " + referenceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
+        }
     }
 
     @Override
@@ -324,31 +370,41 @@ public class ResourceServiceImpl implements IResourceService {
             throws UnauthorizedAccessAttemptException {
         LOGGER.debug("Getting resource references for resource id {}", resourceId);
         EntityManager em = PU.entityManager();
-        LOGGER.debug(" - Building query");
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<ResourceReference> cq = cb.createQuery(ResourceReference.class);
-        Root<ResourceReference> resourceReferences = cq.from(ResourceReference.class);
-        Join<ResourceReference, SecurableResource> resource = resourceReferences.
-                <ResourceReference, SecurableResource>join("resource");
-        // Join<Group, ResourceReference> group = 
-        resourceReferences.<Group, ResourceReference>join("group");
-        cq.select(resourceReferences).where(
-                cb.and(
-                        cb.equal(resource.get(DOMAIN_ID_COLUMN),
-                                resourceId.getDomain())),
-                cb.equal(resource.get(DOMAIN_UNIQUE_ID_COLUMN),
-                        resourceId.getDomainUniqueId()));
-        LOGGER.debug(" - Executing query");
-        TypedQuery<ResourceReference> tq = em.createQuery(cq);
-        List<ResourceReference> resultList = tq.getResultList();
-        List<ReferenceId> referenceIds = new ArrayList<ReferenceId>(resultList.size());
-        LOGGER.debug(" - Building result list for {} elements", resultList.size());
-        for (ResourceReference rr : resultList) {
-            referenceIds.add(new ReferenceId(rr.getResource().getSecurableResourceId(),
-                    new GroupId(rr.getGroup().getGroupId())));
+        try {
+            LOGGER.debug(" - Building query");
+            CriteriaBuilder cb = em.getCriteriaBuilder();
+            CriteriaQuery<ResourceReference> cq = cb.createQuery(ResourceReference.class);
+            Root<ResourceReference> resourceReferences = cq.from(ResourceReference.class);
+            Join<ResourceReference, SecurableResource> resource = resourceReferences.
+                    <ResourceReference, SecurableResource>join("resource");
+            // Join<Group, ResourceReference> group = 
+            resourceReferences.<Group, ResourceReference>join("group");
+            cq.select(resourceReferences).where(
+                    cb.and(
+                            cb.equal(resource.get(DOMAIN_ID_COLUMN),
+                                    resourceId.getDomain())),
+                    cb.equal(resource.get(DOMAIN_UNIQUE_ID_COLUMN),
+                            resourceId.getDomainUniqueId()));
+            LOGGER.debug(" - Executing query");
+            TypedQuery<ResourceReference> tq = em.createQuery(cq);
+            List<ResourceReference> resultList = tq.getResultList();
+            List<ReferenceId> referenceIds = new ArrayList<ReferenceId>(resultList.size());
+            LOGGER.debug(" - Building result list for {} elements", resultList.size());
+            for (ResourceReference rr : resultList) {
+                referenceIds.add(new ReferenceId(rr.getResource().getSecurableResourceId(),
+                        new GroupId(rr.getGroup().getGroupId())));
+            }
+            LOGGER.debug("{} references successfully obtained", referenceIds.size());
+            return referenceIds;
+        } catch (PersistenceException except) {
+            PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+            throw new PersistenceException("Failed to get references for resource id  " + resourceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
-        LOGGER.debug("{} references successfully obtained", referenceIds.size());
-        return referenceIds;
     }
 
     @Override
@@ -357,9 +413,10 @@ public class ResourceServiceImpl implements IResourceService {
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Granting access to resource with resource id {} to role {}", new Object[]{resourceId, restriction});
         EntityManager em = PU.entityManager();
-        EntityTransaction transaction = em.getTransaction();
-        transaction.begin();
+
         try {
+            EntityTransaction transaction = em.getTransaction();
+            transaction.begin();
             LOGGER.debug(FINDING_RESOUCE_STRING);
             SecurableResource resource = FindUtil.findResource(em, resourceId);
             LOGGER.debug(" - Creating grant set");
@@ -371,11 +428,15 @@ public class ResourceServiceImpl implements IResourceService {
             em.merge(resource);
 
             transaction.commit();
-            em.close();
             LOGGER.debug("Access to resource with resource id {} successfully granted to role {}", new Object[]{resourceId, restriction});
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to grant access to resource id " + resourceId + " for role " + resourceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
@@ -385,20 +446,33 @@ public class ResourceServiceImpl implements IResourceService {
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Checking for grants for resource with id {}", resourceId);
         EntityManager em = PU.entityManager();
-        SecurableResource resource = FindUtil.findResource(em, resourceId);
-        LOGGER.debug("Grants {}", (resource.getGrantSet() != null) ? "found" : "not found");
-        return resource.getGrantSet() != null;
+        try {
+            SecurableResource resource = FindUtil.findResource(em, resourceId);
+            LOGGER.debug("Grants {}", (resource.getGrantSet() != null) ? "found" : "not found");
+            return resource.getGrantSet() != null;
+        } catch (PersistenceException except) {
+            PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+            throw new PersistenceException("Failed to get grants for resource id " + resourceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
+        }
     }
 
     @Override
     @SecuredMethod(roleRequired = Role.MANAGER)
-    public final void addGrant(@SecuredArgument SecurableResourceId resourceId, UserId userId, Role role, @Context IAuthorizationContext authCtx)
+    public final void addGrant(@SecuredArgument SecurableResourceId resourceId, UserId userId,
+            Role role,
+            @Context IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException, EntityNotFoundException, EntityAlreadyExistsException {
         LOGGER.debug("Adding grant for resource with id {} to user {} and role {}", new Object[]{resourceId, userId, role});
         EntityManager em = PU.entityManager();
-        EntityTransaction transaction = em.getTransaction();
-        transaction.begin();
+
         try {
+            EntityTransaction transaction = em.getTransaction();
+            transaction.begin();
             LOGGER.debug(" - Finding user");
             User user = FindUtil.findUser(em, userId);
             LOGGER.debug(FINDING_RESOUCE_STRING);
@@ -410,7 +484,6 @@ public class ResourceServiceImpl implements IResourceService {
                 if (transaction.isActive()) {
                     transaction.rollback();
                 }
-                em.close();
                 throw new UnsupportedOperationException(GRANTS_NOT_ALLOWED_STRING);
             }
             List<Grant> grants = grantSet.getGrants();
@@ -421,7 +494,6 @@ public class ResourceServiceImpl implements IResourceService {
                     if (transaction.isActive()) {
                         transaction.rollback();
                     }
-                    em.close();
                     throw new EntityAlreadyExistsException("There is already a grant for "
                             + resourceId.toString() + " and "
                             + userId.toString());
@@ -439,25 +511,31 @@ public class ResourceServiceImpl implements IResourceService {
             grant.setGrantee(user);
             LOGGER.debug(" - Merging grant to database");
             em.merge(grant);
-
             transaction.commit();
-            em.close();
             LOGGER.debug("Grant successfully added for resource with id {} to user {} and role {}", new Object[]{resourceId, userId, role});
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to add grant for resource with id " + resourceId + " to user " + userId + " and role " + role, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
     @Override
     @SecuredMethod(roleRequired = Role.MANAGER)
-    public final void changeGrant(@SecuredArgument SecurableResourceId resourceId, UserId userId, Role role, @Context IAuthorizationContext authCtx)
+    public final void changeGrant(@SecuredArgument SecurableResourceId resourceId, UserId userId,
+            Role role,
+            @Context IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Changing grant for resource with id {} to user {} and role {}", new Object[]{resourceId, userId, role});
         EntityManager em = PU.entityManager();
-        EntityTransaction transaction = em.getTransaction();
-        transaction.begin();
+
         try {
+            EntityTransaction transaction = em.getTransaction();
+            transaction.begin();
             LOGGER.debug(" - Finding resoure");
             SecurableResource resource = FindUtil.findResource(em, resourceId);
             GrantSet grantSet = resource.getGrantSet();
@@ -473,23 +551,29 @@ public class ResourceServiceImpl implements IResourceService {
             }
 
             transaction.commit();
-            em.close();
             LOGGER.debug("Grant successfully changed for resource with id {} for user {} to role {}", new Object[]{resourceId, userId, role});
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to change grant for resource with id " + resourceId + " for user " + userId + " to role " + role, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
     @Override
     @SecuredMethod(roleRequired = Role.MANAGER)
-    public final void revokeGrant(@SecuredArgument SecurableResourceId resourceId, UserId userId, @Context IAuthorizationContext authCtx)
+    public final void revokeGrant(@SecuredArgument SecurableResourceId resourceId, UserId userId,
+            @Context IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Revoking grant for resource with id {} and user {}", new Object[]{resourceId, userId});
         EntityManager em = PU.entityManager();
-        EntityTransaction transaction = em.getTransaction();
-        transaction.begin();
+
         try {
+            EntityTransaction transaction = em.getTransaction();
+            transaction.begin();
             LOGGER.debug(FINDING_RESOUCE_STRING);
             SecurableResource resource = FindUtil.findResource(em, resourceId);
             GrantSet grantSet = resource.getGrantSet();
@@ -509,22 +593,28 @@ public class ResourceServiceImpl implements IResourceService {
             }
 
             transaction.commit();
-            em.close();
             LOGGER.debug("Grant for resource with id {} successfully revoked for user {}", new Object[]{resourceId, userId});
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to revoke grant for resource with id " + resourceId + " for user " + userId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
     @Override
     @SecuredMethod(roleRequired = Role.MANAGER)
-    public final void revokeAllAndDisallowGrants(@SecuredArgument SecurableResourceId resourceId, @Context IAuthorizationContext authCtx)
+    public final void revokeAllAndDisallowGrants(@SecuredArgument SecurableResourceId resourceId,
+            @Context IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Revoking all grant for resource with id {}", resourceId);
         EntityManager em = PU.entityManager();
-        em.getTransaction().begin();
+
         try {
+            em.getTransaction().begin();
             LOGGER.debug(FINDING_RESOUCE_STRING);
             SecurableResource resource = FindUtil.findResource(em, resourceId);
             GrantSet grantSet = resource.getGrantSet();
@@ -545,102 +635,139 @@ public class ResourceServiceImpl implements IResourceService {
                 em.remove(grantSet);
             }
             em.getTransaction().commit();
-            em.close();
             LOGGER.debug("Successfully revoked all grant for resource with id {}.", resourceId);
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to revoke all grant for resource with id " + resourceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
     @Override
     @SecuredMethod(roleRequired = Role.MANAGER)
-    public final Role getGrantRole(@SecuredArgument SecurableResourceId resourceId, UserId userId, @Context IAuthorizationContext authCtx)
+    public final Role getGrantRole(@SecuredArgument SecurableResourceId resourceId, UserId userId,
+            @Context IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Getting grant role for resource with id {} and user {}", new Object[]{resourceId, userId});
         EntityManager em = PU.entityManager();
-        LOGGER.debug(FINDING_RESOUCE_STRING);
-        SecurableResource resource = FindUtil.findResource(em, resourceId);
-        if (null == resource) {
-            throw new EntityNotFoundException(COULD_NOT_FIND_RESOURCE_STRING + resourceId.toString());
-        }
-        LOGGER.debug(" - Obtaining grant set");
-        GrantSet grantSet = resource.getGrantSet();
-        if (null == grantSet) {
-            throw new UnsupportedOperationException(GRANTS_NOT_ALLOWED_STRING);
-        }
-        LOGGER.debug(" - Finding user grant");
-        for (Grant grant : grantSet.getGrants()) {
-            if (grant.getGrantee().getUserId().equals(userId.getStringRepresentation())) {
-                LOGGER.debug("Returning grant role {}", grant.getGrantedRole());
-                return grant.getGrantedRole();
+        try {
+            LOGGER.debug(FINDING_RESOUCE_STRING);
+            SecurableResource resource = FindUtil.findResource(em, resourceId);
+            if (null == resource) {
+                throw new EntityNotFoundException(COULD_NOT_FIND_RESOURCE_STRING + resourceId.toString());
+            }
+            LOGGER.debug(" - Obtaining grant set");
+            GrantSet grantSet = resource.getGrantSet();
+            if (null == grantSet) {
+                throw new UnsupportedOperationException(GRANTS_NOT_ALLOWED_STRING);
+            }
+            LOGGER.debug(" - Finding user grant");
+            for (Grant grant : grantSet.getGrants()) {
+                if (grant.getGrantee().getUserId().equals(userId.getStringRepresentation())) {
+                    LOGGER.debug("Returning grant role {}", grant.getGrantedRole());
+                    return grant.getGrantedRole();
+                }
+            }
+            LOGGER.debug("No grant found, returning Role.NO_ACCESS");
+            return Role.NO_ACCESS;
+        } catch (PersistenceException except) {
+            PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+            throw new PersistenceException("Failed to obtain grant role for resource id " + resourceId + " and user with id " + userId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
             }
         }
-        LOGGER.debug("No grant found, returning Role.NO_ACCESS");
-        return Role.NO_ACCESS;
     }
 
     @Override
     @SecuredMethod(roleRequired = Role.MANAGER)
-    public final List<Grant> getGrants(@SecuredArgument SecurableResourceId resourceId, @Context IAuthorizationContext authCtx)
+    public final List<Grant> getGrants(@SecuredArgument SecurableResourceId resourceId,
+            @Context IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Getting grants resource with id {}", resourceId);
         EntityManager em = PU.entityManager();
-        LOGGER.debug(FINDING_RESOUCE_STRING);
-        SecurableResource resource = FindUtil.findResource(em, resourceId);
-        if (null == resource) {
-            throw new EntityNotFoundException(COULD_NOT_FIND_RESOURCE_STRING + resourceId.toString());
-        }
-        LOGGER.debug(" - Getting grant set");
-        GrantSet grantSet = resource.getGrantSet();
-        if (null == grantSet) {
-            LOGGER.debug("No grant set found for resource with id {}. Returning empty grant list.", resourceId);
-            return new ArrayList<Grant>();
-        } else {
-            LOGGER.debug("Returning {} grants", grantSet.getGrants().size());
-            return grantSet.getGrants();
+        try {
+            LOGGER.debug(FINDING_RESOUCE_STRING);
+            SecurableResource resource = FindUtil.findResource(em, resourceId);
+            if (null == resource) {
+                throw new EntityNotFoundException(COULD_NOT_FIND_RESOURCE_STRING + resourceId.toString());
+            }
+            LOGGER.debug(" - Getting grant set");
+            GrantSet grantSet = resource.getGrantSet();
+            if (null == grantSet) {
+                LOGGER.debug("No grant set found for resource with id {}. Returning empty grant list.", resourceId);
+                return new ArrayList<>();
+            } else {
+                LOGGER.debug("Returning {} grants", grantSet.getGrants().size());
+                return grantSet.getGrants();
+            }
+        } catch (PersistenceException except) {
+            PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+            throw new PersistenceException("Failed get grants for resource id " + resourceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 
     @Override
     @SecuredMethod(roleRequired = Role.MANAGER)
-    public final List<UserId> getAuthorizedUsers(@SecuredArgument SecurableResourceId resourceId, Role minimumRole, @Context IAuthorizationContext authCtx)
+    public final List<UserId> getAuthorizedUsers(@SecuredArgument SecurableResourceId resourceId, Role minimumRole,
+            @Context IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException {
         LOGGER.debug("Getting authorized users for resource with id {} with minimum role {}", new Object[]{resourceId, minimumRole});
         EntityManager em = PU.entityManager();
-        LOGGER.debug(" - Building query");
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<String> q = cb.createQuery(String.class);
-        Root<FilterHelper> record = q.from(FilterHelper.class);
-        q.where(
-                cb.and(
-                        cb.equal(
-                                record.get(DOMAIN_UNIQUE_ID_COLUMN),
-                                resourceId.getDomainUniqueId()),
-                        cb.equal(
-                                record.get(DOMAIN_ID_COLUMN),
-                                resourceId.getDomain()),
-                        cb.ge(record.<Integer>get("roleAllowed"),
-                                minimumRole.ordinal())));
-        q.select(record.<String>get(USER_ID_COLUMN));
-        q.distinct(true);
-        LOGGER.debug(" - Executing query");
-        TypedQuery<String> tq = em.createQuery(q);
-        List<String> resultList = tq.getResultList();
-        List<UserId> users = new ArrayList<UserId>(resultList.size());
-        LOGGER.debug(" - Building result list for {} elements", resultList.size());
-        for (String userIdString : resultList) {
-            users.add(new UserId(userIdString));
-        }
+        try {
+            LOGGER.debug(" - Building query");
+            CriteriaBuilder cb = em.getCriteriaBuilder();
+            CriteriaQuery<String> q = cb.createQuery(String.class);
+            Root<FilterHelper> record = q.from(FilterHelper.class);
+            q.where(
+                    cb.and(
+                            cb.equal(
+                                    record.get(DOMAIN_UNIQUE_ID_COLUMN),
+                                    resourceId.getDomainUniqueId()),
+                            cb.equal(
+                                    record.get(DOMAIN_ID_COLUMN),
+                                    resourceId.getDomain()),
+                            cb.ge(record.<Integer>get("roleAllowed"),
+                                    minimumRole.ordinal())));
+            q.select(record.<String>get(USER_ID_COLUMN));
+            q.distinct(true);
+            LOGGER.debug(" - Executing query");
+            TypedQuery<String> tq = em.createQuery(q);
+            List<String> resultList = tq.getResultList();
+            List<UserId> users = new ArrayList<>(resultList.size());
+            LOGGER.debug(" - Building result list for {} elements", resultList.size());
+            for (String userIdString : resultList) {
+                users.add(new UserId(userIdString));
+            }
 
-        em.close();
-        LOGGER.debug("{} users successfully obtained", users.size());
-        return users;
+            LOGGER.debug("{} users successfully obtained", users.size());
+            return users;
+        } catch (PersistenceException except) {
+            PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+            throw new PersistenceException("Failed get authorized users for resource " + resourceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
+        }
     }
 
     @Override
     @SecuredMethod(roleRequired = Role.MANAGER)
-    public final List<GroupId> getAuthorizedGroups(@SecuredArgument SecurableResourceId resourceId, Role role, @Context IAuthorizationContext authCtx)
+    public final List<GroupId> getAuthorizedGroups(@SecuredArgument SecurableResourceId resourceId, Role role,
+            @Context IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException {
         LOGGER.debug("Getting authorized groups for resource with id {} with role {}", new Object[]{resourceId, role});
         /* EntityManager em = PU.entityManager();
@@ -688,28 +815,40 @@ public class ResourceServiceImpl implements IResourceService {
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Getting grant restriction for resource id {}", resourceId);
         EntityManager em = PU.entityManager();
-        LOGGER.debug(FINDING_RESOUCE_STRING);
-        SecurableResource resource = FindUtil.findResource(em, resourceId);
-        if (null == resource) {
-            throw new EntityNotFoundException(COULD_NOT_FIND_RESOURCE_STRING + resourceId.toString());
+        try {
+            LOGGER.debug(FINDING_RESOUCE_STRING);
+            SecurableResource resource = FindUtil.findResource(em, resourceId);
+            if (null == resource) {
+                throw new EntityNotFoundException(COULD_NOT_FIND_RESOURCE_STRING + resourceId.toString());
+            }
+            GrantSet grantSet = resource.getGrantSet();
+            if (null == grantSet) {
+                throw new UnsupportedOperationException(GRANTS_NOT_ALLOWED_STRING);
+            }
+            LOGGER.debug("Returning grant restriction {}", resource.getGrantSet().getRoleRestriction());
+            return grantSet.getRoleRestriction();
+        } catch (PersistenceException except) {
+            PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
+            throw new PersistenceException("Failed get grant restriction for resource " + resourceId, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
-        GrantSet grantSet = resource.getGrantSet();
-        if (null == grantSet) {
-            throw new UnsupportedOperationException(GRANTS_NOT_ALLOWED_STRING);
-        }
-        LOGGER.debug("Returning grant restriction {}", resource.getGrantSet().getRoleRestriction());
-        return grantSet.getRoleRestriction();
     }
 
     @Override
-    public final void changeGrantsRestriction(@SecuredArgument SecurableResourceId resourceId, Role restriction, IAuthorizationContext authCtx)
+    public final void changeGrantsRestriction(@SecuredArgument SecurableResourceId resourceId, Role restriction,
+            IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         LOGGER.debug("Changing grant restriction for resource id {} to role {}", new Object[]{resourceId, restriction});
 
         EntityManager em = PU.entityManager();
 
-        em.getTransaction().begin();
         try {
+            em.getTransaction().begin();
+
             LOGGER.debug(FINDING_RESOUCE_STRING);
             SecurableResource resource = FindUtil.findResource(em, resourceId);
             if (null == resource) {
@@ -723,11 +862,15 @@ public class ResourceServiceImpl implements IResourceService {
             LOGGER.debug(" - Changing grant restriction from {} to {}", new Object[]{grantSet.getRoleRestriction(), restriction});
             grantSet.setRoleRestriction(restriction);
             em.getTransaction().commit();
-            em.close();
             LOGGER.debug("Grantrestriction for resource id {} successfully changed to role {}", new Object[]{resourceId, restriction});
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to change grant restriction for resource with id " + resourceId + " to role " + restriction, except);
+        } finally {
+            try {
+                em.close();
+            } catch (IllegalStateException ex) {
+            }
         }
     }
 }

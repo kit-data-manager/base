@@ -67,6 +67,7 @@ public final class AtTriggerConfigurationPanel extends AbstractTriggerConfigurat
                 addComponent(getAtDateField(), 0, 2, 2, 1).
                 addComponent(getDescriptionField(), 0, 3, 2, 2).getLayout();
         layout.setMargin(false);
+        layout.setSpacing(true);
         layout.setSizeFull();
         return layout;
     }

@@ -18,16 +18,19 @@ package edu.kit.dama.ui.admin;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.GridLayout;
-import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.mdm.admin.UserGroup;
+import edu.kit.dama.mdm.core.IMetaDataManager;
+import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.ui.admin.exception.MsgBuilder;
 import edu.kit.dama.ui.admin.exception.NoteBuilder;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
+import edu.kit.dama.ui.admin.utils.UIComponentTools;
+import edu.kit.dama.ui.admin.utils.UIHelper;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,23 +43,12 @@ public abstract class AbstractBasePropertiesLayout<C> extends GridLayout {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBasePropertiesLayout.class);
     private static final String DEBUG_ID_PREFIX = AbstractBasePropertiesLayout.class.getName() + "_";
-    private final AdminUIMainView parentApp;
     private ComboBox groupBox;
     private TextArea descriptionArea;
     private CheckBox disabledBox;
     private TextField nameField;
     private VerticalLayout checkBoxesLayout;
     private CheckBox defaultBox;
-   
-
-    /**
-     * Default constructor taking the parent application as argument.
-     *
-     * @param parentApp The parent application used for notification callback.
-     */
-    public AbstractBasePropertiesLayout(AdminUIMainView parentApp) {
-        this.parentApp = parentApp;
-    }
 
     /**
      * Get the text field holding the name of the managed entity.
@@ -122,19 +114,24 @@ public abstract class AbstractBasePropertiesLayout<C> extends GridLayout {
      */
     public final void reloadGroupBox() {
         getGroupBox().removeAllItems();
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+        mdm.setAuthorizationContext(UIHelper.getSessionContext());
         try {
-            List<UserGroup> userGroups = parentApp.getMetaDataManager().find(UserGroup.class);
-
-            for (UserGroup userGroup : userGroups) {
+            List<UserGroup> userGroups = mdm.find(UserGroup.class);
+            userGroups.stream().map((userGroup) -> {
                 getGroupBox().addItem(userGroup.getGroupId());
-                getGroupBox().setItemCaption(userGroup.getGroupId(), userGroup.getGroupName() + " (" + userGroup.getId() + ")");
-            }
+                return userGroup;
+            }).forEachOrdered((userGroup) -> {
+                getGroupBox().setItemCaption(userGroup.getGroupId(), userGroup.getGroupName());
+            });
         } catch (UnauthorizedAccessAttemptException ex) {
             String object = "all registered user groups";
-            parentApp.showWarning("Group-box not reloadable! Cause: "
+            UIComponentTools.showWarning("Group-box not reloadable! Cause: "
                     + NoteBuilder.unauthorizedGetRequest(object));
             LOGGER.warn("Failed to reload '" + getGroupBox().getId() + "'. Cause: "
                     + MsgBuilder.unauthorizedGetRequest(object), ex);
+        } finally {
+            mdm.close();
         }
     }
 
@@ -199,6 +196,7 @@ public abstract class AbstractBasePropertiesLayout<C> extends GridLayout {
             defaultBox.setImmediate(true);
             defaultBox.setDescription("Set this processor as default processor.");
             defaultBox.addStyleName(CSSTokenContainer.BOLD_CAPTION);
+            defaultBox.addStyleName("yesno");
         }
         return defaultBox;
     }
@@ -218,11 +216,10 @@ public abstract class AbstractBasePropertiesLayout<C> extends GridLayout {
             disabledBox.setImmediate(true);
             disabledBox.setDescription("Disable this element from being used.");
             disabledBox.addStyleName(CSSTokenContainer.BOLD_CAPTION);
+            disabledBox.addStyleName("yesno");
         }
         return disabledBox;
     }
-
-   
 
     /**
      * Returns the label of the 'name' field of the element. The value might be

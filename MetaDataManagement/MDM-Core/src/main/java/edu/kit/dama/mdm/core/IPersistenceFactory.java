@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,22 @@ package edu.kit.dama.mdm.core;
 
 /**
  * Interface for creating persistence units.
+ *
  * @author hartmann-v
  */
 public interface IPersistenceFactory {
-  /**
-   * Get an instance of persistence framework.
-   * The instance should be a singleton to avoid
-   * runtime conditions while persisting data.
-   * @param persistenceUnit select a appropriate data base.
-   * @return instance for persisting objects.
-   */
-  IMetaDataManager getMetaDataManager(String persistenceUnit);
+
+    /**
+     * Get an instance of persistence framework. The instance should be a
+     * singleton to avoid runtime conditions while persisting data.
+     *
+     * @param persistenceUnit select a appropriate data base.
+     * @return instance for persisting objects.
+     */
+    IMetaDataManager getMetaDataManager(String persistenceUnit);
+
+    /**
+     * Destroy the persistence factory, e.g. close all idle connections.
+     */
+    void destroy();
 }

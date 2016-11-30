@@ -27,6 +27,7 @@ import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.mdm.base.MetaDataSchema;
 import edu.kit.dama.mdm.content.MetadataIndexingTask;
+import edu.kit.dama.mdm.content.util.ElasticHelper;
 import edu.kit.dama.util.Constants;
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,11 +40,9 @@ import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang.time.DateUtils;
 import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
+//import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.rest.RestStatus;
 import org.json.XML;
 import org.slf4j.LoggerFactory;
 
@@ -277,19 +276,19 @@ public final class MetadataIndexingHelper {
                         task.setFinishTimestamp(System.currentTimeMillis());
                         LOGGER.debug(" * Indexing finished and task entity updated successfully.");
                     } catch (URISyntaxException ex) {
-                        LOGGER.debug("Failed to create URI from document URL " + task.getMetadataDocumentUrl() + ".", ex);
+                        LOGGER.error("Failed to create URI from document URL " + task.getMetadataDocumentUrl() + ".", ex);
                         isError = true;
                     } catch (IOException ex) {
-                        LOGGER.debug("Failed to read document from document URL " + task.getMetadataDocumentUrl() + ".", ex);
+                        LOGGER.error("Failed to read document from document URL " + task.getMetadataDocumentUrl() + ".", ex);
                         isError = true;
                     } catch (Throwable t) {
-                        LOGGER.debug("Unknown error while indexing file " + task.getMetadataDocumentUrl() + ".", t);
+                        LOGGER.error("Unknown error while indexing file " + task.getMetadataDocumentUrl() + ".", t);
                         isError = true;
                     }
                 }
 
                 if (isError) {
-                    LOGGER.debug("Setting lastError timestamp for task #{} to NOW and increasing the fail count.", task.getId());
+                    LOGGER.warn("Setting lastError timestamp for task #{} to NOW and increasing the fail count.", task.getId());
                     task.setLastErrorTimestamp(System.currentTimeMillis());
                     task.setFailCount(task.getFailCount() + 1);
                     errors++;
@@ -331,9 +330,8 @@ public final class MetadataIndexingHelper {
         LOGGER.debug("Intitializing transport client..");
         //Node node = nodeBuilder().clusterName(pCluster).node();
         //Client client = node.client();
-        Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", pCluster).build();
-        Client client = new TransportClient(settings)
-                .addTransportAddress(new InetSocketTransportAddress(getHostname(), getPort()));
+        TransportClient client = ElasticHelper.getTransportClient(getHostname(), getPort(), pCluster);
+
         LOGGER.debug("Indexing document...");
         IndexResponse response = client.prepareIndex(pIndexName,
                 pTask.getSchemaReference().getSchemaIdentifier(),
@@ -341,7 +339,7 @@ public final class MetadataIndexingHelper {
                 setSource(pJson)
                 .execute()
                 .actionGet();
-        LOGGER.debug("Document with id {} was {}. Current document version: {}", response.getId(), (response.isCreated()) ? "created" : "updated", response.getVersion());
+        LOGGER.debug("Document with id {} was {}. Current document version: {}", response.getId(), (response.status().equals(RestStatus.CREATED)) ? "created" : "updated", response.getVersion());
     }
 
     /**
@@ -412,7 +410,7 @@ public final class MetadataIndexingHelper {
                     + System.currentTimeMillis()
                     + " - t.finishTimestamp > "
                     + DateUtils.MILLIS_PER_HOUR * 12
-                    + " OR t.failCount >= 3", 
+                    + " OR t.failCount >= 3",
                     MetadataIndexingTask.class);
             LOGGER.debug("Found {} tasks which can be removed.", tasksToRemove.size());
             for (MetadataIndexingTask task : tasksToRemove) {

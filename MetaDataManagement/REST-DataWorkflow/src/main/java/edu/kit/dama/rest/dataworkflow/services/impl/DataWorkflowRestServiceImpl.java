@@ -76,7 +76,8 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
         try {
             LOGGER.debug("Getting DataWorkflow task by id {}.", id);
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DataWorkflowTask.default");
-            DataWorkflowTask result = new DataWorkflowTaskSecureQueryHelper().getDataWorkflowTaskById(id, mdm, ctx);
+
+            DataWorkflowTask result = mdm.find(DataWorkflowTask.class, id);
             if (result == null) {
                 LOGGER.error("No DataWorkflowTask found for id " + id + ".");
                 throw new WebApplicationException(404);
@@ -98,7 +99,8 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
         try {
             LOGGER.debug("Getting accessible task list.");
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DataWorkflowTask.default");
-            return new DataWorkflowTaskWrapper(new DataWorkflowTaskSecureQueryHelper().getAllTasks(null, mdm, first, results, ctx));
+            return new DataWorkflowTaskWrapper(mdm.findResultList("SELECT t FROM DataWorkflowTask t", DataWorkflowTask.class
+            ));
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Context " + ctx + " is not authorized to get a list of DataWorkflowTasks.", ex);
             throw new WebApplicationException(401);
@@ -114,7 +116,7 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
         mdm.setAuthorizationContext(ctx);
         try {
             LOGGER.debug("Getting accessible task count.");
-            return new DataWorkflowTaskWrapper(new DataWorkflowTaskSecureQueryHelper().getReadableResourceCount(mdm, ctx));
+            return new DataWorkflowTaskWrapper((int) mdm.findSingleResult("SELECT COUNT(t) FROM DataWorkflowTask t", Number.class).intValue());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Context " + ctx + " is not authorized to get DataWorkflowTask count.", ex);
             throw new WebApplicationException(401);
@@ -252,7 +254,9 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
             DataWorkflowTask result = mdm.save(task);
             LOGGER.debug("DataWorkflowTask successfully saved.");
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DataWorkflowTask.default");
+
             return new DataWorkflowTaskWrapper(mdm.find(DataWorkflowTask.class, result.getId()));
+
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Unauthorized to create DataWorkflowTask or to obtain one or more configuration entities.", ex);
             throw new WebApplicationException(401);
@@ -311,8 +315,7 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
         mdm.setAuthorizationContext(ctx);
         try {
             LOGGER.debug("Getting DataWorkflowTaskConfigurations count.");
-            int result = ((Number) mdm.findSingleResult("SELECT COUNT(c) FROM DataWorkflowTaskConfiguration c")).intValue();
-            return new DataWorkflowTaskConfigurationWrapper(result);
+            return new DataWorkflowTaskConfigurationWrapper(((Number) mdm.findSingleResult("SELECT COUNT(c) FROM DataWorkflowTaskConfiguration c")).intValue());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Context " + ctx + " is not authorized to get DataWorkflowTaskConfiguration count.", ex);
             throw new WebApplicationException(401);
@@ -401,7 +404,7 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
     private DigitalObjectId getObjectIdentifierForId(String pId, IAuthorizationContext pCtx) {
         if (pId == null) {
             LOGGER.error("Argument pId must not be null.");
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
         String s_id = pId.trim();
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();

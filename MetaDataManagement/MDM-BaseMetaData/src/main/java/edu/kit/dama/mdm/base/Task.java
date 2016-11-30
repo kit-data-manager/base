@@ -90,7 +90,7 @@ public class Task implements Serializable, IDefaultTask, FetchGroupTracker {
     /**
      * Default constructor. Not accessible from outside.
      */
-    protected Task() {
+    public Task() {
         // this constructor is useless so it's forbidden for the users.
     }
 

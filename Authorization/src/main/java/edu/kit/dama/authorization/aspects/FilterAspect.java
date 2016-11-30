@@ -38,7 +38,7 @@ public class FilterAspect extends AuthorisationSignatureExtractor// extends Cont
    *
    * @param filter The filter.
    */
-  @Pointcut("execution(@edu.kit.dama.authorization.annotations.FilterOutput * *.*(..))  && @annotation(filter)")
+  @Pointcut("execution(@edu.kit.dama.authorization.annotations.FilterOutput * *.*(..)) && @annotation(filter)")
   public void operation(final FilterOutput filter) {
 
   }

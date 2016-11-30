@@ -43,9 +43,6 @@ import javax.persistence.TemporalType;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import org.apache.commons.io.FileUtils;
-import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
-import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 import org.eclipse.persistence.queries.FetchGroupTracker;
 import org.eclipse.persistence.sessions.Session;
 import org.slf4j.LoggerFactory;
@@ -115,31 +112,52 @@ import org.slf4j.LoggerFactory;
             name = "DataWorkflowTask.simple",
             includeAllAttributes = false,
             attributeNodes = {
-                @NamedAttributeNode("id"),
-                @NamedAttributeNode("uniqueIdentifier")}),
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode("uniqueIdentifier")})
+    ,
     @NamedEntityGraph(
             name = "DataWorkflowTask.default",
             includeAllAttributes = false,
             attributeNodes = {
-                @NamedAttributeNode("id"),
-                @NamedAttributeNode("uniqueIdentifier"),
-                @NamedAttributeNode("objectViewMap"),
-                @NamedAttributeNode("objectTransferMap"),
-                @NamedAttributeNode("executionSettings"),
-                @NamedAttributeNode("applicationArguments"),
-                @NamedAttributeNode("status"),
-                @NamedAttributeNode("inputDirectoryUrl"),
-                @NamedAttributeNode("outputDirectoryUrl"),
-                @NamedAttributeNode("workingDirectoryUrl"),
-                @NamedAttributeNode("tempDirectoryUrl"),
-                @NamedAttributeNode("errorMessage"),
-                @NamedAttributeNode("lastUpdate"),
-                @NamedAttributeNode("jobId"),
-                @NamedAttributeNode("executorId"),
-                @NamedAttributeNode("executorGroupId"),
-                @NamedAttributeNode("investigationId"),
-                @NamedAttributeNode(value = "configuration", subgraph = "DataWorkflowTaskConfiguration.simple"),
-                @NamedAttributeNode(value = "executionEnvironmentConfiguration", subgraph = "ExecutionEnvironmentConfiguration.simple"),
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode("uniqueIdentifier")
+                ,
+                @NamedAttributeNode("objectViewMap")
+                ,
+                @NamedAttributeNode("objectTransferMap")
+                ,
+                @NamedAttributeNode("executionSettings")
+                ,
+                @NamedAttributeNode("applicationArguments")
+                ,
+                @NamedAttributeNode("status")
+                ,
+                @NamedAttributeNode("inputDirectoryUrl")
+                ,
+                @NamedAttributeNode("outputDirectoryUrl")
+                ,
+                @NamedAttributeNode("workingDirectoryUrl")
+                ,
+                @NamedAttributeNode("tempDirectoryUrl")
+                ,
+                @NamedAttributeNode("errorMessage")
+                ,
+                @NamedAttributeNode("lastUpdate")
+                ,
+                @NamedAttributeNode("jobId")
+                ,
+                @NamedAttributeNode("executorId")
+                ,
+                @NamedAttributeNode("executorGroupId")
+                ,
+                @NamedAttributeNode("investigationId")
+                ,
+                @NamedAttributeNode(value = "configuration", subgraph = "DataWorkflowTaskConfiguration.simple")
+                ,
+                @NamedAttributeNode(value = "executionEnvironment", subgraph = "ExecutionEnvironmentConfiguration.simple")
+                ,
                 @NamedAttributeNode(value = "predecessor", subgraph = "DataWorkflowTask.simple")},
             subgraphs = {
                 @NamedSubgraph(
@@ -147,17 +165,20 @@ import org.slf4j.LoggerFactory;
                         attributeNodes = {
                             @NamedAttributeNode("id")
                         }
-                ),
+                )
+                ,
                 @NamedSubgraph(
                         name = "ExecutionEnvironmentConfiguration.simple",
                         attributeNodes = {
                             @NamedAttributeNode("id")
                         }
-                ),
+                )
+                ,
                 @NamedSubgraph(
                         name = "DataWorkflowTask.simple",
                         attributeNodes = {
-                            @NamedAttributeNode("id"),
+                            @NamedAttributeNode("id")
+                            ,
                             @NamedAttributeNode("uniqueIdentifier")}
                 )
             })
@@ -286,7 +307,7 @@ public class DataWorkflowTask implements IDefaultDataWorkflowTask, ISecurableRes
      * Output directory Url of the task. Typically, this Url will point to a
      * local directory.
      */
-    private String outputDirectoryrUrl;
+    private String outputDirectoryUrl;
 
     /**
      * Working directory Url of the task. Typically, this Url will point to a
@@ -713,7 +734,7 @@ public class DataWorkflowTask implements IDefaultDataWorkflowTask, ISecurableRes
 
     @Override
     public String getOutputDirectoryUrl() {
-        return outputDirectoryrUrl;
+        return outputDirectoryUrl;
     }
 
     /**
@@ -722,7 +743,7 @@ public class DataWorkflowTask implements IDefaultDataWorkflowTask, ISecurableRes
      * @param outputDirectoryUrl The output directory Url.
      */
     public void setOutputDirectoryUrl(String outputDirectoryUrl) {
-        this.outputDirectoryrUrl = outputDirectoryUrl;
+        this.outputDirectoryUrl = outputDirectoryUrl;
     }
 
     @Override

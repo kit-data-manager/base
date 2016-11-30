@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,43 +34,44 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 public class AuthorizeAccess extends AuthorisationSignatureExtractor {
 
-  /**
-   * Operation definition for secured methods.
-   *
-   * @param method The secured method.
-   */
-  @Pointcut("execution(@edu.kit.dama.authorization.annotations.SecuredMethod * *.*(..) throws edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException)  && @annotation(method)")
-  public void operation(final SecuredMethod method) {
-  }
-
-  /**
-   * Error definition.
-   *
-   */
-  @DeclareError("withincode(@edu.kit.dama.authorization.annotations.SecuredMethod * *.*(..) throws !edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException)")
-  public static final String CONTRACT_ERROR = "All methods using SecuredMethod need to throw edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException!!!";
-
-  /**
-   * Authorize operation for secured methods.
-   *
-   * @param method The method.
-   * @param joinPoint The joint point.
-   *
-   * @throws UnauthorizedAccessAttemptException If the access is not authorized.
-   * @throws EntityNotFoundException If there are problems with the
-   * authorization context provided by the method.
-   */
-  @Before("operation(method)")
-  public void authorizeOperation(final SecuredMethod method, JoinPoint joinPoint) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-    AuthSignature signature = extractAuthSignature(joinPoint);
-    if (null == signature.getAuthContext()) {
-      throw new UnauthorizedAccessAttemptException("No @Context annotation provided. Authorization not possible.");
+    /**
+     * Operation definition for secured methods.
+     *
+     * @param method The secured method.
+     */
+    @Pointcut("execution(@edu.kit.dama.authorization.annotations.SecuredMethod * *.*(..) throws edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException)  && @annotation(method)")
+    public void operation(final SecuredMethod method) {
     }
-    if (!signature.hasSecurableResourceIds()) {
-      PlainAuthorizerLocal.authorize(signature.getAuthContext(), method.roleRequired());
-    } else {
-      PlainAuthorizerLocal.authorize(signature.getAuthContext(), signature.getSecurableResourceIds(), method.roleRequired());
+
+    /**
+     * Error definition.
+     *
+     */
+    @DeclareError("withincode(@edu.kit.dama.authorization.annotations.SecuredMethod * *.*(..) throws !edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException)")
+    public static final String CONTRACT_ERROR = "All methods annotated with @SecuredMethod need to throw edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException.";
+
+    /**
+     * Authorize operation for secured methods.
+     *
+     * @param method The method.
+     * @param joinPoint The joint point.
+     *
+     * @throws UnauthorizedAccessAttemptException If the access is not
+     * authorized.
+     * @throws EntityNotFoundException If there are problems with the
+     * authorization context provided by the method.
+     */
+    @Before("operation(method)")
+    public void authorizeOperation(final SecuredMethod method, JoinPoint joinPoint) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
+        AuthSignature signature = extractAuthSignature(joinPoint);
+        if (null == signature.getAuthContext()) {
+            throw new UnauthorizedAccessAttemptException("No @Context annotation provided. Authorization not possible.");
+        }
+        if (!signature.hasSecurableResourceIds()) {
+            PlainAuthorizerLocal.authorize(signature.getAuthContext(), method.roleRequired());
+        } else {
+            PlainAuthorizerLocal.authorize(signature.getAuthContext(), signature.getSecurableResourceIds(), method.roleRequired());
+        }
     }
-  }
 
 }

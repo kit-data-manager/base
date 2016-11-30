@@ -23,10 +23,9 @@ import edu.kit.dama.ui.admin.administration.usergroup.UserGroupAdministrationTab
 import edu.kit.dama.ui.admin.staging.accesspoints.StagingAccessPointConfigurationTab;
 import edu.kit.dama.ui.admin.staging.processors.StagingProcessorConfigurationTab;
 import edu.kit.dama.ui.admin.administration.user.UserDataAdministrationTab;
-import edu.kit.dama.ui.admin.exception.NoteBuilder;
-import edu.kit.dama.ui.admin.exception.UnsupportedEnumException;
 import edu.kit.dama.ui.admin.schedule.JobScheduleConfigurationTab;
 import edu.kit.dama.ui.admin.utils.IconContainer;
+import edu.kit.dama.ui.admin.utils.UIComponentTools;
 import edu.kit.dama.ui.admin.workflow.DataWorkflowTaskConfigurationTab;
 import edu.kit.dama.ui.admin.workflow.ExecutionEnvironmentConfigurationTab;
 import org.slf4j.Logger;
@@ -41,38 +40,24 @@ public final class DataManagerSettingsPanel extends CustomComponent {
     private static final Logger LOGGER
             = LoggerFactory.getLogger(DataManagerSettingsPanel.class);
 
-    public final static String DEBUG_ID_PREFIX
-            = DataManagerSettingsPanel.class.getName() + "_";
-    private final AdminUIMainView parentApp;
+    public final static String DEBUG_ID_PREFIX = DataManagerSettingsPanel.class.getName() + "_";
     private TabSheet mainComponentContainer;
     private VerticalLayout mainLayout = null;
     private UserDataAdministrationTab userAdministrationTab;
     private UserGroupAdministrationTab groupAdministrationTab;
-
     private StagingAccessPointConfigurationTab accessPointConfigurationTab;
     private StagingProcessorConfigurationTab processorConfigurationTab;
     private DataWorkflowTaskConfigurationTab dataWorkflowConfigurationTab;
     private ExecutionEnvironmentConfigurationTab executionEnvironmentConfigurationTab;
     private JobScheduleConfigurationTab jobScheduleConfigurationTab;
 
-    public enum Tab {
-
-        ALL,
-        USER_ADMINISTRATION,
-        GROUP_ADMINISTRATION,
-        ACCESS_POINT_CONFIGURATION,
-        // ACCESS_PROVIDER_CONFIGURATION,
-        PROCESSOR_CONFIGURATION;
-    }
-
-    public DataManagerSettingsPanel(AdminUIMainView pParentApp) {
-        parentApp = pParentApp;
-        LOGGER.debug(new StringBuilder("Building ").append(DEBUG_ID_PREFIX)
-                .append(" ...").toString());
+    public DataManagerSettingsPanel() {
+        LOGGER.debug(new StringBuilder("Building ").append(DEBUG_ID_PREFIX).append(" ...").toString());
 
         setId(DEBUG_ID_PREFIX);
         buildMainComponentContainer();
         setCompositionRoot(mainLayout);
+        getUserAdministrationTab().update();
         setSizeFull();
     }
 
@@ -84,7 +69,6 @@ public final class DataManagerSettingsPanel extends CustomComponent {
         mainComponentContainer = new TabSheet();
         mainComponentContainer.setId(new StringBuilder(DEBUG_ID_PREFIX).append(id).toString());
         mainComponentContainer.setSizeFull();
-        mainComponentContainer.setImmediate(true);
 
         // Add tab for user administration
         mainComponentContainer.addTab(getUserAdministrationTab(), "User Administration",
@@ -102,78 +86,37 @@ public final class DataManagerSettingsPanel extends CustomComponent {
         mainComponentContainer.addTab(getJobScheduleConfigurationTab(),
                 "Job Scheduling", new ThemeResource(IconContainer.JOB_SCHEDULE));
         // Add listener for tab change
-        mainComponentContainer.addSelectedTabChangeListener(
-                new TabSheet.SelectedTabChangeListener() {
+        mainComponentContainer.addSelectedTabChangeListener((TabSheet.SelectedTabChangeEvent event) -> {
+            if (!event.getTabSheet().getSelectedTab().isEnabled()) {
+                UIComponentTools.showError("You are not authorized to access or modify these settings.");
+                return;
+            }
+            if (event.getTabSheet().getSelectedTab().equals(userAdministrationTab)) {
+                userAdministrationTab.update();
+            } else if (event.getTabSheet().getSelectedTab().equals(groupAdministrationTab)) {
+                groupAdministrationTab.update();
+            } else if (event.getTabSheet().getSelectedTab().equals(accessPointConfigurationTab)) {
+                accessPointConfigurationTab.update();
+            } else if (event.getTabSheet().getSelectedTab().equals(processorConfigurationTab)) {
+                processorConfigurationTab.update();
+            } else if (event.getTabSheet().getSelectedTab().equals(dataWorkflowConfigurationTab)) {
+                dataWorkflowConfigurationTab.update();
+            } else if (event.getTabSheet().getSelectedTab().equals(executionEnvironmentConfigurationTab)) {
+                executionEnvironmentConfigurationTab.update();
+            } else if (event.getTabSheet().getSelectedTab().equals(jobScheduleConfigurationTab)) {
+                jobScheduleConfigurationTab.update();
+            }
 
-                    @Override
-                    public void selectedTabChange(TabSheet.SelectedTabChangeEvent event) {
-                        if (!event.getTabSheet().getSelectedTab().isEnabled()) {
-                            return;
-                        }
-                        if (event.getTabSheet().getSelectedTab().equals(userAdministrationTab)) {
-                            userAdministrationTab.reload();
-                        } else if (event.getTabSheet().getSelectedTab().equals(groupAdministrationTab)) {
-                            groupAdministrationTab.reload();
-                        } else if (event.getTabSheet().getSelectedTab().equals(accessPointConfigurationTab)) {
-                            accessPointConfigurationTab.reload();
-                        } else if (event.getTabSheet().getSelectedTab().equals(processorConfigurationTab)) {
-                            processorConfigurationTab.reload();
-                        } else if (event.getTabSheet().getSelectedTab().equals(dataWorkflowConfigurationTab)) {
-                            dataWorkflowConfigurationTab.reload();
-                        } else if (event.getTabSheet().getSelectedTab().equals(executionEnvironmentConfigurationTab)) {
-                            executionEnvironmentConfigurationTab.reload();
-                        } else if (event.getTabSheet().getSelectedTab().equals(jobScheduleConfigurationTab)) {
-                            jobScheduleConfigurationTab.reload();
-                        }
-                    }
-                });
+            if (!event.getTabSheet().getSelectedTab().isEnabled()) {
+                //check again and show error if privileges have changed...in that case recommend a reload
+                UIComponentTools.showError("You are not authorized to access or modify these settings. Please reload the page.");
+            }
+        });
 
         mainLayout = new VerticalLayout(mainComponentContainer);
         mainLayout.setSpacing(true);
         mainLayout.setMargin(true);
         mainLayout.setSizeFull();
-    }
-
-    /**
-     *
-     * @param tab
-     */
-    public void updateTab(Tab tab) {
-        switch (tab) {
-            case ALL:
-                getUserAdministrationTab().update();
-                getUserAdministrationTab().update();
-                getGroupAdministrationTab().update();
-                getAccessPointConfigurationTab().update();
-                // getAccessProviderConfigurationTab().update();
-                getProcessorConfigurationTab().update();
-                break;
-            case USER_ADMINISTRATION:
-                getUserAdministrationTab().update();
-                break;
-            case GROUP_ADMINISTRATION:
-                getGroupAdministrationTab().update();
-                break;
-            case ACCESS_POINT_CONFIGURATION:
-                getAccessPointConfigurationTab().update();
-                break;
-            /* case ACCESS_PROVIDER_CONFIGURATION:
-             getAccessProviderConfigurationTab().update();
-             break;*/
-            case PROCESSOR_CONFIGURATION:
-                getProcessorConfigurationTab().update();
-                break;
-            default:
-                getParentApp().showError(new StringBuilder("Unknow error occurred! ")
-                        .append(NoteBuilder.CONTACT).toString());
-                LOGGER.error(new StringBuilder("Failed to update the tab(s) of ")
-                        .append(this.getClass().getSimpleName()).append(".").toString(),
-                        new UnsupportedEnumException("Undefined enum constant!"));
-        }
-    }
-
-    public AdminUIMainView getParentApp() {
-        return parentApp;
     }
 
     /**
@@ -191,7 +134,7 @@ public final class DataManagerSettingsPanel extends CustomComponent {
      */
     public UserDataAdministrationTab getUserAdministrationTab() {
         if (userAdministrationTab == null) {
-            userAdministrationTab = new UserDataAdministrationTab(parentApp);
+            userAdministrationTab = new UserDataAdministrationTab();
         }
         return userAdministrationTab;
     }
@@ -201,7 +144,7 @@ public final class DataManagerSettingsPanel extends CustomComponent {
      */
     public UserGroupAdministrationTab getGroupAdministrationTab() {
         if (groupAdministrationTab == null) {
-            groupAdministrationTab = new UserGroupAdministrationTab(parentApp);
+            groupAdministrationTab = new UserGroupAdministrationTab();
         }
         return groupAdministrationTab;
     }
@@ -211,8 +154,7 @@ public final class DataManagerSettingsPanel extends CustomComponent {
      */
     public StagingAccessPointConfigurationTab getAccessPointConfigurationTab() {
         if (accessPointConfigurationTab == null) {
-            accessPointConfigurationTab
-                    = new StagingAccessPointConfigurationTab(parentApp);
+            accessPointConfigurationTab = new StagingAccessPointConfigurationTab();
         }
         return accessPointConfigurationTab;
     }
@@ -222,7 +164,7 @@ public final class DataManagerSettingsPanel extends CustomComponent {
      */
     public StagingProcessorConfigurationTab getProcessorConfigurationTab() {
         if (processorConfigurationTab == null) {
-            processorConfigurationTab = new StagingProcessorConfigurationTab(parentApp);
+            processorConfigurationTab = new StagingProcessorConfigurationTab();
         }
         return processorConfigurationTab;
     }
@@ -232,7 +174,7 @@ public final class DataManagerSettingsPanel extends CustomComponent {
      */
     public DataWorkflowTaskConfigurationTab getDataWorkflowConfigurationTab() {
         if (dataWorkflowConfigurationTab == null) {
-            dataWorkflowConfigurationTab = new DataWorkflowTaskConfigurationTab(parentApp);
+            dataWorkflowConfigurationTab = new DataWorkflowTaskConfigurationTab();
         }
         return dataWorkflowConfigurationTab;
     }
@@ -242,7 +184,7 @@ public final class DataManagerSettingsPanel extends CustomComponent {
      */
     public ExecutionEnvironmentConfigurationTab getExecutionEnvironmentConfigurationTab() {
         if (executionEnvironmentConfigurationTab == null) {
-            executionEnvironmentConfigurationTab = new ExecutionEnvironmentConfigurationTab(parentApp);
+            executionEnvironmentConfigurationTab = new ExecutionEnvironmentConfigurationTab();
         }
         return executionEnvironmentConfigurationTab;
     }
@@ -252,7 +194,7 @@ public final class DataManagerSettingsPanel extends CustomComponent {
      */
     public JobScheduleConfigurationTab getJobScheduleConfigurationTab() {
         if (jobScheduleConfigurationTab == null) {
-            jobScheduleConfigurationTab = new JobScheduleConfigurationTab(parentApp);
+            jobScheduleConfigurationTab = new JobScheduleConfigurationTab();
         }
         return jobScheduleConfigurationTab;
     }

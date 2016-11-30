@@ -16,15 +16,11 @@
 package edu.kit.dama.ui.admin;
 
 import com.vaadin.data.Property;
-import com.vaadin.server.ThemeResource;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.GridLayout;
-import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.ListSelect;
-import com.vaadin.ui.NativeButton;
 import com.vaadin.ui.Panel;
-import com.vaadin.ui.themes.BaseTheme;
 import com.vaadin.ui.themes.LiferayTheme;
 import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.commons.exceptions.ConfigurationException;
@@ -33,8 +29,8 @@ import edu.kit.dama.ui.admin.exception.MsgBuilder;
 import edu.kit.dama.ui.admin.exception.NoteBuilder;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
-import edu.kit.dama.ui.admin.utils.IconContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
+import edu.kit.dama.ui.admin.utils.UIHelper;
 import static edu.kit.dama.util.Constants.USERS_GROUP_ID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,18 +47,13 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
 
     public static final String NEW_ELEMENT_LABEL = "NEW";
 
-    private final AdminUIMainView parentApp;
     private GridLayout mainLayout;
     private ListSelect elementList;
     private GenericSpecificPropertiesLayout specificPropertiesLayout;
-    private NativeButton bulletBasic;
-    private NativeButton bulletSpecific;
     private Panel propertiesPanel;
-    private NativeButton commitChangesButton;
+    private Button commitChangesButton;
     private PropertiesLayoutType propertiesLayoutType;
-    private NativeButton navigateRightButton;
-    private NativeButton navigateLeftButton;
-    private HorizontalLayout bulletLineLayout;
+    private Button navigateButton;
 
     private String selectedElementId;
 
@@ -82,17 +73,13 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
 
     /**
      * Default constructor.
-     *
-     * @param pParentApp The parent application.
      */
-    public AbstractConfigurationTab(AdminUIMainView pParentApp) {
-        parentApp = pParentApp;
+    public AbstractConfigurationTab() {
         DEBUG_ID_PREFIX += hashCode() + "_";
         LOGGER.debug("Building " + DEBUG_ID_PREFIX.substring(0, DEBUG_ID_PREFIX.length() - 1) + " ...");
-
         setId(DEBUG_ID_PREFIX.substring(0, DEBUG_ID_PREFIX.length() - 1));
-
         setCompositionRoot(getMainLayout());
+        setSizeFull();
     }
 
     /**
@@ -105,15 +92,6 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
             mainLayout = buildMainLayout();
         }
         return mainLayout;
-    }
-
-    /**
-     * Get the parent application.
-     *
-     * @return The parent application.
-     */
-    public AdminUIMainView getParentApp() {
-        return parentApp;
     }
 
     /**
@@ -150,9 +128,9 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
 
             elementList = new ListSelect("AVAILABLE ELEMENTS");
             elementList.setId(DEBUG_ID_PREFIX + id);
-            elementList.setWidth("95%");
+
             elementList.setHeight("100%");
-            elementList.setImmediate(true);
+            elementList.setWidth("300px");
             elementList.setNullSelectionAllowed(false);
             elementList.addStyleName(CSSTokenContainer.BOLD_CAPTION);
 
@@ -190,15 +168,25 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
     }
 
     /**
+     * Get the selected itemId. By default, this is getElementList().getValue()
+     * but it might be overwritten if the element list is not used.
+     *
+     * @return The selected id.
+     */
+    public String getSelectedItemId() {
+        return (String) getElementList().getValue();
+    }
+
+    /**
      * Reload the element list by removing all elements, adding the dummy
      * element for creating new entries and calling {@link #fillElementList()}
      * to fill the remaining elements.
      *
      */
     public void reloadElementList() {
-        elementList.removeAllItems();
-        elementList.addItem(NEW_UNIQUE_ID);
-        elementList.setItemCaption(NEW_UNIQUE_ID, NEW_ELEMENT_LABEL);
+        getElementList().removeAllItems();
+        getElementList().addItem(NEW_UNIQUE_ID);
+        getElementList().setItemCaption(NEW_UNIQUE_ID, NEW_ELEMENT_LABEL);
         fillElementList();
     }
 
@@ -302,12 +290,12 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
      *
      * @return The commit button.
      */
-    public NativeButton getCommitChangesButton() {
+    public Button getCommitChangesButton() {
         if (commitChangesButton == null) {
             String id = "commitChangesButton";
             LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
-            commitChangesButton = new NativeButton("Commit Changes");
+            commitChangesButton = new Button("Commit Changes");
             commitChangesButton.setId(DEBUG_ID_PREFIX + id);
             commitChangesButton.setImmediate(true);
 
@@ -386,7 +374,7 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
 
             propertiesPanel = new Panel();
             propertiesPanel.setId(DEBUG_ID_PREFIX + id);
-            propertiesPanel.setHeight("300px");
+            propertiesPanel.setSizeFull();
             propertiesPanel.setStyleName(LiferayTheme.PANEL_LIGHT);
             propertiesPanel.setImmediate(true);
 
@@ -402,7 +390,7 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
      */
     public void reload() {
         reloadElementList();
-        elementList.select(NEW_UNIQUE_ID);
+        getElementList().select(NEW_UNIQUE_ID);
         getBasicPropertiesLayout().reloadGroupBox();
         getBasicPropertiesLayout().getGroupBox().select(USERS_GROUP_ID);
     }
@@ -423,23 +411,8 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
         }
     }
 
-    /**
-     *
-     */
     public final void update() {
-        Role loggedInUserRole = parentApp.getLoggedInUser().getCurrentRole();
-        switch (loggedInUserRole) {
-            case ADMINISTRATOR:
-            case MANAGER:
-                setEnabled(true);
-                break;
-            default:
-                setEnabled(false);
-                UIComponentTools.showWarning("WARNING", "Unauthorized access attempt! " + NoteBuilder.CONTACT, -1);
-                LOGGER.error("Failed to update " + this.getId() + ". Cause: Unauthorized access attempt!");
-                break;
-        }
-        reload();
+        setEnabled(UIHelper.getSessionUserRole().atLeast(Role.CURATOR));
     }
 
     /**
@@ -447,181 +420,26 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
      *
      * @return The navigation button.
      */
-    public NativeButton getNavigateRightButton() {
-        if (navigateRightButton == null) {
-            String id = "navigateRightButton";
+    public Button getNavigateButton() {
+        if (navigateButton == null) {
+            String id = "navigateButton";
             LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
-            navigateRightButton = new NativeButton();
-            navigateRightButton.setId(DEBUG_ID_PREFIX + id);
-            navigateRightButton.setIcon(new ThemeResource(IconContainer.NAVIGATE_RIGHT));
-            navigateRightButton.setStyleName(BaseTheme.BUTTON_LINK);
-            navigateRightButton.setImmediate(true);
+            navigateButton = new Button("Switch to Extended Properties");
+            navigateButton.setId(DEBUG_ID_PREFIX + id);
 
-            navigateRightButton.addClickListener(new Button.ClickListener() {
-
-                @Override
-                public void buttonClick(Button.ClickEvent event) {
-                    switch (getPropertiesLayout()) {
-                        case BASIC:
-                            setPropertiesLayout(PropertiesLayoutType.SPECIFIC);
-                            break;
-                        case SPECIFIC:
-                            setPropertiesLayout(PropertiesLayoutType.BASIC);
-                            break;
-                        default:
-                            UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
-                                    + "element view. " + NoteBuilder.CONTACT, -1);
-                            LOGGER.error("Failed to update " + getPropertiesPanel().getId()
-                                    + ". Cause: Undefined enum constant detected, namely '"
-                                    + getPropertiesLayout().name() + "'.");
-                            break;
-                    }
+            navigateButton.addClickListener((Button.ClickEvent event) -> {
+                switch (getPropertiesLayout()) {
+                    case SPECIFIC:
+                        setPropertiesLayout(PropertiesLayoutType.BASIC);
+                        break;
+                    default:
+                        setPropertiesLayout(PropertiesLayoutType.SPECIFIC);
+                        break;
                 }
             });
         }
-        return navigateRightButton;
-    }
-    
-    /**
-     * Get the navigation button to switch between BASIC and SPECIFIC view.
-     *
-     * @return The navigation button.
-     */
-    public NativeButton getNavigateLeftButton() {
-        if (navigateLeftButton == null) {
-            String id = "navigateLeftButton";
-            LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-            navigateLeftButton = new NativeButton();
-            navigateLeftButton.setId(DEBUG_ID_PREFIX + id);
-            navigateLeftButton.setIcon(new ThemeResource(IconContainer.NAVIGATE_LEFT));
-            navigateLeftButton.setStyleName(BaseTheme.BUTTON_LINK);
-            navigateLeftButton.setImmediate(true);
-
-            navigateLeftButton.addClickListener(new Button.ClickListener() {
-
-                @Override
-                public void buttonClick(Button.ClickEvent event) {
-                    switch (getPropertiesLayout()) {
-                        case BASIC:
-                            setPropertiesLayout(PropertiesLayoutType.SPECIFIC);
-                            break;
-                        case SPECIFIC:
-                            setPropertiesLayout(PropertiesLayoutType.BASIC);
-                            break;
-                        default:
-                            UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
-                                    + "element view. " + NoteBuilder.CONTACT, -1);
-                            LOGGER.error("Failed to update " + getPropertiesPanel().getId()
-                                    + ". Cause: Undefined enum constant detected, namely '"
-                                    + getPropertiesLayout().name() + "'.");
-                            break;
-                    }
-                }
-            });
-        }
-        return navigateLeftButton;
-    }
-
-    /**
-     * Get the bullet button for accessing the BASIC view directly.
-     *
-     * @return The bullet button.
-     */
-    public NativeButton getBulletBasic() {
-        if (bulletBasic == null) {
-            String id = "bulletBasic";
-            LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-            bulletBasic = new NativeButton();
-            bulletBasic.setId(DEBUG_ID_PREFIX + id);
-            bulletBasic.setIcon(new ThemeResource(IconContainer.BULLET_GREEN));
-            bulletBasic.setStyleName(BaseTheme.BUTTON_LINK);
-            bulletBasic.setWidth("17px");
-
-            bulletBasic.addClickListener(new Button.ClickListener() {
-
-                @Override
-                public void buttonClick(Button.ClickEvent event) {
-                    switch (getPropertiesLayout()) {
-                        case BASIC:
-                            break;
-                        case SPECIFIC:
-                            setPropertiesLayout(PropertiesLayoutType.BASIC);
-                            break;
-                        default:
-                            UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
-                                    + "element. " + NoteBuilder.CONTACT, -1);
-                            LOGGER.error("Failed to update " + getPropertiesPanel().getId()
-                                    + ". Cause: Undefined enum constant detected, namely '"
-                                    + getPropertiesLayout().name() + "'.");
-                            break;
-                    }
-                }
-            });
-        }
-        return bulletBasic;
-    }
-
-    /**
-     * Get the bullet button for accessing the SPECIFIC view directly.
-     *
-     * @return The bullet button.
-     */
-    public NativeButton getBulletSpecific() {
-        if (bulletSpecific == null) {
-            String id = "bulletSpecific";
-            LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-            bulletSpecific = new NativeButton();
-            bulletSpecific.setId(DEBUG_ID_PREFIX + id);
-            bulletSpecific.setIcon(new ThemeResource(IconContainer.BULLET_GREY));
-            bulletSpecific.setStyleName(BaseTheme.BUTTON_LINK);
-            bulletSpecific.setWidth("17px");
-
-            bulletSpecific.addClickListener(new Button.ClickListener() {
-
-                @Override
-                public void buttonClick(Button.ClickEvent event) {
-                    switch (getPropertiesLayout()) {
-                        case BASIC:
-                            setPropertiesLayout(PropertiesLayoutType.SPECIFIC);
-                            break;
-                        case SPECIFIC:
-                            break;
-                        default:
-                            UIComponentTools.showError("ERROR", "Unknown error occurred while updating "
-                                    + "element. " + NoteBuilder.CONTACT, -1);
-                            LOGGER.error("Failed to update " + getPropertiesPanel().getId()
-                                    + ". Cause: Undefined enum constant detected, namely '"
-                                    + getPropertiesLayout().name() + "'.");
-                            break;
-                    }
-                }
-            });
-        }
-        return bulletSpecific;
-    }
-
-    /**
-     * Get the bullet button layout.
-     *
-     * @return The bullet button layout
-     */
-    public HorizontalLayout getBulletLineLayout() {
-        if (bulletLineLayout == null) {
-            String id = "bulletLineLayout";
-            LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
-
-            bulletLineLayout = new HorizontalLayout();
-            bulletLineLayout.setId(DEBUG_ID_PREFIX + id);
-            bulletLineLayout.setImmediate(true);
-
-            bulletLineLayout.addComponent(getBulletBasic());
-            bulletLineLayout.addComponent(getBulletSpecific());
-        }
-        return bulletLineLayout;
+        return navigateButton;
     }
 
     /**
@@ -661,18 +479,16 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
      * Handler for changing the configuration part to the BASIC type.
      */
     private void fireBasicPropertiesLayoutSelected() {
+        getNavigateButton().setCaption("Extended Properties");
         getPropertiesPanel().setContent(getBasicPropertiesLayout());
-        getBulletBasic().setIcon(new ThemeResource(IconContainer.BULLET_GREEN));
-        getBulletSpecific().setIcon(new ThemeResource(IconContainer.BULLET_GREY));
     }
 
     /**
      * Handler for changing the configuration part to the SPECIFIC type.
      */
     private void fireSpecificPropertiesLayoutSelected() {
+        getNavigateButton().setCaption("Basic Properties");
         getPropertiesPanel().setContent(getSpecificPropertiesLayout());
-        getBulletSpecific().setIcon(new ThemeResource(IconContainer.BULLET_GREEN));
-        getBulletBasic().setIcon(new ThemeResource(IconContainer.BULLET_GREY));
     }
 
     /**
@@ -680,7 +496,7 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
      * element list. It resets the configuration part of the tab and
      * enables/disables components according to the selection.
      */
-    private void fireNewInstanceSelected() {
+    public final void fireNewInstanceSelected() {
         resetConfigurationComponents();
         setEnabledComponents(ListSelection.NEW);
     }
@@ -690,7 +506,7 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
      * in the element list. It loads the element, fils the configuration part of
      * the tab and enables/disables components according to the selection.
      */
-    private void fireValidListEntrySelected() {
+    public final void fireValidListEntrySelected() {
         C selectedElement = loadElementById(selectedElementId);
 
         try {
@@ -698,13 +514,13 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
             getBasicPropertiesLayout().updateSelection(selectedElement);
             setEnabledComponents(ListSelection.VALID);
         } catch (ConfigurationException ex) {
-            getParentApp().showError("Update of element selection not possible! Cause: " + ex.getMessage());
+            UIComponentTools.showError("Update of element selection not possible! Cause: " + ex.getMessage());
             LOGGER.error("Failed to update '" + this.getClass().getSimpleName()
                     + "'. Cause: " + ex.getMessage(), ex);
             resetComponents();
             setEnabledComponents(ListSelection.INVALID);
         } catch (UIComponentUpdateException ex) {
-            getParentApp().showError("Update of element list selection not possible! Cause: " + ex.getMessage());
+            UIComponentTools.showError("Update of element list selection not possible! Cause: " + ex.getMessage());
             LOGGER.error(MsgBuilder.updateFailed(getPropertiesPanel().getId()) + "Cause: " + ex.getMessage(), ex);
             setEnabledComponents(ListSelection.INVALID);
         }
@@ -716,10 +532,10 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
      * configuration part of the tab, enables/disables components according to
      * the selection and shows a warning.
      */
-    private void fireInvalidListEntrySelected() {
+    public final void fireInvalidListEntrySelected() {
         resetConfigurationComponents();
         setEnabledComponents(ListSelection.INVALID);
-        parentApp.showWarning("Selected element not found in database.");
+        UIComponentTools.showWarning("Selected element not found in database.");
     }
 
     /**
@@ -727,20 +543,14 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
      * list. It resets the configuration part of the tab and enables/disables
      * components according to the selection.
      */
-    private void fireNoListEntrySelected() {
+    public final void fireNoListEntrySelected() {
         resetConfigurationComponents();
         setEnabledComponents(ListSelection.NO);
     }
 
-    /**
-     * Validate the element list selection and return an according enum.
-     * Depending on the enum's value UI elements might be enabled/disabled.
-     *
-     * @return The selection type enum.
-     */
-    private ListSelection validateListSelection() {
+    public final ListSelection validateListSelection(String pSelection) {
         // Get selected list entry
-        String selection = (String) getElementList().getValue();
+        String selection = pSelection == null ? ((String) getElementList().getValue()) : pSelection;
         LOGGER.debug("Validating list selection for current value '{}'", selection);
         // Validate selection
         if (selection == null) {
@@ -766,6 +576,17 @@ public abstract class AbstractConfigurationTab<C> extends CustomComponent {
             LOGGER.debug("Found VALID selection.");
             return ListSelection.VALID;
         }
+
+    }
+
+    /**
+     * Validate the element list selection and return an according enum.
+     * Depending on the enum's value UI elements might be enabled/disabled.
+     *
+     * @return The selection type enum.
+     */
+    public final ListSelection validateListSelection() {
+        return validateListSelection(null);
     }
 
 }

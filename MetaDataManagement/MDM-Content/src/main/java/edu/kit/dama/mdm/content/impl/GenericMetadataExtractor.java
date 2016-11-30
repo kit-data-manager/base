@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,53 +37,54 @@ import org.w3c.dom.Element;
  */
 public class GenericMetadataExtractor extends AbstractMetadataExtractor {
 
-  /**
-   * The logger
-   */
-  private static final Logger LOGGER = LoggerFactory.getLogger(GenericMetadataExtractor.class);
+    /**
+     * The logger
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(GenericMetadataExtractor.class);
 
-  /**
-   * Default constructor
-   *
-   * @param pUniqueIdentifier The unique identifier of this processor. This identifier
-   * should be used to name generated output files associated with this processor.
-   */
-  public GenericMetadataExtractor(String pUniqueIdentifier) {
-    super(pUniqueIdentifier);
-  }
+    /**
+     * Default constructor
+     *
+     * @param pUniqueIdentifier The unique identifier of this processor. This
+     * identifier should be used to name generated output files associated with
+     * this processor.
+     */
+    public GenericMetadataExtractor(String pUniqueIdentifier) {
+        super(pUniqueIdentifier);
+    }
 
-  @Override
-  public final String getName() {
-    return "GenericMetadataExtractor";
-  }
+    @Override
+    public final String getName() {
+        return "GenericMetadataExtractor";
+    }
 
-  @Override
-  public final void performPreTransferExtraction(TransferTaskContainer pContainer) throws StagingProcessorException {
-    //do nothing here
-    LOGGER.debug("performPreTransferExtraction() -- do nothing");
-  }
+    @Override
+    public final void performPreTransferExtraction(TransferTaskContainer pContainer) throws StagingProcessorException {
+        //do nothing here
+        LOGGER.debug("performPreTransferExtraction() -- do nothing");
+    }
 
-  @Override
-  protected final Element createCommunitySpecificElement(TransferTaskContainer pContainer) throws MetaDataExtractionException {
-    LOGGER.debug("{}: createCommunitySpecificElement", this.getClass().toString());
-    return null;
-  }
+    @Override
+    protected final Element createCommunitySpecificElement(TransferTaskContainer pContainer) throws MetaDataExtractionException {
+        LOGGER.debug("{}: createCommunitySpecificElement", this.getClass().toString());
+        return null;
+    }
 
-  @Override
-  protected void validateExtractorProperties(Properties pProperties) throws PropertyValidationException {
-  }
+    @Override
+    protected void validateExtractorProperties(Properties pProperties) throws PropertyValidationException {
+    }
 
-  @Override
-  protected String[] getExtractorPropertyKeys() {
-    return null;
-  }
+    @Override
+    protected String[] getExtractorPropertyKeys() {
+        return null;
+    }
 
-  @Override
-  protected String getExtractorPropertyDescription(String pProperty) {
-    return null;
-  }
+    @Override
+    protected String getExtractorPropertyDescription(String pProperty) {
+        return null;
+    }
 
-  @Override
-  protected void configureExtractor(Properties pProperties) {
-  }
+    @Override
+    protected void configureExtractor(Properties pProperties) {
+    }
 }

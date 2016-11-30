@@ -28,7 +28,7 @@ public abstract class AbstractUserBridge<C> {
   /**
    * The current user logged in
    */
-  private UserData currentUser = UserData.NO_USER;
+  private UserData currentUser = UserData.WORLD_USER;
 
   /**
    * Create an abstract user bridge
@@ -44,7 +44,7 @@ public abstract class AbstractUserBridge<C> {
    */
   public final void setCurrentUser(UserData pCurrentUser) {
     if (pCurrentUser == null) {
-      currentUser = UserData.NO_USER;
+      currentUser = UserData.WORLD_USER;
     } else {
       currentUser = pCurrentUser;
     }

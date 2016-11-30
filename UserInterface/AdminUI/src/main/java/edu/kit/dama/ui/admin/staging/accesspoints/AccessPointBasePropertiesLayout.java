@@ -18,11 +18,9 @@ package edu.kit.dama.ui.admin.staging.accesspoints;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBox;
-import com.vaadin.ui.NativeButton;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import edu.kit.dama.staging.entities.StagingAccessPointConfiguration;
-import edu.kit.dama.ui.admin.AdminUIMainView;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.IPathSelector;
@@ -42,22 +40,17 @@ public final class AccessPointBasePropertiesLayout extends AbstractBasePropertie
     private static final String DEBUG_ID_PREFIX = AccessPointBasePropertiesLayout.class.getName() + "_";
     private TextField remoteBaseUrlField;
     private TextField localBasePathField;
-    private NativeButton pathSelectorButton;
+    private Button pathSelectorButton;
     private CheckBox transientBox;
 
     /**
      * Default constructor.
-     *
-     * @param parentApp The parent application.
      */
-    public AccessPointBasePropertiesLayout(AdminUIMainView parentApp) {
-        super(parentApp);
-
+    public AccessPointBasePropertiesLayout() {
         LOGGER.debug("Building " + DEBUG_ID_PREFIX + " ...");
 
         setId(DEBUG_ID_PREFIX.substring(0, DEBUG_ID_PREFIX.length() - 1));
-        setWidth("100%");
-        setImmediate(true);
+        setSizeFull();
         setMargin(true);
         setSpacing(true);
 
@@ -65,6 +58,7 @@ public final class AccessPointBasePropertiesLayout extends AbstractBasePropertie
         setRows(4);
 
         getCheckBoxesLayout().addComponent(getTransientBox());
+
         addComponent(getNameField(), 0, 0, 1, 0);
         addComponent(getGroupBox(), 3, 0);
         addComponent(getRemoteBaseUrlField(), 0, 1, 1, 1);
@@ -74,11 +68,11 @@ public final class AccessPointBasePropertiesLayout extends AbstractBasePropertie
         addComponent(getDescriptionArea(), 0, 3, 3, 3);
 
         setComponentAlignment(getPathSelectorButton(), Alignment.BOTTOM_RIGHT);
-
-        setColumnExpandRatio(0, 0.69f);
+        setColumnExpandRatio(0, .88f);
         setColumnExpandRatio(1, 0.01f);
         setColumnExpandRatio(2, 0.01f);
-        setColumnExpandRatio(3, 0.19f);
+        setColumnExpandRatio(3, 0.1f);
+        setRowExpandRatio(3, 1f);
     }
 
     /**
@@ -90,6 +84,7 @@ public final class AccessPointBasePropertiesLayout extends AbstractBasePropertie
     public final TextField getRemoteBaseUrlField() {
         if (remoteBaseUrlField == null) {
             remoteBaseUrlField = factoryTextField("REMOTE BASE URL", "remoteBaseUrlField", true);
+            remoteBaseUrlField.setDescription("The base URL at which this access point is reachable from remote, e.g. http://myHost/webdav");
         }
         return remoteBaseUrlField;
     }
@@ -103,6 +98,7 @@ public final class AccessPointBasePropertiesLayout extends AbstractBasePropertie
     public TextField getLocalBasePathField() {
         if (localBasePathField == null) {
             localBasePathField = factoryTextField("LOCAL BASE PATH", "localBasePathField", true);
+            localBasePathField.setDescription("The local absolute path that is equivalent to the remote base URL, e.g. /var/www/webdav");
         }
         return localBasePathField;
     }
@@ -113,12 +109,12 @@ public final class AccessPointBasePropertiesLayout extends AbstractBasePropertie
      *
      * @return The path selector button.
      */
-    public NativeButton getPathSelectorButton() {
+    public Button getPathSelectorButton() {
         if (pathSelectorButton == null) {
             String id = "pathSelectorButton";
             LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
-            pathSelectorButton = new NativeButton("Select Path");
+            pathSelectorButton = new Button("Select Path");
             pathSelectorButton.setId(DEBUG_ID_PREFIX + id);
             pathSelectorButton.setImmediate(true);
 
@@ -151,9 +147,9 @@ public final class AccessPointBasePropertiesLayout extends AbstractBasePropertie
             transientBox = new CheckBox("Transient");
             transientBox.setId(DEBUG_ID_PREFIX + id);
             transientBox.setImmediate(true);
-            transientBox.setDescription("Set this access point as transient access point; "
-                    + "that means, the local folder of this access point will be re-created on each start");
+            transientBox.setDescription("If an access point is transient, all its local data will be removed at each start of the repository system.");
             transientBox.addStyleName(CSSTokenContainer.BOLD_CAPTION);
+            transientBox.addStyleName("yesno");
         }
         return transientBox;
     }

@@ -138,8 +138,7 @@ public final class StagingConfigurationManager {
             try {
                 java.net.URL.setURLStreamHandlerFactory(myFactory);
             } catch (Error e) {
-                LOGGER.error("Factory registration not possible. This environment is not supported!");
-                throw e;
+                LOGGER.error("Factory registration not possible.\nThis environment is not supported.\nUsing custom protocols 'sftp' and 'gsiftp' won't be possible.");
             }
         }
     }

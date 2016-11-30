@@ -82,6 +82,7 @@ public final class IntervalTriggerConfigurationPanel extends AbstractTriggerConf
                 addComponent(getPeriodField(), 0, 3, 1, 1).addComponent(getTimesField(), 1, 3, 1, 1).
                 addComponent(getDescriptionField(), 0, 4, 2, 2).getLayout();
         layout.setMargin(false);
+        layout.setSpacing(true);
         layout.setSizeFull();
         return layout;
     }

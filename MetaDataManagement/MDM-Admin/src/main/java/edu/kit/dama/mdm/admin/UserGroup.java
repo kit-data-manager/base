@@ -52,13 +52,17 @@ import org.slf4j.LoggerFactory;
             name = "simple",
             attributeNodes = {
                 @XmlNamedAttributeNode("id")
-            }),
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("groupId"),
-                @XmlNamedAttributeNode("groupName"),
+                @XmlNamedAttributeNode("id")
+                ,
+                @XmlNamedAttributeNode("groupId")
+                ,
+                @XmlNamedAttributeNode("groupName")
+                ,
                 @XmlNamedAttributeNode("description")
             })})
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -67,14 +71,18 @@ import org.slf4j.LoggerFactory;
             name = "UserGroup.simple",
             includeAllAttributes = false,
             attributeNodes = {
-                @NamedAttributeNode("id")}),
+                @NamedAttributeNode("id")})
+    ,
     @NamedEntityGraph(
             name = "UserGroup.default",
             includeAllAttributes = false,
             attributeNodes = {
-                @NamedAttributeNode("id"),
-                @NamedAttributeNode("groupId"),
-                @NamedAttributeNode("groupName"),
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode("groupId")
+                ,
+                @NamedAttributeNode("groupName")
+                ,
                 @NamedAttributeNode("description")
             })
 })
@@ -163,6 +171,20 @@ public class UserGroup implements IDefaultUserGroup, FetchGroupTracker {
             LOGGER.error("Failed to obtain all users in group " + groupId, ex);
         }
         return result;
+    }
+
+    /**
+     * Copy the basic content (groupId, name and description) and return it as
+     * new group.
+     *
+     * @return The copy of this group.
+     */
+    public UserGroup copy() {
+        UserGroup clonedUserGroup = new UserGroup();
+        clonedUserGroup.setGroupId(getGroupId());
+        clonedUserGroup.setGroupName(getGroupName());
+        clonedUserGroup.setDescription(getDescription());
+        return clonedUserGroup;
     }
 
     private transient org.eclipse.persistence.queries.FetchGroup fg;

@@ -296,7 +296,7 @@ public final class IngestInformationServiceLocal implements IIngestInformationSe
             existingEntity.clearStagingProcessors();
             for (final StagingProcessor proc : merged) {
                 LOGGER.debug("Default staging processor with id {} not linked to ingest, yet. Adding it.");
-                existingEntity.addServerSideStagingProcessor(proc);
+                existingEntity.addStagingProcessor(proc);
             }
 
             //merge the entity with the database

@@ -16,6 +16,7 @@
 package edu.kit.dama.rest.dataorganization.services.impl.util;
 
 import java.io.IOException;
+import javax.ws.rs.core.Response;
 
 /**
  *
@@ -23,6 +24,6 @@ import java.io.IOException;
  */
 public interface IDownloadHandler<C> {
 
-    DownloadStreamWrapper prepareStream(C pEntity) throws IOException;
+    Response prepareStream(C pEntity) throws IOException;
 
 }

@@ -16,7 +16,11 @@
  */
 package edu.kit.dama.mdm.core.tools;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for date tests.
@@ -25,25 +29,34 @@ import java.util.Date;
  */
 public final class DateTester {
 
-  /**
-   * Constructor to disable default constructor for extern classes.
-   */
-  private DateTester() {
-  }
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DateTester.class);
 
-  /**
-   * Test whether start date is less than end date. If not throws an exception.
-   *
-   * @param startDate the earlier date
-   * @param endDate the following date
-   */
-  public static void testForValidDates(final Date startDate,
-          final Date endDate) {
-    if (startDate != null && endDate != null && !startDate.before(endDate)) {
-      throw new IllegalArgumentException("Property 'validFrom' ("
+    /**
+     * Constructor to disable default constructor for extern classes.
+     */
+    private DateTester() {
+    }
+
+    /**
+     * Test whether start date is less than end date. If not throws an
+     * exception.
+     *
+     * @param startDate the earlier date
+     * @param endDate the following date
+     */
+    public static void testForValidDates(final Date startDate,
+            final Date endDate) {
+        if (startDate != null && endDate != null && !startDate.before(endDate)) {
+            final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            df.setTimeZone(TimeZone.getTimeZone("UTC"));
+            LOGGER.warn("Suspicious argument. Property 'validFrom' ("
+                    + df.format(startDate)
+                    + ") should be earlier than property 'validUntil' ("
+                    + df.format(endDate) + ")!");
+            /* throw new IllegalArgumentException("Property 'validFrom' ("
               + startDate.toString()
               + ") has to be earlier than property 'validUntil' ("
-              + endDate.toString() + ")!");
+              + endDate.toString() + ")!");*/
+        }
     }
-  }
 }

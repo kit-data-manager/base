@@ -16,29 +16,29 @@ limitations under the License.
 -->
 
 <DAMA>
-  <MetaDataManagement>
-    <PersistenceImplementations>
-      <PersistenceImplementation>
-        <Name>JPA</Name>
-        <Class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</Class>
-        <PersistenceUnits>
+  <metaDataManagement>
+    <persistenceImplementations>
+      <persistenceImplementation>
+        <name>JPA</name>
+        <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+        <persistenceUnits>
           <!-- All databases which have to be supported by this implementation. 
                Attention: Labels should be the same for all implementations. -->
-          <PersistenceUnit>MDM-Core</PersistenceUnit>  
-          <PersistenceUnit>MDM-Core-Test</PersistenceUnit>  
-        </PersistenceUnits>
-      </PersistenceImplementation>  
-      <PersistenceImplementation>
-        <Name>JPA2</Name>
-        <Class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</Class>
-        <PersistenceUnits>
+          <persistenceUnit>MDM-Core</persistenceUnit>  
+          <persistenceUnit>MDM-Core-Test</persistenceUnit>  
+        </persistenceUnits>
+      </persistenceImplementation>  
+      <persistenceImplementation>
+        <name>JPA2</name>
+        <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+        <persistenceUnits>
           <!-- All databases which have to be supported by this implementation. 
                Attention: Labels should be the same for all implementations. -->
-          <PersistenceUnit>MDM-Core2</PersistenceUnit>  
-          <PersistenceUnit>MDM-Core-Test2</PersistenceUnit>  
-          <PersistenceUnit>PU3</PersistenceUnit>  
-        </PersistenceUnits>
-      </PersistenceImplementation>  
-    </PersistenceImplementations>
-  </MetaDataManagement>  
+          <persistenceUnit>MDM-Core2</persistenceUnit>  
+          <persistenceUnit>MDM-Core-Test2</persistenceUnit>  
+          <persistenceUnit>PU3</persistenceUnit>  
+        </persistenceUnits>
+      </persistenceImplementation>  
+    </persistenceImplementations>
+  </metaDataManagement>  
 </DAMA>

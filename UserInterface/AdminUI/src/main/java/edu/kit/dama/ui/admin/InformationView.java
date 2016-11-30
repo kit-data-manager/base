@@ -17,25 +17,22 @@ package edu.kit.dama.ui.admin;
 
 import com.vaadin.data.Item;
 import com.vaadin.data.util.HierarchicalContainer;
-import com.vaadin.server.Page;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CustomComponent;
-import com.vaadin.ui.Notification;
 import com.vaadin.ui.Table;
 import com.vaadin.ui.Table.Align;
 import com.vaadin.ui.VerticalLayout;
 import edu.kit.dama.authorization.entities.GroupId;
-import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
 import edu.kit.dama.authorization.exceptions.AuthorizationException;
 import edu.kit.dama.authorization.services.administration.GroupServiceLocal;
 import edu.kit.lsdf.adalapi.AbstractFile;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
-import edu.kit.dama.mdm.base.DigitalObject;
-import edu.kit.dama.mdm.tools.DigitalObjectSecureQueryHelper;
 import edu.kit.dama.staging.util.DataOrganizationUtils;
+import edu.kit.dama.ui.admin.utils.UIComponentTools;
+import edu.kit.dama.ui.admin.utils.UIHelper;
 import java.text.NumberFormat;
 import java.util.List;
 import org.slf4j.Logger;
@@ -49,7 +46,6 @@ public class InformationView extends CustomComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InformationView.class);
 
-    private final AdminUIMainView parent;
     private VerticalLayout mainLayout;
     private Table table;
 //  private final Diagram diagram;
@@ -59,8 +55,7 @@ public class InformationView extends CustomComponent {
      *
      * @param pParent The parent view.
      */
-    public InformationView(AdminUIMainView pParent) {
-        parent = pParent;
+    public InformationView() {
         buildMainLayout();
         //just a test
 //    diagram = new Diagram();
@@ -156,40 +151,18 @@ public class InformationView extends CustomComponent {
     }
 
     protected void reload() {
-        IMetaDataManager mdm = null;
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+        mdm.setAuthorizationContext(UIHelper.getSessionContext());
         try {
-            IAuthorizationContext ctx = parent.getAuthorizationContext();
-            mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
-            mdm.setAuthorizationContext(ctx);
-            
-            
-           // LOGGER.debug("Getting all digital objects.");
-            //@TODO Use Admin context and reduce table...this might not scale for huge numbers of objects.
-          //  List<DigitalObject> results = new DigitalObjectSecureQueryHelper().getReadableResources(mdm, 0, Integer.MAX_VALUE, ctx);
-            //LOGGER.debug("Obtained {} result(s).", results.size());
-            
-           // LOGGER.debug("Obtaining group memberships.");
-           // List<GroupId> groupMemberships = GroupServiceLocal.getSingleton().membershipsOf(ctx.getUserId(), 0, Integer.MAX_VALUE, AuthorizationContext.factorySystemContext());
             LOGGER.debug("Obtaining groups.");
             List<GroupId> allGroups = GroupServiceLocal.getSingleton().getAllGroupsIds(0, Integer.MAX_VALUE, AuthorizationContext.factorySystemContext());
             LOGGER.debug("Obtained {} result(s). Obtaining DataOrganization information.", allGroups.size());
 
-          /*  long userFileSize = 0l;
-            long userFiles = 0l;
-            for (DigitalObject result : results) {
-                userFileSize += DataOrganizationUtils.getAssociatedDataSize(result.getDigitalObjectId());
-                userFiles += DataOrganizationUtils.getAssociatedFileCount(result.getDigitalObjectId());
-            }
-            LOGGER.debug("Obtained {} user file(s) with a size of {} bytes. Getting global DataOrganiazation information.", userFiles, userFileSize);
-            int userDigitalObjectCount = results.size();
-            */
-            
             LOGGER.debug("Getting global digital object information.");
             int globalDigitalObjectCount = ((Number) mdm.findSingleResult("SELECT COUNT(d) FROM DigitalObject d")).intValue();
             long globalFileSize = DataOrganizationUtils.getAssociatedDataSize();
             long globalFiles = DataOrganizationUtils.getAssociatedFileCount();
-            
-            
+
             LOGGER.debug("Obtained {} global file(s) with a size of {} bytes.", globalFiles, globalFileSize);
 
             LOGGER.debug("Setting up table data source.");
@@ -200,36 +173,33 @@ public class InformationView extends CustomComponent {
             NumberFormat nf = NumberFormat.getInstance();
             nf.setMinimumFractionDigits(0);
             nf.setMaximumFractionDigits(0);
-            NumberFormat nfp = NumberFormat.getPercentInstance();
 
             Item i = container.addItemAt(0, 0);
             i.getItemProperty("Identifier").setValue("Groups");
             i.getItemProperty("Value").setValue(nf.format(allGroups.size()));
-            
+
             i = container.addItemAt(1, 1);
             i.getItemProperty("Identifier").setValue("Digital Objects");
             i.getItemProperty("Value").setValue(nf.format(globalDigitalObjectCount));
-           
+
             i = container.addItemAt(2, 2);
             i.getItemProperty("Identifier").setValue("Files");
             i.getItemProperty("Value").setValue(nf.format(globalFiles));
-           
+
             nf.setMinimumFractionDigits(2);
             nf.setMaximumFractionDigits(2);
             i = container.addItemAt(3, 3);
             i.getItemProperty("Identifier").setValue("Occupied Diskspace");
             i.getItemProperty("Value").setValue(AbstractFile.formatSize(globalFileSize));
-            
+
             LOGGER.debug("Setting table data source.");
             table.setContainerDataSource(container);
         } catch (AuthorizationException ex) {
             table.setContainerDataSource(new HierarchicalContainer());
             LOGGER.error("Failed to setup information view.", ex);
-            new Notification("Error", "Failed to setup information view. See logfile for details.", Notification.Type.ERROR_MESSAGE).show(Page.getCurrent());
+            UIComponentTools.showError("Failed to setup information view. See logfile for details.");
         } finally {
-            if (mdm != null) {
-                mdm.close();
-            }
+            mdm.close();
         }
     }
 }

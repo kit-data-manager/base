@@ -177,7 +177,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
      * @param id The ObjectType id.
      * @param hc The HttpContext for OAuth check.
      *
-     * @return One or none single object type entity. 
+     * @return One or none single object type entity.
      */
     @GET
     @Path(value = "/objectTypes/{id}")

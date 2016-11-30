@@ -25,19 +25,19 @@ import org.slf4j.LoggerFactory;
  * @author dx6468
  */
 public class UserDataFilter implements Filter {
-    
+
     private static final Logger LOGGER
             = LoggerFactory.getLogger(UserDataFilter.class);
 
     private final String filterExpression;
     private final String propertyId;
     private final SearchSpace searchSpace;
-    
+
     public enum SearchSpace {
         CONTAINS("Contains"),
         STARTS("Starts With"),
         ENDS("Ends With");
-        
+
         public final String caption;
 
         private SearchSpace(String caption) {
@@ -45,7 +45,7 @@ public class UserDataFilter implements Filter {
         }
     }
 
-    public UserDataFilter(String filterExpression, String propertyId, 
+    public UserDataFilter(String filterExpression, String propertyId,
             SearchSpace searchSpace) throws IllegalArgumentException {
         this.filterExpression = filterExpression.toLowerCase();
         this.propertyId = propertyId;
@@ -53,11 +53,11 @@ public class UserDataFilter implements Filter {
     }
 
     @Override
-    public boolean passesFilter(Object itemId, Item item) 
+    public boolean passesFilter(Object itemId, Item item)
             throws UnsupportedOperationException {
         boolean filterPassed = false;
         String itemValue;
-        if(item.getItemProperty(propertyId).getValue().getClass().equals(Long.class)) {
+        if (item.getItemProperty(propertyId).getValue().getClass().equals(Long.class)) {
             itemValue = Long.toString((long) item.getItemProperty(propertyId).getValue());
         } else {
             itemValue = (String) item.getItemProperty(propertyId).getValue();
@@ -74,7 +74,7 @@ public class UserDataFilter implements Filter {
                 filterPassed = haystack.endsWith(filterExpression);
                 break;
             default:
-                LOGGER.error("Failed to check whether the passed cell content '" 
+                LOGGER.error("Failed to check whether the passed cell content '"
                         + haystack + "' contains the filtering expression ");
                 break;
         }

@@ -72,14 +72,14 @@ Elasticsearch-related settings.
 <!--
 MetaDataManagement-related settings.
 -->
-<MetaDataManagement>
-    <PersistenceImplementations>
-      <PersistenceImplementation>
+<metaDataManagement>
+    <persistenceImplementations>
+      <persistenceImplementation>
         <!--Name of the persistence implementation-->
-        <Name>JPA</Name>
+        <name>JPA</name>
         <!--Implementation class of the persistence implementation-->
-        <Class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</Class>
-        <PersistenceUnits>
+        <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+        <persistenceUnits>
           <!-- A list of persistence units (configured endpoints) to store metadata. 
           In case of the default JPA implementation these persistence units are 
           actual persistence units configured in a persistence.xml file using the 
@@ -96,15 +96,15 @@ MetaDataManagement-related settings.
                     otherwise the first entry is interpreted as default persistence unit used by the 
                     implementation if no persistence unit is specified.
                     -->
-                    <PersistenceUnit>AuthorizationPU</PersistenceUnit>  
-                    <PersistenceUnit>DataOrganizationPU</PersistenceUnit>
+                    <persistenceUnit>AuthorizationPU</persistenceUnit>  
+                    <persistenceUnit>DataOrganizationPU</persistenceUnit>
                     <!--Default persistence unit if the used persistence unit is not explicitly named.-->
-                    <PersistenceUnit default="true">MDM-Core</PersistenceUnit>  
-                    <PersistenceUnit>StagingUnit</PersistenceUnit>
-                </PersistenceUnits>
-            </PersistenceImplementation>  
-        </PersistenceImplementations>
-    </MetaDataManagement>  
+                    <persistenceUnit default="true">MDM-Core</persistenceUnit>  
+                    <persistenceUnit>StagingUnit</persistenceUnit>
+                </persistenceUnits>
+            </persistenceImplementation>  
+        </persistenceImplementations>
+    </metaDataManagement>  
     <!--
     JPA-related settings.
     -->

@@ -859,12 +859,9 @@ public final class BaseMetaDataRestClient extends AbstractRestClient {
         if (pGroupId != null) {
             queryParams.add(Constants.REST_PARAMETER_GROUP_ID, pGroupId);
         }
-        queryParams.add(Constants.REST_PARAMETER_FIRST, Integer.toString(
-                pFirstIndex));
-        queryParams.add(Constants.REST_PARAMETER_RESULT, Integer.toString(
-                pResults));
-        returnValue
-                = performOrganizationUnitGet(ORGANIZATION_UNITS, queryParams);
+        queryParams.add(Constants.REST_PARAMETER_FIRST, Integer.toString(pFirstIndex));
+        queryParams.add(Constants.REST_PARAMETER_RESULT, Integer.toString(pResults));
+        returnValue = performOrganizationUnitGet(ORGANIZATION_UNITS, queryParams);
         return returnValue;
     }
 

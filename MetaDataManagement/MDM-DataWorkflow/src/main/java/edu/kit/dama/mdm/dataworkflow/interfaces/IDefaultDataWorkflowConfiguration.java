@@ -87,19 +87,19 @@ public interface IDefaultDataWorkflowConfiguration extends ISimpleDataWorkflowCo
      */
     String getApplicationArguments();
 
-    /**
-     * Returns whether this task is flagged as default or not.
-     *
-     * @return TRUE if default, FALSE otherwise.
-     */
-    Boolean isDefaultTask();
-
-    /**
-     * Returns whether this task is flagged as disabled or not.
-     *
-     * @return TRUE if disabled, FALSE otherwise.
-     */
-    Boolean isDisabled();
+//    /**
+//     * Returns whether this task is flagged as default or not.
+//     *
+//     * @return TRUE if default, FALSE otherwise.
+//     */
+//    Boolean isDefaultTask();
+//
+//    /**
+//     * Returns whether this task is flagged as disabled or not.
+//     *
+//     * @return TRUE if disabled, FALSE otherwise.
+//     */
+//    Boolean isDisabled();
 
     /**
      * Get the list of required environment properties.

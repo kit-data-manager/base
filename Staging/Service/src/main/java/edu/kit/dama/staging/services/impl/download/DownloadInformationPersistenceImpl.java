@@ -130,8 +130,8 @@ public final class DownloadInformationPersistenceImpl implements ITransferInform
      * @param pDigitalObjectId The digital object id for which the download will
      * be created.
      * @param pAccessPointId The AccessPoint to use for downloading data.
-     * @param pProcessors A collection of StagingProcessor applied after the download
-     * preparation.
+     * @param pProcessors A collection of StagingProcessor applied after the
+     * download preparation.
      * @param pSecurityContext The security context.
      *
      * @return The created download information.
@@ -163,20 +163,7 @@ public final class DownloadInformationPersistenceImpl implements ITransferInform
         //add staging processors if available
         if (pProcessors != null && !pProcessors.isEmpty()) {
             for (StagingProcessor processor : pProcessors) {
-                switch (processor.getType()) {
-                    case CLIENT_SIDE_ONLY:
-                        result.addClientSideStagingProcessor(processor);
-                        break;
-                    case SERVER_SIDE_ONLY:
-                        result.addServerSideStagingProcessor(processor);
-                        break;
-                    case CLIENT_AND_SERVER_SIDE:
-                        result.addClientSideStagingProcessor(processor);
-                        result.addServerSideStagingProcessor(processor);
-                        break;
-                    default:
-                        LOGGER.warn("Unknown/unsupported StagingProcessor type '{}'", processor.getType());
-                }
+                result.addStagingProcessor(processor);
             }
         }
 
@@ -405,8 +392,7 @@ public final class DownloadInformationPersistenceImpl implements ITransferInform
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         List<DownloadInformation> results = new LinkedList<>();
         try {
-            results = mdm.findResultList("SELECT x FROM DownloadInformation x WHERE x.status = ?1 AND x.ownerUuid LIKE ?2",
-                    new Object[]{pStatus.getId(), getOwnerFromContext(pSecurityContext)}, DownloadInformation.class, pMinIndex, pMaxResults);
+            results = mdm.findResultList("SELECT x FROM DownloadInformation x WHERE x.status = ?1 AND x.ownerUuid LIKE ?2", new Object[]{pStatus.getId(), getOwnerFromContext(pSecurityContext)}, DownloadInformation.class, pMinIndex, pMaxResults);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to get downloads for status " + pStatus + " using context " + pSecurityContext, ex);
         } finally {
@@ -544,8 +530,7 @@ public final class DownloadInformationPersistenceImpl implements ITransferInform
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         int result = 0;
         try {
-            result = mdm.performUpdate("UPDATE DownloadInformation x SET x.stagingUrl = ?2, x.lastUpdate = ?3 WHERE x.id = ?1 AND x.ownerUuid LIKE ?4",
-                    new Object[]{pId, pStagingUrl, System.currentTimeMillis(), getOwnerFromContext(pSecurityContext)});
+            result = mdm.performUpdate("UPDATE DownloadInformation x SET x.stagingUrl = ?2, x.lastUpdate = ?3 WHERE x.id = ?1 AND x.ownerUuid LIKE ?4", new Object[]{pId, pStagingUrl, System.currentTimeMillis(), getOwnerFromContext(pSecurityContext)});
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to update staging url for download with id " + pId + " using context " + pSecurityContext, ex);
         } finally {

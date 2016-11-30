@@ -26,6 +26,9 @@ public final class Constants {
      */
     public static final String REST_API_SERVICE_KEY = "restServiceAccess";
     public static final String USERS_GROUP_ID = "USERS";
+    public static final String WORLD_USER_ID = "WORLD";
+    public static final String WORLD_GROUP_ID = "WORLD";
+    public static final String OAI_PMH_USER_ID = "OAI-PMH";
     public static final String MAIN_LOGIN_SERVICE_ID = "mainLogin";
 
     /**
@@ -59,6 +62,7 @@ public final class Constants {
      * DataOrganization constants
      */
     public static final String DEFAULT_VIEW = "default";
+    public static final String PUBLIC_VIEW = "public";
     public static final String GENERATED_VIEW = STAGING_GENERATED_FOLDER_NAME;
     public static final String DATA_VIEW = STAGING_DATA_FOLDER_NAME;
 

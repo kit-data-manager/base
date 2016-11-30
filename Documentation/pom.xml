@@ -21,14 +21,13 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>edu.kit.dama</groupId>
     <artifactId>Documentation</artifactId>
     <name>Documentation</name>
     <packaging>jar</packaging>
-    <version>1.3</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <projectName>Documentation</projectName>

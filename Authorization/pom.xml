@@ -21,7 +21,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.3</version>
+        <version>1.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
@@ -29,7 +29,6 @@
     <groupId>edu.kit.dama</groupId>
     <artifactId>Authorization</artifactId>
     <packaging>jar</packaging>
-    <version>1.3</version>
     <name>Authorization</name>
     <properties>
         <org.aspectj-version>1.8.2</org.aspectj-version>
@@ -121,7 +120,7 @@
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Commons</artifactId>
-            <version>1.3</version>
+            <version>${project.kit.datamanager.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

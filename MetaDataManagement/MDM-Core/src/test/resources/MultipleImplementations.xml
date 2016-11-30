@@ -16,30 +16,30 @@ limitations under the License.
 -->
 
 <DAMA>
-  <MetaDataManagement>
-    <PersistenceImplementations>
-      <PersistenceImplementation>
-        <Name>JPA</Name>
-        <Class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</Class>
-        <PersistenceUnits>
-          <!-- All databases which have to be supported by this implementation. 
-               Attention: Labels should be the same for all implementations. -->
-          <PersistenceUnit default="true">MDM-Core</PersistenceUnit>  
-          <PersistenceUnit>MDM-Core-Test</PersistenceUnit>  
-        </PersistenceUnits>
-      </PersistenceImplementation>  
-      <PersistenceImplementation>
-        <Name>JPA2</Name>
-        <Default/>
-        <Class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</Class>
-        <PersistenceUnits>
-          <!-- All databases which have to be supported by this implementation. 
-               Attention: Labels should be the same for all implementations. -->
-          <PersistenceUnit>MDM-Core2</PersistenceUnit>  
-          <PersistenceUnit default="true">MDM-Core-Test2</PersistenceUnit>  
-          <PersistenceUnit>PU3</PersistenceUnit>  
-        </PersistenceUnits>
-      </PersistenceImplementation>  
-    </PersistenceImplementations>
-  </MetaDataManagement>  
+    <metaDataManagement>
+        <persistenceImplementations>
+            <persistenceImplementation>
+                <name>JPA</name>
+                <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+                <persistenceUnits>
+                    <!-- All databases which have to be supported by this implementation. 
+                    Attention: Labels should be the same for all implementations. -->
+                    <persistenceUnit default="true">MDM-Core</persistenceUnit>  
+                    <persistenceUnit>MDM-Core-Test</persistenceUnit>  
+                </persistenceUnits>
+            </persistenceImplementation>  
+            <persistenceImplementation>
+                <name>JPA2</name>
+                <default/>
+                <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+                <persistenceUnits>
+                    <!-- All databases which have to be supported by this implementation. 
+                    Attention: Labels should be the same for all implementations. -->
+                    <persistenceUnit>MDM-Core2</persistenceUnit>  
+                    <persistenceUnit default="true">MDM-Core-Test2</persistenceUnit>  
+                    <persistenceUnit>PU3</persistenceUnit>  
+                </persistenceUnits>
+            </persistenceImplementation>  
+        </persistenceImplementations>
+    </metaDataManagement>  
 </DAMA>

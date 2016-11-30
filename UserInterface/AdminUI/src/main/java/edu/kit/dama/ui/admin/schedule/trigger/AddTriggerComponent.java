@@ -20,10 +20,9 @@ import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.Component;
+import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
-import com.vaadin.ui.NativeButton;
-import com.vaadin.ui.PopupView;
 import com.vaadin.ui.VerticalLayout;
 import edu.kit.dama.scheduler.api.trigger.JobTrigger;
 import edu.kit.dama.ui.admin.schedule.SchedulerBasePropertiesLayout;
@@ -35,13 +34,12 @@ import org.slf4j.LoggerFactory;
  *
  * @author jejkal
  */
-public final class AddTriggerComponent {
+public final class AddTriggerComponent extends CustomComponent {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AddTriggerComponent.class);
 
     private VerticalLayout mainLayout;
     private VerticalLayout triggerEditorLayout;
-    private PopupView triggerPopup;
     private ComboBox triggerTypeSelectionBox;
     private AbstractTriggerConfigurationPanel currentPanel = null;
     private final SchedulerBasePropertiesLayout parent;
@@ -72,6 +70,7 @@ public final class AddTriggerComponent {
     public AddTriggerComponent(SchedulerBasePropertiesLayout pParent) {
         parent = pParent;
         buildMainLayout();
+        setCompositionRoot(mainLayout);
     }
 
     /**
@@ -88,17 +87,16 @@ public final class AddTriggerComponent {
      *
      * @return The popup view.
      */
-    public PopupView getPopupView() {
-        if (triggerPopup == null) {
-            triggerPopup = new PopupView(null, mainLayout);
-            //add 'toback' style putting the popup to z-index 10.000 (from 20.000) allowing to show tooltips also located at z-index 20.000
-            triggerPopup.addStyleName("toback");
-            triggerPopup.setHideOnMouseOut(false);
-        }
-
-        return triggerPopup;
-    }
-
+//    public PopupView getPopupView() {
+//        if (triggerPopup == null) {
+//            triggerPopup = new PopupView(null, mainLayout);
+//            //add 'toback' style putting the popup to z-index 10.000 (from 20.000) allowing to show tooltips also located at z-index 20.000
+//            triggerPopup.addStyleName("toback");
+//            triggerPopup.setHideOnMouseOut(false);
+//        }
+//
+//        return triggerPopup;
+//    }
     /**
      * Build the main layout including the type selection combobox, the buttons
      * and the placeholder for the property configuration component.
@@ -112,7 +110,6 @@ public final class AddTriggerComponent {
 
         triggerTypeSelectionBox = new ComboBox("TRIGGER TYPE");
         triggerTypeSelectionBox.setWidth("100%");
-        triggerTypeSelectionBox.setImmediate(true);
         triggerTypeSelectionBox.setNullSelectionAllowed(false);
         triggerTypeSelectionBox.addStyleName(CSSTokenContainer.BOLD_CAPTION);
 
@@ -128,16 +125,16 @@ public final class AddTriggerComponent {
                 updateTriggerSelection(TRIGGER_TYPE.valueOf((String) triggerTypeSelectionBox.getValue()));
             }
         });
-        final NativeButton createButton = new NativeButton("Create");
-        final NativeButton cancelButton = new NativeButton("Cancel");
+        final Button createButton = new Button("Create");
+        final Button cancelButton = new Button("Cancel");
 
         Button.ClickListener listener = new Button.ClickListener() {
 
             @Override
             public void buttonClick(Button.ClickEvent event) {
                 if (cancelButton.equals(event.getButton()) || (createButton.equals(event.getButton()) && createTrigger())) {
-                    //hide popup if dialog was canceled or if createTrigger succeeded (and 'create' was pressed) 
-                    triggerPopup.setPopupVisible(false);
+                    //hide window if cration was canceled or if createTrigger succeeded (and 'create' was pressed) 
+                    parent.hideAddTriggerWindow();
                 } //otherwise, createTrigger failed 
             }
         };
@@ -146,12 +143,13 @@ public final class AddTriggerComponent {
         cancelButton.addClickListener(listener);
 
         HorizontalLayout buttonLayout = new HorizontalLayout(cancelButton, createButton);
+        buttonLayout.setSpacing(true);
         mainLayout = new VerticalLayout(triggerTypeSelectionBox, triggerEditorLayout, buttonLayout);
         mainLayout.setComponentAlignment(buttonLayout, Alignment.BOTTOM_RIGHT);
         mainLayout.setExpandRatio(triggerTypeSelectionBox, .1f);
         mainLayout.setExpandRatio(triggerEditorLayout, .9f);
         mainLayout.setExpandRatio(buttonLayout, .1f);
-
+        mainLayout.setSpacing(true);
         triggerTypeSelectionBox.setValue(TRIGGER_TYPE.NOW_TRIGGER.toString());
     }
 

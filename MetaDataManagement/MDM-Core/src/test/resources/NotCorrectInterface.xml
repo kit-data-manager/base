@@ -16,29 +16,29 @@ limitations under the License.
 -->
 
 <DAMA>
-  <MetaDataManagement>
-    <PersistenceImplementations>
-      <PersistenceImplementation>
-        <Name>JPA</Name>
+  <metaDataManagement>
+    <persistenceImplementations>
+      <persistenceImplementation>
+        <name>JPA</name>
         <Default/>
-        <Class>java.lang.String</Class>
-        <PersistenceUnits>
+        <class>java.lang.String</class>
+        <persistenceUnits>
           <!-- All databases which have to be supported by this implementation. 
                Attention: Labels should be the same for all implementations. -->
-          <PersistenceUnit>MDM-Core</PersistenceUnit>  
-          <PersistenceUnit>MDM-Core-Test</PersistenceUnit>  
-        </PersistenceUnits>
-      </PersistenceImplementation>  
-      <PersistenceImplementation>
-        <Name>JPA2</Name>
-        <Class>edu.kit.dama.mdm.impl.DoesntExist</Class>
-        <PersistenceUnits>
+          <persistenceUnit>MDM-Core</persistenceUnit>  
+          <persistenceUnit>MDM-Core-Test</persistenceUnit>  
+        </persistenceUnits>
+      </persistenceImplementation>  
+      <persistenceImplementation>
+        <name>JPA2</name>
+        <class>edu.kit.dama.mdm.impl.DoesntExist</class>
+        <persistenceUnits>
           <!-- All databases which have to be supported by this implementation. 
                Attention: Labels should be the same for all implementations. -->
-          <PersistenceUnit>MDM-Core2</PersistenceUnit>  
-          <PersistenceUnit>MDM-Core-Test2</PersistenceUnit>  
-        </PersistenceUnits>
-      </PersistenceImplementation>  
-    </PersistenceImplementations>
-  </MetaDataManagement>  
+          <persistenceUnit>MDM-Core2</persistenceUnit>  
+          <persistenceUnit>MDM-Core-Test2</persistenceUnit>  
+        </persistenceUnits>
+      </persistenceImplementation>  
+    </persistenceImplementations>
+  </metaDataManagement>  
 </DAMA>

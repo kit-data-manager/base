@@ -44,10 +44,8 @@ import edu.kit.dama.staging.exceptions.ContainerInitializationException;
 import edu.kit.dama.rest.SimpleRESTContext;
 import edu.kit.dama.rest.staging.types.DownloadInformationWrapper;
 import edu.kit.dama.rest.staging.types.IngestInformationWrapper;
-import edu.kit.lsdf.adalapi.exception.AdalapiException;
 import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -456,8 +454,8 @@ public class BaseUserClient {
         }
 
         IngestInformation entity = (IngestInformation) container.getTransferInformation();
-        LOGGER.debug(" * Adding {} client-side staging processors", entity.getClientSideStagingProcessor().length);
-        for (StagingProcessor processor : entity.getClientSideStagingProcessor()) {
+        LOGGER.debug(" * Adding {} client-side staging processors", entity.getStagingProcessors().size());
+        for (StagingProcessor processor : entity.getStagingProcessors()) {
             try {
                 LOGGER.debug(" - Try to add processor {} ({})", new Object[]{processor.getName(), processor.getUniqueIdentifier()});
                 transferClient.addStagingProcessor(processor.createInstance());

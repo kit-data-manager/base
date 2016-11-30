@@ -273,7 +273,7 @@ public final class StagingConfigurationPersistence {
     public StagingAccessPointConfiguration findAccessPointConfigurationByUniqueIdentifier(String pUniqueIdentifier) {
         StagingAccessPointConfiguration result = null;
         IMetaDataManager mdm = getMetaDataManager();
-        try {           
+        try {
             result = mdm.findSingleResult("SELECT m FROM StagingAccessPointConfiguration m WHERE m.uniqueIdentifier=?1", new Object[]{pUniqueIdentifier}, StagingAccessPointConfiguration.class);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain StagingAccessPointConfiguration configuration by unique identifier '" + pUniqueIdentifier + "'", ex);
@@ -461,8 +461,10 @@ public final class StagingConfigurationPersistence {
      */
     public StagingProcessor saveStagingProcessor(StagingProcessor pNewProcessor) throws UnauthorizedAccessAttemptException {
         IMetaDataManager mdm = getMetaDataManager();
-        StagingProcessor result = mdm.save(pNewProcessor);
-        mdm.close();
-        return result;
+        try {
+            return mdm.save(pNewProcessor);
+        } finally {
+            mdm.close();
+        }
     }
 }

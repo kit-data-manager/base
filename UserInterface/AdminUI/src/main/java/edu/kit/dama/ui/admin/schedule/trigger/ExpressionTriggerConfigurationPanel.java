@@ -104,6 +104,7 @@ public final class ExpressionTriggerConfigurationPanel extends AbstractTriggerCo
                 addComponent(getExpressionLayout(), 0, 3, 2, 1).
                 addComponent(getDescriptionField(), 0, 4, 2, 2).getLayout();
         layout.setMargin(false);
+        layout.setSpacing(true);
         layout.setSizeFull();
         return layout;
     }

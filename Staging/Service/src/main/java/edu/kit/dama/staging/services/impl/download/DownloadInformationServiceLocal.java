@@ -332,14 +332,14 @@ public final class DownloadInformationServiceLocal implements IDownloadInformati
             existingEntity.setExpiresAt(System.currentTimeMillis() + DownloadInformation.DEFAULT_LIFETIME);
             existingEntity.setAccessPointId(props.getStagingAccessPointId());
             LOGGER.debug("Merging processors of transfer properties with processors of existing entity.");
-            Collection<StagingProcessor> newProcessors = mergeStagingProcessors(props.getProcessors(), existingEntity.getStagingProcessors());
+            Collection<StagingProcessor> mergedProcessors = mergeStagingProcessors(props.getProcessors(), existingEntity.getStagingProcessors());
             LOGGER.debug("Merging in default processors.");
-            Collection<StagingProcessor> merged = mergeStagingProcessors(existingEntity.getStagingProcessors(), newProcessors);
+            mergedProcessors = mergeStagingProcessors(mergedProcessors, defaultProcessors);
 
             existingEntity.clearStagingProcessors();
-            for (final StagingProcessor proc : merged) {
-                LOGGER.debug("Default staging processor with id {} not linked to download, yet. Adding it.");
-                existingEntity.addServerSideStagingProcessor(proc);
+            for (final StagingProcessor proc : mergedProcessors) {
+                LOGGER.debug("Adding staging processor with id {} to download.", proc.getId());
+                existingEntity.addStagingProcessor(proc);
             }
 
             //merge the entity with the database
@@ -403,7 +403,7 @@ public final class DownloadInformationServiceLocal implements IDownloadInformati
         List<StagingProcessor> result = new ArrayList<>(assignedProcessors);
 
         if (defaultProcessors == null || defaultProcessors.isEmpty()) {
-            //return empty list
+            //return assigned processors
             LOGGER.debug("No default processors provided, using only assigned processors.");
             return result;
         }

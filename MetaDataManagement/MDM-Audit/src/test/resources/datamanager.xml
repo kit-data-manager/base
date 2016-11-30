@@ -1,0 +1,156 @@
+<!--
+
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+<!--KIT Data Manager configuration file. This file contains all general properties used to configure your KIT Data Manager instance. 
+Depending on your setup some properties may or may not be needed (e.g. Liferay- or Elasticsearch-related settings), others are mandatory.
+-->
+<config>
+<general>
+	<systemMailAddress>dama@kit.edu</systemMailAddress>
+	<mailServer>smpt.kit.edu</mailServer>
+	<globalSecret>qr2I9Hyp0CBhUUXj</globalSecret>
+	<!--The base URL of your Web application, e.g. http://localhost:8080/MyApp.
+	-->
+	<baseUrl>http://localhost:8080/SimpleRepoUI</baseUrl>
+	<!--Enable/Disable production mode to show/hide additional logging output.-->
+	<productionMode>true</productionMode>
+</general>
+
+
+<!--
+Elasticsearch-related settings.
+-->
+<elasticsearch>
+	<!--The cluster name used by KIT Data Manager to publish metadata. (default: KITDataManager)-->
+	<cluster>KITDataManager</cluster>
+	<!--The hostname of the node where metadata should be published to. (default: localhost)-->
+	<host>localhost</host>
+	<!--The port of the Elasticsearch instance. (default: 9300)-->
+	<port>9300</port>
+	<!--The default index that is access for metadata publishing/querying. 
+	The index to which metadata is published depends on the published metadata schema. (default: dc)
+	-->
+	<index>dc</index>
+	<!--The elasticsearch document key which contains the fulltext representation of an entire document. 
+	The availability of this key depends on the metadata stored in the document. 
+	The default value is 'es.fulltext', this property should not be changed, 
+	-->
+	<!--fulltextKey>es.fulltext</fulltextKey-->
+</elasticsearch>
+<!--
+MetaDataManagement-related settings.
+-->
+<metaDataManagement>
+    <persistenceImplementations>
+      <persistenceImplementation>
+        <!--Name of the persistence implementation-->
+        <name>JPA</name>
+        <!--Implementation class of the persistence implementation-->
+        <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+        <persistenceUnits>
+          <!-- A list of persistence units (configured endpoints) to store metadata. 
+          In case of the default JPA implementation these persistence units are 
+          actual persistence units configured in a persistence.xml file using the 
+		  MetaDataManagement implementation defined above. JPA persistence units not using 
+		  this implementation are not listed here. For other implementations of the 
+		  MetaDataManagement, these persistence units are probably mapped to something different.
+
+          Attention: 
+		  
+		  PersistenceUnit labels should be the same for all implementations 
+          in order to be able to switch implementations.
+		  
+                    The default persistence unit can be marked by an attribute 'default=true', 
+                    otherwise the first entry is interpreted as default persistence unit used by the 
+                    implementation if no persistence unit is specified.
+                    -->
+                    <persistenceUnit authorization="true">AuthorizationPU</persistenceUnit>  
+                    <persistenceUnit>DataOrganizationPU</persistenceUnit>
+                    <!--Default persistence unit if the used persistence unit is not explicitly named.-->
+                    <persistenceUnit default="true">MDM-Core</persistenceUnit>  
+                    <persistenceUnit staging="true">StagingUnit</persistenceUnit>
+                </persistenceUnits>
+            </persistenceImplementation>  
+        </persistenceImplementations>
+        
+        <!--Transition type definitions and their handler implementations used by the base metadata REST 
+        endpoint to handle transition information provided as JSON structure.-->
+        <transitionTypes>
+            <NONE>
+                <handlerClass>edu.kit.dama.mdm.tools.NullTransitionTypeHandler</handlerClass>
+            </NONE>
+            <DATAWORKFLOW>
+                <handlerClass>edu.kit.dama.mdm.dataworkflow.tools.DataWorkflowTransitionTypeHandler</handlerClass>
+            </DATAWORKFLOW>
+            <ELASTICSEARCH>
+                <handlerClass>edu.kit.dama.mdm.content.util.ElasticsearchTransitionTypeHandler</handlerClass>
+            </ELASTICSEARCH>
+        </transitionTypes>
+    </metaDataManagement>  
+
+    <!--
+    DataOrganization-related settings.
+    -->
+    <!--dataOrganization>
+        <dataOrganizerAdapter class="edu.kit.dama.dataorganization.impl.neo4j.DataOrganizerImpl">  
+            <neo4jUrl>http://localhost:7474</neo4jUrl>
+            <neo4jUser>neo4j</neo4jUser>
+            <neo4jPassword>test</neo4jPassword>
+        </dataOrganizerAdapter>
+    </dataOrganization-->
+    <!--
+    Staging-related settings.
+    -->
+    <staging>   
+        <adapters>
+            <dataOrganizationAdapter class="edu.kit.dama.staging.adapters.DefaultDataOrganizationServiceAdapter" target="LOCAL"/>        
+            <ingestInformationServiceAdapter class="edu.kit.dama.staging.adapters.DefaultIngestInformationServiceAdapter" target="LOCAL"/>
+            <downloadInformationServiceAdapter class="edu.kit.dama.staging.adapters.DefaultDownloadInformationServiceAdapter" target="LOCAL"/>
+            <storageVirtualizationAdapter class="edu.kit.dama.staging.adapters.DefaultStorageVirtualizationAdapter" target="LOCAL">
+                <archiveUrl>file:///Users/jejkal/tmp/</archiveUrl>
+                <pathPattern>$year/$month/$day/$owner</pathPattern>
+            </storageVirtualizationAdapter>
+        </adapters>
+        <!--Possible overwrite for persistence unit defined in persistence section.-->
+        <!--persistenceUnit>${persistence.stagingPU}</persistenceUnit-->   
+        <remoteAccess>
+            <restUrl>http://localhost:8080/SimpleRepoUI</restUrl>
+        </remoteAccess>
+    
+        <maxParallelTransfers>10</maxParallelTransfers>
+        <maxParallelIngests>2</maxParallelIngests>
+        <maxParallelDownloads>2</maxParallelDownloads>
+    </staging>
+
+    <authorization>
+        <rest>
+            <authenticators>
+                <authenticator class="edu.kit.dama.rest.util.auth.impl.OAuthAuthenticator">
+                    <authenticatorId>restServiceAccess</authenticatorId>
+                    <enableFor>(.*)</enableFor>
+                    <!--enableFor>(.*)(basemetadata|sharing|dataorganization|staging|usergroup|dataworkflow|scheduler)(.*)</enableFor-->
+                    <defaultConsumerKey>secret</defaultConsumerKey>
+                    <defaultConsumerSecret>secret</defaultConsumerSecret>
+                </authenticator>
+            </authenticators>
+        </rest>
+        <!--The default persistence unit for KIT Data Manager Authorization services.
+        Due to its complexity, the generic nature of KIT Data Manager MetaDataManagement is not feasible for Authorization services.
+        Therefore, they will be configured separately also in future releases.
+        -->
+        <defaultPU>AuthorizationPU</defaultPU>
+    </authorization>
+</config>

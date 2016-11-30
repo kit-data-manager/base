@@ -16,19 +16,11 @@
 package edu.kit.dama.ui.admin.staging.processors;
 
 import com.vaadin.server.ThemeResource;
-import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.GridLayout;
-import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.Label;
-import com.vaadin.ui.NativeButton;
-import com.vaadin.ui.themes.BaseTheme;
 import com.zybnet.autocomplete.server.AutocompleteField;
-import com.zybnet.autocomplete.server.AutocompleteQueryListener;
-import com.zybnet.autocomplete.server.AutocompleteSuggestionPickedListener;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
-import edu.kit.dama.ui.admin.AdminUIMainView;
 import edu.kit.dama.ui.admin.exception.MsgBuilder;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.IconContainer;
@@ -43,6 +35,9 @@ import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.commons.util.UIUtils7;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import org.reflections.Reflections;
@@ -60,11 +55,11 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
 
     private GridLayout mainLayout;
     private AutocompleteField<String> implementationClassField;
-    private NativeButton loadImplementationClassButton;
+    private Button loadImplementationClassButton;
     private StagingProcessorBasePropertiesLayout basicPropertiesLayout;
 
-    public StagingProcessorConfigurationTab(AdminUIMainView pParentApp) {
-        super(pParentApp);
+    public StagingProcessorConfigurationTab() {
+        super();
         DEBUG_ID_PREFIX += hashCode() + "_";
     }
 
@@ -77,41 +72,24 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
         String id = "mainLayout";
         LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
-        mainLayout = new GridLayout(3, 6);
+        UIUtils7.GridLayoutBuilder mainLayoutBuilder = new UIUtils7.GridLayoutBuilder(3, 3);
+
+        // Add components to mainLayout
+        mainLayoutBuilder.fillColumn(getElementList(), 0, 0, 1);
+        mainLayoutBuilder.addComponent(getImplementationClassField(), 1, 0, 1, 1).addComponent(getLoadImplementationClassButton(), Alignment.BOTTOM_RIGHT, 2, 0, 1, 1);
+        mainLayoutBuilder.fillRow(getPropertiesPanel(), 1, 1, 1);
+        mainLayoutBuilder.addComponent(getNavigateButton(), Alignment.BOTTOM_LEFT, 1, 2, 1, 1).addComponent(getCommitChangesButton(), Alignment.BOTTOM_RIGHT, 2, 2, 1, 1);
+
+        mainLayout = mainLayoutBuilder.getLayout();
         mainLayout.setId(DEBUG_ID_PREFIX + id);
         mainLayout.setSizeFull();
         mainLayout.setImmediate(true);
         mainLayout.setSpacing(true);
         mainLayout.setMargin(true);
 
-        // Add components to mainLayout
-        mainLayout.addComponent(getElementList(), 0, 0, 0, 5);
-        mainLayout.addComponent(getImplementationClassField(), 1, 0);
-        mainLayout.addComponent(getLoadImplementationClassButton(), 2, 0);
-        mainLayout.addComponent(new Label("<p> <hr/>", ContentMode.HTML), 1, 1, 2, 1);
-        //mainLayout.addComponent(getPropertiesPanel(), 1, 2);
-        HorizontalLayout coreLayout = new HorizontalLayout(getNavigateLeftButton(), getPropertiesPanel(), getNavigateRightButton());
-        coreLayout.setSizeFull();
-        coreLayout.setExpandRatio(getNavigateLeftButton(), .05f);
-        coreLayout.setComponentAlignment(getNavigateLeftButton(), Alignment.MIDDLE_LEFT);
-        coreLayout.setExpandRatio(getPropertiesPanel(), .9f);
-        coreLayout.setExpandRatio(getNavigateRightButton(), .05f);
-        coreLayout.setComponentAlignment(getNavigateRightButton(), Alignment.MIDDLE_RIGHT);
-        mainLayout.addComponent(coreLayout, 1, 2, 2, 2);
-        mainLayout.addComponent(new Label("<hr/>", ContentMode.HTML), 1, 3, 2, 3);
-        // mainLayout.addComponent(getNavigationButton(), 2, 2);
-        mainLayout.addComponent(getBulletLineLayout(), 1, 4, 2, 4);
-        mainLayout.addComponent(getCommitChangesButton(), 1, 5, 2, 5);
+        mainLayout.setColumnExpandRatio(1, 1f);
+        mainLayout.setRowExpandRatio(1, 1f);
 
-        mainLayout.setComponentAlignment(getImplementationClassField(), Alignment.BOTTOM_LEFT);
-        mainLayout.setComponentAlignment(getLoadImplementationClassButton(), Alignment.BOTTOM_RIGHT);
-        // mainLayout.setComponentAlignment(getNavigationButton(), Alignment.MIDDLE_RIGHT);
-        mainLayout.setComponentAlignment(getBulletLineLayout(), Alignment.TOP_CENTER);
-        mainLayout.setComponentAlignment(getCommitChangesButton(), Alignment.BOTTOM_RIGHT);
-
-        mainLayout.setColumnExpandRatio(0, 0.3f);
-        mainLayout.setColumnExpandRatio(1, 0.69f);
-        mainLayout.setColumnExpandRatio(2, 0.01f);
         return mainLayout;
     }
 
@@ -143,23 +121,22 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
             implementationClassField.setRequired(true);
             implementationClassField.addStyleName(CSSTokenContainer.BOLD_CAPTION);
             implementationClassField.setMinimumQueryCharacters(3);
-            implementationClassField.setQueryListener(new AutocompleteQueryListener<String>() {
-                @Override
-                public void handleUserQuery(AutocompleteField<String> field, String query) {
-                    Reflections reflections = new Reflections(query);
-                    Set<Class<? extends AbstractStagingProcessor>> jobs = reflections.getSubTypesOf(AbstractStagingProcessor.class);
-                    for (Class c : jobs) {
+            implementationClassField.setQueryListener((AutocompleteField<String> field, String query) -> {
+                Reflections reflections = new Reflections(query);
+                Set<Class<? extends AbstractStagingProcessor>> jobs = reflections.getSubTypesOf(AbstractStagingProcessor.class);
+                Class[] elements = jobs.toArray(new Class[]{});
+                Arrays.sort(elements, (Class o1, Class o2) -> o1.getCanonicalName().compareTo(o2.getCanonicalName()));
+
+                Arrays.asList(elements).forEach((c) -> {
+                    if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers()) && !c.isAnnotationPresent(Deprecated.class)) {
                         field.addSuggestion(c.getCanonicalName(), c.getCanonicalName());
                     }
-                }
+                });
             });
 
-            implementationClassField.setSuggestionPickedListener(new AutocompleteSuggestionPickedListener<String>() {
-                @Override
-                public void onSuggestionPicked(String value) {
-                    getImplementationClassField().setText(value);
-                    getImplementationClassField().setValue(value);
-                }
+            implementationClassField.setSuggestionPickedListener((String value) -> {
+                getImplementationClassField().setText(value);
+                getImplementationClassField().setValue(value);
             });
 
         }
@@ -170,35 +147,31 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
      *
      * @return
      */
-    public NativeButton getLoadImplementationClassButton() {
+    public Button getLoadImplementationClassButton() {
         if (loadImplementationClassButton == null) {
             String id = "loadImplementationClassField";
             LOGGER.debug("Building " + DEBUG_ID_PREFIX + id + " ...");
 
-            loadImplementationClassButton = new NativeButton();
+            loadImplementationClassButton = new Button();
             loadImplementationClassButton.setId(DEBUG_ID_PREFIX + id);
-            loadImplementationClassButton.setIcon(
-                    new ThemeResource(IconContainer.TEXT_CODE_JAVA_INPUT));
-            loadImplementationClassButton.setStyleName(BaseTheme.BUTTON_LINK);
-            loadImplementationClassButton.setImmediate(true);
+            loadImplementationClassButton.setIcon(new ThemeResource(IconContainer.TEXT_CODE_JAVA_INPUT));
+            loadImplementationClassButton.setWidth("100%");
             loadImplementationClassButton.setDescription("Load the entered implementation "
                     + "class for setting the configuration of the requested processor");
+            implementationClassField.addStyleName(CSSTokenContainer.BOLD_CAPTION);
+            implementationClassField.addStyleName("v-textfield");
 
-            loadImplementationClassButton.addClickListener(new Button.ClickListener() {
-
-                @Override
-                public void buttonClick(Button.ClickEvent event) {
-                    try {
-                        StagingProcessor newProcessor = createProcessor();
-                        commitProcessor(newProcessor);
-                        addNewElementInstance(newProcessor);
-                        setEnabledComponents(ListSelection.VALID);
-                        getParentApp().showNotification("Staging processor successfully created.");
-                    } catch (ConfigurationException ex) {
-                        getParentApp().showError("Implementation class not loadable! Cause: " + ex.getMessage());
-                        LOGGER.error("Failed to load requested implementation class. Cause: "
-                                + ex.getMessage(), ex);
-                    }
+            loadImplementationClassButton.addClickListener((Button.ClickEvent event) -> {
+                try {
+                    StagingProcessor newProcessor = createProcessor();
+                    commitProcessor(newProcessor);
+                    addNewElementInstance(newProcessor);
+                    setEnabledComponents(ListSelection.VALID);
+                    UIComponentTools.showInformation("Staging processor successfully created.");
+                } catch (ConfigurationException ex) {
+                    UIComponentTools.showError("Implementation class not loadable! Cause: " + ex.getMessage());
+                    LOGGER.error("Failed to load requested implementation class. Cause: "
+                            + ex.getMessage(), ex);
                 }
             });
         }
@@ -211,19 +184,17 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
      * <p align="right"> <b>by</b> Jejkal</p>
      */
     private StagingProcessor createProcessor() throws ConfigurationException {
-        // Validate value of implementation class field
-        /*if (!UIUtils7.validate(getImplementationClassField())) {
-            throw new ConfigurationException("Invalid implementation class.");
-    }*/
-
         // Valid implementation class name => Create new processor
         String implClassName = getImplementationClassField().getText();
+        if (implClassName == null) {
+            throw new ConfigurationException("Please use the auto-completion feature to select an implementation class.");
+        }
         try {
             // Build instance of implementation class
             createProcessorInstance(implClassName);
         } catch (ConfigurationException ex) {
             setPropertiesLayout(PropertiesLayoutType.BASIC);
-            throw new ConfigurationException("Failed to create access provider instance. ", ex);
+            throw new ConfigurationException("Failed to create staging processor instance. ", ex);
         }
         // Create new processor
         StagingProcessor newProcessor = StagingProcessor.factoryNewStagingProcessor();
@@ -285,7 +256,7 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
     @Override
     public StagingProcessorBasePropertiesLayout getBasicPropertiesLayout() {
         if (basicPropertiesLayout == null) {
-            basicPropertiesLayout = new StagingProcessorBasePropertiesLayout(getParentApp());
+            basicPropertiesLayout = new StagingProcessorBasePropertiesLayout();
         }
         return basicPropertiesLayout;
     }
@@ -300,13 +271,13 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
             commitProcessor(changedProcessor);
             updateElementInstance(changedProcessor);
 
-            if (!changedProcessor.isDownloadProcessingSupported() && !changedProcessor.isDownloadProcessingSupported()) {
-                getParentApp().showNotification("Changes successfully committed. Attention: The current configuration neither supports ingests nor downloads and will be ignored.");
+            if (!changedProcessor.isIngestProcessingSupported() && !changedProcessor.isDownloadProcessingSupported()) {
+                UIComponentTools.showInformation("Changes successfully committed. Attention: The current configuration neither supports ingests nor downloads and will be ignored.");
             } else {
-                getParentApp().showNotification("Changes successfully committed.");
+                UIComponentTools.showInformation("Changes successfully committed.");
             }
         } catch (ConfigurationException ex) {
-            getParentApp().showError("Staging processor not modifiable! Cause: " + ex.getMessage());
+            UIComponentTools.showError("Failed to commit changes. Cause: " + ex.getMessage());
             String object = "the changed processor '" + selectedElement.getUniqueIdentifier() + "'";
             LOGGER.error(MsgBuilder.commitFailed(object) + "Cause: " + ex.getMessage(), ex);
         }
@@ -365,13 +336,16 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
 
     @Override
     public void fillElementList() {
-        List<StagingProcessor> processors = StagingConfigurationPersistence
-                .getSingleton(null).findAllStagingProcessors();
-        for (StagingProcessor processor : processors) {
+        List<StagingProcessor> processors = StagingConfigurationPersistence.getSingleton(null).findAllStagingProcessors();
+        Collections.sort(processors, (StagingProcessor o1, StagingProcessor o2) -> Long.compare(o1.getId(), o2.getId()));
+
+        processors.stream().map((processor) -> {
             getElementList().addItem(processor.getUniqueIdentifier());
+            return processor;
+        }).forEachOrdered((processor) -> {
             getElementList().setItemCaption(processor.getUniqueIdentifier(),
                     getProcessorItemCaption(processor));
-        }
+        });
     }
 
     /**
@@ -425,8 +399,7 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
      *
      * @throws ConfigurationException
      */
-    private void checkProcessorConfigurability(StagingProcessor processor)
-            throws ConfigurationException {
+    private void checkProcessorConfigurability(StagingProcessor processor) throws ConfigurationException {
         checkImplementationClassField();
         String implClass = getImplementationClassField().getText();
         AbstractStagingProcessor processorInstance = createProcessorInstance(implClass, processor);
@@ -434,7 +407,7 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
             processorInstance.validateProperties(getSpecificPropertiesLayout().getProperties());
         } catch (PropertyValidationException ex) {
             setPropertiesLayout(PropertiesLayoutType.SPECIFIC);
-            throw new ConfigurationException("Failed to validate the staging processor properties. ", ex);
+            throw new ConfigurationException("Failed to validate the staging processor properties. " + ex.getMessage(), ex);
         }
     }
 
@@ -453,8 +426,7 @@ public class StagingProcessorConfigurationTab extends AbstractConfigurationTab<S
         processor.setDisabled(getBasicPropertiesLayout().getDisabledBox().getValue());
         processor.setDescription((String) getBasicPropertiesLayout().getDescriptionArea().getValue());
         processor.setGroupId((String) getBasicPropertiesLayout().getGroupBox().getValue());
-        processor.setType((StagingProcessor.PROCESSOR_TYPE) getBasicPropertiesLayout()
-                .getProcessorTypeBox().getValue());
+        processor.setPriority((byte) Math.rint(getBasicPropertiesLayout().getPrioritySlider().getValue()));
         processor.setIngestProcessingSupported(getBasicPropertiesLayout().getIngestProcessingSupportedBox().getValue());
         processor.setDownloadProcessingSupported(getBasicPropertiesLayout().getDownloadProcessingSupportedBox().getValue());
 
