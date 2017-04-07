@@ -490,7 +490,8 @@ public class StagingInformationServiceImpl implements IStagingService {
                 LOGGER.debug("Trying to parse provided object id {} as long value.", s_id);
                 long id = Long.parseLong(s_id);
                 LOGGER.debug("Parsing to long succeeded. Obtaining string identifier for long id.");
-                s_id = mdm.findSingleResult("SELECT o.digitalObjectIdentifier FROM DigitalObject o WHERE o.baseId=" + id, String.class);
+                objectId = mdm.findSingleResult("SELECT o.digitalObjectIdentifier FROM DigitalObject o WHERE o.baseId=?1", new Object[]{id}, String.class);
+                LOGGER.debug("Successfully retrieved object id for baseId {}", pId);
             } catch (NumberFormatException ex) {
                 LOGGER.debug("Parsing to long failed, expecting string identifier");
             }

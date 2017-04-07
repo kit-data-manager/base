@@ -28,6 +28,7 @@ import edu.kit.dama.staging.interfaces.ITransferInformationPersistence;
 import edu.kit.dama.staging.entities.download.DOWNLOAD_STATUS;
 import edu.kit.dama.staging.entities.download.DownloadInformation;
 import edu.kit.dama.util.Constants;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -407,7 +408,7 @@ public final class DownloadInformationPersistenceImpl implements ITransferInform
         Number result = 0;
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         try {
-            result = mdm.findSingleResult("SELECT COUNT(i) FROM DownloadInformation i WHERE i.status = ?1 AND x.ownerUuid LIKE ?2",
+            result = mdm.findSingleResult("SELECT COUNT(i) FROM DownloadInformation i WHERE i.status = ?1 AND i.ownerUuid LIKE ?2",
                     new Object[]{pStatus.getId(), getOwnerFromContext(pSecurityContext)}, Number.class);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to get download count for status " + pStatus + " using context " + pSecurityContext, ex);
@@ -462,6 +463,23 @@ public final class DownloadInformationPersistenceImpl implements ITransferInform
             mdm.close();
         }
         return results;
+    }
+
+    @Override
+    public List<DownloadInformation> getTransferableEntities(int pMaxResults, IAuthorizationContext pSecurityContext) {
+        LOGGER.debug("Executing query for {} transferable downloads.", pMaxResults);
+        List<DownloadInformation> result = new ArrayList<>();
+
+        IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
+        try {
+            result = mdm.findResultList("SELECT d FROM DownloadInformation d WHERE d.status=?1 AND d.ownerUuid LIKE ?2 ORDER BY d.lastUpdate",
+                    new Object[]{DOWNLOAD_STATUS.SCHEDULED.getId(), getOwnerFromContext(pSecurityContext)}, DownloadInformation.class);
+        } catch (UnauthorizedAccessAttemptException ex) {
+            LOGGER.error("Not authorized to get transferable downloads using context " + pSecurityContext, ex);
+        } finally {
+            mdm.close();
+        }
+        return result;
     }
 
     @Override

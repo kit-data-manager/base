@@ -16,7 +16,6 @@
  */
 package edu.kit.dama.authorization.services.base;
 
-import edu.kit.dama.authorization.aspects.util.AuthorisationSignatureExtractor;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.ISecurableResource;
 import edu.kit.dama.authorization.entities.SecurableResourceId;

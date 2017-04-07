@@ -49,9 +49,9 @@ public class AuditManager {
 
             try {
                 publisher = createAuditAdapterInstance(auditPublisherConfig);
-                LOGGER.debug("Successfully instantiated new audit publisher.");
+                LOGGER.debug("Successfully instanciated new audit publisher.");
             } catch (ConfigurationException ex) {
-                LOGGER.error("Failed to instantiate audit publisher.", ex);
+                LOGGER.error("Failed to instanciate audit publisher.", ex);
             }
         }
 

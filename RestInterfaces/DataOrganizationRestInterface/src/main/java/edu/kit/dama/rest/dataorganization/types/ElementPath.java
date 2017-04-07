@@ -94,9 +94,11 @@ public class ElementPath implements Serializable {
             result = getChildByPath(rootNode, paths);
         } else {
             //use direct node id
-            LOGGER.debug("Loading single node for object {}, view {} and nodeId {}", pObjectId, pView, id);
+            LOGGER.debug("Loading subtree for object {}, view {} and nodeId {}", pObjectId, pView, id);
             NodeId nodeId = new NodeId(pObjectId, id, 1, pView);
-            result = dataOrganizer.loadNode(nodeId);
+            IDataOrganizationNode thisNode = dataOrganizer.loadNode(nodeId);
+            result = dataOrganizer.loadSubTree(nodeId, 100).getRootNode();
+            result.setName(thisNode.getName());
         }
 
         return result;

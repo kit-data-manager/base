@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:pom="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.fzk.ipe</groupId>
+    <artifactId>Tools</artifactId>
+    <name>Tools</name>
+    <packaging>jar</packaging>
+    <version>1.6</version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>  
+        <projectName>Tools</projectName>
+        <firstName>Tim Oliver</firstName>
+   
+        <lastName>Mueller</lastName>
+
+        <nameId>mueller</nameId>
+        <additionalparam>-Xdoclint:none</additionalparam>
+
+    </properties>
+    <developers>
+        <developer>
+            <id>${nameId}</id>
+            <name>${firstName} ${lastName}</name>
+            <email>${firstName}.${lastName}@kit.edu</email>
+            <organization>Karlsruhe Institute of Technologie (KIT)</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <timezone>1</timezone>
+        </developer>
+        <developer>
+            <id>sutter-m</id>
+            <name>Michael Sutter</name>
+            <email>Michael.Sutter@kit.edu</email>
+            <organization>Karlsruhe Institute of Technologie (KIT)</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>jejkal</id>
+            <name>Thomas Jejkal</name>
+            <email>Thomas.Jejkal@kit.edu</email>
+            <organization>Karlsruhe Institute of Technologie (KIT)</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>hartmann-v</id>
+            <name>Volker Hartmann</name>
+            <email>Volker.Hartmann@kit.edu</email>
+            <organization>Karlsruhe Institute of Technologie (KIT)</organization>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jaxen</groupId>
+            <artifactId>jaxen</artifactId>
+            <version>1.1.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.ibm.icu</groupId>
+                    <artifactId>icu4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!--dependency>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+          <version>1.2.14</version>
+        </dependency-->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.5</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.2</version>
+        </dependency>
+    </dependencies>
+    <scm>
+        <developerConnection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/Maven/Tools/tags/Tools-1.6</developerConnection>
+        <connection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/Maven/Tools/tags/Tools-1.6</connection>
+    </scm>
+    <build>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>2.6</version>
+            </extension>
+        </extensions>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.1</version>
+                <configuration>
+                    <mavenExecutorId>forked-path</mavenExecutorId>
+                    <tagBase>svn+ssh://ipepc21.ka.fzk.de/srv/svn/Maven/Tools/tags</tagBase>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.1</version>
+            </plugin>
+        </plugins>
+    </build>
+
+    <distributionManagement>
+        <repository>
+            <id>deploymentRepo</id>
+            <name>IPE Deployment Repository</name>
+            <url>scpexe://ipelsdf1.lsdf.kit.edu/RAID2/archiva/repositories/internal</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshotRepo</id>
+            <name>IPE Snapshot Repository</name>
+            <url>scpexe://ipelsdf1.lsdf.kit.edu/RAID2/archiva/repositories/snapshots/</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+    </distributionManagement>
+</project>
+

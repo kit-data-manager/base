@@ -79,7 +79,8 @@ public class DataOrganizerFactory {
 
             //check adapter class
             if (adapterClass == null || adapterClass.length() < 1) {
-                throw new ConfigurationException("No valid adapter class attribute found for adapter 'dataOrganizerAdapter'");
+                LOGGER.warn("No valid adapter class attribute found for adapter 'dataOrganizerAdapter'. Returning default dataOrganizer.");
+                return (T) new DataOrganizerImpl();
             }
 
             Configuration customConfig = pConfig.subset("dataOrganizerAdapter");

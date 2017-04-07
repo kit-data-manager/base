@@ -196,7 +196,10 @@
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 	
-    <!-- Job-Scheduler initialization -->
+    <!-- Staging initialization -->
+    <listener>
+        <listener-class>edu.kit.dama.staging.servlet.StagingInitializerListener</listener-class>
+    </listener>    
     <listener>
         <listener-class>edu.kit.dama.scheduler.servlet.JobSchedulerInitializerListener</listener-class>
     </listener>

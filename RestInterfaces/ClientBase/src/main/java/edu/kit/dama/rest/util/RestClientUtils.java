@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@ package edu.kit.dama.rest.util;
 
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import edu.kit.dama.rest.base.exceptions.DeserializationException;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
+import java.util.Set;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.bind.JAXBException;
@@ -116,24 +118,54 @@ public final class RestClientUtils {
     /**
      * Perform a POST request on the qiven path with the given parameters.
      *
+     * This method accepts query params, but as query params are not officially
+     * allowed for POST requests, all query params are
+     *
      * @param <C> entity class.
      * @param pEntityClass The class of the entity to deserialize.
      * @param pWebResource instance of webresource.
      * @param pQueryParams url parameters
      * @param pFormParams form parameters
      * @return client response
+     *
+     * @deprecated POST should not use query params and in a couple of
+     * implementations, e.g. in Python, this is not supported.
      */
     public static <C> C performPost(Class<C> pEntityClass, WebResource pWebResource,
             MultivaluedMap pQueryParams, MultivaluedMap pFormParams) {
+        if (pQueryParams != null) {
+            if (pFormParams == null) {
+                pFormParams = new MultivaluedMapImpl();
+            }
+            Set keys = pQueryParams.keySet();
+            for (Object key : keys) {
+                pFormParams.put(key, pQueryParams.get(key));
+            }
+        }
+
+        return performPost(pEntityClass, pWebResource, pFormParams);
+    }
+
+    /**
+     * Perform a POST request on the qiven path with the given parameters.
+     *
+     * @param <C> entity class.
+     * @param pEntityClass The class of the entity to deserialize.
+     * @param pWebResource instance of webresource.
+     * @param pFormParams form parameters
+     * @return client response
+     */
+    public static <C> C performPost(Class<C> pEntityClass, WebResource pWebResource,
+            MultivaluedMap pFormParams) {
         ClientResponse returnValue;
-        WebResource webResource = prepareWebResource(pWebResource, pQueryParams);
+        WebResource webResource = prepareWebResource(pWebResource, null);
         logFormParams(pFormParams);
         returnValue = webResource.post(ClientResponse.class, pFormParams);
         return createObjectFromStream(pEntityClass, returnValue);
     }
 
     /**
-     * Perform a POST request on the qiven path with the given parameters.
+     * Perform a PUT request on the qiven path with the given parameters.
      *
      * @param <C> entity class
      * @param pEntityClass The class of the entity to deserialize.
@@ -141,11 +173,37 @@ public final class RestClientUtils {
      * @param pQueryParams url parameters
      * @param pFormParams form parameters
      * @return client response
+     *
+     * @deprecated POST should not use query params and in a couple of
+     * implementations, e.g. in Python, this is not supported.
      */
     public static <C> C performPut(Class<C> pEntityClass, WebResource pWebResource,
             MultivaluedMap pQueryParams, MultivaluedMap pFormParams) {
+        if (pQueryParams != null) {
+            if (pFormParams == null) {
+                pFormParams = new MultivaluedMapImpl();
+            }
+            Set keys = pQueryParams.keySet();
+            for (Object key : keys) {
+                pFormParams.put(key, pQueryParams.get(key));
+            }
+        }
+        return performPut(pEntityClass, pWebResource, pFormParams);
+    }
+
+    /**
+     * Perform a PUT request on the qiven path with the given parameters.
+     *
+     * @param <C> entity class
+     * @param pEntityClass The class of the entity to deserialize.
+     * @param pWebResource instance of webresource.
+     * @param pFormParams form parameters
+     * @return client response
+     */
+    public static <C> C performPut(Class<C> pEntityClass, WebResource pWebResource,
+            MultivaluedMap pFormParams) {
         ClientResponse returnValue;
-        WebResource webResource = prepareWebResource(pWebResource, pQueryParams);
+        WebResource webResource = prepareWebResource(pWebResource, null);
         logFormParams(pFormParams);
         returnValue = webResource.type(MediaType.APPLICATION_FORM_URLENCODED).put(ClientResponse.class, pFormParams);
         return createObjectFromStream(pEntityClass, returnValue);

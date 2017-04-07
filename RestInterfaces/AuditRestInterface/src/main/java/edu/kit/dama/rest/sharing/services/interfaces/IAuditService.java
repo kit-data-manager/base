@@ -47,6 +47,10 @@ public interface IAuditService extends ICommonRestInterface {
      * of events can be filtered by different criterias. Multiple criterias are
      * AND connected.
      *
+     * In order to obtain audit information the caller must possess at least
+     * MANAGER permissions in the group provided with the call. If not, access
+     * is forbidden.
+     *
      * @summary Get a list of audit events for a resource, which may be filtered
      * by different criterias.
      *
@@ -116,6 +120,10 @@ public interface IAuditService extends ICommonRestInterface {
 
     /**
      * Returns an audit event by its id.
+     *
+     * In order to obtain audit information the caller must possess at least
+     * MANAGER permissions in the group provided with the call. If not, access
+     * is forbidden.
      *
      * @summary Get an audit event by its id.
      *
@@ -189,7 +197,7 @@ public interface IAuditService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("java.lang.Void")
     Response addEvent(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("pid") String pid,
             @FormParam("eventType") String eventType,
             @FormParam("category") String category,

@@ -15,6 +15,7 @@
  */
 package edu.kit.dama.mdm.core.test;
 
+import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
 import edu.kit.dama.mdm.core.test.entities.TestEntity;
 import edu.kit.dama.authorization.exceptions.AuthorizationException;
 import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
@@ -168,7 +169,9 @@ public class MetaDataManagementTest {
         entityManager.persist(entityForTestFive);
         int noOfTestEntities = entityManager.find(entityForTestFive.getClass()).size();
         assertEquals(noOfTestEntities, entityManager.find(TestEntity.class).size());
-        MetaDataManagement.getMetaDataManagement().getMetaDataManager("JPA", "MDM-Core-Test").persist(entityForTestFive);
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager("JPA", "MDM-Core-Test");
+        mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
+        mdm.persist(entityForTestFive);
         assertFalse(true);
     }
 

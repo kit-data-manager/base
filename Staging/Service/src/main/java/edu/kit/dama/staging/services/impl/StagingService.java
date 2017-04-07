@@ -40,26 +40,27 @@ import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.impl.util.Util;
 import edu.kit.dama.mdm.dataorganization.impl.staging.FileTreeImpl;
+import edu.kit.dama.mdm.dataorganization.service.core.DataOrganizationServiceLocal;
+import edu.kit.dama.mdm.dataorganization.service.exception.EntityExistsException;
 import edu.kit.dama.staging.entities.StagingProcessor;
-import edu.kit.dama.staging.exceptions.ServiceAdapterException;
 import edu.kit.dama.staging.exceptions.StagingProcessorException;
 import edu.kit.dama.staging.exceptions.TransferPreparationException;
 import edu.kit.dama.staging.handlers.impl.DownloadPreparationHandler;
 import edu.kit.dama.staging.processor.AbstractStagingProcessor;
 import edu.kit.dama.staging.interfaces.IStorageVirtualizationServiceAdapter;
 import edu.kit.dama.staging.interfaces.ITransferInformation;
+import edu.kit.dama.staging.services.impl.download.DownloadInformationPersistenceImpl;
+import edu.kit.dama.staging.services.impl.ingest.IngestInformationPersistenceImpl;
+import edu.kit.dama.staging.services.impl.ingest.IngestInformationServiceLocal;
 import edu.kit.dama.staging.util.DataOrganizationUtils;
 import edu.kit.dama.staging.util.StagingConfigurationManager;
 import edu.kit.dama.util.Constants;
-import edu.kit.dama.util.DataManagerSettings;
 import edu.kit.dama.util.SystemUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 import org.apache.commons.io.FileUtils;
@@ -254,14 +255,7 @@ public final class StagingService {
         IngestInformation ingest;
         StagingPreparationResult result = new StagingPreparationResult();
 
-        try {
-            ingest = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestInformation(pDigitalObjectId, pContext);
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(IIS_ACCESS_ERROR, sae);
-            result.setStatus(INGEST_STATUS.PREPARATION_FAILED);
-            result.setErrorMessage(IIS_ACCESS_ERROR);
-            return result;
-        }
+        ingest = IngestInformationServiceLocal.getSingleton().getIngestInformationByDigitalObjectId(pDigitalObjectId, pContext);
 
         if (ingest == null) {
             LOGGER.error("Failed to obtain valid ingest information for object '{}'", pDigitalObjectId);
@@ -315,50 +309,89 @@ public final class StagingService {
      * @return TRUE if an ingest could be finalized or if there was nothing to
      * do.
      */
-    public boolean finalizeIngests() {
-        LOGGER.info("Finalizing ingests.");
-
-        try {
-            //check running ingests...2 allowed at the same time
-            int maxParallelIngest = DataManagerSettings.getSingleton().getIntProperty(DataManagerSettings.STAGING_MAX_PARALLEL_INGESTS, 2);
-            LOGGER.debug(" - Checking running ingests");
-            List<IngestInformation> preparingIngests = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestsByStatus(INGEST_STATUS.INGEST_RUNNING, AuthorizationContext.factorySystemContext());
-            if (preparingIngests.size() > maxParallelIngest) {
-                LOGGER.info("There are already two ingests running. Skipping finalization cycle.");
-                return false;
-            } else {
-                LOGGER.debug(" - Less than two ingests are running...continuing.");
-            }
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(IIS_ACCESS_ERROR, sae);
-            return false;
-        }
-
-        List<IngestInformation> finalizableIngests;
-        try {
-            LOGGER.debug("Obtaining finalizable ingests");
-            finalizableIngests = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestsForArchiving(AuthorizationContext.factorySystemContext());
-            LOGGER.debug(" - Received {} entity/entities", finalizableIngests.size());
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(IIS_ACCESS_ERROR, sae);
-            return false;
-        }
-
-        if (finalizableIngests.isEmpty()) {
-            LOGGER.debug("No finalizable ingests found");
-            return true;
-        }
-
-        Collections.sort(finalizableIngests, new Comparator<IngestInformation>() {
-            @Override
-            public int compare(IngestInformation o1, IngestInformation o2) {
-                return Long.valueOf(o1.getExpiresAt()).compareTo(o2.getExpiresAt());
-            }
-        });
-        //finalize first ingest (the one which will expire next)
-        return finalizeIngest(new DigitalObjectId(finalizableIngests.get(0).getDigitalObjectId()), getContext(finalizableIngests.get(0)));
-    }
-
+//    public boolean finalizeIngests() {
+//        LOGGER.info("Finalizing ingests.");
+//
+//        //check running ingests...2 allowed at the same time
+//        int maxParallelIngest = DataManagerSettings.getSingleton().getIntProperty(DataManagerSettings.STAGING_MAX_PARALLEL_INGESTS, 2);
+//        LOGGER.debug(" - Checking running ingests");
+//
+//        int running = IngestInformationPersistenceImpl.getSingleton().getEntitiesCountByStatus(INGEST_STATUS.INGEST_RUNNING, AuthorizationContext.factorySystemContext()).intValue();
+//
+//        if (running >= maxParallelIngest) {
+//            LOGGER.info("There are already {} ingests running. Skipping finalization cycle.", maxParallelIngest);
+//            return false;
+//        } else {
+//            LOGGER.debug(" - Less than {} ingests are running...continuing.", maxParallelIngest);
+//        }
+//
+//        int freeSlots = maxParallelIngest - running;
+//        List<IngestInformation> transferableIngests = IngestInformationPersistenceImpl.getSingleton().getTransferableEntities(freeSlots, AuthorizationContext.factorySystemContext());
+//
+//        
+////        List<IngestInformation> finalizableIngests;
+////        try {
+////            LOGGER.debug("Obtaining finalizable ingests");
+////            finalizableIngests = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestsForArchiving(AuthorizationContext.factorySystemContext());
+////            LOGGER.debug(" - Received {} entity/entities", finalizableIngests.size());
+////        } catch (ServiceAdapterException sae) {
+////            LOGGER.error(IIS_ACCESS_ERROR, sae);
+////            return false;
+////        }
+////
+////        if (finalizableIngests.isEmpty()) {
+////            LOGGER.debug("No finalizable ingests found");
+////            return true;
+////        }
+////
+////        Collections.sort(finalizableIngests, new Comparator<IngestInformation>() {
+////            @Override
+////            public int compare(IngestInformation o1, IngestInformation o2) {
+////                return Long.valueOf(o1.getExpiresAt()).compareTo(o2.getExpiresAt());
+////            }
+////        });
+////        //finalize first ingest (the one which will expire next)
+////        return finalizeIngest(new DigitalObjectId(finalizableIngests.get(0).getDigitalObjectId()), getContext(finalizableIngests.get(0)));
+//        IngestInformation next = pickNextIngest();
+//        if (next != null) {
+//            return finalizeIngest(new DigitalObjectId(next.getDigitalObjectId()), getContext(next));
+//        }
+//
+//        LOGGER.debug("No next ingest entry found. Returning from finalizeIngest().");
+//        return false;
+//    }
+//    /**
+//     * Obtain next ingest ready for finalization.
+//     */
+//    private synchronized IngestInformation pickNextIngest() {
+//        LOGGER.info("Starting synchronized access to finalizable ingests.");
+//        List<IngestInformation> finalizableIngests;
+//
+//        LOGGER.debug("Obtaining finalizable ingests");
+//        finalizableIngests = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestsForArchiving(AuthorizationContext.factorySystemContext());
+//        LOGGER.debug(" - Received {} entity/entities", finalizableIngests.size());
+//
+//        if (finalizableIngests.isEmpty()) {
+//            LOGGER.debug("No finalizable ingests found");
+//            return null;
+//        }
+//
+//        Collections.sort(finalizableIngests, new Comparator<IngestInformation>() {
+//            @Override
+//            public int compare(IngestInformation o1, IngestInformation o2) {
+//                return Long.valueOf(o1.getExpiresAt()).compareTo(o2.getExpiresAt());
+//            }
+//        });
+//        IngestInformation next = finalizableIngests.get(0);
+//        next.setStatusEnum(INGEST_STATUS.INGEST_RUNNING);
+//        if (updateTransferStatus(next)) {
+//            LOGGER.debug("Ingest status successfully updated to INGEST_RUNNING.");
+//        } else {
+//            LOGGER.error("Failed to update ingest status for transfer #" + next.getTransferId() + " to status INGEST_RUNNING.");
+//        }
+//        LOGGER.info("Returning from synchronized access to finalizable ingests.");
+//        return next;
+//    }
     /**
      * This method finalizes the ingest for the provided digital object id. This
      * method can be called directly, e.g. as administrative using a user
@@ -391,25 +424,14 @@ public final class StagingService {
      */
     public boolean finalizeIngest(DigitalObjectId pId, IAuthorizationContext pContext) {
         LOGGER.debug("Finalizing ingest for object '{}'", pId);
-        IngestInformation ingest;
-        try {
-            ingest = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestInformation(pId, pContext);
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(IIS_ACCESS_ERROR, sae);
-            return false;
+
+        List<IngestInformation> ingests = IngestInformationPersistenceImpl.getSingleton().getEntitiesByDigitalObjectId(pId, pContext);
+
+        if (ingests.isEmpty()) {
+            LOGGER.warn("No finalizable ingest for object id {} found. Returning 'false'.", pId);
         }
 
-        if (!ingest.getStatusEnum().isFinalizationPossible()) {
-            LOGGER.error("Finalization of ingest impossible. Status of ingest #{} is {}, but has to be PRE_INGEST_FINISHED or PRE_INGEST_RUNNING or PRE_INGEST_SCHEDULED", ingest.getTransferId(), ingest.getStatusEnum());
-            return false;
-        }
-
-        LOGGER.debug("Setting ingest status to INGEST_RUNNING");
-        ingest.setStatusEnum(INGEST_STATUS.INGEST_RUNNING);
-        if (!updateTransferStatus(ingest)) {
-            LOGGER.error("Failed to update ingest status to {}. Finalizing impossible.", INGEST_STATUS.INGEST_RUNNING);
-            return false;
-        }
+        IngestInformation ingest = ingests.get(0);
 
         LOGGER.debug("Performing ingest finalization for ingest with id {}", ingest.getTransferId());
         boolean result = true;
@@ -422,7 +444,7 @@ public final class StagingService {
 
             LOGGER.debug("Obtaining local path for staging URL '{}'", stagingUrl.toString());
             File localPath = accessPoint.getLocalPathForUrl(stagingUrl, getContext(ingest));
-
+            IFileTree tree = null;
             //check the local path obtained from the access point
             if (localPath == null) {
                 LOGGER.error("Failed to obtain local path for staging URL '{}'", stagingUrl);
@@ -440,7 +462,20 @@ public final class StagingService {
                 }
 
                 LOGGER.debug("Creating file tree and transfer container.");
-                IFileTree tree = DataOrganizationUtils.createTreeFromFile(ingest.getDigitalObjectId(), new AbstractFile(localPath), localPath.toURI().toURL(), false);
+                tree = DataOrganizationUtils.createTreeFromFile(ingest.getDigitalObjectId(), new AbstractFile(localPath), localPath.toURI().toURL(), false);
+
+                IDataOrganizationNode dataNode = Util.getNodeByName(tree.getRootNode(), Constants.STAGING_DATA_FOLDER_NAME);
+
+                if (dataNode == null || ((ICollectionNode) dataNode).getChildren().isEmpty()) {
+                    LOGGER.error("Data folder at local path '{}' seems to be empty. Ingest cannot be continued.", localPath);
+                    //cannot be handled here...log error and hope for administrator
+                    ingest.setStatus(INGEST_STATUS.INGEST_FAILED.getId());
+                    ingest.setErrorMessage("No uploaded data found.");
+                    result = false;
+                }
+            }
+
+            if (result) {
                 TransferTaskContainer container = TransferTaskContainer.factoryIngestContainer(ingest, tree, StagingConfigurationManager.getSingleton().getRestServiceUrl());
                 container.setDestination(localPath.toURI().toURL());
                 LOGGER.debug("Transfer container successfully created.");
@@ -504,11 +539,17 @@ public final class StagingService {
                         LOGGER.debug("Obtaining 'generated' node.");
                         IDataOrganizationNode generatedNode = Util.getNodeByName(virtualizedFileTree.getRootNode(), Constants.STAGING_GENERATED_FOLDER_NAME);
 
-                        boolean dataStored;
+                        boolean dataStored = false;
                         //store 'data' view
                         if (dataNode == null || !(dataNode instanceof ICollectionNode)) {
                             LOGGER.warn("No valid 'data' node found. Expecting non-default tree structure and registering entire tree as view 'default'.");
-                            dataStored = StagingConfigurationManager.getSingleton().getDataOrganizationAdapter().saveFileTree(virtualizedFileTree);
+                            try {
+                                LOGGER.debug("Trying to store file tree");
+                                DataOrganizationServiceLocal.getSingleton().createFileTree(virtualizedFileTree, null);
+                                dataStored = true;
+                            } catch (EntityExistsException eee) {
+                                LOGGER.error("Failed to store file tree in data organization service. Entity seems to exist already.", eee);
+                            }
                         } else {
                             LOGGER.debug("Creating tree for 'data' content.");
                             IFileTree dataTree = new FileTreeImpl();
@@ -519,7 +560,13 @@ public final class StagingService {
                                 dataTree.getRootNode().addChild(DataOrganizationUtils.copyNode(childNode, false));
                             }
                             LOGGER.debug("Storing 'data' content tree as view 'default'.");
-                            dataStored = StagingConfigurationManager.getSingleton().getDataOrganizationAdapter().saveFileTree(dataTree);
+                            try {
+                                LOGGER.debug("Trying to store file tree");
+                                DataOrganizationServiceLocal.getSingleton().createFileTree(dataTree, null);
+                                dataStored = true;
+                            } catch (EntityExistsException eee) {
+                                LOGGER.error("Failed to store file tree in data organization service. Entity seems to exist already.", eee);
+                            }
                         }
 
                         if (dataStored) {
@@ -535,10 +582,13 @@ public final class StagingService {
                                     generatedTree.getRootNode().addChild(DataOrganizationUtils.copyNode(childNode, false));
                                 }
                                 LOGGER.debug("Storing 'generated' content tree as view 'generated'.");
-                                if (StagingConfigurationManager.getSingleton().getDataOrganizationAdapter().saveFileTree(generatedTree)) {
+
+                                try {
+                                    LOGGER.debug("Trying to store file tree");
+                                    DataOrganizationServiceLocal.getSingleton().createFileTree(generatedTree, null);
                                     LOGGER.debug("Successfully stored view 'generated'.");
-                                } else {
-                                    LOGGER.error("Failed to stored view 'generated'.");
+                                } catch (EntityExistsException eee) {
+                                    LOGGER.error("Failed to stored view 'generated'.", eee);
                                 }
                             }
 
@@ -643,24 +693,18 @@ public final class StagingService {
 
         //get associated ingest information entity
         LOGGER.debug("Obtaining download information");
-        DownloadInformation download;
         StagingPreparationResult result = new StagingPreparationResult();
 
-        try {
-            download = StagingConfigurationManager.getSingleton().getDownloadInformationServiceAdapter().getDownloadInformation(pDigitalObjectId, pContext);
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(DIS_ACCESS_ERROR, sae);
-            result.setStatus(DOWNLOAD_STATUS.PREPARATION_FAILED);
-            result.setErrorMessage(DIS_ACCESS_ERROR);
-            return result;
-        }
+        List<DownloadInformation> downloads = DownloadInformationPersistenceImpl.getSingleton().getEntitiesByDigitalObjectId(pDigitalObjectId, pContext);
 
-        if (download == null) {
+        if (downloads.isEmpty()) {
             LOGGER.error("Failed to obtain valid download information for object with id '{}'", pDigitalObjectId);
             result.setStatus(DOWNLOAD_STATUS.PREPARATION_FAILED);
             result.setErrorMessage("Failed to obtain valid download information for object " + pDigitalObjectId + ".");
             return result;
         }
+
+        DownloadInformation download = downloads.get(0);
 
         if (!download.getStatusEnum().equals(DOWNLOAD_STATUS.SCHEDULED)) {
             //download is not in scheduled state...check which state it has, print appropriate log message and return
@@ -707,114 +751,21 @@ public final class StagingService {
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Download Finalization (Automatic)">
     /**
-     * This method is used internally in an automated fashion to finalize the
-     * next ingest. Therefor the ingest service, the storage virtualization and
-     * the data organization are needed. At first, all finalizable ingests are
-     * obtained and sorted by their expiration date. Afterwards the service will
-     * try to store all files located in the local ingest folder for the ingest
-     * which will expire first. As a result, the virtual file tree is returned
-     * and will be stored using the data organization if the ingest has
-     * succeeded. If everything is done, the ingest information is update using
-     * the ingest information service adapter.
-     *
-     * @return TRUE if any download could be finalized or if there was nothing
-     * to do.
-     */
-    public boolean finalizeDownloads() {
-        LOGGER.info("Finalizing open downloads");
-
-        try {
-            LOGGER.debug(" - Checking running download preparations");
-            int maxParallelDownloads = DataManagerSettings.getSingleton().getIntProperty(DataManagerSettings.STAGING_MAX_PARALLEL_DOWNLOADS, 2);
-            List<DownloadInformation> preparingDownloads = StagingConfigurationManager.getSingleton().getDownloadInformationServiceAdapter().getDownloadsByStatus(DOWNLOAD_STATUS.PREPARING, AuthorizationContext.factorySystemContext());
-            if (preparingDownloads != null && preparingDownloads.size() > maxParallelDownloads) {
-                LOGGER.warn("There are already {} download preparing. Skipping finalization cycle.", maxParallelDownloads);
-                return false;
-            } else {
-                LOGGER.debug(" - Less than 2 download preparations running...continuing.");
-            }
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(DIS_ACCESS_ERROR, sae);
-            return false;
-        }
-
-        List<DownloadInformation> preparableDownloads;
-        try {
-            LOGGER.debug("Obtaining finalizable downloads");
-            preparableDownloads = StagingConfigurationManager.getSingleton().getDownloadInformationServiceAdapter().getDownloadsForStaging(AuthorizationContext.factorySystemContext());
-            LOGGER.debug(" - Received {} entity/entities", preparableDownloads.size());
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(IIS_ACCESS_ERROR, sae);
-            return false;
-        }
-
-        if (preparableDownloads.isEmpty()) {
-            LOGGER.debug("No preparable downloads found");
-            return true;
-        }
-
-        Collections.sort(preparableDownloads, new Comparator<DownloadInformation>() {
-            @Override
-            public int compare(DownloadInformation o1, DownloadInformation o2) {
-                return Long.valueOf(o1.getExpiresAt()).compareTo(Long.valueOf(o2.getExpiresAt()));
-            }
-        });
-
-        return finalizeDownload(new DigitalObjectId(preparableDownloads.get(0).getDigitalObjectId()), getContext(preparableDownloads.get(0)));
-    }
-
-    /**
-     * This method finalizes the download for the provided digital object id. It
-     * is the external interface to
-     * {@link #finalizeDownload(edu.kit.dama.staging.entities.download.DownloadInformation)}.
-     *
-     * @param pId The digital object id of the download to finalize.
-     * @param pContext The authorization context. This context is only used for
-     * the initial query. Download-related access is done using the context
-     * stored in the obtained download entity.
-     *
-     * @return TRUE if the download could be finilized.
-     */
-    public boolean finalizeDownload(DigitalObjectId pId, IAuthorizationContext pContext) {
-        LOGGER.debug("Finalizing download for object '{}'", pId);
-        DownloadInformation download;
-        try {
-            download = StagingConfigurationManager.getSingleton().getDownloadInformationServiceAdapter().getDownloadInformation(pId, pContext);
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(DIS_ACCESS_ERROR, sae);
-            return false;
-        }
-
-        return finalizeDownload(download);
-    }
-
-    /**
-     * This method finalizes the download for the provided download entity. This
-     * method is intended to be used internally only.
+     * This method finalizes the download for the provided download entity. The
+     * reason why the entity is used instead of the object id is, that there
+     * might be different downloads for different users for the same object.
      *
      * @param pDownloadInfo The download information.
      *
      * @return TRUE if the download could be finalized.
      */
-    private boolean finalizeDownload(DownloadInformation pDownloadInfo) {
-        if (!pDownloadInfo.getStatusEnum().isFinalizationPossible()) {
-            LOGGER.error("Finalization of download impossible. Status of download #{} is {}, but has to be DOWNLOAD_STATUS.SCHEDULED", pDownloadInfo.getTransferId(), pDownloadInfo.getStatusEnum());
-            return false;
-        }
-
-        LOGGER.debug("Setting download status to PREPARING");
-        pDownloadInfo.setStatusEnum(DOWNLOAD_STATUS.PREPARING);
-        if (!updateTransferStatus(pDownloadInfo)) {
-            LOGGER.error("Failed to update download status to {}. Finalizing impossible.", DOWNLOAD_STATUS.PREPARING);
-            return false;
-        }
-
-        LOGGER.debug("Performing download finalization for download with id {}", pDownloadInfo.getTransferId());
+    public boolean finalizeDownload(DownloadInformation pDownloadInfo) {
+        LOGGER.debug("Performing download finalization for download with transfer id {}", pDownloadInfo.getTransferId());
         boolean result = true;
 
         try {
             URL stagingUrl = new URL(pDownloadInfo.getStagingUrl());
-            LOGGER.debug("Obtaining AccessPoint with id  '{}'", pDownloadInfo.getAccessPointId());
+            LOGGER.debug("Obtaining AccessPoint with id '{}'", pDownloadInfo.getAccessPointId());
             AbstractStagingAccessPoint accessPoint = StagingConfigurationManager.getSingleton().getAccessPointById(pDownloadInfo.getAccessPointId());
 
             LOGGER.debug("Obtaining user paths for staging URL '{}'", stagingUrl.toString());
@@ -945,13 +896,8 @@ public final class StagingService {
             throw new IllegalArgumentException(CTX_NULL_ERROR);
         }
         LOGGER.debug("Flushing download(s) for object '{}'", pId);
-        DownloadInformation download;
-        try {
-            download = StagingConfigurationManager.getSingleton().getDownloadInformationServiceAdapter().getDownloadInformation(pId, pContext);
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(DIS_ACCESS_ERROR, sae);
-            return false;
-        }
+
+        DownloadInformation download = DownloadInformationPersistenceImpl.getSingleton().getEntityById(pId, pContext);
 
         if (download == null) {
             LOGGER.warn("No download obtained from database, returning.");
@@ -1007,21 +953,18 @@ public final class StagingService {
             throw new IllegalArgumentException(CTX_NULL_ERROR);
         }
         LOGGER.debug("Flushing ingest for object '{}'", pId);
-        IngestInformation ingest;
-        try {
-            ingest = StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().getIngestInformation(pId, pContext);
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error(IIS_ACCESS_ERROR, sae);
-            return false;
-        }
-        if (ingest == null) {
+        List<IngestInformation> ingests = IngestInformationPersistenceImpl.getSingleton().getEntitiesByDigitalObjectId(pId, pContext);
+
+        if (ingests.isEmpty()) {
             LOGGER.warn("No ingest obtained from database, returning.");
             return true;
         }
 
+        IngestInformation ingest = ingests.get(0);
+        LOGGER.debug("Flushing ingest with transfer id {}.", ingest.getTransferId());
         File localFolder = getLocalStagingFolder(ingest, getContext(ingest));
 
-        LOGGER.debug("Removing local staging folder {}", localFolder.getAbsolutePath());
+        LOGGER.debug("Removing local staging folder {}.", localFolder.getAbsolutePath());
         try {
             if (!edu.kit.dama.util.FileUtils.isAccessible(localFolder)) {
                 LOGGER.debug("Local folder " + localFolder + " is not accessible. Cleanup not possible.");
@@ -1030,7 +973,7 @@ public final class StagingService {
             FileUtils.deleteDirectory(localFolder);
             LOGGER.debug("Staging folder successfully removed.");
         } catch (IOException ex) {
-            LOGGER.error("Failed to remove staging folder for ingest with ID " + pId, ex);
+            LOGGER.error("Failed to remove staging folder for ingest for object " + pId, ex);
         }
 
         LOGGER.debug("Ingest successfully flushed.");
@@ -1046,21 +989,15 @@ public final class StagingService {
      */
     private boolean updateTransferStatus(ITransferInformation pInfo) {
         boolean result = true;
-        String errorString = IIS_ACCESS_ERROR;
-        try {
-            if (pInfo instanceof IngestInformation) {
-                errorString = IIS_ACCESS_ERROR;
-                StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().updateIngestInformation((IngestInformation) pInfo, getContext(pInfo));
-            } else if (pInfo instanceof DownloadInformation) {
-                errorString = DIS_ACCESS_ERROR;
-                StagingConfigurationManager.getSingleton().getDownloadInformationServiceAdapter().updateDownloadInformation((DownloadInformation) pInfo, getContext(pInfo));
-            } else {
-                throw new IllegalArgumentException("Argument pInfo is no instance of IngestInformation or DownloadInformation");
-            }
-        } catch (ServiceAdapterException ex) {
-            LOGGER.error(errorString, ex);
-            result = false;
+
+        if (pInfo instanceof IngestInformation) {
+            IngestInformationPersistenceImpl.getSingleton().updateStatus(pInfo.getId(), ((IngestInformation) pInfo).getStatusEnum(), pInfo.getErrorMessage(), getContext(pInfo));
+        } else if (pInfo instanceof DownloadInformation) {
+            DownloadInformationPersistenceImpl.getSingleton().updateStatus(pInfo.getId(), ((DownloadInformation) pInfo).getStatusEnum(), pInfo.getErrorMessage(), getContext(pInfo));
+        } else {
+            throw new IllegalArgumentException("Argument pInfo is no instance of IngestInformation or DownloadInformation");
         }
+
         return result;
     }
 

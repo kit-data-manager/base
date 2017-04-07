@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.kit.dama.ui.admin.utils;
+package edu.kit.dama.ui.commons.util;
 
 import com.vaadin.server.Page;
 import com.vaadin.server.VaadinServlet;

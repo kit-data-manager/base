@@ -15,7 +15,7 @@
  */
 package edu.kit.dama.rest.util.auth.impl;
 
-import com.sun.jersey.api.core.HttpContext;
+import com.sun.jersey.api.core.HttpRequestContext;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.UserId;
@@ -24,6 +24,7 @@ import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.commons.exceptions.ConfigurationException;
 import edu.kit.dama.mdm.admin.ServiceAccessToken;
 import edu.kit.dama.rest.util.auth.AbstractAuthenticator;
+import edu.kit.dama.rest.util.auth.exception.MissingCredentialException;
 import java.security.Principal;
 import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -102,11 +103,11 @@ public class HTTPAuthenticator extends AbstractAuthenticator {
     }
 
     @Override
-    public IAuthorizationContext obtainAuthorizationContext(HttpContext httpContext, GroupId groupId) throws UnauthorizedAccessAttemptException {
-        Principal principal = httpContext.getRequest().getUserPrincipal();
+    public IAuthorizationContext obtainAuthorizationContext(HttpRequestContext httpContext, GroupId groupId) throws UnauthorizedAccessAttemptException, MissingCredentialException {
+        Principal principal = httpContext.getUserPrincipal();
 
         if (principal == null) {
-            throw new UnauthorizedAccessAttemptException("Pre-authorization has not been performed. Principal not available, authorization not possible.");
+            throw new MissingCredentialException("Pre-authorization has not been performed. Principal not available, authorization not possible.");
         }
 
         String authorizedUser = principal.getName();

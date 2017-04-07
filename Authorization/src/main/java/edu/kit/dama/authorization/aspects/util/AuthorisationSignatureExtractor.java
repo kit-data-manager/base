@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,69 +34,69 @@ import org.slf4j.LoggerFactory;
  */
 public class AuthorisationSignatureExtractor {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationSignatureExtractor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationSignatureExtractor.class);
 
-  /**
-   * Extract the authentication signature.
-   *
-   * @param jp The AspectJ JointPoint.
-   *
-   * @return The extracted AuthSignature information.
-   */
-  protected final AuthSignature extractAuthSignature(final JoinPoint jp) {
-    AuthSignature result = new AuthSignature();
-    Object[] args = jp.getArgs();
-    Signature signature = jp.getStaticPart().getSignature();
-    LOGGER.debug("Looking for method signature.");
-    if (signature instanceof MethodSignature) {
-      LOGGER.debug("Checking signature of method {}#{}", signature.getDeclaringTypeName(), signature.getName());
-      MethodSignature methodSignature = (MethodSignature) signature;
-      Method method = methodSignature.getMethod();
-      Class[] parametersTypes = method.getParameterTypes();
-      Annotation[][] parameterAnnotations = method.getParameterAnnotations();
-      LOGGER.debug("Checking {} parameter annotations.", parameterAnnotations.length);
-      for (int i = 0; i < parameterAnnotations.length; i++) {
-        Annotation[] annotations = parameterAnnotations[i];
-        LOGGER.debug("Checking {} annotations for parameter {} of type {}.", annotations.length, i, parametersTypes[i]);
-        for (Annotation annotation : annotations) {
-          LOGGER.debug("Checking argument annotation {} of type {}", annotation, annotation.annotationType());
-          if (Context.class.isAssignableFrom(annotation.annotationType())) {
-            LOGGER.debug("Argument with @Context annotation found");
-            if (null == args[i]) {
-              throw new IllegalArgumentException("Argument annotated with @Context must not be 'null'. Argument skipped.");
-            } else if (!(args[i] instanceof IAuthorizationContext)) {
-              throw new IllegalArgumentException("Argument annotated with @Context does not implement IAuthorizationContext. Argument skipped.");
-            } else {
-              LOGGER.debug("Setting provided argument {} as authorization context.", args[i]);
-              result.setAuthContext((IAuthorizationContext) args[i]);
+    /**
+     * Extract the authentication signature.
+     *
+     * @param jp The AspectJ JointPoint.
+     *
+     * @return The extracted AuthSignature information.
+     */
+    protected final AuthSignature extractAuthSignature(final JoinPoint jp) {
+        AuthSignature result = new AuthSignature();
+        Object[] args = jp.getArgs();
+        Signature signature = jp.getStaticPart().getSignature();
+        LOGGER.debug("Looking for method signature.");
+        if (signature instanceof MethodSignature) {
+            LOGGER.debug("Checking signature of method {}#{}", signature.getDeclaringTypeName(), signature.getName());
+            MethodSignature methodSignature = (MethodSignature) signature;
+            Method method = methodSignature.getMethod();
+            Class[] parametersTypes = method.getParameterTypes();
+            Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+            LOGGER.debug("Checking {} parameter annotations.", parameterAnnotations.length);
+            for (int i = 0; i < parameterAnnotations.length; i++) {
+                Annotation[] annotations = parameterAnnotations[i];
+                LOGGER.debug("Checking {} annotations for parameter {} of type {}.", annotations.length, i, parametersTypes[i]);
+                for (Annotation annotation : annotations) {
+                    LOGGER.debug("Checking argument annotation {} of type {}", annotation, annotation.annotationType());
+                    if (Context.class.isAssignableFrom(annotation.annotationType())) {
+                        LOGGER.debug("Argument with @Context annotation found");
+                        if (null == args[i]) {
+                            throw new IllegalArgumentException("Argument annotated with @Context must not be 'null'. Argument skipped.");
+                        } else if (!(args[i] instanceof IAuthorizationContext)) {
+                            throw new IllegalArgumentException("Argument annotated with @Context does not implement IAuthorizationContext. Argument skipped.");
+                        } else {
+                            LOGGER.debug("Setting provided argument {} as authorization context.", args[i]);
+                            result.setAuthContext((IAuthorizationContext) args[i]);
+                        }
+                    } else if (SecuredArgument.class.isAssignableFrom(annotation.annotationType())) {
+                        LOGGER.debug("Argument with @SecuredArgument annotation found");
+                        if (null == args[i]) {
+                            //Just ignore argument
+                            LOGGER.debug("Argument {} is 'null' and therefore ignored.", i);
+                        } else if (args[i] instanceof SecurableResourceId) {
+                            LOGGER.debug("Adding SecurableResourceId {}.", args[i]);
+                            result.addSecurableResourceId((SecurableResourceId) args[i]);
+                        } else if (args[i] instanceof ISecurableResource) {
+                            LOGGER.debug("Adding SecurableResource {}.", args[i]);
+                            result.addSecurableResource((ISecurableResource) args[i]);
+                        } else {
+                            LOGGER.info("Argument {} annotated with @SecuredArgument does not implement ISecurableResourceId or ISecurableResource. Argument ignored.", i);
+                        }
+                    } else {
+                        LOGGER.debug("Annotation with unknown type {} found. Ignoring it.", annotation.annotationType());
+                    }
+                }
+                LOGGER.debug("Checks for parameter {} of type {} finished.", i, parametersTypes[i]);
             }
-          } else if (SecuredArgument.class.isAssignableFrom(annotation.annotationType())) {
-            LOGGER.debug("Argument with @SecuredArgument annotation found");
-            if (null == args[i]) {
-              //Just ignore argument
-              LOGGER.debug("Argument {} is 'null' and therefore ignored.", i);
-            } else if (args[i] instanceof SecurableResourceId) {
-              LOGGER.debug("Adding SecurableResourceId {}.", args[i]);
-              result.addSecurableResourceId((SecurableResourceId) args[i]);
-            } else if (args[i] instanceof ISecurableResource) {
-              LOGGER.debug("Adding SecurableResource {}.", args[i]);
-              result.addSecurableResource((ISecurableResource) args[i]);
-            } else {
-              throw new IllegalArgumentException("Argument annotated with @SecuredArgument does not implement ISecurableResourceId or ISecurableResource. Argument ignored.");
-            }
-          } else {
-            LOGGER.debug("Annotation with unknown type {} found. Ignoring it.", annotation.annotationType());
-          }
+        } else {
+            LOGGER.info("Provided signature is no MethodSignature");
         }
-        LOGGER.debug("Checks for parameter {} of type {} finished.", i, parametersTypes[i]);
-      }
-    } else {
-      LOGGER.info("Provided signature is no MethodSignature");
-    }
 
-    if (!result.isValid()) {
-      LOGGER.warn("No valid auth signature extracted.");
+        if (!result.isValid()) {
+            LOGGER.warn("No valid auth signature extracted.");
+        }
+        return result;
     }
-    return result;
-  }
 }

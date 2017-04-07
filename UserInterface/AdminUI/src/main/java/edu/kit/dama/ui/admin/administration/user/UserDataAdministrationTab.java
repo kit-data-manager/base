@@ -38,7 +38,7 @@ import static edu.kit.dama.authorization.entities.Role.MANAGER;
 import edu.kit.dama.ui.admin.filter.UserDataFilter;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.IconContainer;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -36,10 +36,12 @@ public class DatabaseConsumer extends AbstractAuditConsumer {
 
     @Override
     public void consume(AuditEvent entry) {
+        LOGGER.debug("Consuming audit event for pid {}", entry.getPid());
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
         try {
             mdm.save(entry);
+            LOGGER.debug("Audit event with id {} successfully processed.", entry.getPid());
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to persist audit entry.", ex);
         } finally {

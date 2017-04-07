@@ -15,7 +15,7 @@
  */
 package edu.kit.dama.rest.util.auth.impl;
 
-import com.sun.jersey.api.core.HttpContext;
+import com.sun.jersey.api.core.HttpRequestContext;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.UserId;
@@ -29,6 +29,7 @@ import edu.kit.dama.mdm.admin.util.ServiceAccessUtil;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.rest.util.auth.AbstractAuthenticator;
+import edu.kit.dama.rest.util.auth.exception.MissingCredentialException;
 import edu.kit.dama.util.CryptUtil;
 import java.util.Map;
 import org.apache.commons.configuration.Configuration;
@@ -42,27 +43,39 @@ import org.slf4j.LoggerFactory;
 public class SimpleTokenAuthenticator extends AbstractAuthenticator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleTokenAuthenticator.class);
-    public static final String USER_TOKEN_KEY = "Token";
+    public static final String USER_TOKEN_PROPERTY_KEY = "Token";
 
     @Override
     public String[] getCredentialAttributeNames() {
-        return new String[]{USER_TOKEN_KEY};
+        return new String[]{USER_TOKEN_PROPERTY_KEY};
     }
 
     @Override
     public ServiceAccessToken generateServiceAccessToken(UserId pUser, Map<String, String> pCredential) throws SecretEncryptionException {
         ServiceAccessToken token = new ServiceAccessToken(pUser.getStringRepresentation(), getAuthenticatorId());
-        token.setTokenKey(CryptUtil.stringToSHA1(pCredential.get(USER_TOKEN_KEY)));
+        token.setTokenKey(CryptUtil.stringToSHA1(pCredential.get(USER_TOKEN_PROPERTY_KEY)));
         return token;
     }
 
     @Override
-    public IAuthorizationContext obtainAuthorizationContext(HttpContext hc, GroupId groupId) throws UnauthorizedAccessAttemptException {
-        String token = hc.getRequest().getQueryParameters().getFirst("authToken");
+    public IAuthorizationContext obtainAuthorizationContext(HttpRequestContext hc, GroupId groupId) throws UnauthorizedAccessAttemptException, MissingCredentialException {
+        String token = hc.getQueryParameters().getFirst("authToken");
 
         if (token == null) {
-            throw new UnauthorizedAccessAttemptException("No query parameter 'authToken' found.");
+            //check header
+            String authHeader = hc.getHeaderValue("Authorization");
+            if (authHeader != null) {
+                String[] split = authHeader.split(" ");
+                if (split.length == 2 && "authToken".equals(split[0])) {
+                    token = split[1];
+                }
+            }
         }
+
+        if (token == null) {
+            throw new MissingCredentialException("No query parameter 'authToken' and no authorization header found.");
+        }
+
         LOGGER.debug("Starting simple token authentication.");
 
         IMetaDataManager manager = MetaDataManagement.getMetaDataManagement().getMetaDataManager();

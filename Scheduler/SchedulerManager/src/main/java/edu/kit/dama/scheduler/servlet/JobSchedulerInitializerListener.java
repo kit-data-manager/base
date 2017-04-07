@@ -128,14 +128,14 @@ public class JobSchedulerInitializerListener implements ServletContextListener {
                         QuartzIntervalTrigger ingestTrigger = new QuartzIntervalTrigger();
                         ingestTrigger.setName("IngestFinalizerTrigger");
                         ingestTrigger.setTriggerGroup("Staging");
-                        ingestTrigger.setDescription("Default trigger for the ingest finalizer job firing every 60 seconds.");
-                        ingestTrigger.setPeriod(60000l);
+                        ingestTrigger.setDescription("Default trigger for the ingest finalizer job firing every 2 seconds.");
+                        ingestTrigger.setPeriod(2000l);
                         ingestTrigger.setTimes(-1);
                         QuartzIntervalTrigger downloadTrigger = new QuartzIntervalTrigger();
                         downloadTrigger.setName("DownloadFinalizerTrigger");
                         downloadTrigger.setTriggerGroup("Staging");
-                        downloadTrigger.setDescription("Default trigger for the download finalizer job firing every 60 seconds.");
-                        downloadTrigger.setPeriod(30000l);
+                        downloadTrigger.setDescription("Default trigger for the download finalizer job firing every 3 seconds.");
+                        downloadTrigger.setPeriod(3000l);
                         downloadTrigger.setTimes(-1);
 
                         LOGGER.debug("Adding ingest finalizer schedule.");

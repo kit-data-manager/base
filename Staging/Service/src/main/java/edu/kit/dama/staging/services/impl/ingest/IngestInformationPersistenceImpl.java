@@ -24,11 +24,13 @@ import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.commons.types.DigitalObjectId;
 import edu.kit.dama.mdm.core.IMetaDataManager;
+import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.mdm.core.authorization.SecureMetaDataManager;
 import edu.kit.dama.staging.entities.StagingProcessor;
 import edu.kit.dama.staging.entities.ingest.INGEST_STATUS;
 import edu.kit.dama.staging.entities.ingest.IngestInformation;
 import edu.kit.dama.util.Constants;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -73,7 +75,7 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
             } else {
                 SINGLETON = new IngestInformationPersistenceImpl(pIngestUnit);
             }
-        } else if (SINGLETON.getPersistenceUnit() != null && !SINGLETON.getPersistenceUnit().equals(pIngestUnit)) {
+        } else if (SINGLETON.getPersistenceUnit() != null && pIngestUnit != null && !SINGLETON.getPersistenceUnit().equals(pIngestUnit)) {
             LOGGER.warn("ATTENTION: Current persistence unit '" + SINGLETON.getPersistenceUnit() + "' is not equal provided persistence unit '" + pIngestUnit + "'");
         }
         return SINGLETON;
@@ -386,7 +388,7 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
         Number result = 0;
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         try {
-            result = mdm.findSingleResult("SELECT COUNT(i) FROM IngestInformation i WHERE i.status = ?1 AND x.ownerUuid LIKE ?2",
+            result = mdm.findSingleResult("SELECT COUNT(i) FROM IngestInformation i WHERE i.status = ?1 AND i.ownerUuid LIKE ?2",
                     new Object[]{pStatus.getId(), getOwnerFromContext(pSecurityContext)}, Number.class);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to get ingest count for status " + pStatus + " using context " + pSecurityContext, ex);
@@ -399,9 +401,9 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
 
     @Override
     public IngestInformation getEntityById(long pId, IAuthorizationContext pSecurityContext) {
-        LOGGER.debug("Executing query for ingest  entity with id {}", pId);
-
-        IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
+        LOGGER.debug("Executing query for ingest entity with id {} using context {}", pId, pSecurityContext);
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(getPersistenceUnit());
+        mdm.setAuthorizationContext(pSecurityContext);
         IngestInformation result = null;
         try {
             result = mdm.findSingleResult("SELECT x FROM IngestInformation x WHERE x.id = ?1 AND x.ownerUuid LIKE ?2",
@@ -455,6 +457,23 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
                     new Object[]{IngestInformation.DEFAULT_LIFETIME, System.currentTimeMillis(), getOwnerFromContext(pSecurityContext)}, Number.class);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to get expired ingest count using context " + pSecurityContext, ex);
+        } finally {
+            mdm.close();
+        }
+        return result;
+    }
+
+    @Override
+    public List<IngestInformation> getTransferableEntities(int pMaxResults, IAuthorizationContext pSecurityContext) {
+        LOGGER.debug("Executing query for {} transferable ingests.", pMaxResults);
+        List<IngestInformation> result = new ArrayList<>();
+
+        IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
+        try {
+            result = mdm.findResultList("SELECT i FROM IngestInformation i WHERE i.status=?1 AND i.ownerUuid LIKE ?2 ORDER BY i.lastUpdate",
+                    new Object[]{INGEST_STATUS.PRE_INGEST_FINISHED.getId(), getOwnerFromContext(pSecurityContext)}, IngestInformation.class);
+        } catch (UnauthorizedAccessAttemptException ex) {
+            LOGGER.error("Not authorized to get transferable ingests using context " + pSecurityContext, ex);
         } finally {
             mdm.close();
         }
@@ -543,12 +562,15 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
     @Override
     public int removeEntity(long pId, IAuthorizationContext pSecurityContext) {
         LOGGER.debug("Removing ingest with id {}", pId);
-        IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(getPersistenceUnit());
+        mdm.setAuthorizationContext(pSecurityContext);
         int result = 0;
         try {
             IngestInformation toDelete = getEntityById(pId, pSecurityContext);
             if (toDelete == null) {
                 throw new EntityNotFoundException("Unable to find ingest for id " + pId + " accessible by context " + pSecurityContext);
+            } else {
+                LOGGER.debug("Entity found. Removing entity with id {}", toDelete.getId());
             }
             mdm.remove(toDelete);
             result = 1;

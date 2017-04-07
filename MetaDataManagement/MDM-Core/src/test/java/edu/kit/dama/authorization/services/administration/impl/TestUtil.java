@@ -41,7 +41,7 @@ public class TestUtil {
   public static final IAuthorizationContext sysCtx = new AuthorizationContext(new UserId(Constants.SYSTEM_ADMIN), new GroupId(Constants.SYSTEM_GROUP), Role.ADMINISTRATOR);
 
   public static void clearDB() {
-    PU.setPersistenceUnitName("AuthorizationUnit-Test");
+    PU.setPersistenceUnitName("AuthorizationPU");
 
     EntityManager em = PU.entityManager();
 

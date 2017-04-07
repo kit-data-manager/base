@@ -37,7 +37,6 @@ import java.util.Iterator;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import edu.kit.dama.mdm.dataorganization.service.core.DataOrganizerFactory;
-import edu.kit.dama.util.DataManagerSettings;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
@@ -203,8 +202,9 @@ public final class Util {
     /**
      * Transform the provided data organization node to a JSON representation.
      * If pNode is a CollectionNode, the method is called recursively for all of
-     * its child nodes. If pNode is a FileNode it is expected that pNode has a
-     * nodeId assigned. Otherwise, an IllegalArgumentException will be thrown.
+     * its child nodes. If pNode is a FileNode and has a nodeId assigned, only
+     * the node id is added to the JSONObject. For FileNodes without nodeId the
+     * name and the lfn is added.
      *
      * @param pNode The node to transform.
      *
@@ -223,11 +223,15 @@ public final class Util {
                 object.append("children", nodeToJson(child));
             }
         } else if (pNode instanceof IFileNode) {
-            if (pNode.getTransientNodeId() == null) {
-                throw new IllegalArgumentException("Only FileNodes with a nodeId are supported.");
+            if (pNode.getTransientNodeId() != null) {
+                // throw new IllegalArgumentException("Only FileNodes with a nodeId are supported.");
+                object.putOnce("nodeId", pNode.getTransientNodeId().getInTreeId());
+                object.putOnce("type", "FileNode");
+            } else {
+                object.putOnce("name", pNode.getName());
+                object.putOnce("lfn", ((IFileNode) pNode).getLogicalFileName().asString());
+                object.putOnce("type", "FileNode");
             }
-            object.putOnce("nodeId", pNode.getTransientNodeId().getInTreeId());
-            object.putOnce("type", "FileNode");
         }
 
         if (!pNode.getAttributes().isEmpty()) {

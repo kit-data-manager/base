@@ -32,7 +32,7 @@ import edu.kit.dama.ui.admin.filter.FilterProperties;
 import edu.kit.dama.ui.admin.filter.UserGroupFilter;
 import edu.kit.dama.ui.admin.utils.IconContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import java.util.HashMap;
 import java.util.List;
 import org.slf4j.Logger;

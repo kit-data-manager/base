@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,6 +99,18 @@ public final class ZipUtils {
      * problems with reading the input files or writing into the output file
      */
     public static void zip(File[] pFiles, String pBasePath, File pZipOut) throws IOException {
+       
+        if(pFiles == null){
+            throw new IllegalArgumentException("Argument pFiles must not be null.");
+        }
+        
+        if(pBasePath == null){
+            throw new IllegalArgumentException("Argument pBasePath must not be null.");
+        }
+          
+         if(pZipOut == null){
+            throw new IllegalArgumentException("Argument pZipOut must not be null.");
+        }
         ZipOutputStream zipOut = null;
         try {
             zipOut = new ZipOutputStream(new FileOutputStream(pZipOut));
@@ -193,6 +204,7 @@ public final class ZipUtils {
      * problems with reading the input files or writing into the output file
      */
     private static void zip(File[] pFileList, String pBasePath, ZipOutputStream pZipOut) throws IOException {
+      String basePath = new File(pBasePath).getCanonicalPath();
         // Create a buffer for reading the files
         byte[] buf = new byte[1024];
         try {
@@ -200,7 +212,7 @@ public final class ZipUtils {
             LOGGER.debug("Adding {} files to archive", pFileList.length);
 
             for (File pFileList1 : pFileList) {
-                String entryName = pFileList1.getPath().replaceAll(Pattern.quote(pBasePath), "");
+                String entryName = pFileList1.getCanonicalPath().replaceAll(Pattern.quote(basePath), "");
                 if (entryName.startsWith(File.separator)) {
                     entryName = entryName.substring(1);
                 }

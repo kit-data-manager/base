@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -66,7 +66,7 @@ public final class StudySecureQueryHelper extends AbstractSecureQueryHelper<Stud
     public List<Study> getReadableStudies(IMetaDataManager pMetaDataManager, int pFirstIdx, int pMaxEntries, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
         pMetaDataManager.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Study.default");
         try {
-            return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? null : "o.visible='TRUE'", pFirstIdx, pMaxEntries, pContext);
+            return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? null : "o.visible='TRUE'", ORDER.ASC, pFirstIdx, pMaxEntries, pContext);
         } finally {
             pMetaDataManager.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
         }

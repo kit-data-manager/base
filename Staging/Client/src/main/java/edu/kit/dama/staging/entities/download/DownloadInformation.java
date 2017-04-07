@@ -22,6 +22,7 @@ import edu.kit.dama.staging.entities.StagingProcessor;
 import edu.kit.dama.staging.entities.interfaces.IDefaultDownloadInformation;
 import edu.kit.dama.staging.interfaces.ITransferInformation;
 import edu.kit.dama.util.DataManagerSettings;
+import edu.kit.dama.util.SystemUtils;
 import edu.kit.tools.url.URLCreator;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -33,7 +34,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
@@ -268,7 +268,7 @@ public class DownloadInformation implements IDefaultDownloadInformation, ITransf
     @Override
     public String getTransferId() {
         if (transferId == null) {
-            transferId = Long.toString(getId());
+            transferId = SystemUtils.toFileSystemSafeName("download" + Long.toString(getId()) + "_" + getDigitalObjectId());
         }
         return transferId;
     }

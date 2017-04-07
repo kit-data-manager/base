@@ -40,9 +40,8 @@ import edu.kit.dama.mdm.dataorganization.impl.staging.FileTreeImpl;
 import edu.kit.dama.staging.entities.StagingFile;
 import edu.kit.dama.mdm.dataorganization.impl.staging.LFNImpl;
 import edu.kit.dama.mdm.dataorganization.impl.staging.ISelectable;
-import edu.kit.dama.mdm.dataorganization.impl.util.DataOrganizationTreeBuilder;
-import edu.kit.dama.mdm.dataorganization.impl.util.Util;
 import edu.kit.dama.util.Constants;
+import edu.kit.dama.util.DataManagerSettings;
 import edu.kit.tools.url.URLCreator;
 import java.io.File;
 import java.io.FileInputStream;
@@ -69,6 +68,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.collections.CollectionUtils;
@@ -1008,7 +1009,14 @@ public class DataOrganizationUtils {
      * streaming fails.
      */
     public static void zip(ICollectionNode pNode, OutputStream pOutputStream, long pSizeLimit) throws IOException {
-        byte[] buf = new byte[1024];
+        int blockSize = DataManagerSettings.getSingleton().getIntProperty(DataManagerSettings.DATA_ORGANIZATION_DOWNLOAD_BLOCK_SIZE, 10 * 1024);
+        int compression = DataManagerSettings.getSingleton().getIntProperty(DataManagerSettings.DATA_ORGANIZATION_DOWNLOAD_ZIP_COMPRESSION, -1);
+        if (compression < -1 || compression > 9) {
+            LOGGER.debug("Invalid compression {}. Setting compression to default -1", compression);
+            compression = Deflater.DEFAULT_COMPRESSION;
+        }
+        LOGGER.debug("Zipping collection node with blockSize {} and compression {}.", blockSize, compression);
+        byte[] buf = new byte[blockSize];
 
         HashMap<String, File> map = new HashMap<>();
         long size = DataOrganizationUtils.generateZipEntries(pNode, null, map);
@@ -1017,6 +1025,7 @@ public class DataOrganizationUtils {
         }
         Set<Entry<String, File>> entries = map.entrySet();
         try (ZipOutputStream zipOut = new ZipOutputStream(pOutputStream)) {
+            zipOut.setLevel(compression);
             for (Entry<String, File> entry : entries) {
 
                 if (entry.getValue() == null) {

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
+import org.eclipse.persistence.queries.FetchGroupTracker;
+import org.eclipse.persistence.sessions.Session;
 
 /**
  *
@@ -38,21 +40,49 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
     @XmlNamedObjectGraph(
             name = "simple",
             attributeNodes = {
-                @XmlNamedAttributeNode("id"),
+                @XmlNamedAttributeNode("id")
+                ,
                 @XmlNamedAttributeNode("userId")
-            }),
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("userId"),
+                @XmlNamedAttributeNode("id")
+                ,
+                @XmlNamedAttributeNode("userId")
+                ,
                 @XmlNamedAttributeNode("maximumRole")
             //Add memberships if necessary
             })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @Entity(name = "Users")
 @Table(name = "Users")
-public class User implements IDefaultUser, Serializable {
+@NamedEntityGraphs({
+    @NamedEntityGraph(
+            name = "User.simple",
+            includeAllAttributes = false,
+            attributeNodes = {
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode("maximumRole")
+                ,
+                @NamedAttributeNode("userId")
+            })
+    ,
+    @NamedEntityGraph(
+            name = "User.memberships",
+            includeAllAttributes = false,
+            attributeNodes = {
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode("userId")
+                ,@NamedAttributeNode("maximumRole")
+                ,
+                @NamedAttributeNode(value = "memberships")
+            })
+})
+public class User implements IDefaultUser, Serializable, FetchGroupTracker {
 
     private static final long serialVersionUID = 1L;
     @Id
@@ -174,5 +204,47 @@ public class User implements IDefaultUser, Serializable {
     @Override
     public String toString() {
         return "User{" + "id=" + id + ", userId=" + userId + '}';
+    }
+
+    private transient org.eclipse.persistence.queries.FetchGroup fg;
+    private transient Session sn;
+
+    @Override
+    public org.eclipse.persistence.queries.FetchGroup _persistence_getFetchGroup() {
+        return this.fg;
+    }
+
+    @Override
+    public void _persistence_setFetchGroup(org.eclipse.persistence.queries.FetchGroup fg) {
+        this.fg = fg;
+    }
+
+    @Override
+    public boolean _persistence_isAttributeFetched(String string) {
+        return true;
+    }
+
+    @Override
+    public void _persistence_resetFetchGroup() {
+    }
+
+    @Override
+    public boolean _persistence_shouldRefreshFetchGroup() {
+        return false;
+    }
+
+    @Override
+    public void _persistence_setShouldRefreshFetchGroup(boolean bln) {
+
+    }
+
+    @Override
+    public Session _persistence_getSession() {
+        return sn;
+    }
+
+    @Override
+    public void _persistence_setSession(Session sn) {
+        this.sn = sn;
     }
 }

@@ -29,11 +29,10 @@ import edu.kit.dama.staging.interfaces.IStorageVirtualizationServiceAdapter;
 import edu.kit.dama.staging.entities.StagingFile;
 import edu.kit.dama.rest.staging.types.TransferTaskContainer;
 import edu.kit.dama.commons.exceptions.ConfigurationException;
-import edu.kit.dama.staging.exceptions.ServiceAdapterException;
 import edu.kit.dama.staging.exceptions.StagingIntitializationException;
+import edu.kit.dama.staging.services.impl.ingest.IngestInformationServiceLocal;
 import edu.kit.dama.staging.util.DataOrganizationUtils;
 import edu.kit.dama.staging.util.StagingConfigurationManager;
-import edu.kit.dama.util.CryptUtil;
 import edu.kit.dama.util.FileUtils;
 import java.io.File;
 import java.io.IOException;
@@ -165,18 +164,11 @@ public class DefaultStorageVirtualizationAdapter implements IStorageVirtualizati
         LOGGER.debug("Storing object with transfer ID '{}'", pContainer.getUniqueTransferIdentifier());
         //udpate storage URL in ingest information entity and commit changes
         ((IngestInformation) pContainer.getTransferInformation()).setStorageUrl(destination.getUrl().toString());
-        try {
-            LOGGER.debug("Updating storage URL for ingest with id '{}'", transferId);
-            StagingConfigurationManager.getSingleton().getIngestInformationServiceAdapter().updateIngestInformation((IngestInformation) pContainer.getTransferInformation(), pContext);
-            LOGGER.debug("Storage URL successfully updated");
-        } catch (ServiceAdapterException sae) {
-            LOGGER.error("Failed to update storage URL for ingest with id '" + transferId + "'", sae);
-            return null;
-        }
+        LOGGER.debug("Setting storage URL for ingest with id '{}' to {}", transferId, destination.getUrl().toString());
+        IngestInformationServiceLocal.getSingleton().updateStorageUrl(pContainer.getTransferId(), destination.getUrl().toString(), pContext);
+        LOGGER.debug("Storage URL successfully set to {}", destination.getUrl().toString());
 
-        //--> destination = Base Service URL, single path elements obtained by some generator class specified within the settings?
-        LOGGER.info("Perform staging to {}", destination.getUrl());
-        //TransferTaskContainer container = TransferTaskContainer.factoryIngestContainer(pIngest, tree, StagingConfigurationManager.getSingleton().getRestServiceUrl());
+        //start with transfer
         LOGGER.info("Disabling ADALAPI overwrite checks");
         AbstractFile.OVERWRITE_PERMISSION permission = AbstractFile.getOverwritePermission();
         AbstractFile.setOverwritePermission(AbstractFile.OVERWRITE_PERMISSION.ALLOWED);
@@ -209,13 +201,16 @@ public class DefaultStorageVirtualizationAdapter implements IStorageVirtualizati
 
     @Override
     public boolean restore(DownloadInformation pDownloadInformation, IFileTree pArchivedTree, StagingFile pDownloadDestination) {
+        LOGGER.debug("Restoring file tree for download {}", pDownloadInformation.getTransferId());
         IFileTree tree = TransferTaskContainer.createCompatibleTree(pDownloadInformation, pArchivedTree.getRootNode());
+        LOGGER.debug("File tree obtained.");
         TransferTaskContainer container = TransferTaskContainer.factoryDownloadContainer(pDownloadInformation.getId(), tree, StagingConfigurationManager.getSingleton().getRestServiceUrl());
         container.setTransferInformation(pDownloadInformation);
+        LOGGER.debug("Transfer container created. Creating transfer client to download destination {}", pDownloadDestination);
         InProcStagingClient isc = new InProcStagingClient(container, pDownloadDestination.getAbstractFile());
         isc.addStagingCallbackListener(this);
         isc.start();
-
+        LOGGER.debug("Transfer client started for download {}. Waiting for client termination.", pDownloadInformation.getTransferId());
         //perform the storage operation in a blocking fashion
         while (isc.isTransferRunning()) {
             try {
@@ -223,6 +218,7 @@ public class DefaultStorageVirtualizationAdapter implements IStorageVirtualizati
             } catch (InterruptedException ie) {
             }
         }
+        LOGGER.debug("Transfer client for download {} finished with status {}.", pDownloadInformation.getTransferId(), isc.getStatus());
         return isc.getStatus().equals(AbstractTransferClient.TRANSFER_STATUS.SUCCEEDED);
     }
 
@@ -259,7 +255,7 @@ public class DefaultStorageVirtualizationAdapter implements IStorageVirtualizati
      *
      * <i>archiveURL</i>/<i>pathPattern</i>/SHA1(pTransferId) where
      * <i>pathPattern</i> allows the use or variables like $year, $month, $day
-     * and $owner and pTransferId is the numeric id of the transfer.
+     * and $owner and pTransferId is the unique identifier of the transfer.
      *
      * @param pTransferId The transfer id as it comes from the ingest
      * information entity.
@@ -306,8 +302,8 @@ public class DefaultStorageVirtualizationAdapter implements IStorageVirtualizati
             if (!sUrl.endsWith("/")) {
                 sUrl += "/";
             }
-            LOGGER.debug("Appending SHA1-hashed transfer ID '{}' to current destination '{}'.", new Object[]{pTransferId, sUrl});
-            sUrl += CryptUtil.stringToSHA1(pTransferId);
+            LOGGER.debug("Appending transfer ID '{}' to current destination '{}'.", new Object[]{pTransferId, sUrl});
+            sUrl += pTransferId;
             LOGGER.debug("Preparing destination at {}.", sUrl);
 
             result = new AbstractFile(new URL(sUrl));

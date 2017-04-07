@@ -44,6 +44,7 @@ import edu.kit.dama.mdm.dataworkflow.tools.DataWorkflowTaskSecureQueryHelper;
 import edu.kit.dama.mdm.tools.DigitalObjectSecureQueryHelper;
 import edu.kit.dama.rest.base.IEntityWrapper;
 import edu.kit.dama.rest.dataworkflow.types.DataWorkflowTaskConfigurationWrapper;
+import edu.kit.dama.util.Constants;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Enumeration;
@@ -93,6 +94,11 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
 
     @Override
     public IEntityWrapper<? extends IDefaultDataWorkflowTask> getAllTasks(String groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(ctx);
@@ -293,6 +299,11 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
 
     @Override
     public IEntityWrapper<? extends IDefaultDataWorkflowConfiguration> getAllTaskConfigurations(String groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(ctx);
@@ -349,6 +360,11 @@ public final class DataWorkflowRestServiceImpl implements IDataWorkflowRestServi
 
     @Override
     public IEntityWrapper<? extends IDefaultExecutionEnvironment> getAllExecutionEnvironmentConfigurations(String groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(ctx);

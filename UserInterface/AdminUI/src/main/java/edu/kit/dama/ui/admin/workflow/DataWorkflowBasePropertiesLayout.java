@@ -38,7 +38,7 @@ import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.IconContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import edu.kit.dama.ui.admin.workflow.property.AddEnvironmentPropertyComponent;
 import static edu.kit.dama.util.Constants.USERS_GROUP_ID;
 import java.util.Collections;
@@ -212,10 +212,14 @@ public final class DataWorkflowBasePropertiesLayout extends AbstractBaseProperti
             List<UserData> users = mdm.find(UserData.class);
 
             users.stream().map((user) -> {
-                getContactBox().addItem(user.getDistinguishedName());
+                if (user.getDistinguishedName() != null) {
+                    getContactBox().addItem(user.getDistinguishedName());
+                }
                 return user;
             }).forEachOrdered((user) -> {
-                getContactBox().setItemCaption(user.getDistinguishedName(), user.getFullname());
+                if (user.getDistinguishedName() != null) {
+                    getContactBox().setItemCaption(user.getDistinguishedName(), user.getFullname());
+                }
             });
         } catch (UnauthorizedAccessAttemptException ex) {
             String object = "all users";

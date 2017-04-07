@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
@@ -39,10 +39,8 @@
 
     <modules>
         <module>SchedulerManager</module>
-        <module>SchedulerRestInterface</module>
-        <module>REST-SchedulerService</module>
         <module>SchedulerJobs</module>
         <module>JobSchedulerTest</module>
-        <module>RESTIntegrationTest</module>
+        <!--module>RESTIntegrationTest</module-->
     </modules>
 </project>

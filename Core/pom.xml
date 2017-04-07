@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -187,22 +187,7 @@
             <artifactId>REST-Audit</artifactId>
             <version>${project.kit.datamanager.version}</version>
         </dependency>
-        <!--Direct dependency to allow to remove icu4j dependency-->
-        <dependency>
-            <groupId>org.fzk.ipe</groupId>
-            <artifactId>Tools</artifactId>
-            <version>1.5</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>icu4j</artifactId>
-                    <groupId>com.ibm.icu</groupId>
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+       
         <dependency>
             <groupId>xml-apis</groupId>
             <artifactId>xml-apis</artifactId>
@@ -230,7 +215,7 @@
         </dependency>
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
-            <artifactId>REST-SchedulerService</artifactId>
+            <artifactId>REST-Scheduler</artifactId>
             <version>${project.kit.datamanager.version}</version>
         </dependency>
         <dependency>

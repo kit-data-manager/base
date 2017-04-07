@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.kit.dama.rest.scheduler.test;
+package edu.kit.scheduler.test;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -60,7 +60,10 @@ public class SchedulerServiceTest extends JerseyTest {
      * Default constructor.
      */
     public SchedulerServiceTest() {
-        super("edu.kit.dama.rest.scheduler.test");
+        super("edu.kit.scheduler.test");
+        ctx = new SimpleRESTContext("secret", "secret");
+        client = new SchedulerRestClient(
+                "http://localhost:9998/SchedulerTest", ctx);
     }
 
     @Override
@@ -85,13 +88,6 @@ public class SchedulerServiceTest extends JerseyTest {
             return port;
         }
         return this.getPort(0);
-    }
-
-    @BeforeClass
-    public static void initClient() {
-        ctx = new SimpleRESTContext("secret", "secret");
-        client = new SchedulerRestClient(
-                "http://localhost:9998/SchedulerTest", ctx);
     }
 
     @Test

@@ -34,45 +34,45 @@ import javax.persistence.EntityNotFoundException;
  */
 public class DataWorkflowTaskSecureQueryHelper extends AbstractSecureQueryHelper<DataWorkflowTask> {
 
-  @SecuredMethod(roleRequired = Role.GUEST)
-  public Number getTaskCount(String pDefailedQuery, IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
-    return getReadableResourceCount(pMetaDataManager,
-            pDefailedQuery,
-            pContext);
-  }
-
-  @SecuredMethod(roleRequired = Role.GUEST)
-  public List<DataWorkflowTask> getAllTasks(String pDefailedQuery, IMetaDataManager pMetaDataManager, Integer pFirst, Integer pResults, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
-    return getReadableResources(pMetaDataManager, pDefailedQuery, pFirst, pResults, pContext);
-  }
-
-  @SecuredMethod(roleRequired = Role.GUEST)
-  public DataWorkflowTask getDataWorkflowTaskById(Long pId, IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws EntityNotFoundException, UnauthorizedAccessAttemptException {
-    List<DataWorkflowTask> result = getReadableResources(pMetaDataManager, "o.id='" + Long.toString(pId) + "'", 0, 1, pContext);
-    if (result.isEmpty()) {
-      throw new EntityNotFoundException("No entity found/accessible with id " + pId);
-    } else {
-      return result.get(0);
+    @SecuredMethod(roleRequired = Role.GUEST)
+    public Number getTaskCount(String pDefailedQuery, IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
+        return getReadableResourceCount(pMetaDataManager,
+                pDefailedQuery,
+                pContext);
     }
-  }
 
-  @SecuredMethod(roleRequired = Role.GUEST)
-  public List<DataWorkflowTask> getDataWorkflowTaskByStatus(DataWorkflowTask.TASK_STATUS pStatus, IMetaDataManager pMetaDataManager, int pFirst, int pResults, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
-    return getReadableResources(pMetaDataManager, "o.status='" + pStatus.toString() + "'", pFirst, pResults, pContext);
-  }
-
-  @SecuredMethod(roleRequired = Role.GUEST)
-  public List<DataWorkflowTask> getDataWorkflowTaskByDigitalObjectId(DigitalObjectId pId, IMetaDataManager pMetaDataManager, int pFirst, int pResults, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
-    return getReadableResources(pMetaDataManager, "o.objectViewMap LIKE '%" + pId.toString() + "%'", pFirst, pResults, pContext);
-  }
-
-  @SecuredMethod(roleRequired = Role.GUEST)
-  public DataWorkflowTask getDataWorkflowTaskByJobId(String pJobId, IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-    List<DataWorkflowTask> result = getReadableResources(pMetaDataManager, "o.jobId='" + pJobId + "'", 0, 1, pContext);
-    if (result.isEmpty()) {
-      throw new EntityNotFoundException("No entity found/accessible with job id " + pJobId);
-    } else {
-      return result.get(0);
+    @SecuredMethod(roleRequired = Role.GUEST)
+    public List<DataWorkflowTask> getAllTasks(String pDefailedQuery, IMetaDataManager pMetaDataManager, Integer pFirst, Integer pResults, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
+        return getReadableResources(pMetaDataManager, pDefailedQuery, ORDER.ASC, pFirst, pResults, pContext);
     }
-  }
+
+    @SecuredMethod(roleRequired = Role.GUEST)
+    public DataWorkflowTask getDataWorkflowTaskById(Long pId, IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws EntityNotFoundException, UnauthorizedAccessAttemptException {
+        List<DataWorkflowTask> result = getReadableResources(pMetaDataManager, "o.id='" + Long.toString(pId) + "'", ORDER.ASC, 0, 1, pContext);
+        if (result.isEmpty()) {
+            throw new EntityNotFoundException("No entity found/accessible with id " + pId);
+        } else {
+            return result.get(0);
+        }
+    }
+
+    @SecuredMethod(roleRequired = Role.GUEST)
+    public List<DataWorkflowTask> getDataWorkflowTaskByStatus(DataWorkflowTask.TASK_STATUS pStatus, IMetaDataManager pMetaDataManager, int pFirst, int pResults, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
+        return getReadableResources(pMetaDataManager, "o.status='" + pStatus.toString() + "'", ORDER.ASC, pFirst, pResults, pContext);
+    }
+
+    @SecuredMethod(roleRequired = Role.GUEST)
+    public List<DataWorkflowTask> getDataWorkflowTaskByDigitalObjectId(DigitalObjectId pId, IMetaDataManager pMetaDataManager, int pFirst, int pResults, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
+        return getReadableResources(pMetaDataManager, "o.objectViewMap LIKE '%" + pId.toString() + "%'", ORDER.ASC, pFirst, pResults, pContext);
+    }
+
+    @SecuredMethod(roleRequired = Role.GUEST)
+    public DataWorkflowTask getDataWorkflowTaskByJobId(String pJobId, IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
+        List<DataWorkflowTask> result = getReadableResources(pMetaDataManager, "o.jobId='" + pJobId + "'", ORDER.ASC, 0, 1, pContext);
+        if (result.isEmpty()) {
+            throw new EntityNotFoundException("No entity found/accessible with job id " + pJobId);
+        } else {
+            return result.get(0);
+        }
+    }
 }

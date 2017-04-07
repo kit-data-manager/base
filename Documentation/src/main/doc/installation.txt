@@ -12,9 +12,9 @@ In order to be able to provide KIT Data Manager services you'll need at least th
 
 * Java SE Development Kit 8
 * Apache Tomcat 7 (Tomcat 8 is currently not supported)
-* PostgreSQL 9.1
-* RabbitMQ 3.6.5
-* Elasticsearch 5.0 
+* PostgreSQL 9.1+
+* RabbitMQ 3.6.5+
+* Elasticsearch 5.1+ 
 
 In principal it is possible to install KIT Data Manager on every operating system. For simplicity, this documentation only covers the installation on a Unix-based system 
 (namely Ubuntu 16.04 LTS) in detail.
@@ -35,7 +35,7 @@ user@localhost:/home/user$ sudo apt-get install openjdk-8-jdk
 Reading package lists... Done
 Building dependency tree       
 Reading state information... Done
-openjdk-7-jdk is already the newest version.
+openjdk-8-jdk is already the newest version.
 user@localhost:/home/user$ sudo apt-get install tomcat7
 Reading package lists... Done
 Building dependency tree       
@@ -53,22 +53,23 @@ and configured first.
 
 Elasticsearch
 ^^^^^^^^^^^^^
-If Elasticsearch is already installed this section might be skipped. 
+If an older version of Elasticsearch is already installed an upgrade should be made to 
+preserve existing indices. (See links below)
 
 [NOTE]
 *_Cluster name_* and *_hostname_* needed to be known during further installation steps.
 
 
-*Step1:* Download newest Version (5.0) of Elasticsearch (Tested with version 5.0.0).
+*Step1:* Download newest Version (5.X) of Elasticsearch (Tested with version 5.1.1).
 [source,sh]
 --------------------------------------
-user@localhost:/home/user$ wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.0.0.deb
+user@localhost:/home/user$ wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.1.1.deb
 --------------------------------------
 
 *Step 2:* Install Elasticsearch
 [source,sh]
 --------------------------------------
-user@localhost:/home/user$ sudo dpkg -i elasticsearch-5.0.0.deb
+user@localhost:/home/user$ sudo dpkg -i elasticsearch-5.1.1.deb
 --------------------------------------
 
 *Step 3:* Configuring Elasticsearch
@@ -82,6 +83,10 @@ cluster.name: KITDataManager@`hostname`
 
 Set `hostname` to the hostname of the host running elasticsearch or to another, unique value and keep the value of 'cluster.name' for later use.
 
+[IMPORTANT]
+Please check also the https://www.elastic.co/guide/en/elasticsearch/reference/current/system-config.html[System Configuration] section of elasticsearch, 
+especially for increasing the number of open file descriptors.
+
 *Step 4:* Configure Elasticsearch as daemon and start service
 [source,sh]
 --------------------------------------
@@ -92,7 +97,7 @@ user@localhost:/home/user$ sudo /bin/systemctl start elasticsearch.service
 That's it. Now continue setting up KIT Data Manager to index metadata to Elasticsearch. 
 
 [IMPORTANT]
-In the newest version (5.0.0) the ports (9200 and 9300) for accessing Elasticsearch 
+Since elastic version 5.0.0 the ports (9200 and 9300) for accessing Elasticsearch 
 are only accessible from localhost. Dowever, everyone who is able to access Elasticsearch 
 has all privileges, e.g. also deleting the index. For production environments further security measures are recommended.
 
@@ -102,6 +107,12 @@ For more detailed information on how to setup Elasticsearch on Ubuntu please ref
 links.
 
 https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-elasticsearch-on-ubuntu-14-04[Installation and configuration of Elasticsearch]
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/system-config.html[Elasticsearch System Configuration]
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/setup-service.html[Run Elasticsearch as service]
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/setup-upgrade.html[Upgrade from old version]
 
 Setup KIT Data Manager
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -137,6 +148,12 @@ postgres=#create database datamanager;
 CREATE DATABASE
 postgres=#\q
 --------------------------------------
+Alternatively this can also be done from commandline.
+[source,sh]
+--------------------------------------
+user@localhost:/home/user$ sudo -u postgres createdb datamanager
+user@localhost:/home/user$ 
+--------------------------------------
 
 A database named `datamanager` has been created and can be set up. For this purpose, a file named `$KITDM_LOCATION/sql/schema.sql` is provided as part of your KIT Data 
 Manager distribution. Apply the SQL statements in this file to the database by the following command:
@@ -152,19 +169,8 @@ CREATE INDEX
 user@localhost:/home/user$ 
 --------------------------------------
 
-Finally, the database has to be filled with some basic data in order to access KIT Data Manager later for the first time. This basic sample data is stored in the file 
-`$KITDM_LOCATION/sql/sampledata.sql`. Before you continue you may modify this file according to your needs. Afterwards, add all data stored in this file to the database 
-by the following command: 
-
-[source,sh]
---------------------------------------
-user@localhost:/home/user$ sudo -u postgres psql -U postgres -d datamanager -f $KITDM_LOCATION/sql/sampledata.sql
-SET
-SET
-[...]
-INSERT 0 1
-user@localhost:/home/user$ 
---------------------------------------
+[NOTE]
+Adding sample data is not longer necessary since KIT DM version 1.5. For security reasons, a first start wizard has been implemented for creating the administrator user and perform basic configuration.
 
 In the next step you have to deploy the KIT Data Manager and WebDav Web applications on the local Tomcat server. Therefor, copy the files `$KITDM_LOCATION/webapp/KITDM.xml` and `$KITDM_LOCATION/webapp/webdav.xml` to 
 `$CATALINA_HOME/conf/Catalina/localhost/`. In our case this would be `/var/lib/tomcat7/conf/Catalina/localhost/`. 
@@ -177,7 +183,7 @@ user@localhost:/home/user$
 
 [[WebDavLibraries]]
 Now, the custom WebDav implementation must be 'deployed' to Tomcat. Therefor, execute the following commands:
-
+ 
 [source,sh]
 --------------------------------------
 user@localhost:/home/user$ sudo cp $KITDM_LOCATION/tomcat-ext/*.jar /usr/share/tomcat7/lib/
@@ -251,22 +257,14 @@ There you'll find the configuration section:
 The values of 'realm' and 'type' must match the configuration in the `web.xml` as the HTTPAuthenticator is used to generate the WebDav credentials for the KIT Data Manager users that are later used to authenticate. If there is a 
 configuration mismatch, authentication will fail.
 
-The final step is now to register a new staging access point using WebDav access using the administration backend of KIT Data Manager. For this purpose please browse to
-`http://localhost:8080/KITDM` at your KIT Data Manager machine and login. By default the administrator email is `dama@kit.edu` and the password is `dama14`. 
-Open the settings page using the button with the gears image:Settings_Button.png[Settings_Button, width="30"] and select the tab `Staging Access Points`, which looks as follows:
-
-[[AdminUI_AP]]
-.Staging access point configuration tab in the administration backend.
-image::screenshots/StagingAccessPointConfiguration_Selection.png[AdminUI_AP]
-
-At first, insert `edu.kit.dama.staging.ap.impl.BasicStagingAccessPoint` as access point Implementation Class. Clicking the button next to the input fields will create
-a new access point. Now, please insert all values as shown in the screenshot in order to configure the access point properly. Pay special attention to the Remote Base URL, 
-which has to correspond to the FQDN of your machine running KIT Data Manager. 
-
 [NOTE]
-If the Tomcat Servlet-based WebDav access is used the `LOCAL BASE PATH` must be set to `$KITDM_LOCATION/webdav` by default.
+NOW start/restart your Tomcat container in order to apply the configuration changes. 
 
-Finally, commit all changes using the Commit button on the lower right. Now, you should be able to use KIT Data Manager as a repository system including the ingest and the download of data.
+The final step is now to register a new staging access point using WebDav access using the administration backend of KIT Data Manager. For this purpose please browse to
+`http://localhost:8080/KITDM` at your KIT Data Manager machine. As this should be the first time accessing the installation, a wizard will appear guiding you through the initial setup. 
+
+Please follow the wizard until you reach the third step. At this point you have to input `Base Url` and `Base Path`. The base Url look like http://myhost:8080/webdav depending on your local hostname, the Base Path should be 
+the absolute path to `$KITDM_LOCATION/webdav`. At the end of the wizard the access point is committed to the database together with all other settings.
 
 Enhanced Configuration
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -452,13 +450,13 @@ user@localhost:/home/user$ sudo -u postgres pg_dump -U postgres -h localhost -d 
 user@localhost:/home/user$
 --------------------------------------
 
-In the next step, the libraries of your KIT Data Manager installation have to be updated. Please download the update package KITDM-Update-<VERSION>.zip to `$KITDM_LOCATION` and continue as follows:
+In the next step, the libraries of your KIT Data Manager installation have to be updated. Please download the update package KITDM-<VERSION>_Update.zip to `$KITDM_LOCATION` and continue as follows:
 
 [source,sh]
 --------------------------------------
 user@localhost:/home/user$ rm KITDM/WEB-INF/lib/*.jar 
 user@localhost:/home/user$ rm KITDM/WEB-INF/classes/edu/kit/dama/ -R
-user@localhost:/home/user$ unzip KITDM-Update-<VERSION>.zip
+user@localhost:/home/user$ unzip -u KITDM-<VERSION>_Update.zip
 user@localhost:/home/user$ 
 --------------------------------------
 
@@ -682,7 +680,6 @@ Current list of entities (KIT DM 1.3) that has to be registered in the persisten
 
 [underline]*Update 1.3 -> 1.4*
 
-
 [cols="1,1,6,2", options="header"]
 |============================================================================================================================
 |Type|Optional|Todo|Side Effects
@@ -690,7 +687,6 @@ Current list of entities (KIT DM 1.3) that has to be registered in the persisten
 |image:gear_preferences.png[ConfigurationUpdate]|No|New sections 'authorization' and 'audit' added to datamanager.xml, major cleanup of file structure.|None.
 |image:gear_preferences.png[ConfigurationUpdate]|No|Update entity list in persistence.xml, persistence unit MDM-Core according to the list below. |None.
 |============================================================================================================================
-
 
 Due to a huge number of changes in the structure of 'datamanager.xml' it is recommended to use the sample file below and merge all settings from the old configuration 
 (database connections, elasticsearch settings, staging settings) manually:
@@ -951,7 +947,6 @@ Current list of entities (KIT DM 1.4) that has to be registered in the persisten
         <class>edu.kit.dama.authorization.entities.impl.User</class>
         <class>edu.kit.dama.authorization.entities.impl.Membership</class>
         <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
-        <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
         <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
         <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
         <class>edu.kit.dama.authorization.entities.impl.Grant</class>
@@ -992,3 +987,17 @@ Current list of entities (KIT DM 1.4) that has to be registered in the persisten
 [NOTE]
 Also consider to update to the custom WebDav implementation provided with KIT DM 1.4. Therefor, please follow the instructions beginning with <<WebDavLibraries,deploying tomcat-ext>>, followed by copying and configuring the provided webdav.xml
 Finally, you should compare your configuration with the <<WebDavConfig, configuration described in the installation chapter>>. Afterwards, you should be able to add WebDav credentials in the <<ChapterProfile,profile tab>> of the AdminUI.
+
+[underline]*Update 1.4 -> 1.5*
+
+[cols="1,1,6,2", options="header"]
+|============================================================================================================================
+|Type|Optional|Todo|Side Effects
+|image:data.png[DatabaseUpdate]|No|Apply script `sql/update.1.4-1.5.sql`|This script updates constraints in the data organization tables in order to avoid conflicts during updates.|None
+|image:gear_preferences.png[ConfigurationUpdate]|Yes|Due to an update of the behaviour of transfer finalization jobs it is recommended to change the trigger rate of the ingest and download finalizer jobs to one execution per 2 or 3 seconds after removing the existing triggers from both jobs. Please refer to the <<ChapterJobScheduling,AdminUI documentation>> on how to do this. |None.
+|image:server_client_exchange.png[RESTInterfaceChanges]|No|PUT and POST do not longer accept query parameters. Instead, previous query parameters must be provided as form parameters. This affects only the 'groupId' parameter used in almost in every endpoint. |Form parameters provide as query parameters are ignored. In case of the groupId, the default groupId 'USERS' would be used.
+|image:server_client_exchange.png[RESTInterfaceChanges]|No|DELETE rest/sharing/resources/references now takes an additional parameter `referenceGroupId` to provide the groupId of the resource reference. Previously, `groupId` has been used for this purpose, which is now used for authorization only.|Not providing `referenceGroupId` will results in HTTP BAD_REQUEST.
+|============================================================================================================================
+
+[NOTE]
+The authentication extension located in library 'tomcat-ext-<version>.jar' has been updated to version 1.1.2. Please remember to replace library '/usr/share/tomcat7/lib/tomcat-ext-1.1.1.jar' by '/usr/share/tomcat7/lib/tomcat-ext-1.1.2.jar'.

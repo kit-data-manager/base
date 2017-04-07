@@ -44,7 +44,7 @@ import edu.kit.dama.ui.admin.utils.UIComponentTools;
 import edu.kit.dama.mdm.base.UserData;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import edu.kit.dama.ui.commons.util.UIUtils7;
 import java.util.Collection;
 import java.util.List;
@@ -387,7 +387,7 @@ public class GroupMembershipEditorWindow extends Window {
         mdm.setAuthorizationContext(UIHelper.getSessionContext());
 
         try {
-            Group theGroup = FindUtil.findGroup(PU.entityManager(), groupId);
+            Group theGroup = FindUtil.findGroupWithMemberships(PU.entityManager(), groupId);
             theGroup.getMemberships().stream().map((membership) -> {
                 //add a new member row
                 UserData member = null;

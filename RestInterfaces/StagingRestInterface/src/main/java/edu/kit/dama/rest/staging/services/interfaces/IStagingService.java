@@ -143,7 +143,7 @@ public interface IStagingService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.IDefaultIngestInformation>")
     IEntityWrapper<? extends IDefaultIngestInformation> createIngest(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("objectId") String objectId,
             @FormParam("accessPoint") String accessPointId,
             @FormParam("stagingProcessors") String stagingProcessors,
@@ -458,7 +458,7 @@ public interface IStagingService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.staging.entities.interfaces.IDefaultDownloadInformation>")
     IEntityWrapper<? extends IDefaultDownloadInformation> createDownload(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("objectId") String objectId,
             @FormParam("accessPoint") String accessPoint,
             @FormParam("dataOrganizationTree") String dataOrganizationTree,

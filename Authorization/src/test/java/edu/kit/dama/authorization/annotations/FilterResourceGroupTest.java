@@ -195,7 +195,7 @@ public class FilterResourceGroupTest extends SecurityUtil {
      */
     @FilterOutput(roleRequired = Role.GUEST)
     public List<SecurityTestEntity> getAllEntities(@Context AuthorizationContext act) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-        List<SecurityTestEntity> copyList = new ArrayList<SecurityTestEntity>();
+        List<SecurityTestEntity> copyList = new ArrayList<>();
         copyList.addAll(allEntities);
         //@TODO Check why aspect weaving is not available here
       //  PlainAuthorizerLocal.filterOnAccessAllowed(act, Role.GUEST, (Collection) copyList);

@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.kit.dama</groupId>
   <artifactId>KITDM</artifactId>
-  <version>1.4</version>
+  <version>1.5</version>
   <packaging>pom</packaging>
   <name>KIT Data Manager</name>
   <description>The main module containing all components of KIT Data Manager. The sub-modules are separated by functionality and may contain additional sub-modules.
@@ -14,6 +14,7 @@
     <module>Commons</module>
     <module>DataOrganization</module>
     <module>DataOrganization_Neo4j</module>
+    <module>Scheduler</module>
     <module>MetaDataManagement</module>
     <module>DataWorkflow</module>
     <module>RestInterfaces</module>
@@ -22,7 +23,6 @@
     <module>Core</module>
     <module>Utils</module>
     <module>Documentation</module>
-    <module>Scheduler</module>
     <module>Samples</module>
   </modules>
   <scm>
@@ -128,7 +128,18 @@
     <dependency>
       <groupId>org.fzk.ipe</groupId>
       <artifactId>Tools</artifactId>
-      <version>1.5</version>
+      <version>1.6</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>log4j</artifactId>
+          <groupId>log4j</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.7.5</version>
     </dependency>
   </dependencies>
   <repositories>
@@ -213,14 +224,12 @@
         <configuration>
           <source>1.7</source>
           <target>1.7</target>
-          <meminitial>512m</meminitial>
-          <maxmem>1024m</maxmem>
-          <fork>true</fork>
+          <meminitial>1024m</meminitial>
+          <maxmem>2048m</maxmem>
           <annotationProcessors>
             <annotationProcessor>edu.kit.dama.authorization.annotations.SecurableResourceIdFieldProcessor</annotationProcessor>
             <annotationProcessor>edu.kit.dama.authorization.annotations.FilterOutputValidationProcessor</annotationProcessor>
           </annotationProcessors>
-          <argLine>-Xms512m -Xmx1024m -XX:+UseConcMarkSweepGC -XX:+CMSPermGenSweepingEnabled -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=128m</argLine>
         </configuration>
       </plugin>
       <plugin>
@@ -292,8 +301,8 @@
           </execution>
         </executions>
         <configuration>
-          <argLine>-Xms512m -Xmx1024m -XX:-UseSplitVerifier -XX:+UseConcMarkSweepGC -XX:MaxPermSize=128m</argLine>
-          <reuseForks>false</reuseForks>
+          <threadCount>1</threadCount>
+          <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=128m</argLine>
         </configuration>
       </plugin>
       <plugin>
@@ -454,7 +463,7 @@
             <configuration>
               <format>{0}_rev.{1}</format>
               <items>
-                <item>${kit.datamanager.branch}</item>
+                <item>${project.kit.datamanager.branch}</item>
                 <item>scmVersion</item>
               </items>
               <doCheck>true</doCheck>

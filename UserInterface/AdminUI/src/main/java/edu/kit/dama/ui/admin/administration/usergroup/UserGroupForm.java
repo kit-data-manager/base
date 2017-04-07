@@ -45,7 +45,7 @@ import edu.kit.dama.mdm.admin.UserGroup;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.ui.admin.utils.IconContainer;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import edu.kit.dama.ui.commons.util.UIUtils7;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

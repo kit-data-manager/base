@@ -232,8 +232,8 @@ public final class StagingConfigurationPersistence {
     }
 
     /**
-     * Find all AccessPoints for the provided group. If pGroupId is null, an
-     * empty string is used.
+     * Find all AccessPoints for the provided group and for AccessPoints that
+     * are available for all groups.
      *
      * @param pGroupId The group.
      *
@@ -242,19 +242,19 @@ public final class StagingConfigurationPersistence {
     public List<StagingAccessPointConfiguration> findAccessPointConfigurationsForGroup(String pGroupId) {
         List<StagingAccessPointConfiguration> result = new LinkedList<>();
         String groupId = pGroupId;
-        if (groupId == null) {
-            LOGGER.info("No group argument specified. Using empty string.");
-            groupId = "";
-        }
 
-        if (groupId.equals(Constants.SYSTEM_GROUP)) {
+        if (Constants.SYSTEM_GROUP.equals(groupId)) {
             LOGGER.info("Returning all AccessPoint configurations for group SYSTEM_GROUP");
             return findAllAccessPointConfigurations();
         }
         IMetaDataManager mdm = getMetaDataManager();
 
         try {
-            result = mdm.findResultList("SELECT h FROM StagingAccessPointConfiguration h WHERE h.groupId=?1 OR h.groupId IS NULL", new Object[]{groupId}, StagingAccessPointConfiguration.class);
+            if (groupId == null) {
+                result = mdm.findResultList("SELECT h FROM StagingAccessPointConfiguration h WHERE h.groupId IS NULL", StagingAccessPointConfiguration.class);
+            } else {
+                result = mdm.findResultList("SELECT h FROM StagingAccessPointConfiguration h WHERE h.groupId=?1 OR h.groupId IS NULL", new Object[]{groupId}, StagingAccessPointConfiguration.class);
+            }
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain available AccessPoint configurations", ex);
         } finally {
@@ -355,19 +355,18 @@ public final class StagingConfigurationPersistence {
      */
     public List<StagingProcessor> findStagingProcessorsForGroup(String pGroupId) {
         List<StagingProcessor> result = new LinkedList<>();
-        String groupId = pGroupId;
-        if (groupId == null) {
-            LOGGER.info("No group argument specified. Using empty string.");
-            groupId = "";
-        }
 
-        if (groupId.equals(Constants.SYSTEM_GROUP)) {
+        if (Constants.SYSTEM_GROUP.equals(pGroupId)) {
             LOGGER.info("Returning all staging processor configurations for group SYSTEM_GROUP");
             return findAllStagingProcessors();
         }
         IMetaDataManager mdm = getMetaDataManager();
         try {
-            result = mdm.findResultList("SELECT p FROM StagingProcessor p WHERE p.groupId=?1 OR p.groupId IS NULL", new Object[]{groupId}, StagingProcessor.class);
+            if (pGroupId == null) {
+                result = mdm.findResultList("SELECT p FROM StagingProcessor p WHERE p.groupId IS NULL", new Object[]{pGroupId}, StagingProcessor.class);
+            } else {
+                result = mdm.findResultList("SELECT p FROM StagingProcessor p WHERE p.groupId=?1 OR p.groupId IS NULL", new Object[]{pGroupId}, StagingProcessor.class);
+            }
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain available staging processor configurations", ex);
         } finally {

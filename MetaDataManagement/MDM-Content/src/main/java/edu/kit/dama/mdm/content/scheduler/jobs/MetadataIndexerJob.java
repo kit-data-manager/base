@@ -47,22 +47,22 @@ public class MetadataIndexerJob extends AbstractConfigurableJob {
      * The property key for setting the id of the group for which the metadata
      * should be processed.
      */
-    private static final String GROUP_ID = "groupId";
+    public static final String GROUP_ID_PROPERTY = "groupId";
 
     /**
      * The property key for setting the hostname for publishing the metadata.
      */
-    private static final String HOSTNAME = "hostname";
+    public static final String HOSTNAME_PROPERTY = "hostname";
 
     /**
      * The property key for setting the index for publishing the metadata.
      */
-    private static final String INDEX = "index";
+    public static final String INDEX_PROPERTY = "index";
 
     /**
      * The property key for setting the cluster for publishing the metadata.
      */
-    private static final String CLUSTER = "cluster";
+    public static final String CLUSTER_PROPERTY = "cluster";
 
     private String groupId = Constants.USERS_GROUP_ID;
     private String hostname = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_HOST_ID, "localhost");
@@ -85,10 +85,10 @@ public class MetadataIndexerJob extends AbstractConfigurableJob {
                 if (jobParameters != null) {
                     props = PropertiesUtil.propertiesFromString(jobParameters);
                 }
-                groupId = (props.getProperty(GROUP_ID) != null) ? props.getProperty(GROUP_ID) : Constants.USERS_GROUP_ID;
-                hostname = (props.getProperty(HOSTNAME) != null) ? props.getProperty(HOSTNAME) : hostname;
-                cluster = (props.getProperty(CLUSTER) != null) ? props.getProperty(CLUSTER) : cluster;
-                index = (props.getProperty(INDEX) != null) ? props.getProperty(INDEX) : index;
+                groupId = (props.getProperty(GROUP_ID_PROPERTY) != null) ? props.getProperty(GROUP_ID_PROPERTY) : Constants.USERS_GROUP_ID;
+                hostname = (props.getProperty(HOSTNAME_PROPERTY) != null) ? props.getProperty(HOSTNAME_PROPERTY) : hostname;
+                cluster = (props.getProperty(CLUSTER_PROPERTY) != null) ? props.getProperty(CLUSTER_PROPERTY) : cluster;
+                index = (props.getProperty(INDEX_PROPERTY) != null) ? props.getProperty(INDEX_PROPERTY) : index;
                 LOGGER.debug(" - Performing indexing to cluster {} accessed via {}/{}", cluster, hostname, index);
                 MetadataIndexingHelper.getSingleton().setHostname(hostname);
                 boolean result = MetadataIndexingHelper.getSingleton().performIndexing(cluster, index, new GroupId(groupId), 10, AuthorizationContext.factorySystemContext());
@@ -114,20 +114,20 @@ public class MetadataIndexerJob extends AbstractConfigurableJob {
 
     @Override
     public String[] getInternalPropertyKeys() {
-        return new String[]{GROUP_ID, HOSTNAME, CLUSTER, INDEX};
+        return new String[]{GROUP_ID_PROPERTY, HOSTNAME_PROPERTY, CLUSTER_PROPERTY, INDEX_PROPERTY};
     }
 
     @Override
     public String getInternalPropertyDescription(String pKey) {
         if (null != pKey) {
             switch (pKey) {
-                case GROUP_ID:
+                case GROUP_ID_PROPERTY:
                     return "The group whose metadata entries should be indexed.";
-                case HOSTNAME:
+                case HOSTNAME_PROPERTY:
                     return "The hostname where the elastic instance is running.";
-                case CLUSTER:
+                case CLUSTER_PROPERTY:
                     return "The cluster at which the metadata is indexed.";
-                case INDEX:
+                case INDEX_PROPERTY:
                     return "The index at which the metadata is indexed.";
             }
         }
@@ -137,10 +137,10 @@ public class MetadataIndexerJob extends AbstractConfigurableJob {
     @Override
     public void validateProperties(Properties pProperties) throws PropertyValidationException {
         EntityManager em = PU.entityManager();
-        String group = pProperties.getProperty(GROUP_ID);
+        String group = pProperties.getProperty(GROUP_ID_PROPERTY);
         if (group != null) {
             try {
-                FindUtil.findGroup(em, new GroupId(group));
+                FindUtil.findGroupQuick(em, new GroupId(group));
             } catch (EntityNotFoundException ex) {
                 throw new PropertyValidationException("Group with id '" + group + "' not found.", ex);
             }

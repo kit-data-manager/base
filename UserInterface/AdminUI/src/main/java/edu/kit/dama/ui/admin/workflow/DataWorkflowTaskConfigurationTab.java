@@ -43,10 +43,7 @@ import edu.kit.dama.ui.admin.exception.NoteBuilder;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
 import edu.kit.dama.ui.commons.util.UIUtils7;
-import edu.kit.dama.ui.components.ConfirmationWindow7;
-import static edu.kit.dama.ui.components.ConfirmationWindow7.RESULT.YES;
 import edu.kit.dama.util.Constants;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -57,7 +54,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

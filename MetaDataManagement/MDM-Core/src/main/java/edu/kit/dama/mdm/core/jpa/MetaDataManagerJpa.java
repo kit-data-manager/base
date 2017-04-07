@@ -21,6 +21,7 @@ import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +129,7 @@ public class MetaDataManagerJpa implements IMetaDataManager {
             applyProperties(query);
             resultList = query.getResultList();
         } catch (RuntimeException re) {
-            LOGGER.error("Failed to find entity list for query: " + queryString, re);
+            LOGGER.trace("Failed to find entity list for query: " + queryString, re);
         } finally {
             finalizeEntityManagerAccess("find", null, entityClass);
         }
@@ -150,7 +151,7 @@ public class MetaDataManagerJpa implements IMetaDataManager {
             //or implement FetchGroupTracker as it is currently done
             result = entityManager.find(entityClass, primaryKey, properties);
         } catch (RuntimeException re) {
-            LOGGER.warn("Failed to find typed single result by primary key '" + primaryKey + "'", re);
+            LOGGER.trace("Failed to find typed single result by primary key '" + primaryKey + "'", re);
         } finally {
             finalizeEntityManagerAccess("find with PK '" + primaryKey.toString() + "'", null, entityClass);
         }
@@ -189,7 +190,7 @@ public class MetaDataManagerJpa implements IMetaDataManager {
             }
             result = q.getResultList();
         } catch (RuntimeException re) {
-            LOGGER.warn("Failed to obtain typed query result list", re);
+            LOGGER.trace("Failed to obtain typed query result list", re);
         } finally {
             finalizeEntityManagerAccess("find result list with plain SQL '" + queryString + "'", null, entityClass);
         }
@@ -228,7 +229,7 @@ public class MetaDataManagerJpa implements IMetaDataManager {
             }
             result = q.getResultList();
         } catch (RuntimeException re) {
-            LOGGER.warn("Failed to obtain generic query result list", re);
+            LOGGER.trace("Failed to obtain generic query result list", re);
         } finally {
             finalizeEntityManagerAccess("find result list with plain SQL '" + queryString + "'", null, List.class);
         }
@@ -257,7 +258,7 @@ public class MetaDataManagerJpa implements IMetaDataManager {
             result = q.getSingleResult();
             LOGGER.debug("Query returned.");
         } catch (RuntimeException re) {
-            LOGGER.warn("Failed to obtain typed single query result", re);
+            LOGGER.trace("Failed to obtain typed single query result", re);
         } finally {
             finalizeEntityManagerAccess("find single result with plain SQL '" + queryString + "'", null, entityClass);
         }
@@ -283,7 +284,7 @@ public class MetaDataManagerJpa implements IMetaDataManager {
             }
             result = q.getSingleResult();
         } catch (RuntimeException re) {
-            LOGGER.warn("Failed to obtain generic single query result", re);
+            LOGGER.trace("Failed to obtain generic single query result", re);
         } finally {
             finalizeEntityManagerAccess("find single result with plain SQL '" + queryString + "'", null, Object.class);
         }
@@ -310,7 +311,7 @@ public class MetaDataManagerJpa implements IMetaDataManager {
             transaction.begin();
             result = q.executeUpdate();
         } catch (RuntimeException re) {
-            LOGGER.warn("Failed to obtain generic update result", re);
+            LOGGER.trace("Failed to obtain generic update result", re);
         } finally {
             finalizeEntityManagerAccess("update with plain SQL '" + queryString + "'", transaction, Object.class);
         }
@@ -383,8 +384,8 @@ public class MetaDataManagerJpa implements IMetaDataManager {
             Query q = entityManager.createQuery(queryString.toString());
             applyProperties(q);
             resultList = (List<T>) q.getResultList();
-        } catch (Exception e) {
-            LOGGER.warn("Failed to obtain result in find-method for query: " + queryString.toString(), e);
+        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            LOGGER.trace("Failed to obtain result in find-method for query: " + queryString.toString(), e);
         } finally {
             finalizeEntityManagerAccess("find(first,last)", null, argumentNotNull);
         }
@@ -459,8 +460,7 @@ public class MetaDataManagerJpa implements IMetaDataManager {
             transaction.begin();
             entityManager.remove(managedEntity);
         } catch (RuntimeException re) {
-            LOGGER.error("Failed to remove entity", re);
-            throw re;
+            LOGGER.trace("Failed to remove entity.", re);
         } finally {
             finalizeEntityManagerAccess("remove", transaction, entity);
         }
@@ -681,5 +681,10 @@ public class MetaDataManagerJpa implements IMetaDataManager {
     @Override
     public void setAuthorizationContext(IAuthorizationContext authorizationContext) {
         //nothing is done here as this metadata manager is not secured.
+    }
+
+    @Override
+    public IAuthorizationContext getAuthorizationContext() {
+        return null;
     }
 }

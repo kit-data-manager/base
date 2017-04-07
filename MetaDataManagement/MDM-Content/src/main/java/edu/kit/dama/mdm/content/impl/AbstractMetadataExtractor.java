@@ -296,22 +296,17 @@ public abstract class AbstractMetadataExtractor extends AbstractStagingProcessor
         // <editor-fold defaultstate="collapsed" desc="Load DigitalObject from database">
         if (getDigitalObject() == null) {
             // Load digital object from database 
-            DigitalObject dObj = DigitalObject.factoryNewDigitalObject(digitalObjectIdentifier);
             IMetaDataManager imdm = null;
             try {
                 imdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
                 imdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
 
-                //@TODO check if this is smart...for huge repositories this will be a lot data
-                List<DigitalObject> find = imdm.find(dObj, dObj);
+                List<DigitalObject> find = imdm.findResultList("SELECT o FROM DigitalObject o WHERE o.digitalObjectIdentifier=?1", new Object[]{digitalObjectIdentifier}, DigitalObject.class);
+
                 if (find.isEmpty()) {
                     throw new StagingProcessorException("No DigitalObject found for identifier '" + digitalObjectIdentifier + "'");
                 } else {
                     setDigitalObject(find.get(0));
-                    if (find.size() > 1) {
-                        LOGGER.warn("More than one object with identifier '{}' found! "
-                                + "Found {} results!?", digitalObjectIdentifier, find.size());
-                    }
                 }
             } catch (UnauthorizedAccessAttemptException ex) {
                 throw new StagingProcessorException("Not authorized to access digital object with id " + digitalObjectIdentifier, ex);

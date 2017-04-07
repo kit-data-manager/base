@@ -52,6 +52,7 @@ public final class Constants {
     public final static String REST_ALL_INT = "-1";
     public final static String REST_DEFAULT_MIN_INDEX = "0";
     public final static String REST_DEFAULT_MAX_RESULTS = "10";
+    public final static int REST_MAX_PAGE_SIZE = 100;
 
     public static final String REST_PARAMETER_GROUP_ID = "groupId";
     public static final String REST_PARAMETER_FIRST = "first";

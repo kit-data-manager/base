@@ -339,7 +339,7 @@ public class GenerateSourceRelease {
         Dependency mail = factoryDependency("org.fzk.globus", "mail", "4.0.8");
         Dependency soton = factoryDependency("org.fzk.globus", "soton-hicog", "4.0.2");
         Dependency gridutil = factoryDependency("org.fzk.ipe", "grid-util", "2.1");
-        Dependency tools = factoryDependency("org.fzk.ipe", "Tools", "1.5");
+        Dependency tools = factoryDependency("org.fzk.ipe", "Tools", "1.6");
         Dependency mtk = factoryDependency("au.edu.apsr", "mtk", "1.1");
 
         config.setLocalDependencies(new Dependency[]{commandlineTools, adalapi, mail, soton, gridutil, tools, mtk});

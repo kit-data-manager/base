@@ -326,7 +326,7 @@ public interface IUserGroupService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultUserData>")
     IEntityWrapper<? extends IDefaultUserData> addUser(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("firstName") String firstName,
             @FormParam("lastName") String lastName,
             @FormParam("email") String email,
@@ -358,7 +358,9 @@ public interface IUserGroupService extends ICommonRestInterface {
     /**
      * Get details of the user with the provided userId. If the provided userId
      * is 0, information about the caller are returned and the call is not role
-     * restricted.
+     * restricted. If caller is available, e.g. if no credentials are provided,
+     * a result with userId WORLD will be returned representing anonymous
+     * access.
      *
      * Role restriction: MEMBER
      *
@@ -408,7 +410,7 @@ public interface IUserGroupService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultUserData>")
     IEntityWrapper<? extends IDefaultUserData> updateUser(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("userId") Long userId,
             @FormParam("firstName") String firstName,
             @FormParam("lastName") String lastName,
@@ -436,7 +438,7 @@ public interface IUserGroupService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("java.lang.Void")
     Response deleteUser(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("userId") Long userId,
             @javax.ws.rs.core.Context HttpContext hc);
 }

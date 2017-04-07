@@ -165,7 +165,7 @@ public interface IDataWorkflowRestService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataworkflow.interfaces.IDefaultDataWorkflowTask>")
     IEntityWrapper<? extends IDefaultDataWorkflowTask> createTask(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("investigationId") Long investigationId,
             @FormParam("configurationId") Long configurationId,
             @FormParam("environmentId") Long environmentId,

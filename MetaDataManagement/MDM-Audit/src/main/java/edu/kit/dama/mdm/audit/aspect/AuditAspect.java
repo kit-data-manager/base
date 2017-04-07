@@ -16,6 +16,7 @@
 package edu.kit.dama.mdm.audit.aspect;
 
 import edu.kit.dama.mdm.audit.impl.AuditManager;
+import edu.kit.dama.mdm.audit.servlet.RabbitMQInitializerListener;
 import edu.kit.dama.mdm.audit.types.AuditEvent;
 import edu.kit.dama.mdm.audit.types.AuditDetail;
 
@@ -23,6 +24,7 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.slf4j.LoggerFactory;
 
 /**
  * The audit aspect. This aspect is activated when calling
@@ -32,6 +34,8 @@ import org.aspectj.lang.annotation.Pointcut;
  */
 @Aspect
 public class AuditAspect {
+
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(AuditAspect.class);
 
     @Pointcut("call(* edu.kit.dama.mdm.audit.util.AuditUtils.audit(..)) && args(pid, caller, agent, resource, category, type, trigger, details)")
     public void auditPointcut(final String pid, final String caller, final String agent, final String resource, final String category, final AuditEvent.TYPE type, final AuditEvent.TRIGGER trigger, final AuditDetail... details) {
@@ -58,6 +62,7 @@ public class AuditAspect {
      */
     @Around("auditPointcut(pid, caller, agent, resource, category, type, trigger, details)")
     public void handleAuditInformation(final String pid, final String caller, final String agent, final String resource, final String category, final AuditEvent.TYPE type, final AuditEvent.TRIGGER trigger, final AuditDetail[] details, final JoinPoint jointPoint) throws Throwable {
+        LOGGER.debug("Handling AuditEvent of type {} in category {} by aspect implementation.", type, category);
         AuditEvent event = AuditEvent.factoryAuditEvent(type, category);
         event.setEventTrigger(trigger);
         event.setPid(pid);

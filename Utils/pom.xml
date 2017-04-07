@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -43,7 +43,7 @@
         <scope>provided</scope>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <root.relative.path>../</root.relative.path>
-        <project.kit.datamanager.version>1.4</project.kit.datamanager.version>
+        <project.kit.datamanager.version>${project.version}</project.kit.datamanager.version>
     </properties>
       
     <developers>
@@ -291,13 +291,13 @@
             <version>${project.kit.datamanager.version}</version>
             <scope>${scope}</scope>
         </dependency-->
-        <dependency>
+        <!--dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>FunctionalTests</artifactId>
             <version>${project.kit.datamanager.version}</version>
             <type>jar</type>
             <scope>${scope}</scope>
-        </dependency>
+        </dependency-->
         <dependency>
             <groupId>edu.kit</groupId>
             <artifactId>ADALAPI</artifactId>
@@ -321,7 +321,7 @@
             <groupId>org.fzk.ipe</groupId>
             <artifactId>Tools</artifactId>
             <type>jar</type>
-            <version>1.5</version>
+            <version>1.6</version>
             <scope>${scope}</scope>
         </dependency>
         <dependency>

@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>MetaDataManagement</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -138,18 +138,6 @@
             <version>1.1</version>
         </dependency>
         <dependency>
-            <groupId>org.fzk.ipe</groupId>
-            <artifactId>Tools</artifactId>
-            <type>jar</type>
-            <version>1.5</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xerces</groupId>
-                    <artifactId>xercesImpl</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>1.2</version>
@@ -178,23 +166,23 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-      <plugin>
-        <groupId>eu.somatik.serviceloader-maven-plugin</groupId>
-        <artifactId>serviceloader-maven-plugin</artifactId>
-        <version>1.0.7</version>
-        <configuration>
-          <services>
-            <param>edu.kit.dama.mdm.content.mets.plugin.IMetsTypeExtractor</param>
-          </services>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
+            <plugin>
+                <groupId>eu.somatik.serviceloader-maven-plugin</groupId>
+                <artifactId>serviceloader-maven-plugin</artifactId>
+                <version>1.0.7</version>
+                <configuration>
+                    <services>
+                        <param>edu.kit.dama.mdm.content.mets.plugin.IMetsTypeExtractor</param>
+                    </services>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

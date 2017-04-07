@@ -33,11 +33,11 @@ public class ElasticHelper {
 
     public static TransportClient getTransportClient(String hostname, int port, String cluster) {
         Settings settings = Settings.builder().put("cluster.name", cluster).build();
-
-        TransportClient client = new PreBuiltTransportClient(settings)
-                .addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress(hostname, port)));
-
+        TransportClient client = new PreBuiltTransportClient(settings).addTransportAddress(new InetSocketTransportAddress(new InetSocketAddress(hostname, port)));
         return client;
     }
+    
+    
+    
 
 }

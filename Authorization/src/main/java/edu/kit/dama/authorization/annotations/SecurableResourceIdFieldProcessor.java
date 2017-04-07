@@ -78,7 +78,7 @@ public class SecurableResourceIdFieldProcessor extends AbstractProcessor {
   @Override
   public final boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     for (TypeElement te : annotations) {
-      Map<Element, Integer> occurences = new HashMap<Element, Integer>();
+      Map<Element, Integer> occurences = new HashMap<>();
       for (Element e : roundEnv.getElementsAnnotatedWith(te)) {
         if (occurences.get(e.getEnclosingElement()) == null) {
           occurences.put(e.getEnclosingElement(), 1);

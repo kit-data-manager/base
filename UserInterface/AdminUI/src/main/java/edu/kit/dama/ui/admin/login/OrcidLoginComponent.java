@@ -41,7 +41,7 @@ import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.rest.util.auth.AbstractAuthenticator;
 import edu.kit.dama.rest.util.auth.AuthenticatorFactory;
 import edu.kit.dama.rest.util.auth.impl.SimpleTokenAuthenticator;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import edu.kit.dama.util.Constants;
 import edu.kit.dama.util.CryptUtil;
 import edu.kit.dama.util.DataManagerSettings;
@@ -191,7 +191,7 @@ public class OrcidLoginComponent extends AbstractLoginComponent {
                 VaadinSession.getCurrent().setAttribute("from", null);
                 Page.getCurrent().setLocation(fromPage);
             } else {
-                Page.getCurrent().setLocation(UIHelper.getWebAppUrl().toString());
+                Page.getCurrent().reload();
             }
         }
     }
@@ -307,7 +307,7 @@ public class OrcidLoginComponent extends AbstractLoginComponent {
             if (auth.getAuthenticatorId().equals(getLoginIdentifier())) {
                 authenticatorFound = true;
                 Map<String, String> propertyMap = new HashMap<>();
-                propertyMap.put(SimpleTokenAuthenticator.USER_TOKEN_KEY, registeredUser.getDistinguishedName());
+                propertyMap.put(SimpleTokenAuthenticator.USER_TOKEN_PROPERTY_KEY, registeredUser.getDistinguishedName());
                 IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
                 mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
                 try {

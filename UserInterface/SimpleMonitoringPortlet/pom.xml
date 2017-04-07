@@ -19,7 +19,7 @@ limitations under the License.
 	<parent>
     <artifactId>UserInterface</artifactId>
     <groupId>edu.kit.dama</groupId>
-    <version>1.4</version>
+    <version>1.5</version>
   </parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>edu.kit.dama</groupId>
@@ -130,7 +130,7 @@ limitations under the License.
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>1.8</version>
+            <version>1.19</version>
         </dependency>   
     </dependencies>
 

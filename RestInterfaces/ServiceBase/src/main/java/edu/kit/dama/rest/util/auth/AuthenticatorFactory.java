@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import edu.kit.dama.commons.interfaces.IConfigurableAdapter;
 import edu.kit.dama.rest.util.auth.impl.OAuthAuthenticator;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,5 +129,22 @@ public class AuthenticatorFactory {
      */
     public final List<AbstractAuthenticator> getAuthenticators() {
         return authenticators;
+    }
+
+    /**
+     * Get an authenticators by its id.
+     *
+     * @param authenticatorId The id of the authenticator.
+     *
+     * @return An authenticator or null if no authenticator for the provided id
+     * is available.
+     */
+    public final AbstractAuthenticator getAuthenticator(final String authenticatorId) {
+        return (AbstractAuthenticator) CollectionUtils.find(authenticators, new Predicate() {
+            @Override
+            public boolean evaluate(Object o) {
+                return ((AbstractAuthenticator) o).getAuthenticatorId().equals(authenticatorId);
+            }
+        });
     }
 }

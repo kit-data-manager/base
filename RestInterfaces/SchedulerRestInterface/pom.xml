@@ -17,34 +17,47 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    
+
     <parent>
-        <groupId>edu.kit.dama</groupId>
-        <artifactId>Scheduler</artifactId>
-        <version>1.4</version>
+        <groupId>edu.kit.dama.rest</groupId>
+        <artifactId>RestInterfaces</artifactId>
+        <version>1.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
-    <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>    
     <groupId>edu.kit.dama.rest</groupId>
-    <artifactId>REST-SchedulerService</artifactId>
-    <name>REST-SchedulerService</name>
+    <artifactId>SchedulerRestInterface</artifactId>
+    <name>SchedulerRestInterface</name>
     <packaging>jar</packaging>
-    
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>        
-        <root.relative.path>../../</root.relative.path>
+        <maven.compiler.target>1.7</maven.compiler.target>
+        <root.relative.path>../../</root.relative.path>  
     </properties>
-    
+   
     <dependencies>
-        
+        <dependency>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>1.1.0.Final</version>
+        </dependency>
         <dependency>
             <groupId>edu.kit.dama.rest</groupId>
-            <artifactId>SchedulerRestInterface</artifactId>
+            <artifactId>ServiceBase</artifactId>
             <version>${project.kit.datamanager.version}</version>
-        </dependency>  
-        
-    </dependencies>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama.rest</groupId>
+            <artifactId>ClientBase</artifactId>
+            <version>${project.kit.datamanager.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>edu.kit.dama</groupId>
+            <artifactId>SchedulerManager</artifactId>
+            <version>${project.kit.datamanager.version}</version>
+        </dependency>
+    </dependencies>    
 </project>

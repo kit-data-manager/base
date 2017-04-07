@@ -17,7 +17,7 @@ limitations under the License.
 
 <persistence version="1.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence     http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd">
     <!--This PU is needed as the MDM-Core tests are using test classes of the Authorization module for database cleanup.-->
-    <persistence-unit name="AuthorizationUnit-Test" transaction-type="RESOURCE_LOCAL">
+    <persistence-unit name="AuthorizationPU" transaction-type="RESOURCE_LOCAL">
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
         <class>edu.kit.dama.mdm.core.test.entities.TestEntity</class>
         <class>edu.kit.dama.mdm.core.test.entities.SecurityTestEntity</class>
@@ -25,7 +25,6 @@ limitations under the License.
         <class>edu.kit.dama.authorization.entities.impl.User</class>
         <class>edu.kit.dama.authorization.entities.impl.Membership</class>
         <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
-        <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
         <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
         <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
         <class>edu.kit.dama.authorization.entities.impl.Grant</class>
@@ -51,7 +50,6 @@ limitations under the License.
         <class>edu.kit.dama.authorization.entities.impl.User</class>
         <class>edu.kit.dama.authorization.entities.impl.Membership</class>
         <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
-        <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
         <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
         <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
         <class>edu.kit.dama.authorization.entities.impl.Grant</class>

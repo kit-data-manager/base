@@ -15,15 +15,14 @@
  */
 package edu.kit.dama.ui.admin;
 
+import edu.kit.dama.ui.admin.wizard.FirstStartWizard;
 import com.vaadin.annotations.Theme;
-import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.data.Property;
 import com.vaadin.event.LayoutEvents;
 import com.vaadin.server.DefaultErrorHandler;
 import static com.vaadin.server.DefaultErrorHandler.doDefault;
 import com.vaadin.server.ExternalResource;
 import com.vaadin.server.VaadinRequest;
-import com.vaadin.server.VaadinServlet;
 import com.vaadin.server.VaadinSession;
 import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.ui.Alignment;
@@ -47,8 +46,8 @@ import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.ui.admin.login.AbstractLoginComponent;
 import edu.kit.dama.ui.admin.login.OrcidLoginComponent;
 import edu.kit.dama.ui.admin.login.EmailPasswordLoginComponent;
-import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
+import edu.kit.dama.ui.commons.util.UIUtils7;
 import edu.kit.dama.ui.simon.panel.SimonMainPanel;
 import edu.kit.dama.ui.simon.util.SimonConfigurator;
 import edu.kit.dama.util.Constants;
@@ -62,7 +61,6 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import javax.servlet.annotation.WebServlet;
 import org.apache.commons.configuration.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,26 +90,48 @@ public class AdminUIMainView extends UI {
     private LandingPageComponent landingPage;
     private VerticalLayout mainLayout;
     private Component viewComponent;
-    private VIEW currentView;
     private boolean INITIALIZING = true;
-
-    @WebServlet(value = "/*", asyncSupported = true)
-    @VaadinServletConfiguration(productionMode = false, ui = AdminUIMainView.class, widgetset = "edu.kit.dama.ui.admin.AppWidgetSet")
-    public static class Servlet extends VaadinServlet {
-
-        @Override
-        public void destroy() {
-            //destroy also all metadata management instances on redeployment in order to close all database connections
-            MetaDataManagement.getMetaDataManagement().destroy();
-            super.destroy();
-        }
-
-    }
 
     @Override
     protected void init(VaadinRequest request) {
+        boolean firstStart = false;
+        //check first start
+        IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
+        mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
         try {
-            //might be OAuth redirect
+            if (mdm.findSingleResult("SELECT COUNT(u) FROM Users u", Number.class).intValue() == 0) {
+                //first start
+                LOGGER.info("Recognized first start. Showing wizard.");
+                firstStart = true;
+            }
+        } catch (UnauthorizedAccessAttemptException ex) {
+            //failed
+        } finally {
+            mdm.close();
+        }
+
+        try {
+            //setup SiMon configuration and error handler
+            doBasicSetup();
+
+            //check if a landing page is requested and create the header accordingly
+            boolean isLandingPage = request.getParameter("landing") != null;
+            String landingObjectId = request.getParameter("oid");
+            //setup header
+            setupHeader(isLandingPage, landingObjectId);
+
+            if (firstStart) {
+                //do nothing else but first start handling
+                mainLayout = new VerticalLayout();
+                mainLayout.setMargin(false);
+                mainLayout.setSizeFull();
+                mainLayout.addComponent(new FirstStartWizard());
+                setContent(mainLayout);
+                setSizeFull();
+                return;
+            }
+
+            //Check for OAuth redirect
             String pendingAuthId = null;
             AbstractLoginComponent.AUTH_MODE type = AbstractLoginComponent.AUTH_MODE.LOGIN;
             if (VaadinSession.getCurrent().getAttribute("auth_pending") != null) {
@@ -120,13 +140,6 @@ public class AdminUIMainView extends UI {
                 pendingAuthId = (String) VaadinSession.getCurrent().getAttribute("registration_pending");
                 type = AbstractLoginComponent.AUTH_MODE.REGISTRATION;
             }
-
-            doBasicSetup();
-
-            boolean isLandingPage = request.getParameter("landing") != null;
-            String landingObjectId = request.getParameter("oid");
-            //setup header
-            setupHeader(isLandingPage, landingObjectId);
 
             //setup login form
             setupLoginForm(type, pendingAuthId, request);
@@ -145,19 +158,25 @@ public class AdminUIMainView extends UI {
 
             setContent(mainLayout);
             setSizeFull();
+
+            //fill the main layout, either with landing page content or the default content
             if (isLandingPage) {
                 //setup landing page
                 LOGGER.debug("Showing landing page.");
-                setupLandingPage(request);
+                setupLandingPage(landingObjectId);
             } else {
                 refreshMainLayout();
             }
             INITIALIZING = false;
         } catch (Throwable t) {
-            LOGGER.error("Failed to init app.", t);
+            LOGGER.error("Failed to initialize application. Closing session.", t);
+            VaadinSession.getCurrent().close();
         }
     }
 
+    /**
+     * Setup SiMon configuration and error handler.
+     */
     private void doBasicSetup() {
         //configure SiMon
         try {
@@ -190,10 +209,13 @@ public class AdminUIMainView extends UI {
         });
     }
 
+    /**
+     * Setup header depending on whether a landing page is requested or not.
+     */
     private void setupHeader(boolean landingPage, String landingObjectId) {
         if (!landingPage) {
             String repositoryName = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.GENERAL_REPOSITORY_NAME, "Repository");
-            title = new Label("<h1>" + repositoryName + " Administration</h1><h5>Build " + readVersion() + "</h5>", ContentMode.HTML);
+            title = new Label("<h2>" + repositoryName + " UI</h2>Build " + readVersion(), ContentMode.HTML);
             title.setDescription("Click to return to main page.");
             title.setWidth("50%");
             title.addStyleName("title");
@@ -209,8 +231,8 @@ public class AdminUIMainView extends UI {
             logo.setSource(new ExternalResource(logoUrl));
 
             header = new HorizontalLayout(logo, title);
-            header.setComponentAlignment(logo, Alignment.MIDDLE_CENTER);
-            header.setComponentAlignment(title, Alignment.MIDDLE_CENTER);
+            header.setComponentAlignment(logo, Alignment.TOP_CENTER);
+            header.setComponentAlignment(title, Alignment.TOP_CENTER);
         } else {
             title = new Label("<h1>Landing Page for Object #" + landingObjectId + "</h1><h5>Build " + readVersion() + "</h5>", ContentMode.HTML);
             title.setWidth("50%");
@@ -232,8 +254,12 @@ public class AdminUIMainView extends UI {
         }
     }
 
-    private void setupLandingPage(VaadinRequest request) {
-        String oid = (String) request.getParameter("oid");
+    /**
+     * Setup the landing page.
+     *
+     * @param oid The object id for which the landing page should be shown.
+     */
+    private void setupLandingPage(String oid) {
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         DigitalObject result = null;
         Role viewRole = Role.GUEST;
@@ -277,7 +303,7 @@ public class AdminUIMainView extends UI {
                     return;
                 }
             }
-            //http://localhost:8080/KITDM/?landing&oid=3b1243b2-df09-4a98-ad87-21b7cda74be9catch (UnauthorizedAccessAttemptException | ParserConfigurationException ex) {
+            //http://localhost:8080/KITDM/?landing&oid=3b1243b2-df09-4a98-ad87-21b7cda74be9
         } catch (UnauthorizedAccessAttemptException ex) {
             //not found, should result in error page
             LOGGER.error("Failed to access digital object with id " + oid, ex);
@@ -295,6 +321,12 @@ public class AdminUIMainView extends UI {
 
     /**
      * Setup the login form including its logic.
+     *
+     * @param type Either REGISTRATION or LOGIN
+     * @param pendingAuth The id of the pending authentication or null if no
+     * authentication is pending.
+     * @param request The original request used to obtain further authentication
+     * information, e.g. header values.
      */
     private void setupLoginForm(AbstractLoginComponent.AUTH_MODE type, String pendingAuth, VaadinRequest request) {
         ComboBox authSelection = new ComboBox();
@@ -347,7 +379,7 @@ public class AdminUIMainView extends UI {
                     //failed to continue auth...cancel.
                     String message = "Failed to continue pending " + (AbstractLoginComponent.AUTH_MODE.LOGIN.equals(type) ? "login" : "registration") + " for authentication #" + pendingAuth + ".";
                     LOGGER.error(message, ex);
-                    UIComponentTools.showError(message);
+                    UIUtils7.showError(message);
                     VaadinSession.getCurrent().setAttribute("auth_pending", null);
                     VaadinSession.getCurrent().setAttribute("registration_pending", null);
                     loginComponent.reset();
@@ -381,7 +413,6 @@ public class AdminUIMainView extends UI {
      * @param pView The new view.
      */
     public void updateView(VIEW pView) {
-        currentView = pView;
         mainLayout.removeAllComponents();
         switch (pView) {
             case SIMON:
@@ -415,10 +446,6 @@ public class AdminUIMainView extends UI {
                 if (datamanagerSettings == null) {
                     datamanagerSettings = new DataManagerSettingsPanel();
                 }
-                /* if (!datamanagerSettings.getUserAdministrationTab().equals(datamanagerSettings.getMainComponentContainer().getSelectedTab())) {
-                    datamanagerSettings.getMainComponentContainer().setSelectedTab(datamanagerSettings.getUserAdministrationTab());
-                }
-                datamanagerSettings.getUserAdministrationTab().reload();*/
                 viewComponent = datamanagerSettings;
                 break;
             case LANDING:
@@ -464,6 +491,9 @@ public class AdminUIMainView extends UI {
         }
     }
 
+    /**
+     * Selected group has changed. Refresh the main layout.
+     */
     protected void sessionGroupChanged() {
         if (!INITIALIZING) {
             refreshMainLayout();
@@ -478,15 +508,8 @@ public class AdminUIMainView extends UI {
     }
 
     /**
-     * @return the currentView
+     * Read the current version available in the file 'version.txt'.
      */
-    public VIEW getCurrentView() {
-        if (currentView == null) {
-            refreshMainLayout();
-        }
-        return currentView;
-    }
-
     private String readVersion() {
         InputStream versionFile = null;
         String version = "UNKNOWN";

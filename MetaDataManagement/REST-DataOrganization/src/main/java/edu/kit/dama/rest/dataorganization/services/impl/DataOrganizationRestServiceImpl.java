@@ -110,6 +110,11 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
 
     @Override
     public IEntityWrapper<? extends IDefaultDataOrganizationNode> getRootNode(String groupId, Long id, Integer first, Integer results, String viewName, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         DigitalObjectId objectId = getDigitalObjectId(id, groupId, hc);
         LOGGER.debug("Getting root node id for digital object id {}", objectId);
         NodeId rootId = null;
@@ -152,6 +157,11 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
 
     @Override
     public IEntityWrapper<? extends IDefaultDataOrganizationNode> getChildren(String groupId, Long id, Long nodeId, Integer first, Integer results, String viewName, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         DigitalObjectId objectId = getDigitalObjectId(id, groupId, hc);
         NodeId nid = new NodeId(objectId, nodeId, inTreeIdVersion, viewName);
 
@@ -236,6 +246,11 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
 
     @Override
     public IEntityWrapper<? extends IDefaultDataOrganizationNode> getRootNodeChildren(String groupId, Long id, Integer first, Integer results, String viewName, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         DigitalObjectId objectId = getDigitalObjectId(id, groupId, hc);
         LOGGER.debug("Getting root node id for digital object id {}", objectId);
         NodeId rootId;

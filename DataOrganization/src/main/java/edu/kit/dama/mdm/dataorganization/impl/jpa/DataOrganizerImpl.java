@@ -16,6 +16,7 @@
 package edu.kit.dama.mdm.dataorganization.impl.jpa;
 
 import edu.kit.dama.commons.exceptions.ConfigurationException;
+import edu.kit.dama.commons.interfaces.IConfigurableAdapter;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNodeVisitor;
 import edu.kit.dama.mdm.dataorganization.impl.jpa.persistence.BulkPersist;
@@ -35,7 +36,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author pasic
  */
-final public class DataOrganizerImpl implements edu.kit.dama.mdm.dataorganization.service.core.DataOrganizer {
+final public class DataOrganizerImpl implements edu.kit.dama.mdm.dataorganization.service.core.DataOrganizer, IConfigurableAdapter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataOrganizerImpl.class);
 

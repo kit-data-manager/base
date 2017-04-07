@@ -59,7 +59,6 @@ public class SharingTestService implements ISharingService {
     static List<ReferenceId> references = new LinkedList<>();
 
     protected static void factoryGrant() {
-
         SecurableResource sr = new SecurableResource();
         sr.setId(100l);
         Grant g = new Grant();
@@ -100,7 +99,7 @@ public class SharingTestService implements ISharingService {
                 return ((ReferenceId) o).getGroupId().equals(gid);
             }
         });
-        
+
         List<ReferenceId> referenceIds = new LinkedList<>();
         for (Object r : rs) {
             referenceIds.add(((ReferenceId) r));
@@ -130,12 +129,13 @@ public class SharingTestService implements ISharingService {
 
     @Override
     public Response deleteReference(String pDomain, String pDomainUniqueId,
-            String pGroupId, HttpContext hc) {
+            String pReferenceGroupId, String pGroupId, HttpContext hc) {
 
         final SecurableResourceId rid = new SecurableResourceId(pDomain,
                 pDomainUniqueId);
         final GroupId gid = new GroupId(pGroupId);
-
+        final GroupId refgid = new GroupId(pReferenceGroupId);
+        
         ReferenceId rr = (ReferenceId) CollectionUtils.find(references,
                 new Predicate() {
 
@@ -143,7 +143,7 @@ public class SharingTestService implements ISharingService {
             public boolean evaluate(Object o) {
                 ReferenceId r = (ReferenceId) o;
                 return r.getSecurableResourceId() == rid
-                        && r.getGroupId() == gid;
+                        && r.getGroupId() == refgid;
             }
         });
         references.remove(rr);

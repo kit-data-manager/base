@@ -1,6 +1,7 @@
 package edu.kit.dama.rest.util.auth;
 
 import com.sun.jersey.api.core.HttpContext;
+import com.sun.jersey.api.core.HttpRequestContext;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.Role;
@@ -16,7 +17,9 @@ import edu.kit.dama.mdm.admin.exception.SecretEncryptionException;
 import edu.kit.dama.mdm.admin.util.ServiceAccessUtil;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
+import edu.kit.dama.rest.util.auth.exception.AuthenticatorDisabledException;
 import edu.kit.dama.rest.util.auth.exception.InvalidCredentialException;
+import edu.kit.dama.rest.util.auth.exception.MissingCredentialException;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -75,7 +78,7 @@ public abstract class AbstractAuthenticator implements IConfigurableAdapter {
      * procedure applied to it during the actual authentication.
      *
      * The implementation of this method may use both, the plain key and the
-     * enrypted secret field of ServiceAccessToken or only one of them.
+     * encrypted secret field of ServiceAccessToken or only one of them.
      *
      * @param pUser The user the ServiceAccessToken should be connected with.
      * @param pCredential A map of all credential attributes and their values.
@@ -95,16 +98,19 @@ public abstract class AbstractAuthenticator implements IConfigurableAdapter {
      * an authorization context is created using the provided group and
      * containing also the resulting user role.
      *
-     * @param httpContext The HttpContext containing all request information.
+     * @param httpContext The HttpRequestContext containing all request
+     * information.
      * @param groupId The user group on which behalf the user has called the
      * service.
      *
      * @return The authorization context if the authorization succeeds.
      *
      * @throws UnauthorizedAccessAttemptException If the authorization has
-     * failed.
+     * failed using the provided credentials.
+     * @throws MissingCredentialException If proper credentials are missing, so
+     * authentication is not possible.
      */
-    public abstract IAuthorizationContext obtainAuthorizationContext(HttpContext httpContext, GroupId groupId) throws UnauthorizedAccessAttemptException;
+    public abstract IAuthorizationContext obtainAuthorizationContext(HttpRequestContext httpContext, GroupId groupId) throws UnauthorizedAccessAttemptException, MissingCredentialException;
 
     /**
      * Store authentication information for the provided userId. This method
@@ -155,6 +161,34 @@ public abstract class AbstractAuthenticator implements IConfigurableAdapter {
      * used to complete the returned AuthorizationContext and to determine the
      * user's role in this context.
      *
+     * @param httpRequestContext The HttpRequestContext provided by the user
+     * while accessing a REST endpoint.
+     * @param groupId The group on which behalf the user accessed the endpoint.
+     *
+     * @return The AuthorizationContext or a WebApplicationException containing
+     * status UNAUTHORIZED.
+     *
+     * @throws UnauthorizedAccessAttemptException If authentication is not
+     * possible using the provided credentials.
+     * @throws MissingCredentialException If no usable credentials were found.
+     * @throws AuthenticatorDisabledException If this authenticator is disabled
+     * to the baseUri of the provided request.
+     */
+    public final IAuthorizationContext authenticate(HttpRequestContext httpRequestContext, GroupId groupId) throws UnauthorizedAccessAttemptException, MissingCredentialException, AuthenticatorDisabledException {
+        String baseUrl = httpRequestContext.getBaseUri().toString();
+        if (!Pattern.matches(enableForPattern, baseUrl)) {
+            throw new AuthenticatorDisabledException("Authenticator not enabled for baseUrl '" + baseUrl + "'. EnablePattern is '" + enableForPattern + "'.");
+        }
+
+        return obtainAuthorizationContext(httpRequestContext, groupId);
+    }
+
+    /**
+     * Authenticate a service access using the provided HttpContext. Calls are
+     * delegated to {@link #authenticate(com.sun.jersey.api.core.HttpRequestContext, edu.kit.dama.authorization.entities.GroupId)
+     * }. This method is maintained for backwards compatibility and should be
+     * removed in future.
+     *
      * @param httpContext The HttpContext provided by the user while accessing a
      * REST endpoint.
      * @param groupId The group on which behalf the user accessed the endpoint.
@@ -162,15 +196,14 @@ public abstract class AbstractAuthenticator implements IConfigurableAdapter {
      * @return The AuthorizationContext or a WebApplicationException containing
      * status UNAUTHORIZED.
      *
-     * @throws UnauthorizedAccessAttemptException If not authorized.
+     * @throws UnauthorizedAccessAttemptException If authentication is not
+     * possible using the provided credentials.
+     * @throws MissingCredentialException If no usable credentials were found.
+     * @throws AuthenticatorDisabledException If this authenticator is disabled
+     * to the baseUri of the provided request.
      */
-    public final IAuthorizationContext authenticate(HttpContext httpContext, GroupId groupId) throws UnauthorizedAccessAttemptException {
-        String baseUrl = httpContext.getRequest().getBaseUri().toString();
-        if (!Pattern.matches(enableForPattern, baseUrl)) {
-            throw new UnauthorizedAccessAttemptException("Authenticator not enabled for baseUrl '" + baseUrl + "'. EnablePattern is '" + enableForPattern + "'.");
-        }
-
-        return obtainAuthorizationContext(httpContext, groupId);
+    public final IAuthorizationContext authenticate(HttpContext httpContext, GroupId groupId) throws UnauthorizedAccessAttemptException, MissingCredentialException, AuthenticatorDisabledException {
+        return authenticate(httpContext.getRequest(), groupId);
     }
 
     /**

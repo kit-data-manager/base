@@ -49,7 +49,7 @@ import edu.kit.dama.mdm.core.jpa.MetaDataManagerJpa;
 import edu.kit.dama.rest.dataorganization.services.impl.util.PublicDownloadHandler;
 import edu.kit.dama.staging.util.DataOrganizationUtils;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import edu.kit.dama.ui.commons.util.UIUtils7;
 import edu.kit.dama.util.Constants;
 import edu.kit.lsdf.adalapi.AbstractFile;
@@ -167,7 +167,7 @@ public class LandingPageComponent extends CustomComponent {
 
             searchButton.addClickListener((Button.ClickEvent event) -> {
                 String oid = oidField.getValue();
-                Page.getCurrent().setLocation(URI.create(UIHelper.getWebAppUrl().toString() + "?landing&oid=" + oid).toString());
+                Page.getCurrent().setLocation(URI.create(Page.getCurrent().getLocation().toString() + "?landing&oid=" + oid).toString());
             });
 
             dcButton.setWidth("128px");

@@ -71,6 +71,8 @@ public final class DataManagerSettings {
     public static final String AUDIT_CONFIG_ROOT = "audit";
 
     public static final String DATA_ORGANIZATION_CONFIG_ROOT = "dataOrganization";
+    public static final String DATA_ORGANIZATION_DOWNLOAD_BLOCK_SIZE = "dataOrganization.download.blockSize";
+    public static final String DATA_ORGANIZATION_DOWNLOAD_ZIP_COMPRESSION = "dataOrganization.download.compression";
 
     public static final String METADATA_MANAGEMENT_CONFIG_ROOT = "metaDataManagement";
 
@@ -194,8 +196,7 @@ public final class DataManagerSettings {
             LOGGER.debug("Try to read resource from {}", configResource);
 
             //just try if configResource is not null
-            resource = Thread.currentThread().getContextClassLoader().
-                    getResource(configResource);
+            resource = Thread.currentThread().getContextClassLoader().getResource(configResource);
         }
 
         if (resource != null) {

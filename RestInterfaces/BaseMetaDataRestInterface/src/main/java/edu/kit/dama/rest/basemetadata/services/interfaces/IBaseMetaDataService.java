@@ -133,7 +133,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectTransition>")
     IEntityWrapper<? extends IDefaultDigitalObjectTransition> addDigitalObjectTransition(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("inputObjectMap") String inputObjectMap,
             @FormParam("outputObjectList") String outputObjectList,
             @FormParam("type") @DefaultValue("NONE") TransitionType type,
@@ -211,7 +211,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectType>")
     IEntityWrapper<? extends IDefaultDigitalObjectType> addDigitalObjectType(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("typeDomain") String typeDomain,
             @FormParam("identifier") String identifier,
             @FormParam("version") @DefaultValue("1") int version,
@@ -345,7 +345,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultOrganizationUnit>")
     IEntityWrapper<? extends IDefaultOrganizationUnit> createOrganizationUnit(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("ouName") String ouName,
             @FormParam("managerUserId") @DefaultValue("-1") Long managerUserId,
             @FormParam("address") String address,
@@ -417,7 +417,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultOrganizationUnit>")
     IEntityWrapper<? extends IDefaultOrganizationUnit> updateOrganizationUnit(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @FormParam("ouName") String ouName,
             @FormParam("address") String address,
@@ -473,7 +473,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultMetaDataSchema>")
     IEntityWrapper<? extends IDefaultMetaDataSchema> createMetadataSchema(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("metadataSchemaId") String identifier,
             @FormParam("schemaUrl") String schemaUrl,
             @javax.ws.rs.core.Context HttpContext hc);
@@ -562,7 +562,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultTask>")
     IEntityWrapper<? extends IDefaultTask> createTask(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("taskName") String taskName,
             @javax.ws.rs.core.Context HttpContext hc);
 
@@ -767,7 +767,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultStudy>")
     IEntityWrapper<? extends IDefaultStudy> createStudy(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("topic") String topic,
             @FormParam("note") String note,
             @FormParam("legalNote") String legalNote,
@@ -794,7 +794,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultStudy>")
     IEntityWrapper<? extends IDefaultStudy> addRelationToStudy(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @FormParam("organizationUnitId") Long organizationUnitId,
             @FormParam("taskId") Long taskId,
@@ -863,7 +863,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultInvestigation>")
     IEntityWrapper<? extends IDefaultInvestigation> addInvestigationToStudy(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @FormParam("topic") String topic,
             @FormParam("note") String note,
@@ -896,7 +896,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultStudy>")
     IEntityWrapper<? extends IDefaultStudy> updateStudyById(
             @PathParam("id") Long id,
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("topic") String topic,
             @FormParam("note") String note,
             @FormParam("legalNote") String legalNote,
@@ -1024,7 +1024,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject>")
     IEntityWrapper<? extends IDefaultDigitalObject> addDigitalObjectToInvestigation(
             @PathParam("id") Long id,
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("label") String label,
             @FormParam("uploaderId") Long uploaderId,
             @FormParam("note") String note,
@@ -1051,7 +1051,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultInvestigation>")
     IEntityWrapper<? extends IDefaultInvestigation> addParticipantToInvestigation(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @FormParam("userDataId") Long userDataId,
             @FormParam("taskId") Long taskId,
@@ -1074,7 +1074,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultInvestigation>")
     IEntityWrapper<? extends IDefaultInvestigation> addMetadataSchemaToInvestigation(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @FormParam("metadataSchemaId") Long metadataSchemaId,
             @javax.ws.rs.core.Context HttpContext hc);
@@ -1103,7 +1103,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultInvestigation>")
     IEntityWrapper<? extends IDefaultInvestigation> updateInvestigationById(
             @PathParam("id") Long id,
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("topic") String topic,
             @FormParam("note") String note,
             @FormParam("description") String description,
@@ -1271,7 +1271,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectType>")
     IEntityWrapper<? extends IDefaultDigitalObjectType> addDigitalObjectTypeToDigitalObject(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @FormParam("objectTypeId") Long objectTypeId,
             @javax.ws.rs.core.Context HttpContext hc);
@@ -1361,7 +1361,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObjectTransition>")
     IEntityWrapper<? extends IDefaultDigitalObjectTransition> addTransitionToDigitalObject(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @FormParam("otherId") Long otherId,
             @FormParam("viewName") @DefaultValue(value = Constants.DEFAULT_VIEW) String viewName,
@@ -1387,7 +1387,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject>")
     IEntityWrapper<? extends IDefaultDigitalObject> addExperimenterToDigitalObject(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long id,
             @FormParam("userDataId") Long userDataId,
             @javax.ws.rs.core.Context HttpContext hc);
@@ -1415,7 +1415,7 @@ public interface IBaseMetaDataService extends ICommonRestInterface {
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.base.interfaces.IDefaultDigitalObject>")
     IEntityWrapper<? extends IDefaultDigitalObject> updateDigitalObjectById(
             @PathParam("id") Long id,
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @FormParam("label") String label,
             @FormParam("note") String note,
             @FormParam("startDate") @DefaultValue("-1") Long startDate,

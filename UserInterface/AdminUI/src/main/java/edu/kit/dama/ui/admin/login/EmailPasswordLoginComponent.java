@@ -31,7 +31,7 @@ import edu.kit.dama.mdm.admin.util.ServiceAccessUtil;
 import edu.kit.dama.mdm.base.UserData;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import edu.kit.dama.ui.commons.util.UIUtils7;
 import edu.kit.dama.util.Constants;
 import java.util.List;
@@ -122,7 +122,7 @@ public class EmailPasswordLoginComponent extends AbstractLoginComponent {
             VaadinSession.getCurrent().setAttribute("from", null);
             Page.getCurrent().setLocation(fromPage);
         } else {
-            Page.getCurrent().setLocation(UIHelper.getWebAppUrl().toString());
+            Page.getCurrent().reload();
         }
     }
 

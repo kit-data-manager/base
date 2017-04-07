@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama.rest</groupId>
         <artifactId>RestInterfaces</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -53,12 +53,6 @@
     </developers>
 
     <dependencies>
-        <dependency>
-            <groupId>com.sun.jersey.jersey-test-framework</groupId>
-            <artifactId>jersey-test-framework-grizzly2</artifactId>
-            <version>1.8</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>StagingClient</artifactId>

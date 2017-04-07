@@ -18,6 +18,7 @@ package edu.kit.dama.rest.audit.services.impl;
 import com.sun.jersey.api.core.HttpContext;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
+import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.mdm.audit.types.AuditDetail;
 import edu.kit.dama.mdm.audit.types.AuditEvent;
@@ -30,6 +31,7 @@ import edu.kit.dama.rest.base.types.CheckServiceResponse;
 import edu.kit.dama.rest.base.types.ServiceStatus;
 import edu.kit.dama.rest.sharing.services.interfaces.IAuditService;
 import edu.kit.dama.rest.util.RestUtils;
+import edu.kit.dama.util.Constants;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -59,8 +61,20 @@ public final class AuditRestServiceImpl implements IAuditService {
             LOGGER.error("Argument pid must not be null.");
             throw new WebApplicationException(Response.Status.BAD_REQUEST);
         }
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
+
+        if (ctx.getRoleRestriction().atLeast(Role.MANAGER)) {
+            LOGGER.error("Insufficient role for obtaining audit information. Role is {}, but MANAGER is needed.", ctx.getRoleRestriction());
+            throw new WebApplicationException(Response.Status.FORBIDDEN);
+        }
+
         final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -124,6 +138,12 @@ public final class AuditRestServiceImpl implements IAuditService {
     @Override
     public IEntityWrapper<AuditEvent> getEventById(String groupId, Long id, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
+
+        if (ctx.getRoleRestriction().atLeast(Role.MANAGER)) {
+            LOGGER.error("Insufficient role for obtaining audit information. Role is {}, but MANAGER is needed.", ctx.getRoleRestriction());
+            throw new WebApplicationException(Response.Status.FORBIDDEN);
+        }
+
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
             LOGGER.debug("Getting audit event by id {}", id);
@@ -176,7 +196,7 @@ public final class AuditRestServiceImpl implements IAuditService {
     @Override
     public Response checkService() {
         ServiceStatus status = ServiceStatus.UNKNOWN;
-        return Response.status(200).entity(new CheckServiceResponse("Sharing", status)).build();
+        return Response.status(200).entity(new CheckServiceResponse("Audit", status)).build();
     }
 
 }

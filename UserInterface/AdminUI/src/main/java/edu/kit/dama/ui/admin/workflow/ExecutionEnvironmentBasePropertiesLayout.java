@@ -38,7 +38,6 @@ import edu.kit.dama.ui.admin.utils.PathSelector;
 import edu.kit.dama.ui.admin.AbstractBasePropertiesLayout;
 import edu.kit.dama.ui.admin.utils.IconContainer;
 import edu.kit.dama.ui.admin.workflow.property.AddEnvironmentPropertyComponent;
-import static edu.kit.dama.util.Constants.USERS_GROUP_ID;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -230,7 +229,7 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
 
         getNameField().setValue(pValue.getName());
         if (pValue.getGroupId() == null) {
-            getGroupBox().select(USERS_GROUP_ID);
+            getGroupBox().select(AbstractBasePropertiesLayout.ALL_GROUPS_ID);
         } else {
             getGroupBox().select(pValue.getGroupId());
         }
@@ -250,7 +249,7 @@ public final class ExecutionEnvironmentBasePropertiesLayout extends AbstractBase
     public void reset() {
         setEnabled(true);
         getNameField().setValue(null);
-        getGroupBox().select(USERS_GROUP_ID);
+        getGroupBox().select(ALL_GROUPS_ID);
         getMaxTasksField().setValue("1");
         getAccessPointBasePathField().setValue(null);
         getDefaultBox().setValue(false);

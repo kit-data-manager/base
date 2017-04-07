@@ -39,7 +39,7 @@ public class AuthorizeAccess extends AuthorisationSignatureExtractor {
      *
      * @param method The secured method.
      */
-    @Pointcut("execution(@edu.kit.dama.authorization.annotations.SecuredMethod * *.*(..) throws edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException)  && @annotation(method)")
+    @Pointcut("execution(@edu.kit.dama.authorization.annotations.SecuredMethod * *.*(..) throws edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException) && @annotation(method)")
     public void operation(final SecuredMethod method) {
     }
 

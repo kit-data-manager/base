@@ -279,7 +279,9 @@ public final class DownloadInformationServiceLocal implements IDownloadInformati
         LOGGER.debug("Checking {} staging processor(s)", processors.size());
         List<StagingProcessor> defaultProcessors = new ArrayList<>();
         for (StagingProcessor processor : processors) {
-            if (processor.isDefaultOn() && processor.isDownloadProcessingSupported() && !processor.isDisabled()) {
+            if (processor.isDefaultOn()
+                    && processor.isDownloadProcessingSupported()
+                    && !processor.isDisabled()) {
                 LOGGER.debug(" - Adding default download staging processor " + processor.getUniqueIdentifier());
                 defaultProcessors.add(processor);
             }

@@ -39,12 +39,15 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
             name = "simple",
             attributeNodes = {
                 @XmlNamedAttributeNode("id")
-            }),
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode(value = "grantee", subgraph = "simple"),
+                @XmlNamedAttributeNode("id")
+                ,
+                @XmlNamedAttributeNode(value = "grantee", subgraph = "simple")
+                ,
                 @XmlNamedAttributeNode("grantedRole")
             })})
 @XmlAccessorType(XmlAccessType.FIELD)

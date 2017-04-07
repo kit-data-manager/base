@@ -16,7 +16,6 @@
 package edu.kit.dama.mdm.content.mets;
 
 import edu.kit.dama.commons.exceptions.PropertyValidationException;
-import edu.kit.dama.mdm.base.MetaDataSchema;
 import edu.kit.dama.mdm.content.impl.exceptions.MetaDataExtractionException;
 import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
@@ -31,15 +30,11 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Properties;
-import java.util.logging.Level;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FileUtils;
 import org.fzk.tools.xml.JaxenUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Extraction the metadata from data set. Complete content metadata has to be
@@ -162,8 +157,9 @@ public class ExtractXmlMetadataFromFile extends MetsMetadataExtractor {
         if (LOGGER.isTraceEnabled()) {
           LOGGER.trace("Content of file: " + xmlAsString);
         }
-        ByteArrayInputStream bin = new ByteArrayInputStream(xmlAsString.getBytes());
-        xmlDocument = JaxenUtil.getW3CDocument(bin);
+        try (ByteArrayInputStream bin = new ByteArrayInputStream(xmlAsString.getBytes())) {
+          xmlDocument = JaxenUtil.getW3CDocument(bin);
+        }
 
       } catch (MalformedURLException | URISyntaxException ex) {
         LOGGER.error("Failed to obtain metadata file from URL " + metadataFile.getLogicalFileName().asString() + ".", ex);

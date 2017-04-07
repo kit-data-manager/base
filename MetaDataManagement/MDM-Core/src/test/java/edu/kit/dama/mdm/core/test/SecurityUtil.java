@@ -66,15 +66,15 @@ public class SecurityUtil {
     protected GroupId groupId;
     protected boolean success;
     protected Role userRole;
-    protected static IMetaDataManager entityManager = null;
+    protected static IMetaDataManager metadataManager = null;
     public static final AuthorizationContext adminContext = new AuthorizationContext(new UserId(Constants.SYSTEM_ADMIN), new GroupId(Constants.SYSTEM_GROUP), Role.ADMINISTRATOR);
     
     public SecurityUtil() {
     }
     
     public static void prepare() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-        PU.setPersistenceUnitName("AuthorizationUnit-Test");
-        removeEntities(entityManager);
+        PU.setPersistenceUnitName("AuthorizationPU");
+        removeEntities(metadataManager);
         System.out.println(JWhich.whichJar("META-INF/persistence.xml", true));
         TestUtil.clearDB();
         
@@ -99,7 +99,7 @@ public class SecurityUtil {
     }
     
     public static void release() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-        removeEntities(entityManager);
+        removeEntities(metadataManager);
         
         TestUtil.clearDB();
     }

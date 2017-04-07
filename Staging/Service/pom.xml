@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>Staging</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -126,12 +126,6 @@
             <version>${project.kit.datamanager.version}</version>
             <type>jar</type>
         </dependency>
-        <dependency>
-            <groupId>org.fzk.ipe</groupId>
-            <artifactId>Tools</artifactId>
-            <version>1.5</version>
-            <type>jar</type>
-        </dependency>
         <!--dependency>
             <groupId>org.syncloud</groupId>
             <artifactId>dropbox-client</artifactId>
@@ -154,6 +148,24 @@
                 <configuration>
                     <mavenExecutorId>forked-path</mavenExecutorId>
                 </configuration>
+            </plugin>
+            <!--Override surefire configuration as the Authorization tests are not meant to be executed in parallel.-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.16</version>
+                <configuration combine.self="override">
+                    <threadCount>1</threadCount>
+                    <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=128m</argLine>
+                    <reuseForks>false</reuseForks>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

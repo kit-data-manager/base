@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,11 @@ import edu.kit.dama.authorization.entities.impl.Group;
 import edu.kit.dama.authorization.entities.impl.GrantSet;
 import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.authorization.entities.impl.Membership;
+import edu.kit.dama.authorization.entities.util.FindUtil;
 import java.util.List;
 import edu.kit.dama.authorization.entities.util.PU;
 import edu.kit.dama.util.Constants;
 import javax.persistence.*;
-
 
 /**
  *
@@ -43,12 +43,12 @@ public class TestUtil {
      *
      */
     public static final IAuthorizationContext sysCtx = new AuthorizationContext(new UserId(Constants.SYSTEM_ADMIN), new GroupId(Constants.SYSTEM_GROUP), Role.ADMINISTRATOR);
+
     /**
      *
      */
     public static void clearDB() {
         PU.setPersistenceUnitName("AuthorizationUnit-Test");
-
         EntityManager em = PU.entityManager();
 
         em.getTransaction().begin();
@@ -73,7 +73,6 @@ public class TestUtil {
         }
 
         em.flush();
-
         List<User> users = em.createQuery("SELECT u from Users u", User.class).getResultList();
         for (User user : users) {
             em.remove(user);
@@ -96,32 +95,31 @@ public class TestUtil {
 //        }
 //
 //        em.flush();
-
         List<SecurableResource> resources = em.createQuery("SELECT r from Resources r", SecurableResource.class).getResultList();
         for (SecurableResource resource : resources) {
             GrantSet grantSet = resource.getGrantSet();
             resource.setGrantSet(null);
             //grantSet.setResource(null);
             em.remove(resource);
-            if(null != grantSet){
+            if (null != grantSet) {
                 em.remove(grantSet);
             }
         }
-        
-        Group group = new Group(Constants.SYSTEM_GROUP);
-        User user = new User(Constants.SYSTEM_ADMIN, Role.ADMINISTRATOR);
+
+        /*  Group group = new Group(Constants.USERS_GROUP_ID);
+        User user = new User("admin", Role.ADMINISTRATOR);
         em.persist(group);
         em.persist(user);
         Membership membership = new Membership(user, Role.ADMINISTRATOR, group);
         em.persist(membership);
         group.getMemberships().add(membership);
         user.getMemberships().add(membership);
-                
+         */
         em.getTransaction().commit();
 
         em.close();
     }
-    
+
 //
 //    //// BEGIN self-tests ////
 //    @Test

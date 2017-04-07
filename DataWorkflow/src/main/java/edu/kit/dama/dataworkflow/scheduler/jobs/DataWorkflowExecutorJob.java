@@ -62,7 +62,7 @@ public class DataWorkflowExecutorJob extends AbstractConfigurableJob {
                     props = PropertiesUtil.propertiesFromString(jobParameters);
                 }
                 ProcessParameters param = new ProcessParameters();
-                param.group = (props.getProperty(GROUP_ID) != null) ? props.getProperty(GROUP_ID) : Constants.USERS_GROUP_ID;
+                // param.group = (props.getProperty(GROUP_ID) != null) ? props.getProperty(GROUP_ID) : Constants.USERS_GROUP_ID;
                 try {
                     param.count = (props.getProperty(HANDLED_WORKFLOW_TASK_COUNT) != null) ? Integer.parseInt(props.getProperty(HANDLED_WORKFLOW_TASK_COUNT)) : 10;
                 } catch (NumberFormatException ex) {
@@ -98,10 +98,8 @@ public class DataWorkflowExecutorJob extends AbstractConfigurableJob {
     public String getInternalPropertyDescription(String pKey) {
         if (null != pKey) {
             switch (pKey) {
-                case GROUP_ID:
-                    return "The group whose workflow tasks are triggered by this job.";
                 case HANDLED_WORKFLOW_TASK_COUNT:
-                    return "The max. number of workflow tasks that are triggered during one cycle.";
+                    return "The max. number of workflow tasks that are triggered during one cycle. (defaul: 10)";
             }
         }
         return "Unknown property key '" + pKey + "'";
@@ -109,18 +107,13 @@ public class DataWorkflowExecutorJob extends AbstractConfigurableJob {
 
     @Override
     public void validateProperties(Properties pProperties) throws PropertyValidationException {
-        EntityManager em = PU.entityManager();
-        String group = pProperties.getProperty(GROUP_ID);
-        if (group != null) {
-            try {
-                LOGGER.debug("Valid property GROUP_ID with value '{}' found.", FindUtil.findGroup(em, new GroupId(group)));
-            } catch (EntityNotFoundException ex) {
-                throw new PropertyValidationException("Group with id '" + group + "' not found.", ex);
-            }
-        }
         String value = pProperties.getProperty(HANDLED_WORKFLOW_TASK_COUNT);
         try {
-            LOGGER.debug("Valid property HANDLED_WORKFLOW_TASK_COUNT with value '{}' found.", Integer.parseInt(value));
+            int val = Integer.parseInt(value);
+            if (val <= 0) {
+                throw new PropertyValidationException("Property HANDLED_WORKFLOW_TASK_COUNT must be larger than 0.");
+            }
+            LOGGER.debug("Valid property HANDLED_WORKFLOW_TASK_COUNT with value '{}' found.", val);
         } catch (NumberFormatException ex) {
             throw new PropertyValidationException("Invalid value for max. workflow task count. '" + value + "' is no integer value.", ex);
         }

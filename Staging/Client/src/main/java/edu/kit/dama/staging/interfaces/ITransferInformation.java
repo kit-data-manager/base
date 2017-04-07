@@ -33,9 +33,12 @@ import java.util.Set;
 public interface ITransferInformation<C extends ITransferStatus> extends ISimpleTransferInformation {
 
     /**
-     * Returns the internal transfer id. Currently, the string representation of
-     * the id is returned and is expected by many related implementations, e.g.
-     * the transfer client.
+     * Returns the internal transfer id. The transfer id is a unique identifier
+     * of the transfer. It should contain the transfer type (e.g. ingest or
+     * download), the primary key that can be used to find the transfer in the
+     * database and the associated object id. The result should be escaped in a
+     * proper way in order to use the transfer id as folder name for storing and
+     * identifying the transfer on the local disk.
      *
      * @return The transfer id.
      */

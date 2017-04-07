@@ -30,12 +30,14 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
     @XmlNamedObjectGraph(
             name = "simple",
             attributeNodes = {
-                @XmlNamedAttributeNode("resourceId")
-            }),
+                @XmlNamedAttributeNode(value = "resourceId", subgraph = "default")
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("resourceId"),
+                @XmlNamedAttributeNode(value = "resourceId", subgraph = "default")
+                ,
                 @XmlNamedAttributeNode(value = "groupId", subgraph = "simple")
             })})
 public class ReferenceId implements IDefaultReferenceId, ISecurableResource {
@@ -61,7 +63,7 @@ public class ReferenceId implements IDefaultReferenceId, ISecurableResource {
     }
 
     @Override
-    public final GroupId getGroupId() {
+    public GroupId getGroupId() {
         return groupId;
     }
 
@@ -70,7 +72,7 @@ public class ReferenceId implements IDefaultReferenceId, ISecurableResource {
      *
      * @param groupId new value of groupId
      */
-    public final void setGroupId(GroupId groupId) {
+    public void setGroupId(GroupId groupId) {
         this.groupId = groupId;
     }
 
@@ -80,7 +82,7 @@ public class ReferenceId implements IDefaultReferenceId, ISecurableResource {
      * @return the value of resourceId
      */
     @Override
-    public final SecurableResourceId getResourceId() {
+    public SecurableResourceId getResourceId() {
         return resourceId;
     }
 
@@ -89,7 +91,7 @@ public class ReferenceId implements IDefaultReferenceId, ISecurableResource {
      *
      * @param resourceId new value of resourceId
      */
-    public final void setResourceId(SecurableResourceId resourceId) {
+    public void setResourceId(SecurableResourceId resourceId) {
         this.resourceId = resourceId;
     }
 
@@ -128,6 +130,6 @@ public class ReferenceId implements IDefaultReferenceId, ISecurableResource {
     @XmlTransient
     @JsonIgnore
     public final SecurableResourceId getSecurableResourceId() {
-        return resourceId;
+        return getResourceId();
     }
 }

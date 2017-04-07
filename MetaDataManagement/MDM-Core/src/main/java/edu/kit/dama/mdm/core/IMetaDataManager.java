@@ -33,7 +33,7 @@ public interface IMetaDataManager {
 
     /**
      * Set authorization context which is used to authorize secured access and
-     * reiltering of secured resources. When using security, for each method of
+     * filtering of secured resources. When using security, for each method of
      * this interface a secured version has to be implemented.
      *
      * Example remove():
@@ -66,6 +66,14 @@ public interface IMetaDataManager {
      * @param authorizationContext authorization context.
      */
     void setAuthorizationContext(IAuthorizationContext authorizationContext);
+
+    /**
+     * Get authorization context which is used to authorize secured access and
+     * reiltering of secured resources.
+     *
+     * @return authorizationContext authorization context.
+     */
+    IAuthorizationContext getAuthorizationContext();
 
     /**
      * Check whether instance of object is managed by the manager backend. If
@@ -129,7 +137,7 @@ public interface IMetaDataManager {
      * checked against the backend.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param <T> any class supported by the chosen model
      * @param first lower bounds
@@ -150,7 +158,7 @@ public interface IMetaDataManager {
      * IMetaDataManager and might be JPQL, SQL or another query language syntax.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param <T> any class supported by the chosen model
      * @param queryString The plain query string
@@ -179,7 +187,7 @@ public interface IMetaDataManager {
      * <b>?1</b> in the query.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param <T> any class supported by the chosen model
      * @param queryString The plain query string
@@ -202,7 +210,7 @@ public interface IMetaDataManager {
      * to avoid reading all entities at once if only a subset is needed.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param <T> any class supported by the chosen model
      * @param queryString The plain query string
@@ -238,7 +246,7 @@ public interface IMetaDataManager {
      * <b>?1</b> in the query.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param <T> any class supported by the chosen model
      * @param queryString The plain query string
@@ -265,7 +273,7 @@ public interface IMetaDataManager {
      * succeed. If no result was found, <i>null</i> should be returned.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param <T> any class supported by the chosen model
      * @param queryString The plain SQL query string
@@ -292,7 +300,7 @@ public interface IMetaDataManager {
      * <b>?1</b> in the query.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param <T> any class supported by the chosen model
      * @param queryString The plain SQL query string
@@ -315,7 +323,7 @@ public interface IMetaDataManager {
      * in JPQL/SQL, but should be applicable also for queries for entities.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param queryString The plain SQL query string
      *
@@ -342,7 +350,7 @@ public interface IMetaDataManager {
      * <b>?1</b> in the query.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param queryString The plain SQL query string
      * @param pParameters The parameter array used to replace parameters in the
@@ -474,7 +482,7 @@ public interface IMetaDataManager {
      * many entities.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param updateString The plain SQL update string.
      *
@@ -502,7 +510,7 @@ public interface IMetaDataManager {
      * <b>?1</b> in the query.
      *
      * Implementation specific runtime exceptions which may occur should be
-     * logged as warning.
+     * logged as trace messages.
      *
      * @param updateString The plain SQL update string.
      * @param pParameters The parameter array used to replace parameters in the

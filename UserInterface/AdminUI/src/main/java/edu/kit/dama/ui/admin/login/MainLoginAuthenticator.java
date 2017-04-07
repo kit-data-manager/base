@@ -15,7 +15,7 @@
  */
 package edu.kit.dama.ui.admin.login;
 
-import com.sun.jersey.api.core.HttpContext;
+import com.sun.jersey.api.core.HttpRequestContext;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.UserId;
@@ -50,7 +50,7 @@ public class MainLoginAuthenticator extends AbstractAuthenticator {
     }
 
     @Override
-    public IAuthorizationContext obtainAuthorizationContext(HttpContext httpContext, GroupId groupId) throws UnauthorizedAccessAttemptException {
+    public IAuthorizationContext obtainAuthorizationContext(HttpRequestContext httpContext, GroupId groupId) throws UnauthorizedAccessAttemptException {
         //not supported
         return null;
     }

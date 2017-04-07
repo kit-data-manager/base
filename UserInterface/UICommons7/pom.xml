@@ -22,7 +22,7 @@
   <artifactId>UICommons7</artifactId>
   <name>UICommons7</name>
   <packaging>jar</packaging>
-  <version>1.4</version>
+  <version>1.5</version>
   
   <description>The Vaadin 7 compliant version of UICommons.</description>
   
@@ -36,7 +36,7 @@
     <vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
     <project.inceptionYear>2013-2014</project.inceptionYear>
     <root.relative.path>../..</root.relative.path> 
-    <project.kit.datamanager.version>1.4</project.kit.datamanager.version> 
+    <project.kit.datamanager.version>${project.version}</project.kit.datamanager.version> 
     <!--No Javadoc generation for UserInterface-->
     <maven.javadoc.skip>true</maven.javadoc.skip>
     <additionalparam>-Xdoclint:none</additionalparam>
@@ -199,6 +199,17 @@
                 <version>2.6</version>
             </extension>
         </extensions>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.5.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
   
     <distributionManagement>
@@ -219,8 +230,8 @@
     </distributionManagement>
   
     <scm>
-        <developerConnection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/KDM/tags/KITDM-1.4/UserInterface/UICommons7</developerConnection>
-        <url>http://ipepc21.ka.fzk.de/viewcvs/KDM/tags/KITDM-1.4/UserInterface/UICommons7</url>
+        <developerConnection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/KDM/tags/KITDM-1.5/UserInterface/UICommons7</developerConnection>
+        <url>http://ipepc21.ka.fzk.de/viewcvs/KDM/tags/KITDM-1.5/UserInterface/UICommons7</url>
     </scm>
   
 </project>

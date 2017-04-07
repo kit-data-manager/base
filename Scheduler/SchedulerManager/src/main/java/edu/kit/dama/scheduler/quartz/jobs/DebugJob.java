@@ -19,6 +19,8 @@ import edu.kit.dama.commons.exceptions.PropertyValidationException;
 import edu.kit.dama.util.PropertiesUtil;
 import java.io.IOException;
 import java.util.Properties;
+import javax.xml.bind.PropertyException;
+import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ public class DebugJob extends AbstractConfigurableJob {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DebugJob.class);
     private final static String MESSAGE_PROPERTY = "Debug Message";
+    private final static String DELAY_PROPERTY = "Delay";
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -47,12 +50,15 @@ public class DebugJob extends AbstractConfigurableJob {
                 props = PropertiesUtil.propertiesFromString(jobParameters);
             }
 
+            int delay = Integer.parseInt((String) props.get(DELAY_PROPERTY));
+
             String message = (String) props.get(MESSAGE_PROPERTY);
             LOGGER.debug("Executing DebugJob with job key := {}. name := {}, group := {}, description := {}, class := {} and message := {}.", new Object[]{key, name, group, description, clazz, message});
+            LOGGER.debug("Sleeping {} ms...", delay);
+            Thread.sleep(delay);
         } catch (Exception ex) {
             LOGGER.error("Failed to execute job '" + key + "'", ex);
         }
-
     }
 
     @Override
@@ -73,18 +79,27 @@ public class DebugJob extends AbstractConfigurableJob {
 
     @Override
     public String[] getInternalPropertyKeys() {
-        return new String[]{MESSAGE_PROPERTY};
+        return new String[]{MESSAGE_PROPERTY, DELAY_PROPERTY};
     }
 
     @Override
     public String getInternalPropertyDescription(String pKey) {
         if (MESSAGE_PROPERTY.equals(pKey)) {
             return "The debug message to print out.";
+        } else if (DELAY_PROPERTY.equals(pKey)) {
+            return "The delay before the execution ends.";
         }
         return "Unknown property key '" + pKey + "'.";
     }
 
     @Override
     public void validateProperties(Properties pProperties) throws PropertyValidationException {
+        if (pProperties.get(DELAY_PROPERTY) != null) {
+            try {
+                Integer.parseInt((String) pProperties.get(DELAY_PROPERTY));
+            } catch (NumberFormatException ex) {
+                throw new PropertyValidationException("Property " + DELAY_PROPERTY + " has an invalid value. A numeric value > 0 is expected.", ex);
+            }
+        }
     }
 }

@@ -18,7 +18,6 @@ package edu.kit.dama.mdm.dataorganization.impl.staging;
 import edu.kit.dama.commons.types.ILFN;
 import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
-import edu.kit.dama.mdm.dataorganization.entity.core.IDefaultDataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IFileNode;
 import java.util.ArrayList;
 import java.util.List;

@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <artifactId>UserInterface</artifactId>
     <groupId>edu.kit.dama</groupId>
-    <version>1.4</version>
+    <version>1.5</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <groupId>edu.kit.dama</groupId>
@@ -190,11 +190,17 @@ limitations under the License.
             <artifactId>REST-DataOrganization</artifactId>
             <version>${project.kit.datamanager.version}</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpcore</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>MDM-Core</artifactId>
-            <version>1.4</version>
+            <version>1.5</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
@@ -226,26 +232,10 @@ limitations under the License.
             <version>1.1.1</version>
         </dependency>
         <dependency>
-            <groupId>org.fzk.ipe</groupId>
-            <artifactId>Tools</artifactId>
-            <type>jar</type>
-            <version>1.5</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xerces</groupId>
-                    <artifactId>xercesImpl</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Commons</artifactId>
             <type>jar</type>
-            <version>1.4</version>
+            <version>1.5</version>
             <exclusions>
                 <exclusion>
                     <groupId>log4j</groupId>

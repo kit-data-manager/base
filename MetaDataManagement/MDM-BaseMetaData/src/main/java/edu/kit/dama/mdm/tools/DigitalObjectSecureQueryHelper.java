@@ -105,14 +105,16 @@ public final class DigitalObjectSecureQueryHelper extends AbstractSecureQueryHel
                     + (AuthorizationUtil.isAdminContext(pContext)
                     ? ""
                     : " AND o.visible='TRUE'"),
+                    ORDER.ASC,
                     pFirstResult,
                     pMaxResults,
-                    pContext);
+                    pContext
+            );
         }
         return getReadableResources(pMetaDataManager,
                 AuthorizationUtil.isAdminContext(pContext)
                 ? null
-                : "o.visible='TRUE'", pFirstResult, pMaxResults, pContext);
+                : "o.visible='TRUE'", ORDER.ASC, pFirstResult, pMaxResults, pContext);
     }
 
     /**
@@ -173,6 +175,7 @@ public final class DigitalObjectSecureQueryHelper extends AbstractSecureQueryHel
                     + (AuthorizationUtil.isAdminContext(pContext)
                     ? " AND o.investigation.study.studyId='" + pStudy.getStudyId() + "'"
                     : " AND o.visible='TRUE' AND o.investigation.study.studyId='" + pStudy.getStudyId() + "'"),
+                    ORDER.ASC,
                     pFirstResult,
                     pMaxResults,
                     pContext);
@@ -181,6 +184,7 @@ public final class DigitalObjectSecureQueryHelper extends AbstractSecureQueryHel
                 AuthorizationUtil.isAdminContext(pContext)
                 ? "o.investigation.study.studyId='" + pStudy.getStudyId() + "'"
                 : "o.visible='TRUE' AND o.investigation.study.studyId='" + pStudy.getStudyId() + "'",
+                ORDER.ASC,
                 pFirstResult,
                 pMaxResults,
                 pContext);
@@ -246,6 +250,7 @@ public final class DigitalObjectSecureQueryHelper extends AbstractSecureQueryHel
                         + (AuthorizationUtil.isAdminContext(pContext)
                         ? " AND o.investigation.investigationId='" + pInvestigation.getInvestigationId() + "'"
                         : " AND o.visible='TRUE' AND o.investigation.investigationId='" + pInvestigation.getInvestigationId() + "'"),
+                        ORDER.ASC,
                         pFirstResult,
                         pMaxResults,
                         pContext);
@@ -255,6 +260,7 @@ public final class DigitalObjectSecureQueryHelper extends AbstractSecureQueryHel
                     AuthorizationUtil.isAdminContext(pContext)
                     ? "o.investigation.investigationId='" + pInvestigation.getInvestigationId() + "'"
                     : "o.visible='TRUE' AND o.investigation.investigationId='" + pInvestigation.getInvestigationId() + "'",
+                    ORDER.ASC,
                     pFirstResult,
                     pMaxResults,
                     pContext);
@@ -339,6 +345,7 @@ public final class DigitalObjectSecureQueryHelper extends AbstractSecureQueryHel
                     AuthorizationUtil.isAdminContext(pContext)
                     ? "o.baseId='" + pBaseId + "'"
                     : "o.visible='TRUE' AND o.baseId='" + pBaseId + "'",
+                    ORDER.ASC,
                     0,
                     1,
                     pContext);

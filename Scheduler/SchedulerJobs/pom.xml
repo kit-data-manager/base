@@ -21,7 +21,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>Scheduler</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 

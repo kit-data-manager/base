@@ -25,6 +25,7 @@ import edu.kit.dama.mdm.dataorganization.impl.jpa.DataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.impl.jpa.FileTree;
 import edu.kit.dama.mdm.dataorganization.impl.jpa.persistence.PersistenceFacade;
 import java.util.List;
+import java.util.UUID;
 import javax.persistence.EntityManager;
 
 /**
@@ -52,7 +53,7 @@ public class TestUtil {
     public static IFileTree createBasicTestTree() {
         IFileTree tree
                 = new edu.kit.dama.mdm.dataorganization.entity.impl.client.FileTree();
-        DigitalObjectId digitalObjectID = new DigitalObjectId("Dummy");
+        DigitalObjectId digitalObjectID = new DigitalObjectId("Dummy " + UUID.randomUUID().toString());
         tree.setDigitalObjectId(digitalObjectID);
         ICollectionNode cnp;
         ICollectionNode cnc

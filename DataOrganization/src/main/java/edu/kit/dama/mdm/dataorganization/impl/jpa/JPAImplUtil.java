@@ -79,12 +79,9 @@ public final class JPAImplUtil {
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager(pu);
         mdm.setAuthorizationContext(pContext);
         try {
-            System.out.println("Update Attrib");
             //  int attribChanges = mdm.performUpdate("UPDATE Attribute a SET a.viewName=?1 WHERE a.annotatedNode.digitalObjectIDStr=?2 AND a.annotatedNode.viewName=?3", new Object[]{pNewName, pObjectId.getStringRepresentation(), pOldName});
             //   System.out.println("CHANGE " + attribChanges);
-            System.out.println("UPDATE NODE");
-            return mdm.performUpdate("UPDATE DataOrganizationNode n SET n.viewName=?1 WHERE  n.digitalObjectIDStr=?2 AND n.viewName=?3", new Object[]{pNewName, pObjectId.getStringRepresentation(), pOldName});
-
+            return mdm.performUpdate("UPDATE DataOrganizationNode n SET n.viewName=?1 WHERE n.digitalObjectIDStr=?2 AND n.viewName=?3", new Object[]{pNewName, pObjectId.getStringRepresentation(), pOldName});
         } finally {
             mdm.close();
         }

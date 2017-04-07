@@ -78,6 +78,7 @@ import edu.kit.dama.rest.basemetadata.types.RelationWrapper;
 import edu.kit.dama.rest.basemetadata.types.StudyWrapper;
 import edu.kit.dama.rest.basemetadata.types.TaskWrapper;
 import edu.kit.dama.rest.util.RestUtils;
+import edu.kit.dama.util.Constants;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -101,6 +102,12 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
     @Override
     public IEntityWrapper<? extends IDefaultStudy> getStudies(String groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -317,6 +324,11 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
     @Override
     public IEntityWrapper<? extends IDefaultInvestigation> getInvestigations(String groupId, Long studyId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         List<Investigation> investigations;
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
@@ -503,6 +515,11 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
     @Override
     public IEntityWrapper<? extends IDefaultDigitalObject> getDigitalObjects(String groupId, Long investigationId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -657,6 +674,11 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
     @Override
     public IEntityWrapper<? extends IDefaultOrganizationUnit> getOrganizationUnits(String groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -780,6 +802,11 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
     @Override
     public IEntityWrapper<? extends IDefaultMetaDataSchema> getMetadataSchemas(String groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -853,6 +880,11 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
     @Override
     public IEntityWrapper<? extends IDefaultTask> getTasks(String groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
 
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
@@ -927,6 +959,11 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
     @Override
     public IEntityWrapper<? extends IDefaultUserData> getUserDataEntities(String groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
 
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
@@ -1207,6 +1244,11 @@ public final class BaseMetaDataRestService implements IBaseMetaDataService {
 
     @Override
     public IEntityWrapper<? extends IDefaultDigitalObjectType> getDigitalObjectTypes(String groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {

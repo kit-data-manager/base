@@ -42,7 +42,7 @@ import edu.kit.dama.ui.admin.exception.NoteBuilder;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.IconContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

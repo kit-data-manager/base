@@ -37,7 +37,7 @@ import edu.kit.dama.ui.admin.filter.FilterProperties;
 import edu.kit.dama.ui.admin.filter.UserDataFilter;
 import edu.kit.dama.ui.admin.utils.IconContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;

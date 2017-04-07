@@ -107,6 +107,11 @@ public final class SecureMetaDataManager implements IMetaDataManager {
     }
 
     @Override
+    public IAuthorizationContext getAuthorizationContext() {
+        return authCtx;
+    }
+
+    @Override
     public void addProperty(String key, Object value) {
         impl.addProperty(key, value);
     }
@@ -269,8 +274,7 @@ public final class SecureMetaDataManager implements IMetaDataManager {
      */
     @SecuredMethod(roleRequired = Role.GUEST)
     <T> T findSingleResult(String queryString, Object[] pParameters, Class<T> entityClass, @Context IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException {
-        T entity;
-        entity = impl.findSingleResult(queryString, pParameters, entityClass);
+        T entity = impl.findSingleResult(queryString, pParameters, entityClass);
         entity = filterEntity(entity, authorizationContext);
         return entity;
     }
@@ -309,8 +313,7 @@ public final class SecureMetaDataManager implements IMetaDataManager {
      */
     @SecuredMethod(roleRequired = Role.GUEST)
     Object findSingleResult(String queryString, Object[] pParameters, @Context IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException {
-        Object entity;
-        entity = impl.findSingleResult(queryString, pParameters);
+        Object entity = impl.findSingleResult(queryString, pParameters);
         entity = filterEntity(entity, authorizationContext);
         return entity;
     }
@@ -349,8 +352,7 @@ public final class SecureMetaDataManager implements IMetaDataManager {
      */
     @SecuredMethod(roleRequired = Role.GUEST)
     List findResultList(String queryString, Object[] pParameters, @Context IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException {
-        List entityList;
-        entityList = impl.findResultList(queryString, pParameters);
+        List entityList = impl.findResultList(queryString, pParameters);
         return filterList(entityList, authorizationContext);
     }
 
@@ -394,8 +396,7 @@ public final class SecureMetaDataManager implements IMetaDataManager {
      */
     @SecuredMethod(roleRequired = Role.GUEST)
     List findResultList(String queryString, Object[] pParameters, int pFirstIdx, int pResultCount, @Context IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException {
-        List entityList;
-        entityList = impl.findResultList(queryString, pParameters, pFirstIdx, pResultCount);
+        List entityList = impl.findResultList(queryString, pParameters, pFirstIdx, pResultCount);
         return filterList(entityList, authorizationContext);
     }
 
@@ -456,7 +457,7 @@ public final class SecureMetaDataManager implements IMetaDataManager {
                 PlainAuthorizerLocal.authorize(authorizationContext, secureEntity.getSecurableResourceId(), Role.GUEST);
             } catch (AuthorizationException ex) {
                 result = null;
-                LOGGER.error(null, ex);
+                LOGGER.error("Authorization failed. Filtering resource with id " + secureEntity.getSecurableResourceId(), ex);
             }
         }
         return result;
@@ -507,12 +508,10 @@ public final class SecureMetaDataManager implements IMetaDataManager {
     @SecuredMethod(roleRequired = Role.GUEST)
     <T> T find(Class<T> entityClass, Object primaryKey, @Context IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         T entity = impl.find(entityClass, primaryKey);
-        ISecurableResource secureEntity = (ISecurableResource) entity;
-        if (secureEntity != null) {
+        if (entity instanceof ISecurableResource) {
+            ISecurableResource secureEntity = (ISecurableResource) entity;
             // Check access rights for entity!
             PlainAuthorizerLocal.authorize(authorizationContext, secureEntity.getSecurableResourceId(), Role.GUEST);
-        } else {
-            throw new EntityNotFoundException("Data base for Entity " + entityClass + " has no entry with PK '" + primaryKey.toString() + "'!");
         }
 
         return entity;
@@ -574,18 +573,20 @@ public final class SecureMetaDataManager implements IMetaDataManager {
     @SecuredMethod(roleRequired = Role.MEMBER)
     <T> T persist(T entity, @Context IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException {
         T returnValue = impl.persist(entity);
-        LOGGER.debug("Persist successful. Registering resource.");
-        ISecurableResource resource = (ISecurableResource) returnValue;
-        // Register resource for group with MANAGER access as default.
-        // Only manager of group is allowed to remove this resource.
-        try {
-            LOGGER.debug("Registering resource id {}", resource.getSecurableResourceId());
-            ResourceServiceLocal.getSingleton().registerResource(resource.getSecurableResourceId(),
-                    authorizationContext.getGroupId(),
-                    Role.MANAGER,
-                    AuthorizationContext.factorySystemContext());
-        } catch (EntityNotFoundException ex) {
-            LOGGER.error("Failed to register resource. Probably, the provided groupId provided in the caller's context (" + authorizationContext.getGroupId() + ") does not exist.", ex);
+        if (returnValue instanceof ISecurableResource) {
+            LOGGER.debug("Persist successful. Registering resource.");
+            ISecurableResource resource = (ISecurableResource) returnValue;
+            // Register resource for group with MANAGER access as default.
+            // Only manager of group is allowed to remove this resource.
+            try {
+                LOGGER.debug("Registering resource id {}", resource.getSecurableResourceId());
+                ResourceServiceLocal.getSingleton().registerResource(resource.getSecurableResourceId(),
+                        authorizationContext.getGroupId(),
+                        Role.MANAGER,
+                        AuthorizationContext.factorySystemContext());
+            } catch (EntityNotFoundException ex) {
+                LOGGER.error("Failed to register resource. Probably, the provided groupId provided in the caller's context (" + authorizationContext.getGroupId() + ") does not exist.", ex);
+            }
         }
         return returnValue;
     }
@@ -658,14 +659,18 @@ public final class SecureMetaDataManager implements IMetaDataManager {
      */
     @SecuredMethod(roleRequired = Role.MANAGER)
     public <T> void remove(@SecuredArgument T entity, @Context IAuthorizationContext authorizationContext) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-        ISecurableResource securableResource = (ISecurableResource) entity;
-        // Remove all registered Users/Groups
-        try {
-            ResourceServiceLocal.getSingleton().remove(securableResource.getSecurableResourceId(), authorizationContext);
-        } catch (EntityNotFoundException enfe) {
-            // ignore
+        if (!impl.contains(entity)) {
+            throw new EntityNotFoundException("Entity '" + entity + "' doesn't exist! Can't remove it.");
         }
-
+        if (entity instanceof ISecurableResource) {
+            ISecurableResource securableResource = (ISecurableResource) entity;
+            // Remove all registered Users/Groups
+            try {
+                ResourceServiceLocal.getSingleton().remove(securableResource.getSecurableResourceId(), authorizationContext);
+            } catch (EntityNotFoundException enfe) {
+                // ignore
+            }
+        }
         impl.remove(entity);
     }
 
@@ -676,124 +681,116 @@ public final class SecureMetaDataManager implements IMetaDataManager {
 
     @Override
     public <T> boolean contains(T object) throws UnauthorizedAccessAttemptException {
-        if ((authCtx != null) && (object instanceof ISecurableResource)) {
-            boolean exists;
-            try {
-                exists = contains(object, authCtx);
-            } catch (EntityNotFoundException enfe) {
-                // entity doesn't exist
-                exists = false;
-            }
-            return exists;
-        } else {
-            return impl.contains(object);
+        // if ((authCtx != null)) { //&& (object instanceof ISecurableResource)) {
+        boolean exists = false;
+        try {
+            exists = contains(object, authCtx);
+        } catch (EntityNotFoundException enfe) {
+            // entity doesn't exist
         }
+        return exists;
+        /*} else {
+            return impl.contains(object);
+        }*/
     }
 
     @Override
     public <T> List<T> find(Class<T> entityClass) throws UnauthorizedAccessAttemptException {
-        if (ISecurableResource.class.isAssignableFrom(entityClass)) {
-            return find(entityClass, authCtx);
-        } else {
-            return impl.find(entityClass);
-        }
+        // if (ISecurableResource.class.isAssignableFrom(entityClass)) {
+        return find(entityClass, authCtx);
+        // } else {
+        //     return impl.find(entityClass);
+        // }
     }
 
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey) throws UnauthorizedAccessAttemptException {
         T returnValue = null;
-        if (ISecurableResource.class.isAssignableFrom(entityClass)) {
-            try {
-                return find(entityClass, primaryKey, authCtx);
-            } catch (EntityNotFoundException ex) {
-                LOGGER.error("Failed to find secured entity. Returning 'null'.", ex);
-
-            }
-        } else {
-            returnValue = impl.find(entityClass, primaryKey);
+        //if (ISecurableResource.class.isAssignableFrom(entityClass)) {
+        try {
+            returnValue = find(entityClass, primaryKey, authCtx);
+        } catch (EntityNotFoundException ex) {
+            LOGGER.error("Failed to find entity of type " + entityClass + " with primary key " + primaryKey + ". Returning 'null'.", ex);
         }
+        // } else {
+        //     returnValue = impl.find(entityClass, primaryKey);
+        // }
         return returnValue;
     }
 
     @Override
     public <T> List<T> find(T first, T last) throws UnauthorizedAccessAttemptException {
-        boolean secure = false;
+        /* boolean secure = false;
         if (first != null && first instanceof ISecurableResource) {
             secure = true;
         }
         if (last != null && last instanceof ISecurableResource) {
             secure = true;
-        }
-        if (secure) {
-            return find(first, last, authCtx);
-        } else {
+        }*/
+        //if (secure) {
+        return find(first, last, authCtx);
+        /* } else {
             return impl.find(first, last);
-        }
+        }*/
     }
 
     @Override
     public <T> T save(T entity) throws UnauthorizedAccessAttemptException {
         T returnValue = entity;
-        if (entity instanceof ISecurableResource) {
-            if (!impl.contains(entity)) {
-                //entity is not persisted
-                //this check is needed for SYS_ADMIN access!!
-                persist(entity, authCtx);
-            } else {
-                //entity is persisted, perform a normal save for normal users
-                try {
-                    returnValue = update(entity, authCtx);
-                } catch (EntityNotFoundException ex) {
-                    //this should never happen! ... yes, never ever! Really! :-D
-                    throw new UnauthorizedAccessAttemptException("Failed to save entity. The entity does either not exist or is not properly registered by the authorization.", ex);
-                }
-            }
+        //if (entity instanceof ISecurableResource) {
+        if (!impl.contains(entity)) {
+            //entity is not persisted
+            //this check is needed for SYS_ADMIN access!!
+            persist(entity, authCtx);
         } else {
-            returnValue = impl.save(entity);
+            //entity is persisted, perform a normal save for normal users
+            try {
+                returnValue = update(entity, authCtx);
+            } catch (EntityNotFoundException ex) {
+                //this should never happen! ... yes, never ever! Really! :-D
+                throw new UnauthorizedAccessAttemptException("Failed to save entity. The entity does either not exist or is not properly registered by the authorization.", ex);
+            }
         }
+        //  } else {
+        //     returnValue = impl.save(entity);
+        // }
         return returnValue;
     }
 
     @Override
     public <T> T persist(T entity) throws UnauthorizedAccessAttemptException {
-        T returnValue;
-        if ((authCtx != null) && (entity instanceof ISecurableResource)) {
-            returnValue = persist(entity, authCtx);
-        } else {
-            returnValue = impl.persist(entity);
-        }
-        return returnValue;
+        // T returnValue;
+        // if ((authCtx != null)){// && (entity instanceof ISecurableResource)) {
+        return persist(entity, authCtx);
+        // } else {
+        //     returnValue = impl.persist(entity);
+        // }
+        //   return returnValue;
     }
 
     @Override
     public <T> T update(T entity) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-        if ((authCtx != null) && (entity instanceof ISecurableResource)) {
-            return update(entity, authCtx);
-        } else {
+        //if ((authCtx != null) && (entity instanceof ISecurableResource)) {
+        return update(entity, authCtx);
+        /* } else {
             return impl.update(entity);
-        }
+        }*/
     }
 
     @Override
     public <T> T refresh(T entity) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-        T returnValue;
-        if (entity instanceof ISecurableResource) {
-            returnValue = refresh(entity, authCtx);
-        } else {
+        //T returnValue;
+        //if (entity instanceof ISecurableResource) {
+        return refresh(entity, authCtx);
+        /*  } else {
             returnValue = refreshImpl(entity);
         }
-        return returnValue;
+        return returnValue;*/
     }
 
     @Override
     public <T> void remove(T entity) throws UnauthorizedAccessAttemptException, EntityNotFoundException {
-        if (entity instanceof ISecurableResource) {
-            remove(entity, authCtx);
-        } else if (impl.contains(entity)) {
-            impl.remove(entity);
-        } else {
-            throw new EntityNotFoundException("Entity '" + entity + "' doesn't exist! Can't remove it.");
-        }
+        remove(entity, authCtx);
     }
 
     @Override
@@ -813,11 +810,11 @@ public final class SecureMetaDataManager implements IMetaDataManager {
 
     @Override
     public <T> List<T> findResultList(String queryString, Object[] pParameters, Class<T> entityClass, int pFirstIdx, int pResultCount) throws UnauthorizedAccessAttemptException {
-        if (ISecurableResource.class.isAssignableFrom(entityClass)) {
-            return findResultList(queryString, pParameters, entityClass, pFirstIdx, pResultCount, authCtx);
-        } else {
+        //  if (ISecurableResource.class.isAssignableFrom(entityClass)) {
+        return findResultList(queryString, pParameters, entityClass, pFirstIdx, pResultCount, authCtx);
+        /* } else {
             return impl.findResultList(queryString, pParameters, entityClass, pFirstIdx, pResultCount);
-        }
+        }*/
     }
 
     @Override
@@ -827,11 +824,11 @@ public final class SecureMetaDataManager implements IMetaDataManager {
 
     @Override
     public <T> T findSingleResult(String queryString, Object[] pParameters, Class<T> entityClass) throws UnauthorizedAccessAttemptException {
-        if (ISecurableResource.class.isAssignableFrom(entityClass)) {
-            return findSingleResult(queryString, pParameters, entityClass, authCtx);
-        } else {
+        // if (ISecurableResource.class.isAssignableFrom(entityClass)) {
+        return findSingleResult(queryString, pParameters, entityClass, authCtx);
+        /* } else {
             return impl.findSingleResult(queryString, pParameters, entityClass);
-        }
+        }*/
     }
 
     @Override

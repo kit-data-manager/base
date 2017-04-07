@@ -26,7 +26,6 @@ import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextArea;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
-import org.eclipse.persistence.jpa.jpql.parser.AbstractOrderByClause;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,6 +138,8 @@ public class UIComponentTools {
     /**
      *
      * @param description
+     *
+     * @deprecated Moved to UIUtils7
      */
     public static void showError(String description) {
         showError("Error", description, -1);
@@ -149,6 +150,8 @@ public class UIComponentTools {
      * @param caption
      * @param description
      * @param delay
+     *
+     * @deprecated Moved to UIUtils7
      */
     public static void showError(String caption, String description, int delay) {
         showNotification(caption, description, delay, Notification.Type.ERROR_MESSAGE);
@@ -167,6 +170,8 @@ public class UIComponentTools {
      * @param caption
      * @param description
      * @param delay
+     *
+     * @deprecated Moved to UIUtils7
      */
     public static void showWarning(String caption, String description, int delay) {
         showNotification(caption, description, delay, Notification.Type.WARNING_MESSAGE);
@@ -177,6 +182,8 @@ public class UIComponentTools {
      * seconds.
      *
      * @param description
+     *
+     * @deprecated Moved to UIUtils7
      */
     public static void showInformation(String description) {
         showInformation("Information", description, 3000);
@@ -188,6 +195,8 @@ public class UIComponentTools {
      * @param caption
      * @param description
      * @param delay
+     *
+     * @deprecated Moved to UIUtils7
      */
     public static void showInformation(String caption, String description, int delay) {
         showNotification(caption, description, delay, Notification.Type.HUMANIZED_MESSAGE, Position.TOP_RIGHT);
@@ -202,6 +211,8 @@ public class UIComponentTools {
      * @param message The message.
      * @param delay The delay (ms) until the nofication disappears.
      * @param pType The notification type.
+     *
+     * @deprecated Moved to UIUtils7
      */
     private static void showNotification(String caption, String message, int delay, Notification.Type pType) {
         showNotification(caption, message, delay, pType, Position.MIDDLE_CENTER);
@@ -217,6 +228,8 @@ public class UIComponentTools {
      * @param delay The delay (ms) until the nofication disappears.
      * @param pType The notification type.
      * @param pPosition The notification position.
+     *
+     * @deprecated Moved to UIUtils7
      */
     private static void showNotification(String caption, String message, int delay, Notification.Type pType, Position position) {
         Notification notification = new Notification(caption, message, pType);

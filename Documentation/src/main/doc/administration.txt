@@ -535,6 +535,9 @@ results in creating a new version of the task.
 
 `Commit Changes`:: Button for committing the changed configuration of the selected workflow task or to create a new task/a new version of the task if unchangeable fields have changed. 
 
+[WARNING]
+In order to make KIT Data Manager executing scheduled tasks, a job has to be scheduled via the AdminUI. Therefor, change to the <<ChapterJobScheduling, Job Scheduling tab>> and add a new job with implementation class `edu.kit.dama.dataworkflow.scheduler.jobs.DataWorkflowExecutorJob`.
+
 [[ChapterJobScheduling]]
 Job Scheduling
 ^^^^^^^^^^^^^^

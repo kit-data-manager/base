@@ -27,12 +27,7 @@ limitations under the License.
     <!--
     Liferay-related settings.
     -->
-    <liferay>
-        <!--The primary key of the default company. This value is needed as queries for Liferay users must be linked to a company id.
-        By default, all Liferay users are in the default company identified by this id. 
-        -->
-        <defaultCompanyId>10000</defaultCompanyId>
-    </liferay>
+ 
     <!--
     Elasticsearch-related settings.
     -->
@@ -64,11 +59,14 @@ limitations under the License.
                 <persistenceUnits>
                     <!-- All databases which have to be supported by this implementation. 
                     Attention: Labels should be the same for all implementations. -->
-                    <persistenceUnit>Staging_Test</persistenceUnit>  
+                    <persistenceUnit default="true" staging="true">Staging_Test</persistenceUnit>  
+                    <persistenceUnit authorization="true">AuthorizationUnit-Test</persistenceUnit>  
+
                 </persistenceUnits>
             </persistenceImplementation>  
         </persistenceImplementations>
     </metaDataManagement>  
+    
     <!--
     JPA-related settings.
     -->

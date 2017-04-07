@@ -32,7 +32,7 @@ import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.staging.util.DataOrganizationUtils;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import java.text.NumberFormat;
 import java.util.List;
 import org.slf4j.Logger;

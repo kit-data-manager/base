@@ -69,7 +69,7 @@ public final class InvestigationSecureQueryHelper extends AbstractSecureQueryHel
     public List<Investigation> getReadableInvestigations(IMetaDataManager pMetaDataManager, int pFirstIdx, int pMaxEntries, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
         pMetaDataManager.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
         try {
-            return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? null : "o.visible='TRUE'", pFirstIdx, pMaxEntries, pContext);
+            return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? null : "o.visible='TRUE'", ORDER.ASC, pFirstIdx, pMaxEntries, pContext);
         } finally {
             pMetaDataManager.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
         }
@@ -94,7 +94,12 @@ public final class InvestigationSecureQueryHelper extends AbstractSecureQueryHel
     public List<Investigation> getInvestigationsInStudy(Study pStudy, IMetaDataManager pMetaDataManager, int pFirstIdx, int pMaxEntries, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
         pMetaDataManager.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
         try {
-            return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? "o.study.studyId='" + pStudy.getStudyId() + "'" : "o.visible='TRUE' AND o.study.studyId='" + pStudy.getStudyId() + "'", pFirstIdx, pMaxEntries, pContext);
+            return getReadableResources(pMetaDataManager,
+                    AuthorizationUtil.isAdminContext(pContext) ? "o.study.studyId='" + pStudy.getStudyId() + "'" : "o.visible='TRUE' AND o.study.studyId='" + pStudy.getStudyId() + "'",
+                    ORDER.ASC,
+                    pFirstIdx,
+                    pMaxEntries,
+                    pContext);
         } finally {
             pMetaDataManager.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
         }
@@ -116,7 +121,12 @@ public final class InvestigationSecureQueryHelper extends AbstractSecureQueryHel
     public boolean isInvestigationReadable(long pInvestigationId, IMetaDataManager pMetaDataManager, @Context IAuthorizationContext pContext) throws UnauthorizedAccessAttemptException {
         pMetaDataManager.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "Investigation.simple");
         try {
-            return getReadableResources(pMetaDataManager, AuthorizationUtil.isAdminContext(pContext) ? "o.investigationId=" + pInvestigationId : "o.visible='TRUE' AND o.investigationId=" + pInvestigationId, 0, 1, pContext).size() == 1;
+            return getReadableResources(pMetaDataManager,
+                    AuthorizationUtil.isAdminContext(pContext) ? "o.investigationId=" + pInvestigationId : "o.visible='TRUE' AND o.investigationId=" + pInvestigationId,
+                    ORDER.ASC,
+                    0,
+                    1,
+                    pContext).size() == 1;
         } finally {
             pMetaDataManager.removeProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH);
         }

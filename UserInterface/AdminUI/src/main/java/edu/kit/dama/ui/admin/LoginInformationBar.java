@@ -37,7 +37,7 @@ import edu.kit.dama.authorization.services.administration.GroupServiceLocal;
 import edu.kit.dama.ui.admin.AdminUIMainView.VIEW;
 import edu.kit.dama.mdm.base.UserData;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import edu.kit.dama.ui.commons.util.UIUtils7;
 import edu.kit.dama.util.Constants;
 import java.util.List;

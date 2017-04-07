@@ -28,6 +28,8 @@ import org.eclipse.persistence.annotations.BatchFetchType;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
+import org.eclipse.persistence.queries.FetchGroupTracker;
+import org.eclipse.persistence.sessions.Session;
 
 /**
  *
@@ -38,18 +40,72 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
             name = "simple",
             attributeNodes = {
                 @XmlNamedAttributeNode("id")
-            }),
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("roleRestriction"),
+                @XmlNamedAttributeNode("id")
+                ,
+                @XmlNamedAttributeNode("roleRestriction")
+                ,
                 @XmlNamedAttributeNode(value = "group", subgraph = "simple")
             })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @Entity(name = "ResourceReferences")
 @Table(name = "ResourceReferences", uniqueConstraints = @UniqueConstraint(columnNames = {"RESOURCE_ID", "GROUP_ID"}))
-public class ResourceReference implements IDefaultResourceReference, Serializable {
+@NamedEntityGraphs({
+    @NamedEntityGraph(
+            name = "ResourceReference.simple",
+            includeAllAttributes = false,
+            attributeNodes = {
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode("roleRestriction")
+                ,
+                @NamedAttributeNode(value = "resource", subgraph = "ResourceReference.simple.Resource.simple")
+                ,
+                @NamedAttributeNode(value = "group", subgraph = "ResourceReference.simple.Group.simple")
+            },
+            subgraphs = {
+                @NamedSubgraph(
+                        name = "ResourceReference.simple.Resource.simple",
+                        attributeNodes = {
+                            @NamedAttributeNode("id")
+                            ,
+                            @NamedAttributeNode("domainId")
+                            ,
+                            @NamedAttributeNode("domainUniqueId")}
+                )
+                ,
+                @NamedSubgraph(
+                        name = "ResourceReference.simple.Group.simple",
+                        attributeNodes = {
+                            @NamedAttributeNode("id")
+                            ,
+                        @NamedAttributeNode("groupId")}
+                )
+            })
+    , @NamedEntityGraph(
+            name = "ResourceReference.resourceOnly",
+            includeAllAttributes = false,
+            attributeNodes = {
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode(value = "resource", subgraph = "ResourceReference.resourceOnly.Resource.simple")
+
+            },
+            subgraphs = {
+                @NamedSubgraph(
+                        name = "ResourceReference.resourceOnly.Resource.simple",
+                        attributeNodes = {
+                            @NamedAttributeNode("domainId")
+                            ,
+                            @NamedAttributeNode("domainUniqueId")}
+                )
+            })
+})
+public class ResourceReference implements IDefaultResourceReference, Serializable, FetchGroupTracker {
 
     private static final long serialVersionUID = 1L;
     @Id
@@ -175,5 +231,47 @@ public class ResourceReference implements IDefaultResourceReference, Serializabl
     @Override
     public String toString() {
         return "ResourceReference{" + "id=" + id + "}";
+    }
+
+    private transient org.eclipse.persistence.queries.FetchGroup fg;
+    private transient Session sn;
+
+    @Override
+    public org.eclipse.persistence.queries.FetchGroup _persistence_getFetchGroup() {
+        return this.fg;
+    }
+
+    @Override
+    public void _persistence_setFetchGroup(org.eclipse.persistence.queries.FetchGroup fg) {
+        this.fg = fg;
+    }
+
+    @Override
+    public boolean _persistence_isAttributeFetched(String string) {
+        return true;
+    }
+
+    @Override
+    public void _persistence_resetFetchGroup() {
+    }
+
+    @Override
+    public boolean _persistence_shouldRefreshFetchGroup() {
+        return false;
+    }
+
+    @Override
+    public void _persistence_setShouldRefreshFetchGroup(boolean bln) {
+
+    }
+
+    @Override
+    public Session _persistence_getSession() {
+        return sn;
+    }
+
+    @Override
+    public void _persistence_setSession(Session sn) {
+        this.sn = sn;
     }
 }

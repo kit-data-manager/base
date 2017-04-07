@@ -45,17 +45,24 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
     @XmlNamedObjectGraph(
             name = "simple",
             attributeNodes = {
-                @XmlNamedAttributeNode("nodeId"),
+                @XmlNamedAttributeNode("nodeId")
+                ,
                 @XmlNamedAttributeNode("name")
-            }),
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("nodeId"),
-                @XmlNamedAttributeNode("name"),
-                @XmlNamedAttributeNode("description"),
-                @XmlNamedAttributeNode("logicalFileName"),
-                @XmlNamedAttributeNode(value = "attributes", subgraph = "default"),
+                @XmlNamedAttributeNode("nodeId")
+                ,
+                @XmlNamedAttributeNode("name")
+                ,
+                @XmlNamedAttributeNode("description")
+                ,
+                @XmlNamedAttributeNode("logicalFileName")
+                ,
+                @XmlNamedAttributeNode(value = "attributes", subgraph = "default")
+                ,
                 @XmlNamedAttributeNode(value = "children", subgraph = "simple")
             })
 
@@ -137,8 +144,10 @@ public class DataOrganizationNodeImpl implements IDefaultDataOrganizationNode, I
     final public void setAttributes(Set<? extends IAttribute> attributes) {
         Set<IAttribute> myAttributes = getAttributes();
         myAttributes.clear();
-        for (IAttribute attr : attributes) {
-            myAttributes.add(attr);
+        if (attributes != null) {
+            for (IAttribute attr : attributes) {
+                myAttributes.add(attr);
+            }
         }
     }
 

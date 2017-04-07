@@ -692,6 +692,10 @@ public class DataOrganizationRestClient extends AbstractRestClient {
         if (pGroupId != null) {
             queryParams.add(Constants.REST_PARAMETER_GROUP_ID, pGroupId);
         }
+        
+        if (pViewName != null) {
+            queryParams.add(QUERY_PARAMETER_VIEW_NAME, pViewName);
+        }
 
         LOGGER.debug("Requesting download stream.");
         ClientResponse response = getWebResource(resourceUrl).queryParams(queryParams).get(ClientResponse.class);

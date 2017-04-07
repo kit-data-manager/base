@@ -28,6 +28,8 @@ import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.rest.base.exceptions.DeserializationException;
 import edu.kit.dama.rest.util.auth.AbstractAuthenticator;
 import edu.kit.dama.rest.util.auth.AuthenticatorFactory;
+import edu.kit.dama.rest.util.auth.exception.AuthenticatorDisabledException;
+import edu.kit.dama.rest.util.auth.exception.MissingCredentialException;
 import edu.kit.dama.util.Constants;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -102,13 +104,20 @@ public final class RestUtils {
             LOGGER.debug("Authentication attempt #{}, authenticator '{}'", authCnt, auth.getAuthenticatorId());
             try {
                 return auth.authenticate(hc, pGroupId);
-            } catch (UnauthorizedAccessAttemptException ex) {
-                LOGGER.debug("Authentication failed. " + ((authenticators.hasNext()) ? "Processing with next authenticator." : "No more authenticators available."), ex);
+            } catch (MissingCredentialException ex) {
+                LOGGER.trace("Authentication not possible due to missing credentials. " + ((authenticators.hasNext()) ? "Processing with next authenticator." : "No more authenticators available."), ex);
                 authCnt++;
+            } catch (AuthenticatorDisabledException ex) {
+                LOGGER.trace("Authentication not possible due to disabled authenticator. " + ((authenticators.hasNext()) ? "Processing with next authenticator." : "No more authenticators available."), ex);
+                authCnt++;
+            } catch (UnauthorizedAccessAttemptException ex) {
+                //credentials were found, authenticator is enabled for the endpoint, but authentication really failed....return NULL
+                LOGGER.error("Authentication failed. Aborting process and returning no authorization context.", ex);
+                return null;
             }
         }
 
-        //if we arrive here, no authenticator worked out. Provide access as 'WORLD'.
+        //if we arrive here, no authenticator worked out but also no error occured. Provide access as 'WORLD'.
         LOGGER.debug("Returning authorization context for 'WORLD'");
         return new AuthorizationContext(new UserId(Constants.WORLD_USER_ID), new GroupId(Constants.WORLD_GROUP_ID), Role.GUEST);
     }

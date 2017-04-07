@@ -1,6 +1,13 @@
 /* Import the reindeer theme. */
 /* This only allows us to use the mixins defined in it and does not add any styles by itself. */
 @import "../valo/valo.scss";
+
+// Defines the plaintext font size, weight and family. Font size affects general component sizing.
+$v-font-size: 14px;
+//$v-font-weight: 300;
+//$v-font-family: "Open Sans", sans-serif;
+$v-unit-size: 22px;
+
 /* This contains all of your theme. */
 /* If somebody wants to extend the theme she will include this mixin. */
 @mixin mytheme {
@@ -172,7 +179,7 @@
         text-align: center;
         font-weight: bold;
     }
-    
+
     .v-label-probe-success{
         border: 1px solid black;
         @include linear-gradient(to bottom, #B5FFC8 2%, #EAFFEF 98%);      

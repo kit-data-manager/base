@@ -44,11 +44,7 @@ import org.slf4j.LoggerFactory;
  * This class represents the configuration of a staging service. The
  * configuration is realized via XML. The content should look as follows:
  *
- * &lt;staging&gt; &lt;adapters&gt; &lt;dataOrganizationAdapter
- * class="edu.kit.dama.rest.staging.impl.DefaultDataOrganizationServiceAdapter"
- * target="LOCAL"/&gt; &lt;ingestInformationServiceAdapter
- * class="edu.kit.dama.rest.staging.ingest.impl.DefaultIngestInformationServiceAdapter"
- * target="LOCAL"/&gt; &lt;storageVirtualizationAdapter
+ * &lt;staging&gt; &lt;adapters&gt; &lt;storageVirtualizationAdapter
  * class="edu.kit.dama.rest.staging.impl.DefaultDataVirtualizationAdapter"
  * target="LOCAL"/&gt; &lt;/adapters&gt; &lt;/staging&gt;
  *
@@ -61,10 +57,10 @@ import org.slf4j.LoggerFactory;
  * For custom configuration of single adapters, additional XML entries may be
  * added after each adapter entry, e.g.:
  *
- * &lt;dataOrganizationAdapter
- * class="edu.kit.dama.rest.staging.impl.DefaultDataOrganizationServiveAdapter"
- * target="LOCAL"&gt; &lt;myCustomTag&gt;myCustomValue&lt;/myCustomTag&gt;
- * &lt;/dataOrganizationAdapter&gt;
+ * &lt;storageVirtualizationAdapter
+ * class="edu.kit.dama.rest.staging.impl.DefaultDataVirtualizationAdapter"
+ * target="LOCAL"&gt; &lt;archiveUrl&gt;file:///mnt/data/&lt;/archiveUrl&gt;
+ * &lt;/storageVirtualizationAdapter&gt;
  *
  * Be aware, the the adapter attributes 'class' and 'target' are mandatory, even
  * for custom configuration.
@@ -80,18 +76,6 @@ public final class StagingConfigurationManager {
     private final static String STAGING_CONFIG_ROOT = "staging";
     private final static String STAGING_PU_PROPERTY = "persistenceUnit";
     /**
-     * XML element for providing the data organization adapter
-     */
-    private final static String DATA_ORGANIZATION_ADAPTER_ID = "dataOrganizationAdapter";
-    /**
-     * XML element for providing the ingest information service adapter
-     */
-    private final static String INGEST_INFORMATION_SERVICE_ADAPTER_ID = "ingestInformationServiceAdapter";
-    /**
-     * XML element for providing the download information service adapter
-     */
-    private final static String DOWNLOAD_INFORMATION_SERVICE_ADAPTER_ID = "downloadInformationServiceAdapter";
-    /**
      * XML element for providing the storage virtualization adapter
      */
     private final static String STORAGE_VIRTUALIZATION_ADAPTER_ID = "storageVirtualizationAdapter";
@@ -104,9 +88,6 @@ public final class StagingConfigurationManager {
      */
     private SubnodeConfiguration stagingConfig = null;
     private String stagingPU = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.PERSISTENCE_STAGING_PU_ID, "StagingUnit");
-    private IDataOrganizationServiceAdapter dataOrganizationAdapter = null;
-    private IIngestInformationServiceAdapter ingestInformationAdapter = null;
-    private IDownloadInformationServiceAdapter downloadInformationAdapter = null;
     private IStorageVirtualizationServiceAdapter storageVirtualizationAdapter = null;
     private String restUrl;
 
@@ -340,9 +321,7 @@ public final class StagingConfigurationManager {
     }
 
     /**
-     * Obtain all adapters from the provided configuration. Adapters are used to
-     * access dependent services, e.g. for DataOrganization, Ingest-,
-     * DownloadInformation and StorageVirtualization. The method reads all
+     * Obtain all adapters from the provided configuration. The method reads all
      * adapter configurations and tries to create an instance for each adapter.
      * Non-default adapter properties are forwarded to the adapter and will be
      * used for extended configuration. If everything works fine, all adapters
@@ -354,9 +333,6 @@ public final class StagingConfigurationManager {
      */
     private void configureAdapters(Configuration pConfig) {
         try {//try to load adapters
-            dataOrganizationAdapter = createAdapterInstance(pConfig, DATA_ORGANIZATION_ADAPTER_ID);
-            ingestInformationAdapter = createAdapterInstance(pConfig, INGEST_INFORMATION_SERVICE_ADAPTER_ID);
-            downloadInformationAdapter = createAdapterInstance(pConfig, DOWNLOAD_INFORMATION_SERVICE_ADAPTER_ID);
             storageVirtualizationAdapter = createAdapterInstance(pConfig, STORAGE_VIRTUALIZATION_ADAPTER_ID);
         } catch (ConfigurationException ce) {
             throw new StagingIntitializationException("Failed to initialize staging. Configuration of at least one adapter failed.", ce);
@@ -581,36 +557,33 @@ public final class StagingConfigurationManager {
     }
 
     ////////////////////////ADAPTER GETTERS/////////////////////////////////////////////
-    /**
-     * Returns the configured data organization adapter.
-     *
-     * @return An implementations of IDataOrganizationServiceAdapter.
-     */
-    public IDataOrganizationServiceAdapter getDataOrganizationAdapter() {
-        LOGGER.debug("Getting configured DataOrganizationAdapter");
-        return dataOrganizationAdapter;
-    }
-
+//    /**
+//     * Returns the configured data organization adapter.
+//     *
+//     * @return An implementations of IDataOrganizationServiceAdapter.
+//     */
+//    public IDataOrganizationServiceAdapter getDataOrganizationAdapter() {
+//        LOGGER.debug("Getting configured DataOrganizationAdapter");
+//        return dataOrganizationAdapter;
+//    }
     /**
      * Returns the configured ingest information service adapter.
      *
      * @return An implementations of IIngestInformationServiceAdapter.
      */
-    public IIngestInformationServiceAdapter getIngestInformationServiceAdapter() {
-        LOGGER.debug("Getting configured IngestInformationServiceAdapter");
-        return ingestInformationAdapter;
-    }
-
+//    public IIngestInformationServiceAdapter getIngestInformationServiceAdapter() {
+//        LOGGER.debug("Getting configured IngestInformationServiceAdapter");
+//        return ingestInformationAdapter;
+//    }
     /**
      * Returns the configured download information service adapter.
      *
      * @return An implementations of IDownloadInformationServiceAdapter.
      */
-    public IDownloadInformationServiceAdapter getDownloadInformationServiceAdapter() {
-        LOGGER.debug("Getting configured DownloadInformationServiceAdapter");
-        return downloadInformationAdapter;
-    }
-
+//    public IDownloadInformationServiceAdapter getDownloadInformationServiceAdapter() {
+//        LOGGER.debug("Getting configured DownloadInformationServiceAdapter");
+//        return downloadInformationAdapter;
+//    }
     /**
      * Returns the configured storage virtualization adapter.
      *

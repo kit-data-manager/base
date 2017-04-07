@@ -27,7 +27,6 @@ limitations under the License.
     <class>edu.kit.dama.authorization.entities.impl.User</class>
     <class>edu.kit.dama.authorization.entities.impl.Membership</class>
     <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
-    <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
     <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
     <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
     <class>edu.kit.dama.authorization.entities.impl.Grant</class>
@@ -80,7 +79,6 @@ limitations under the License.
     <class>edu.kit.dama.authorization.entities.impl.User</class>
     <class>edu.kit.dama.authorization.entities.impl.Membership</class>
     <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
-    <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
     <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
     <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
     <class>edu.kit.dama.authorization.entities.impl.Grant</class>

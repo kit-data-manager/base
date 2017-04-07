@@ -22,6 +22,7 @@ import edu.kit.dama.staging.entities.interfaces.IDefaultIngestInformation;
 import edu.kit.dama.staging.interfaces.ITransferInformation;
 import edu.kit.dama.util.Constants;
 import edu.kit.dama.util.DataManagerSettings;
+import edu.kit.dama.util.SystemUtils;
 import edu.kit.tools.url.URLCreator;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -33,6 +34,7 @@ import javax.persistence.*;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
@@ -313,7 +315,7 @@ public class IngestInformation implements IDefaultIngestInformation, ITransferIn
     @Override
     public String getTransferId() {
         if (transferId == null) {
-            transferId = Long.toString(getId());
+            transferId = SystemUtils.toFileSystemSafeName("ingest_" + Long.toString(getId()) + "_" + getDigitalObjectId());
         }
         return transferId;
     }
@@ -337,7 +339,7 @@ public class IngestInformation implements IDefaultIngestInformation, ITransferIn
                 throw new IllegalStateException("The staging URL " + stagingUrl + " seems to be invalid", ex);
             }
         }
-        throw new IllegalStateException("The data folder URL cannot be returned as long as the staging URL is not set");
+        throw new IllegalStateException("The data folder URL cannot be returned because the staging URL is not set, yet.");
     }
 
     @Override
@@ -349,7 +351,7 @@ public class IngestInformation implements IDefaultIngestInformation, ITransferIn
                 throw new IllegalStateException("The staging URL " + stagingUrl + " seems to be invalid", ex);
             }
         }
-        throw new IllegalStateException("The settings folder URL cannot be returned as long as the staging URL is not set");
+        throw new IllegalStateException("The settings folder URL cannot be returned because the staging URL is not set, yet.");
     }
 
     @Override
@@ -361,7 +363,7 @@ public class IngestInformation implements IDefaultIngestInformation, ITransferIn
                 throw new IllegalStateException("The staging URL " + stagingUrl + " seems to be invalid", ex);
             }
         }
-        throw new IllegalStateException("The generated folder URL cannot be returned as long as the staging URL is not set");
+        throw new IllegalStateException("The generated folder URL cannot be returned because the staging URL is not set, yet.");
     }
 
     @Override

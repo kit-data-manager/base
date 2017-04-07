@@ -80,6 +80,41 @@ public final class EntityManagerHelper {
     }
 
     /**
+     * Returns the field name annotated with <code>@Id</code> of the provided
+     * entity. If no annotated field was found, an IllegalArgumentException is
+     * thrown.
+     *
+     * @param entityClass The entity class.
+     *
+     * @return The name of the field annotated with <code>@Id</code>
+     *
+     * @throws UnauthorizedAccessAttemptException If the Id field cannot be
+     * accessed.
+     */
+    public static String getIdFieldName(Class entityClass) throws UnauthorizedAccessAttemptException {
+        String returnValue = null;
+        boolean idFound = false; // only one Id per class hierarchie.
+
+        if (entityClass.isAnnotationPresent(Entity.class) || entityClass.isAnnotationPresent(MappedSuperclass.class)) {
+            Field[] fields = entityClass.getDeclaredFields();
+            for (Field field : fields) {
+                Id entityId = field.getAnnotation(Id.class);
+                if (entityId != null) {
+                    idFound = true;
+                    returnValue = field.getName();
+                }
+            }
+
+            if (!idFound) {
+                returnValue = getIdFieldName(entityClass.getSuperclass());
+            }
+        } else {
+            throw new IllegalArgumentException(entityClass.toString() + " is not an Entity!");
+        }
+        return returnValue;
+    }
+
+    /**
      * Returns the entity table name obtained from the 'Table' annotation of the
      * entity class or one of its super classes. If no such annotation is found,
      * the class name of the entity class is returned.

@@ -21,7 +21,6 @@ import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.service.core.DataOrganizerFactory;
 import edu.kit.dama.mdm.dataorganization.service.exception.EntityNotFoundException;
 import edu.kit.dama.mdm.dataorganization.service.exception.InvalidNodeIdException;
-import edu.kit.dama.rest.dataorganization.services.impl.DataOrganizationRestServiceImpl;
 import edu.kit.dama.rest.dataorganization.types.ElementPath;
 import edu.kit.dama.staging.util.DataOrganizationUtils;
 import edu.kit.dama.util.Constants;

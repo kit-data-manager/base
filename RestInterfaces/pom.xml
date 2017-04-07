@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -140,6 +140,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.sun.jersey.jersey-test-framework</groupId>
+            <artifactId>jersey-test-framework-grizzly2</artifactId>
+            <version>1.19</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <version>3.1.0</version>
@@ -154,32 +160,37 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
-            <version>1.8</version>
+            <version>1.19</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-servlet</artifactId>
+            <version>1.19</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>1.8</version>
+            <version>1.19</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey.contribs.jersey-oauth</groupId>
             <artifactId>oauth-signature</artifactId>
-            <version>1.8</version>
+            <version>1.19</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey.contribs.jersey-oauth</groupId>
             <artifactId>oauth-server</artifactId>
-            <version>1.8</version>
+            <version>1.19</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-json</artifactId>
-            <version>1.8</version>
+            <version>1.19</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey.contribs.jersey-oauth</groupId>
             <artifactId>oauth-client</artifactId>
-            <version>1.8</version>
+            <version>1.19</version>
         </dependency>
         <dependency>
             <groupId>com.qmino</groupId>
@@ -209,5 +220,6 @@
         <module>SharingRestInterface</module>
         <module>DataWorkflowRestInterface</module>
         <module>AuditRestInterface</module>
+        <module>SchedulerRestInterface</module>
     </modules>
 </project>

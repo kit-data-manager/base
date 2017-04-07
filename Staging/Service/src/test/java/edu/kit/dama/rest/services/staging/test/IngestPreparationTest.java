@@ -15,11 +15,18 @@
  */
 package edu.kit.dama.rest.services.staging.test;
 
+import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.rest.services.staging.test.util.TestAuthorizationContext;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
 import edu.kit.dama.authorization.entities.Role;
+import edu.kit.dama.authorization.entities.UserId;
+import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
 import edu.kit.dama.authorization.entities.util.PU;
+import edu.kit.dama.authorization.exceptions.EntityAlreadyExistsException;
+import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
+import edu.kit.dama.authorization.services.administration.GroupServiceLocal;
+import edu.kit.dama.authorization.services.administration.UserServiceLocal;
 import edu.kit.dama.commons.types.DigitalObjectId;
 import edu.kit.dama.staging.exceptions.PropertyNotFoundException;
 import edu.kit.dama.staging.services.impl.ingest.IngestInformationPersistenceImpl;
@@ -92,7 +99,15 @@ public class IngestPreparationTest {
     public void prepare() {
         PU.setPersistenceUnitName("AuthorizationUnit-Test");
         Logger.getLogger(IngestPreparationTest.class.getName()).log(Level.INFO, "Preparing test database");
+        try {
+            UserServiceLocal.getSingleton().register(new UserId("someUser"), Role.MANAGER, AuthorizationContext.factorySystemContext());
+            GroupServiceLocal.getSingleton().create(new GroupId("someGroup"), new UserId("someUser"), AuthorizationContext.factorySystemContext());
+        } catch (UnauthorizedAccessAttemptException | EntityNotFoundException | EntityAlreadyExistsException ex) {
+            //this will never happen...if it does, try to continue and fail later
+        }
+
         Logger.getLogger(IngestPreparationTest.class.getName()).log(Level.INFO, "Adding entries with context {0}", secCtx);
+
         for (int i = 0; i < 5; i++) {
             String uuid = UUID.randomUUID().toString();
             Logger.getLogger(IngestPreparationTest.class.getName()).log(Level.INFO, " - Adding digital object {0}", uuid);

@@ -7,8 +7,8 @@ Contact <webmaster@datamanager.kit.edu>
 :max-width: 90em
 :author:    KIT Data Manager Dev Team
 :email:     webmaster@datamanager.kit.edu
-:revdate:   November 25, 2016
-:revnumber: 1.4.0
+:revdate:   April 6, 2017
+:revnumber: 1.5.0
 :website: http://datamanager.kit.edu
 
 About this documentation

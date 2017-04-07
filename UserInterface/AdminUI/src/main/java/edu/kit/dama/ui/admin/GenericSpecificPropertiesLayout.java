@@ -118,7 +118,7 @@ public class GenericSpecificPropertiesLayout extends VerticalLayout {
         String[] keys = pConfigurable.getInternalPropertyKeys();
         if (keys == null || keys.length == 0) {
             reset();
-            LOGGER.warn("Provided configurable has no specific properties.");
+            LOGGER.trace("Provided configurable {} has no specific properties.", pConfigurable);
             return;
         }
 

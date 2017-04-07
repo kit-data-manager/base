@@ -34,6 +34,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 
 /**
  *
@@ -63,10 +64,12 @@ public class DataOrganizerTest {
     public void testSaveAndLoadFileTree() throws EntityNotFoundException, EntityExistsException {
         IFileTree testTree = TestUtil.createBasicTestTree();
         testTree.setDigitalObjectId(digitalObjectID);
-
+        System.out.println("CREATE");
         dataOrganizer.createFileTree(testTree);
+        System.out.println("LOAD ");
         IFileTree lf = DataOrganizerFactory.getInstance().getDataOrganizer().
                 loadFileTree(testTree.getDigitalObjectId());
+        System.out.println("DONE");
         assert (testTree.equals(lf));
     }
 

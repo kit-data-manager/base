@@ -15,6 +15,7 @@
  */
 package edu.kit.dama.rest.dataorganization.services.impl.util;
 
+import com.sun.jersey.core.util.ReaderWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;

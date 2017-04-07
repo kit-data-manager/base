@@ -19,22 +19,15 @@ import edu.kit.dama.commons.types.DigitalObjectId;
 import edu.kit.dama.mdm.base.DigitalObject;
 import edu.kit.dama.mdm.base.xml.DigitalObject2Xml;
 import edu.kit.dama.mdm.content.impl.exceptions.MetaDataExtractionException;
-import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
-import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
-import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
-import edu.kit.dama.mdm.dataorganization.impl.util.Util;
+import edu.kit.dama.mdm.content.util.ElasticHelper;
 import edu.kit.dama.mdm.dataorganization.service.core.DataOrganizer;
 import edu.kit.dama.mdm.dataorganization.service.core.DataOrganizerFactory;
 import edu.kit.dama.mdm.tools.BaseMetaDataHelper;
 import edu.kit.dama.rest.SimpleRESTContext;
 import edu.kit.dama.rest.basemetadata.client.impl.BaseMetaDataRestClient;
 import edu.kit.dama.rest.basemetadata.types.DigitalObjectWrapper;
-import edu.kit.dama.staging.util.DataOrganizationUtils;
 import edu.kit.dama.util.BaseMetaDataCleaningHelper;
-import edu.kit.dama.util.Constants;
-import edu.kit.lsdf.adalapi.AbstractFile;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.StringWriter;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -44,6 +37,11 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.fzk.tools.xml.JaxenUtil;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -70,17 +68,39 @@ public class LocalAccessTest {
 
     public static void main(String[] args) throws Exception {
 
-        IFileTree tree = DataOrganizationUtils.createTreeFromFile("1q2345", new AbstractFile(new File("/Users/jejkal/NetBeansProjects/KITDM/trunk/Docker/KITDM/share/log/cd37731e22d7df46722fa41efe2c5511ee83d3ee")), true);
-        IDataOrganizationNode generatedNode = Util.getNodeByName(tree.getRootNode(), Constants.STAGING_GENERATED_FOLDER_NAME);
+        TransportClient client1 = ElasticHelper.getTransportClient("localhost", 9300, "NFFA@localhost");
 
-        //DataOrganizationUtils.printTree(tree.getRootNode(), true);
-        DataOrganizationUtils.printTree((ICollectionNode) generatedNode, true);
+        SearchRequestBuilder b = client1.prepareSearch("idrp");
+        b.setQuery(QueryBuilders.queryStringQuery("testing"));//wrapperQuery("{\"match\" : {\"measurementId\" : \"12344412\"}}"));
+        SearchResponse response = b.
+                setTypes("project", "measurement")
+                .setFrom(0)
+                .setSize(10)
+                .execute()
+                .actionGet();
 
-        if (generatedNode == null || !(generatedNode instanceof ICollectionNode) || ((ICollectionNode) generatedNode).getChildren().isEmpty()) {
-            System.out.println("Node for 'generated' content not found or is empty. Skip registering view 'generated'.");
-        } else {
-            System.out.println("OK!");
+        System.out.println(response.getHits().getTotalHits());
+
+        for (SearchHit hit : response.getHits()) {
+            System.out.println(hit.getSourceAsString());
+            System.out.println("T " + hit.getType());
+            System.out.println("-----");
         }
+
+//           
+//        try {
+//            SearchResponse response = new SearchTemplateRequestBuilder(client1).
+//                    setScript("{\"from\" : 1, \"size\" : 2, \"query\":{\"experimentId\":\"12344412\"}}").
+//                    setScriptType(ScriptService.ScriptType.INLINE)
+//                    //   .setScriptParams(template_params)     .            
+//                    .setRequest(new SearchRequest("idrp"))
+//                    .get()
+//                    .getResponse();
+//            System.out.println(response.getScrollId());
+//            System.out.println(response.getHits().getTotalHits());
+//        } catch (ParsingException ex) {
+//            System.out.println("EX!");
+//        }
         if (true) {
             return;
         }

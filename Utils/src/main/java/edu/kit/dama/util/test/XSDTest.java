@@ -15,63 +15,53 @@
  */
 package edu.kit.dama.util.test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
-import javax.xml.bind.Marshaller;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.PumpStreamHandler;
-import uk.co.jemos.podam.api.PodamFactoryImpl;
-
 /**
  *
  * @author jejkal
  */
 public class XSDTest {
 
-    public static void main(String[] args) throws Exception {
-        String xsd = "http://datamanager.kit.edu/dama/basemetadata/2015-08/basemetadata.xsd";
-        String destination = "generated";
-        String outPackage = "edu.kit.dama.model.bmd";
-        new File(destination).mkdirs();
-        CommandLine cmdLine = CommandLine.parse("xjc -d " + destination + " -p " + outPackage + " " + xsd);
-        DefaultExecutor executor = new DefaultExecutor();
-        executor.setExitValue(0);
-
-        executor.setStreamHandler(new PumpStreamHandler(System.out, System.out));
-
-        int exitCode = executor.execute(cmdLine);
-        System.out.println("EX " + exitCode);
-        File outPath = new File(destination + "/" + outPackage.replace(".", "/"));
-        //cmdLine = CommandLine.parse("/usr/bin/javac *.java");
-        StringBuilder files = new StringBuilder();
-        for (File f : outPath.listFiles()) {
-            if (f.getName().endsWith("java")) {
-                files.append(" ").append(f.getAbsolutePath());
-            }
-        }
-
-        cmdLine = CommandLine.parse("/usr/bin/javac" + files.toString());
-        executor = new DefaultExecutor();
-        executor.setExitValue(0);
-
-        executor.setStreamHandler(new PumpStreamHandler(System.out, System.out));
-        exitCode = executor.execute(cmdLine);
-        System.out.println("EX " + exitCode);
-        URLClassLoader loader = new URLClassLoader(new URL[]{new File("./" + destination).toURI().toURL()}, ClassLoader.getSystemClassLoader());
-
-        ///// ---> This only works for some cases....depending on the schema it is not possible to create a POJO automatically, e.g. DublinCore is not possible
-        Class c = loader.loadClass(outPackage + ".Basemetadata");
-        Object o = new PodamFactoryImpl(new CustomPodamProviderStrategy()).manufacturePojo(c);
-        Marshaller marshaller = org.eclipse.persistence.jaxb.JAXBContext.newInstance(c).createMarshaller();
-
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        marshaller.marshal(o, bout);
-
-        System.out.println(bout.toString());
-
-    }
+//    public static void main(String[] args) throws Exception {
+//        String xsd = "http://datamanager.kit.edu/dama/basemetadata/2015-08/basemetadata.xsd";
+//        String destination = "generated";
+//        String outPackage = "edu.kit.dama.model.bmd";
+//        new File(destination).mkdirs();
+//        CommandLine cmdLine = CommandLine.parse("xjc -d " + destination + " -p " + outPackage + " " + xsd);
+//        DefaultExecutor executor = new DefaultExecutor();
+//        executor.setExitValue(0);
+//
+//        executor.setStreamHandler(new PumpStreamHandler(System.out, System.out));
+//
+//        int exitCode = executor.execute(cmdLine);
+//        System.out.println("EX " + exitCode);
+//        File outPath = new File(destination + "/" + outPackage.replace(".", "/"));
+//        //cmdLine = CommandLine.parse("/usr/bin/javac *.java");
+//        StringBuilder files = new StringBuilder();
+//        for (File f : outPath.listFiles()) {
+//            if (f.getName().endsWith("java")) {
+//                files.append(" ").append(f.getAbsolutePath());
+//            }
+//        }
+//
+//        cmdLine = CommandLine.parse("/usr/bin/javac" + files.toString());
+//        executor = new DefaultExecutor();
+//        executor.setExitValue(0);
+//
+//        executor.setStreamHandler(new PumpStreamHandler(System.out, System.out));
+//        exitCode = executor.execute(cmdLine);
+//        System.out.println("EX " + exitCode);
+//        URLClassLoader loader = new URLClassLoader(new URL[]{new File("./" + destination).toURI().toURL()}, ClassLoader.getSystemClassLoader());
+//
+//        ///// ---> This only works for some cases....depending on the schema it is not possible to create a POJO automatically, e.g. DublinCore is not possible
+//        Class c = loader.loadClass(outPackage + ".Basemetadata");
+//        Object o = new PodamFactoryImpl(new CustomPodamProviderStrategy()).manufacturePojo(c);
+//        Marshaller marshaller = org.eclipse.persistence.jaxb.JAXBContext.newInstance(c).createMarshaller();
+//
+//        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+//        marshaller.marshal(o, bout);
+//
+//        System.out.println(bout.toString());
+//
+//    }
 
 }

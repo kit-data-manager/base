@@ -39,7 +39,7 @@ import edu.kit.dama.rest.util.auth.AbstractAuthenticator;
 import edu.kit.dama.rest.util.auth.AuthenticatorFactory;
 import edu.kit.dama.ui.admin.login.MainLoginAuthenticator;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import edu.kit.dama.ui.commons.util.UIUtils7;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -154,6 +154,15 @@ public class ServiceAccessTokenDialog {
                 String userId = UIHelper.getSessionUser().getDistinguishedName();
                 try {
                     try {
+                        AbstractAuthenticator selection = (AbstractAuthenticator) CollectionUtils.find(authenticators, (Object o) -> ((AbstractAuthenticator) o).getAuthenticatorId().equals(typeSelection));
+
+                        //check for other token with same key for same service
+                        int cnt = mdm.findSingleResult("SELECT COUNT(t) FROM ServiceAccessToken t WHERE t.serviceId=?1 AND t.tokenKey=?2", new Object[]{typeSelection, tokenField.getValue()}, Number.class).intValue();
+                        if (cnt != 0) {
+                            UIComponentTools.showWarning("There exists already a credential of type '" + typeSelection + "' with credential key (field " + selection.getCredentialAttributeNames()[0] + ") " + tokenField.getValue() + ".");
+                            return;
+                        }
+
                         List<ServiceAccessToken> token = mdm.findResultList("SELECT t FROM ServiceAccessToken t WHERE t.serviceId=?1 AND t.userId=?2", new Object[]{typeSelection, userId}, ServiceAccessToken.class);
                         if (!token.isEmpty()) {
                             UIComponentTools.showWarning("There exists already a credential of type '" + typeSelection + "' for your userId.");
@@ -174,6 +183,7 @@ public class ServiceAccessTokenDialog {
 
                     newToken.setUserId(uid);
                     mdm.save(newToken);
+
                     created = true;
                 } catch (UnauthorizedAccessAttemptException | SecretEncryptionException ex) {
                     UIComponentTools.showWarning("Failed to create new credential. (Message: " + ex.getMessage() + ")");
@@ -227,7 +237,13 @@ public class ServiceAccessTokenDialog {
             credentialMap.put(tokenField.getCaption(), tokenField.getValue());
             if (secretField != null) {
                 //secret is also visible, use caption as key and value as secret 
-                credentialMap.put(secretField.getCaption(), secretField.getValue());
+                if (!showSecret.getValue()) {
+                    //take secret from secret field
+                    credentialMap.put(secretField.getCaption(), secretField.getValue());
+                } else {
+                    //take secret from nosecret field
+                    credentialMap.put(nosecretField.getCaption(), nosecretField.getValue());
+                }
             }
         }
 

@@ -35,6 +35,7 @@ import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.authorization.services.administration.IGroupService;
 import edu.kit.dama.authorization.entities.util.PU;
+import edu.kit.dama.util.Constants;
 import java.util.*;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
@@ -71,11 +72,16 @@ public class GroupServiceImpl implements IGroupService {
     public final void create(GroupId newGroupId, UserId groupManager, @Context IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException, EntityNotFoundException, EntityAlreadyExistsException {
         LOGGER.debug("Creating new group {} with manager {}", new Object[]{newGroupId, groupManager});
+
+        if (newGroupId.getStringRepresentation().equals(Constants.SYSTEM_GROUP)) {
+            throw new UnauthorizedAccessAttemptException("Invalid group id.");
+        }
+
         EntityManager entityManager = PU.entityManager();
         EntityTransaction transaction = entityManager.getTransaction();
         try {
             LOGGER.debug(" - Trying to find existing group");
-            FindUtil.findGroup(entityManager, newGroupId);
+            FindUtil.findGroupQuick(entityManager, newGroupId);
             throw new EntityAlreadyExistsException("There is already a group with groupId=" + newGroupId.getStringRepresentation());
         } catch (EntityNotFoundException e) {
             try {
@@ -119,8 +125,10 @@ public class GroupServiceImpl implements IGroupService {
         try {
             em.getTransaction().begin();
             boolean result;
+            //obtain group quick just to get the id
             LOGGER.debug(" - Trying to find group {}", groupId);
-            Group group = FindUtil.findGroup(em, groupId);
+            Group group = FindUtil.findGroupQuick(em, groupId);
+            //now, obtain the memberships separately
             LOGGER.debug(" - Getting all group memberships");
             List<Membership> memberships = em.createQuery("SELECT m "
                     + "FROM Memberships m "
@@ -128,6 +136,7 @@ public class GroupServiceImpl implements IGroupService {
                     Membership.class).
                     setParameter(GROUP_ID_COLUMN, groupId.getStringRepresentation()).
                     getResultList();
+
             LOGGER.debug(" - {}", (memberships.isEmpty()) ? "No memberships found" : "Memberships found");
             LOGGER.debug(" - Getting associated securable resources");
             SecurableResource resource = FindUtil.findResource(em, groupId.getSecurableResourceId());
@@ -228,11 +237,11 @@ public class GroupServiceImpl implements IGroupService {
             EntityTransaction transaction = em.getTransaction();
             transaction.begin();
             LOGGER.debug(" - Finding user");
-            User user = FindUtil.findUser(em, userId);
+            User user = FindUtil.findUserQuick(em, userId);
             LOGGER.debug(" - Finding group");
-            Group group = FindUtil.findGroup(em, groupId);
+            Group group = FindUtil.findGroupQuick(em, groupId);
             LOGGER.debug(" - Finding membership");
-            Membership membership = FindUtil.findMembership(em, groupId, userId);
+            Membership membership = FindUtil.findMembershipQuick(em, groupId, userId);
             LOGGER.debug(" - Removing membership");
             em.remove(membership);
             LOGGER.debug(" - Adapting user and group entities");

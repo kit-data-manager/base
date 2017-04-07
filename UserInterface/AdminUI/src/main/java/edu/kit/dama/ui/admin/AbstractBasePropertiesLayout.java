@@ -30,7 +30,7 @@ import edu.kit.dama.ui.admin.exception.NoteBuilder;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +43,7 @@ public abstract class AbstractBasePropertiesLayout<C> extends GridLayout {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBasePropertiesLayout.class);
     private static final String DEBUG_ID_PREFIX = AbstractBasePropertiesLayout.class.getName() + "_";
+    public static final String ALL_GROUPS_ID = "ALL_GROUPS_ID";
     private ComboBox groupBox;
     private TextArea descriptionArea;
     private CheckBox disabledBox;
@@ -103,7 +104,8 @@ public abstract class AbstractBasePropertiesLayout<C> extends GridLayout {
             groupBox.setId(DEBUG_ID_PREFIX + id);
             groupBox.setWidth("100%");
             groupBox.setImmediate(true);
-            groupBox.setNullSelectionAllowed(false);
+            //groupBox.setNullSelectionAllowed(false);
+            groupBox.setNullSelectionItemId(ALL_GROUPS_ID);
             groupBox.addStyleName(CSSTokenContainer.BOLD_CAPTION);
         }
         return groupBox;
@@ -114,6 +116,8 @@ public abstract class AbstractBasePropertiesLayout<C> extends GridLayout {
      */
     public final void reloadGroupBox() {
         getGroupBox().removeAllItems();
+        getGroupBox().addItem(ALL_GROUPS_ID);
+        getGroupBox().setItemCaption(ALL_GROUPS_ID, "All Groups");
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(UIHelper.getSessionContext());
         try {

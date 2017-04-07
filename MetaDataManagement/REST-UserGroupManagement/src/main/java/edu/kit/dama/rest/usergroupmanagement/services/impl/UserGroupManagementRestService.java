@@ -64,6 +64,11 @@ public final class UserGroupManagementRestService implements IUserGroupService {
 
     @Override
     public IEntityWrapper<? extends IDefaultUserGroup> getGroups(Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(Constants.USERS_GROUP_ID));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -180,6 +185,11 @@ public final class UserGroupManagementRestService implements IUserGroupService {
 
     @Override
     public IEntityWrapper<? extends IDefaultUserData> getGroupUsers(Long groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(Constants.USERS_GROUP_ID));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -275,6 +285,11 @@ public final class UserGroupManagementRestService implements IUserGroupService {
 
     @Override
     public IEntityWrapper<? extends IDefaultUserData> getUsers(String groupId, Integer first, Integer results, HttpContext hc) {
+        if (results > Constants.REST_MAX_PAGE_SIZE) {
+            LOGGER.error("BAD_REQUEST. Result count {} is larger than max. page size {}", results, Constants.REST_MAX_PAGE_SIZE);
+            throw new WebApplicationException(Response.Status.BAD_REQUEST);
+        }
+
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(groupId));
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(ctx);
         try {
@@ -367,9 +382,15 @@ public final class UserGroupManagementRestService implements IUserGroupService {
             UserData user;
             LOGGER.debug("Getting user details for user with id {} (0 = caller)", userId);
             mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "UserData.default");
-            if (userId <= 0) {
+            if (userId <= 0 && Constants.WORLD_USER_ID.equals(ctx.getUserId().getStringRepresentation())) {
+                LOGGER.debug("Obtaining user information for anonymous request.");
+                user = new UserData();
+                user.setDistinguishedName(Constants.WORLD_USER_ID);
+            } else if (userId <= 0 && !Constants.WORLD_USER_ID.equals(ctx.getUserId().getStringRepresentation())) {
+                LOGGER.debug("Obtaining user information for caller {}.", ctx.getUserId());
                 user = mdm.findSingleResult("SELECT x FROM UserData x WHERE x.distinguishedName LIKE '" + ctx.getUserId().getStringRepresentation() + "'", UserData.class);
             } else {
+                LOGGER.debug("Obtaining user information for provided userId {}.", userId);
                 user = mdm.findSingleResult("SELECT x FROM UserData x WHERE x.userId=" + userId, UserData.class);
             }
             return new UserDataWrapper(user);
@@ -450,7 +471,7 @@ public final class UserGroupManagementRestService implements IUserGroupService {
         ServiceStatus status;
         try {
             LOGGER.debug("Doing service check by getting USERS group");
-            Group users = FindUtil.findGroup(PU.entityManager(), new GroupId(Constants.USERS_GROUP_ID));
+            Group users = FindUtil.findGroupQuick(PU.entityManager(), new GroupId(Constants.USERS_GROUP_ID));
 
             LOGGER.debug("Service check using USERS group returned {}.", users);
             status = ServiceStatus.OK;

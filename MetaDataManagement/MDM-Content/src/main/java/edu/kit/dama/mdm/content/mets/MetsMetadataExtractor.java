@@ -106,15 +106,15 @@ public abstract class MetsMetadataExtractor extends AbstractStagingProcessor {
     /**
      * Constant for Mets DMD ID.
      */
-    private final String COMMUNITY_DMD_SECTION_ID = "communityMetadataDmdId";
+    public static final String COMMUNITY_DMD_SECTION_ID = "communityMetadataDmdId";
     /**
      * Constant for Mets DMD Type.
      */
-    private final String COMMUNITY_MD_TYPE_ID = "communityMDType";
+    public static final String COMMUNITY_MD_TYPE_ID = "communityMDType";
     /**
      * Constant for Mets schema Id of community metadata.
      */
-    private final String COMMUNITY_METADATA_SCHEMA_ID = "communityMetadataSchemaId";
+    public static final String COMMUNITY_METADATA_SCHEMA_ID = "communityMetadataSchemaId";
     /**
      * Schema Id of community metadata. should be unique for each community.
      */
@@ -264,13 +264,15 @@ public abstract class MetsMetadataExtractor extends AbstractStagingProcessor {
                     + "/rest/dataorganization/organization/download/" + Long.toString(digitalObject.getBaseId()) + "/" + ((node.getName() != null) ? node.getName() : "");
         };
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
+          File metsFile;
+          try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             metsBuilder.createDOSection(defaultObjectNodeResolver);
             metsBuilder.createStructureSection(defaultObjectNodeResolver);
             metsBuilder.write(baos);
-            File metsFile = getMetsFile(pContainer);
+            metsFile = getMetsFile(pContainer);
             FileUtils.writeStringToFile(metsFile, baos.toString());
+          }
             generateIndexFiles(metsFile, false);
         } catch (IOException ex) {
             LOGGER.error("Error writing mets file", ex);
@@ -488,34 +490,35 @@ public abstract class MetsMetadataExtractor extends AbstractStagingProcessor {
         } finally {
             mdm.close();
         }
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
         try {
+          String returnValue;
+          try (ByteArrayOutputStream bout = new ByteArrayOutputStream()) {
             LOGGER.debug("Creating basic mets document.");
             metsBuilder = MetsBuilder.init(getDigitalObject()).createMinimalMetsDocument(creator);
-
             LOGGER.debug("Creating community specific descriptive metadata document.");
             Document doc = createCommunitySpecificDocument(pContainer);
             if (doc == null) {
-                throw new Exception("No community metadata element was returned. Assuming ingest of invalid digital object.");
+              throw new Exception("No community metadata element was returned. Assuming ingest of invalid digital object.");
             }
-
             LOGGER.debug("Determining md type and schema location for community specific descriptive metadata section.");
             MetaDataSchema linkedSchema = getLinkedSchema();
             MDTYPE schemaType = MDTYPE.OTHER;
             String schemaLocation = null;
             if (communityMDType != null) {
-                LOGGER.debug("Using provided MDTYPE element {}.", communityMDType);
-                schemaType = MDTYPE.valueOf(communityMDType);
-                //schemaLocation remains null as it is already defined in the mets profile
+              LOGGER.debug("Using provided MDTYPE element {}.", communityMDType);
+              schemaType = MDTYPE.valueOf(communityMDType);
+              //schemaLocation remains null as it is already defined in the mets profile
             } else if (linkedSchema != null) {
-                LOGGER.debug("Using MDTYPE.OTHER and provided metadata schema url {}.", linkedSchema.getMetaDataSchemaUrl());
-                //schemaType remains OTHER as another schema is used
-                schemaLocation = linkedSchema.getMetaDataSchemaUrl();
+              LOGGER.debug("Using MDTYPE.OTHER and provided metadata schema url {}.", linkedSchema.getMetaDataSchemaUrl());
+              //schemaType remains OTHER as another schema is used
+              schemaLocation = linkedSchema.getMetaDataSchemaUrl();
             }
             LOGGER.debug("Adding custom descriptive metadata section to mets document.");
             metsBuilder.addCustomDmdSection(communityDmdSectionId, schemaType, schemaLocation, doc).write(bout);
             LOGGER.debug("Returning final mets document.");
-            return bout.toString();
+            returnValue = bout.toString();
+          }
+            return returnValue;
         } catch (Exception e) {
             throw new StagingProcessorException("Failed to create METS document for transfer #" + pContainer.getTransferId(), e);
         }

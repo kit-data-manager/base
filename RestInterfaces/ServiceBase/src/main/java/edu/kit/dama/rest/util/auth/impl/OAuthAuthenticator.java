@@ -16,6 +16,7 @@
 package edu.kit.dama.rest.util.auth.impl;
 
 import com.sun.jersey.api.core.HttpContext;
+import com.sun.jersey.api.core.HttpRequestContext;
 import com.sun.jersey.oauth.server.OAuthServerRequest;
 import com.sun.jersey.oauth.signature.OAuthParameters;
 import com.sun.jersey.oauth.signature.OAuthSecrets;
@@ -35,6 +36,7 @@ import edu.kit.dama.mdm.admin.util.ServiceAccessUtil;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
 import edu.kit.dama.rest.util.auth.AbstractAuthenticator;
+import edu.kit.dama.rest.util.auth.exception.MissingCredentialException;
 import java.util.Map;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
@@ -71,9 +73,9 @@ public class OAuthAuthenticator extends AbstractAuthenticator {
     }
 
     @Override
-    public IAuthorizationContext obtainAuthorizationContext(HttpContext hc, GroupId pGroupId) throws UnauthorizedAccessAttemptException {
+    public IAuthorizationContext obtainAuthorizationContext(HttpRequestContext hc, GroupId pGroupId) throws UnauthorizedAccessAttemptException, MissingCredentialException {
         LOGGER.debug("Starting OAuth authentication.");
-        OAuthServerRequest request = new OAuthServerRequest(hc.getRequest());
+        OAuthServerRequest request = new OAuthServerRequest(hc);
         // get incoming OAuth parameters
         OAuthParameters params = new OAuthParameters();
         params.readRequest(request);
@@ -84,7 +86,7 @@ public class OAuthAuthenticator extends AbstractAuthenticator {
             //obtain consumer key and secret
             String consumerKey = params.getConsumerKey();
             if (consumerKey == null) {
-                throw new UnauthorizedAccessAttemptException("No consumer key provided.");
+                throw new MissingCredentialException("No consumer key provided.");
             }
             LOGGER.debug("Consumer key is: {}", consumerKey);
             String consumerSecret;
@@ -112,7 +114,7 @@ public class OAuthAuthenticator extends AbstractAuthenticator {
                 throw new UnauthorizedAccessAttemptException("No access token found for provided key '" + params.getToken() + "'.");
             }
 
-            LOGGER.debug("Successfully obtained service access token for user. GEnerating OAuthSecrets.");
+            LOGGER.debug("Successfully obtained service access token for user. Generating OAuthSecrets.");
             //set the secret from the obtained token
             OAuthSecrets secrets = new OAuthSecrets();
             secrets = secrets.consumerSecret(consumerSecret);

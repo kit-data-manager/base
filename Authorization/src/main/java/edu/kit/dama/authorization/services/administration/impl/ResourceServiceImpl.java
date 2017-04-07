@@ -78,7 +78,7 @@ public class ResourceServiceImpl implements IResourceService {
         try {
             boolean alreadyExists = false;
             try {
-                LOGGER.debug(" - Trying to find existing resource");
+                LOGGER.debug(" - Trying to find existing resource with id " + resourceId);
                 FindUtil.findResource(em, resourceId);
                 LOGGER.debug(" - Resource already exists");
                 alreadyExists = true;
@@ -118,7 +118,7 @@ public class ResourceServiceImpl implements IResourceService {
             EntityTransaction transaction = em.getTransaction();
             transaction.begin();
             LOGGER.debug(" - Finding group");
-            Group group = FindUtil.findGroup(em, ownerGroup);
+            Group group = FindUtil.findGroupQuick(em, ownerGroup);
             SecurableResource resource = new SecurableResource(resourceId);
             ResourceReference reference = new ResourceReference();
             reference.setResource(resource);
@@ -245,21 +245,18 @@ public class ResourceServiceImpl implements IResourceService {
                 //OK we dont't have a duplication
                 alreadyExists = false;
             }
-
             if (!alreadyExists) {
                 LOGGER.debug(" - Trying to create resource reference");
                 LOGGER.debug(FINDING_RESOUCE_STRING);
                 SecurableResource resource = FindUtil.findResource(em, referenceId.getResourceId());
                 LOGGER.debug(" - Finding group");
-                Group group = FindUtil.findGroup(em, referenceId.getGroupId());
+                Group group = FindUtil.findGroupQuick(em, referenceId.getGroupId());
                 LOGGER.debug(" - Creating resource reference with role restriction {}", roleRestriction);
                 ResourceReference resourceReference = new ResourceReference(roleRestriction, resource, group);
                 LOGGER.debug(" - Persisting resource reference");
                 em.persist(resourceReference);
                 LOGGER.debug(" - Adding resource reference to group");
                 group.getResourceReferences().add(resourceReference);
-                LOGGER.debug(" - Adding resource reference to resource");
-                resource.getResourceReferences().add(resourceReference);
             }
             transaction.commit();
             if (alreadyExists) {
@@ -288,16 +285,12 @@ public class ResourceServiceImpl implements IResourceService {
         try {
             em.getTransaction().begin();
             LOGGER.debug(FINDING_RESOUCE_REFERENCE_STRING);
-            ResourceReference reference = FindUtil.findResourceReference(em, referenceId);
+            ResourceReference reference = FindUtil.findResourceReferenceQuick(em, referenceId);
             Group group = reference.getGroup();
-            SecurableResource resource = reference.getResource();
             LOGGER.debug(" - Removing reference");
             em.remove(reference);
             LOGGER.debug(" - Removing reference from group");
             group.getResourceReferences().remove(reference);
-            LOGGER.debug(" - Removing reference from resource");
-            resource.getResourceReferences().remove(reference);
-
             em.getTransaction().commit();
             LOGGER.debug("Resource reference for reference id {} successfully removed.", referenceId);
         } catch (PersistenceException except) {
@@ -322,7 +315,7 @@ public class ResourceServiceImpl implements IResourceService {
             EntityTransaction transaction = em.getTransaction();
             transaction.begin();
             LOGGER.debug(FINDING_RESOUCE_REFERENCE_STRING);
-            ResourceReference reference = FindUtil.findResourceReference(em, referenceId);
+            ResourceReference reference = FindUtil.findResourceReferenceQuick(em, referenceId);
             LOGGER.debug(" - Setting new role restriction");
             reference.setRoleRestriction(newRoleRestriction);
             LOGGER.debug(" - Merging resource reference to database");
@@ -350,7 +343,7 @@ public class ResourceServiceImpl implements IResourceService {
         EntityManager em = PU.entityManager();
         try {
             LOGGER.debug(FINDING_RESOUCE_REFERENCE_STRING);
-            ResourceReference reference = FindUtil.findResourceReference(em, referenceId);
+            ResourceReference reference = FindUtil.findResourceReferenceQuick(em, referenceId);
             LOGGER.debug("Returning role restriction {}", reference.getRoleRestriction());
             return reference.getRoleRestriction();
         } catch (PersistenceException except) {
@@ -377,7 +370,6 @@ public class ResourceServiceImpl implements IResourceService {
             Root<ResourceReference> resourceReferences = cq.from(ResourceReference.class);
             Join<ResourceReference, SecurableResource> resource = resourceReferences.
                     <ResourceReference, SecurableResource>join("resource");
-            // Join<Group, ResourceReference> group = 
             resourceReferences.<Group, ResourceReference>join("group");
             cq.select(resourceReferences).where(
                     cb.and(
@@ -387,12 +379,13 @@ public class ResourceServiceImpl implements IResourceService {
                             resourceId.getDomainUniqueId()));
             LOGGER.debug(" - Executing query");
             TypedQuery<ResourceReference> tq = em.createQuery(cq);
+            tq.setHint("javax.persistence.fetchgraph", em.getEntityGraph("ResourceReference.simple"));
+
             List<ResourceReference> resultList = tq.getResultList();
-            List<ReferenceId> referenceIds = new ArrayList<ReferenceId>(resultList.size());
+            List<ReferenceId> referenceIds = new ArrayList<>(resultList.size());
             LOGGER.debug(" - Building result list for {} elements", resultList.size());
             for (ResourceReference rr : resultList) {
-                referenceIds.add(new ReferenceId(rr.getResource().getSecurableResourceId(),
-                        new GroupId(rr.getGroup().getGroupId())));
+                referenceIds.add(new ReferenceId(rr.getResource().getSecurableResourceId(), new GroupId(rr.getGroup().getGroupId())));
             }
             LOGGER.debug("{} references successfully obtained", referenceIds.size());
             return referenceIds;
@@ -418,15 +411,20 @@ public class ResourceServiceImpl implements IResourceService {
             EntityTransaction transaction = em.getTransaction();
             transaction.begin();
             LOGGER.debug(FINDING_RESOUCE_STRING);
-            SecurableResource resource = FindUtil.findResource(em, resourceId);
-            LOGGER.debug(" - Creating grant set");
-            GrantSet grantSet = new GrantSet(resource, restriction);
-            em.persist(grantSet);
-            LOGGER.debug(" - Assigning grant set to resource");
-            resource.setGrantSet(grantSet);
-            LOGGER.debug(" - Merging resource to database");
-            em.merge(resource);
-
+            SecurableResource resource = FindUtil.findResourceQuick(em, resourceId);
+            if (resource.getGrantSet() != null) {
+                LOGGER.debug("Grant set found. Grants are already allowed for resource {}.", resourceId);
+                if (!resource.getGrantSet().getRoleRestriction().equals(restriction)) {
+                    LOGGER.debug("Updating role restriction from {} to {}.", resource.getGrantSet().getRoleRestriction(), restriction);
+                    resource.getGrantSet().setRoleRestriction(restriction);
+                }
+            } else {
+                LOGGER.debug(" - Creating grant set");
+                GrantSet grantSet = new GrantSet(resource, restriction);
+                em.persist(grantSet);
+                LOGGER.debug(" - Assigning grant set to resource");
+                resource.setGrantSet(grantSet);
+            }
             transaction.commit();
             LOGGER.debug("Access to resource with resource id {} successfully granted to role {}", new Object[]{resourceId, restriction});
         } catch (PersistenceException except) {
@@ -447,7 +445,7 @@ public class ResourceServiceImpl implements IResourceService {
         LOGGER.debug("Checking for grants for resource with id {}", resourceId);
         EntityManager em = PU.entityManager();
         try {
-            SecurableResource resource = FindUtil.findResource(em, resourceId);
+            SecurableResource resource = FindUtil.findResourceQuick(em, resourceId);
             LOGGER.debug("Grants {}", (resource.getGrantSet() != null) ? "found" : "not found");
             return resource.getGrantSet() != null;
         } catch (PersistenceException except) {
@@ -473,10 +471,11 @@ public class ResourceServiceImpl implements IResourceService {
         try {
             EntityTransaction transaction = em.getTransaction();
             transaction.begin();
+            long s = System.currentTimeMillis();
             LOGGER.debug(" - Finding user");
-            User user = FindUtil.findUser(em, userId);
+            User user = FindUtil.findUserQuick(em, userId);
             LOGGER.debug(FINDING_RESOUCE_STRING);
-            SecurableResource resource = FindUtil.findResource(em, resourceId);
+            SecurableResource resource = FindUtil.findResourceQuick(em, resourceId);
             LOGGER.debug(" - Finding grant set");
             GrantSet grantSet = resource.getGrantSet();
             if (null == grantSet) {
@@ -488,29 +487,26 @@ public class ResourceServiceImpl implements IResourceService {
             }
             List<Grant> grants = grantSet.getGrants();
             LOGGER.debug(" - Checking {} existing grants", grants.size());
+            boolean exists = false;
             for (Grant g : grants) {
                 if (g.getGrantee().getUserId().equals(userId.getStringRepresentation())) {
-                    LOGGER.warn("Grant set for user {} already exists.", userId);
-                    if (transaction.isActive()) {
-                        transaction.rollback();
+                    LOGGER.info("Grant for user {} already exists.", userId);
+                    if (!g.getGrantedRole().equals(role)) {
+                        g.setGrantedRole(role);
                     }
-                    throw new EntityAlreadyExistsException("There is already a grant for "
-                            + resourceId.toString() + " and "
-                            + userId.toString());
                 }
             }
-            LOGGER.debug("- Creating new grant for user {} and role {}", new Object[]{user, role});
-            Grant grant = new Grant(user, role, grantSet);
-            LOGGER.debug("Adding grant to grant set");
-            grants.add(grant);
-            LOGGER.debug(" - Merging grant set to database");
-            em.merge(grantSet);
-            LOGGER.debug(" - Persisting grant");
-            em.persist(grant);
-            LOGGER.debug(" - Setting grantee to grant");
-            grant.setGrantee(user);
-            LOGGER.debug(" - Merging grant to database");
-            em.merge(grant);
+
+            if (!exists) {
+                LOGGER.debug("- Creating new grant for user {} and role {}", new Object[]{user, role});
+                Grant grant = new Grant(user, role, grantSet);
+                LOGGER.debug("Adding grant to grant set");
+                grants.add(grant);
+                LOGGER.debug(" - Merging grant set to database");
+                em.merge(grantSet);
+                LOGGER.debug(" - Persisting grant");
+                em.persist(grant);
+            }
             transaction.commit();
             LOGGER.debug("Grant successfully added for resource with id {} to user {} and role {}", new Object[]{resourceId, userId, role});
         } catch (PersistenceException except) {
@@ -540,18 +536,24 @@ public class ResourceServiceImpl implements IResourceService {
             SecurableResource resource = FindUtil.findResource(em, resourceId);
             GrantSet grantSet = resource.getGrantSet();
             LOGGER.debug(" - Checking {} grants", grantSet.getGrants().size());
+            boolean changed = false;
             for (Grant grant : grantSet.getGrants()) {
                 if (grant.getGrantee().getUserId().equals(userId.getStringRepresentation())) {
                     LOGGER.debug(" - Changing grant from role {} to role {}", new Object[]{grant.getGrantedRole(), role});
                     grant.setGrantedRole(role);
                     LOGGER.debug(" - Merging grant to database");
                     em.merge(grant);
+                    changed = true;
                     break;
                 }
             }
 
             transaction.commit();
-            LOGGER.debug("Grant successfully changed for resource with id {} for user {} to role {}", new Object[]{resourceId, userId, role});
+            if (changed) {
+                LOGGER.debug("Grant successfully changed for resource with id {} for user {} to role {}", new Object[]{resourceId, userId, role});
+            } else {
+                LOGGER.info("Nothing changed for resource {} and user {}. Probably, user has no grant assigned.", new Object[]{resourceId, userId, role});
+            }
         } catch (PersistenceException except) {
             PU.handleUnexpectedPersistenceExceptionInTransaction(except, em);
             throw new PersistenceException("Failed to change grant for resource with id " + resourceId + " for user " + userId + " to role " + role, except);
@@ -616,7 +618,7 @@ public class ResourceServiceImpl implements IResourceService {
         try {
             em.getTransaction().begin();
             LOGGER.debug(FINDING_RESOUCE_STRING);
-            SecurableResource resource = FindUtil.findResource(em, resourceId);
+            SecurableResource resource = FindUtil.findResourceQuick(em, resourceId);
             GrantSet grantSet = resource.getGrantSet();
             LOGGER.debug(" - Resetting grant set");
             if (grantSet != null) {
@@ -770,42 +772,41 @@ public class ResourceServiceImpl implements IResourceService {
             @Context IAuthorizationContext authCtx)
             throws UnauthorizedAccessAttemptException {
         LOGGER.debug("Getting authorized groups for resource with id {} with role {}", new Object[]{resourceId, role});
-        /* EntityManager em = PU.entityManager();
-        LOGGER.debug(" - Building query");*/
- /*CriteriaBuilder cb = em.getCriteriaBuilder();
-    CriteriaQuery<String> q = cb.createQuery(String.class);
-    Root<FilterHelper> record = q.from(FilterHelper.class);
-    q.where(
-            cb.and(
-                    cb.equal(
-                            record.get(DOMAIN_UNIQUE_ID_COLUMN),
-                            resourceId.getDomainUniqueId()),
-                    cb.equal(
-                            record.get(DOMAIN_ID_COLUMN),
-                            resourceId.getDomain()),
-                    cb.ge(record.<Integer>get("roleAllowed"),
-                            role.ordinal())));
-    q.select(record.<String>get(GROUP_ID_COLUMN));
-    q.distinct(true);
-    LOGGER.debug(" - Executing query");
-    TypedQuery<String> tq = em.createQuery(q);
-    List<String> resultList = tq.getResultList();
-    List<GroupId> groups = new ArrayList<>(resultList.size());*/
+        EntityManager em = PU.entityManager();
+        LOGGER.debug(" - Building query");
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<String> q = cb.createQuery(String.class);
+        Root<FilterHelper> record = q.from(FilterHelper.class);
+        q.where(
+                cb.and(
+                        cb.equal(
+                                record.get(DOMAIN_UNIQUE_ID_COLUMN),
+                                resourceId.getDomainUniqueId()),
+                        cb.equal(
+                                record.get(DOMAIN_ID_COLUMN),
+                                resourceId.getDomain()),
+                        cb.ge(record.<Integer>get("roleAllowed"),
+                                role.ordinal())));
+        q.select(record.<String>get(GROUP_ID_COLUMN));
+        q.distinct(true);
+        LOGGER.debug(" - Executing query");
+        TypedQuery<String> tq = em.createQuery(q);
+        List<String> resultList = tq.getResultList();
+        List<GroupId> groups = new ArrayList<>(resultList.size());
 
-        LOGGER.debug("Obtaining reference ids for resource {}", resourceId);
+        /* LOGGER.debug("Obtaining reference ids for resource {}", resourceId);
         List<ReferenceId> referenceIds = getReferences(resourceId, authCtx);
         LOGGER.debug("Obtained {} referende ids. Extracting groups.", referenceIds.size());
         List<GroupId> groups = new ArrayList<>(referenceIds.size());
         for (ReferenceId referenceId : referenceIds) {
             LOGGER.debug("Adding group {}  to result list.", referenceId.getGroupId().getStringRepresentation());
             groups.add(referenceId.getGroupId());
-        }
-
-        /*LOGGER.debug(" - Building result list for {} elements", resultList.size());
+        }*/
+        LOGGER.debug(" - Building result list for {} elements", resultList.size());
         for (String groupIdString : resultList) {
             groups.add(new GroupId(groupIdString));
-        }*/
-        // em.close();
+        }
+        em.close();
         LOGGER.debug("{} groups successfully obtained", groups.size());
         return groups;
     }

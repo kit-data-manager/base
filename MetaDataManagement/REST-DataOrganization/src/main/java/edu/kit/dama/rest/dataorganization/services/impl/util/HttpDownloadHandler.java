@@ -15,6 +15,7 @@
  */
 package edu.kit.dama.rest.dataorganization.services.impl.util;
 
+import edu.kit.dama.util.DataManagerSettings;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -60,12 +61,13 @@ public class HttpDownloadHandler implements IDownloadHandler<URL> {
 
             LOGGER.debug("Using content type '{}' to stream URL content to client.", contentType);
             final InputStream is = entity.getContent();
+            final int blockSize = DataManagerSettings.getSingleton().getIntProperty(DataManagerSettings.DATA_ORGANIZATION_DOWNLOAD_BLOCK_SIZE, 10 * 1024);
 
             final StreamingOutput stream = new StreamingOutput() {
                 @Override
                 public void write(OutputStream os) throws IOException, WebApplicationException {
                     try {
-                        byte[] data = new byte[1024];
+                        byte[] data = new byte[blockSize];
                         int bytesRead;
                         while ((bytesRead = is.read(data)) != -1) {
                             os.write(data, 0, bytesRead);

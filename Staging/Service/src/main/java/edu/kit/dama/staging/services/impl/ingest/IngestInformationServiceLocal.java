@@ -251,10 +251,13 @@ public final class IngestInformationServiceLocal implements IIngestInformationSe
 
         LOGGER.debug("Searching for default staging processors for group '{}'", pSecurityContext.getGroupId());
         List<StagingProcessor> processors = StagingConfigurationPersistence.getSingleton().findStagingProcessorsForGroup(pSecurityContext.getGroupId().getStringRepresentation());
+
         LOGGER.debug("Checking {} staging processor(s)", processors.size());
         List<StagingProcessor> defaultProcessors = new ArrayList<>();
         for (StagingProcessor processor : processors) {
-            if (processor.isDefaultOn() && processor.isIngestProcessingSupported() && !processor.isDisabled()) {
+            if (processor.isDefaultOn()
+                    && processor.isIngestProcessingSupported()
+                    && !processor.isDisabled()) {
                 LOGGER.debug(" - Adding default ingest staging processor " + processor.getUniqueIdentifier());
                 defaultProcessors.add(processor);
             }
@@ -334,7 +337,9 @@ public final class IngestInformationServiceLocal implements IIngestInformationSe
                 LOGGER.debug("Entity changed committed.");
             }
         }
-        return activeIngest;
+
+        //reload entity to have correct state
+        return persistenceImpl.getEntityById(activeIngest.getId(), pSecurityContext);
     }
 
     private List<StagingProcessor> mergeStagingProcessors(Collection<StagingProcessor> assignedProcessors, List<StagingProcessor> defaultProcessors) {

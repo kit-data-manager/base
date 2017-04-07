@@ -31,6 +31,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
+import org.eclipse.persistence.queries.FetchGroupTracker;
+import org.eclipse.persistence.sessions.Session;
 
 /**
  *
@@ -41,19 +43,52 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
             name = "simple",
             attributeNodes = {
                 @XmlNamedAttributeNode("id")
-            }),
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("domainId"),
-                @XmlNamedAttributeNode("domainUniqueId"),
+                @XmlNamedAttributeNode("id")
+                ,
+                @XmlNamedAttributeNode("domainId")
+                ,
+                @XmlNamedAttributeNode("domainUniqueId")
+                ,
                 @XmlNamedAttributeNode(value = "resourceReferences", subgraph = "simple")
             })})
 @XmlAccessorType(XmlAccessType.FIELD)
 @Entity(name = "Resources")
 @Table(name = "Resources", uniqueConstraints = @UniqueConstraint(columnNames = {"domainUniqueId", "domainId"}))
-public class SecurableResource implements IDefaultSecurableResource, ISecurableResource, Serializable {
+@NamedEntityGraphs({
+    @NamedEntityGraph(
+            name = "SecurableResource.simple",
+            includeAllAttributes = false,
+            attributeNodes = {
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode("domainUniqueId")
+                ,
+                @NamedAttributeNode("domainId")
+                ,
+                @NamedAttributeNode(value = "resourceReferences", subgraph = "SecurableResource.simple.ResourceReferences.simple")
+                ,
+                @NamedAttributeNode(value = "grantSet", subgraph = "SecurableResource.simple.GrantSet.simple")
+            },
+            subgraphs = {
+                @NamedSubgraph(
+                        name = "SecurableResource.simple.ResourceReferences.simple",
+                        attributeNodes = {
+                            @NamedAttributeNode("id")}
+                )
+                ,
+                @NamedSubgraph(
+                        name = "SecurableResource.simple.GrantSet.simple",
+                        attributeNodes = {
+                            @NamedAttributeNode("id")}
+                )
+            })
+})
+public class SecurableResource implements IDefaultSecurableResource, ISecurableResource, Serializable, FetchGroupTracker {
 
     private static final long serialVersionUID = 1L;
     @Id
@@ -179,5 +214,45 @@ public class SecurableResource implements IDefaultSecurableResource, ISecurableR
     public String toString() {
         return "Resource{" + "id=" + id + ", resourceId=" + domainUniqueId + "," + domainId + "}";
     }
+    private transient org.eclipse.persistence.queries.FetchGroup fg;
+    private transient Session sn;
 
+    @Override
+    public org.eclipse.persistence.queries.FetchGroup _persistence_getFetchGroup() {
+        return this.fg;
+    }
+
+    @Override
+    public void _persistence_setFetchGroup(org.eclipse.persistence.queries.FetchGroup fg) {
+        this.fg = fg;
+    }
+
+    @Override
+    public boolean _persistence_isAttributeFetched(String string) {
+        return true;
+    }
+
+    @Override
+    public void _persistence_resetFetchGroup() {
+    }
+
+    @Override
+    public boolean _persistence_shouldRefreshFetchGroup() {
+        return false;
+    }
+
+    @Override
+    public void _persistence_setShouldRefreshFetchGroup(boolean bln) {
+
+    }
+
+    @Override
+    public Session _persistence_getSession() {
+        return sn;
+    }
+
+    @Override
+    public void _persistence_setSession(Session sn) {
+        this.sn = sn;
+    }
 }

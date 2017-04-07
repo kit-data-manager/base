@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package edu.kit.dama.rest.scheduler.test;
+package edu.kit.scheduler.test;
 
 import com.sun.jersey.api.core.HttpContext;
 import edu.kit.dama.rest.scheduler.services.interfaces.ISchedulerRestService;

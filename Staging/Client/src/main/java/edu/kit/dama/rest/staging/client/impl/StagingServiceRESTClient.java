@@ -36,7 +36,6 @@ import java.net.URL;
 import java.util.List;
 import javax.ws.rs.core.MultivaluedMap;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
 
 /**

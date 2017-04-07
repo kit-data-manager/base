@@ -152,7 +152,7 @@ public interface IDataOrganizationRestService extends ICommonRestInterface {
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.mdm.dataorganization.entity.core.IDefaultDataOrganizationNode>")
     IEntityWrapper<? extends IDefaultDataOrganizationNode> addDataOrganizationView(
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String groupId,
             @PathParam("id") Long baseId,
             @FormParam("viewData") String viewData,
             @FormParam("preserveAttributes") Boolean preserveAttributes,

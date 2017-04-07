@@ -19,7 +19,6 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import edu.kit.dama.commons.exceptions.ConfigurationException;
-import edu.kit.dama.commons.exceptions.InitializationError;
 import edu.kit.dama.mdm.audit.interfaces.AbstractAuditPublisher;
 import edu.kit.dama.mdm.audit.types.AuditEvent;
 import java.io.IOException;
@@ -85,10 +84,11 @@ public class RabbitMQPublisher extends AbstractAuditPublisher {
     @Override
     public void publish(AuditEvent entry) {
         try {
-            LOGGER.debug("Publishing message to channel.");
+            LOGGER.debug("Publishing message to channel at exchange {} in category {}", exchangeName, entry.getCategory());
             if (entry.getCategory() == null || !entry.getCategory().startsWith(exchangeName)) {
                 LOGGER.warn("Entry category '{}' does not match exchange topic '{}'. Message will probably be dropped.", entry.getCategory(), exchangeName);
             }
+
             channel.basicPublish(exchangeName, entry.getCategory(), null, entry.toJson().getBytes());
             LOGGER.debug("Published message to channel.");
         } catch (IOException ex) {

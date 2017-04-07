@@ -25,6 +25,7 @@ import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.authorization.entities.UserId;
 import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
+import edu.kit.dama.authorization.exceptions.EntityAlreadyExistsException;
 import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.mdm.core.MetaDataManagement;
@@ -109,7 +110,7 @@ public class WriteResourcesTest extends SecurityUtil {
     @BeforeClass
     public static void prepareClass() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         MetaDataManagementHelper.replaceConfig(null);
-        entityManager = MetaDataManagement.getMetaDataManagement().getMetaDataManager("JPA", "MDM-Core-Test");
+        metadataManager = MetaDataManagement.getMetaDataManagement().getMetaDataManager("JPA", "MDM-Core-Test");
         prepare();
         initResources();
 
@@ -164,9 +165,9 @@ public class WriteResourcesTest extends SecurityUtil {
         //      java.util.logging.Logger.getLogger(FilterResourceGroupTest.class.getName()).log(Level.SEVERE, null, eaee);
         //    }
         try {
-            entityManager.setAuthorizationContext(adminContext);
-            allSecurableEntities = entityManager.find(SecurityTestEntity.class);
-            allEntities = entityManager.find(TestEntity.class);
+            metadataManager.setAuthorizationContext(adminContext);
+            allSecurableEntities = metadataManager.find(SecurityTestEntity.class);
+            allEntities = metadataManager.find(TestEntity.class);
         } catch (UnauthorizedAccessAttemptException ex) {
             java.util.logging.Logger.getLogger(WriteResourcesTest.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -184,9 +185,9 @@ public class WriteResourcesTest extends SecurityUtil {
         if ((group != null) && (role != null)) {
             ctx = new AuthorizationContext(userMember, group, role);
         }
-        entityManager.setAuthorizationContext(ctx);
+        metadataManager.setAuthorizationContext(ctx);
         try {
-            entityManager.persist(item);
+            metadataManager.persist(item);
         } catch (UnauthorizedAccessAttemptException ex) {
             java.util.logging.Logger.getLogger(AccessResourcesTest.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -204,9 +205,9 @@ public class WriteResourcesTest extends SecurityUtil {
         if ((group != null) && (role != null)) {
             ctx = new AuthorizationContext(userMember, group, role);
         }
-        entityManager.setAuthorizationContext(ctx);
+        metadataManager.setAuthorizationContext(ctx);
         try {
-            entityManager.persist(item);
+            metadataManager.persist(item);
         } catch (UnauthorizedAccessAttemptException ex) {
             java.util.logging.Logger.getLogger(WriteResourcesTest.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -229,20 +230,20 @@ public class WriteResourcesTest extends SecurityUtil {
             throwException = true;
         }
         AuthorizationContext act = new AuthorizationContext(userId, groupId, userRole);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         try {
-            entityManager.save(ste);
+            metadataManager.save(ste);
             assertFalse(throwException);
-            assertTrue(entityManager.contains(ste));
+            assertTrue(metadataManager.contains(ste));
             // Check for Changes in saved entity
-            entityManager.setAuthorizationContext(adminContext);
-            List<SecurityTestEntity> ste2 = entityManager.find(ste, ste);
+            metadataManager.setAuthorizationContext(adminContext);
+            List<SecurityTestEntity> ste2 = metadataManager.find(ste, ste);
             assertEquals(1, ste2.size());
             assertEquals(ste2.get(0).getDescription(), ste.getDescription());
             assertEquals(ste2.get(0).getAnyValue(), ste.getAnyValue());
             assertEquals(ste2.get(0).getId(), ste.getId());
 
-            entityManager.remove(ste);
+            metadataManager.remove(ste);
         } catch (UnauthorizedAccessAttemptException ex) {
             assertTrue(throwException);
         }
@@ -255,7 +256,7 @@ public class WriteResourcesTest extends SecurityUtil {
     @Test
     public void testSaveSecureWithRoleAndManagedEntity() throws EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, userRole);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         SecurityTestEntity ste = getSecurityTestEntity();
         boolean throwException = false;
         if (groupId.getStringRepresentation().startsWith("guest")
@@ -263,30 +264,30 @@ public class WriteResourcesTest extends SecurityUtil {
             throwException = true;
         }
         try {
-            entityManager.setAuthorizationContext(adminContext);
-            ste = entityManager.find(SecurityTestEntity.class, ste.getId());
+            metadataManager.setAuthorizationContext(adminContext);
+            ste = metadataManager.find(SecurityTestEntity.class, ste.getId());
             String oldDescription = ste.getDescription();
             ste.setDescription("beforeDes");
             ste.setAnyValue(123L);
 
-            entityManager.setAuthorizationContext(act);
-            assertTrue(entityManager.contains(ste));
+            metadataManager.setAuthorizationContext(act);
+            assertTrue(metadataManager.contains(ste));
 
             // Save entity
-            entityManager.save(ste);
+            metadataManager.save(ste);
             assertFalse(throwException);
-            assertTrue(entityManager.contains(ste));
+            assertTrue(metadataManager.contains(ste));
 
             // Check for Changes in saved entity
-            entityManager.setAuthorizationContext(adminContext);
-            List<SecurityTestEntity> ste2 = entityManager.find(ste, ste);
+            metadataManager.setAuthorizationContext(adminContext);
+            List<SecurityTestEntity> ste2 = metadataManager.find(ste, ste);
             assertEquals(1, ste2.size());
             assertEquals(ste2.get(0).getDescription(), ste.getDescription());
             assertEquals(ste2.get(0).getAnyValue(), ste.getAnyValue());
             assertEquals(ste2.get(0).getId(), ste.getId());
             // Restore old values
             ste.setDescription(oldDescription);
-            entityManager.save(ste);
+            metadataManager.save(ste);
             assertFalse(throwException);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error(ste.getDescription() + " / " + ste.getSummary());
@@ -303,7 +304,7 @@ public class WriteResourcesTest extends SecurityUtil {
     private SecurityTestEntity getSecurityTestEntity() {
         SecurityTestEntity returnValue = allSecurableEntities.get(0);
         try {
-            List<SecurityTestEntity> find = entityManager.find(SecurityTestEntity.class);
+            List<SecurityTestEntity> find = metadataManager.find(SecurityTestEntity.class);
             if (!find.isEmpty()) {
                 returnValue = find.get(0);
             }
@@ -316,66 +317,58 @@ public class WriteResourcesTest extends SecurityUtil {
     /**
      * Test contains with role NOACCESS
      */
-    @Test
+    @Test(expected = UnauthorizedAccessAttemptException.class)
     public void testSaveWithNoAccess() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.NO_ACCESS);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         TestEntity te = new TestEntity();
         te.setDescription("aiuh4rbk");
         te.setSummary("kjawephira");
-        entityManager.save(te);
-        assertTrue(entityManager.contains(te));
-        List<TestEntity> te2 = entityManager.find(te, te);
+        metadataManager.save(te);
+        assertTrue(metadataManager.contains(te));
+        List<TestEntity> te2 = metadataManager.find(te, te);
         assertEquals(1, te2.size());
         assertEquals(te2.get(0).getDescription(), te.getDescription());
         assertEquals(te2.get(0).getSummary(), te.getSummary());
         assertEquals(te2.get(0).getId(), te.getId());
-        entityManager.remove(te);
+        metadataManager.remove(te);
         assertTrue(true);
     }
 
     /**
      * Test contains with role GUEST
      */
-    @Test
-    public void testSaveWithGuest() throws EntityNotFoundException {
+    @Test(expected = UnauthorizedAccessAttemptException.class)
+    public void testSaveWithGuest() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         boolean throwException = false;
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.GUEST);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         TestEntity ste = new TestEntity();
-        try {
-            assertFalse(entityManager.contains(ste));
-            entityManager.save(ste);
-            assertTrue(entityManager.contains(ste));
-            assertFalse(throwException);
-            entityManager.setAuthorizationContext(adminContext);
-            entityManager.remove(ste);
-        } catch (UnauthorizedAccessAttemptException ex) {
-            assertTrue(throwException);
-        }
+        assertFalse(metadataManager.contains(ste));
+        metadataManager.save(ste);
+        assertTrue(metadataManager.contains(ste));
+        assertFalse(throwException);
+        metadataManager.setAuthorizationContext(adminContext);
+        metadataManager.remove(ste);
     }
 
     /**
      * Test contains with role GUEST
      */
-    @Test
+    @Test(expected = UnauthorizedAccessAttemptException.class)
     public void testSaveExistingEntityWithGuest() throws EntityNotFoundException, UnauthorizedAccessAttemptException {
         boolean throwException = false;
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.GUEST);
-        entityManager.setAuthorizationContext(act);
-        TestEntity ste = entityManager.find(TestEntity.class).get(0);
-        try {
-            assertTrue(entityManager.contains(ste));
-            ste.setDescription(userId.getStringRepresentation() + groupId.getStringRepresentation());
-            Long id = ste.getId();
-            entityManager.save(ste);
-            TestEntity te2 = entityManager.find(TestEntity.class, id);
-            assertEquals(ste.getDescription(), te2.getDescription());
-            assertEquals(ste.getId(), te2.getId());
-            assertFalse(throwException);
-        } catch (UnauthorizedAccessAttemptException ex) {
-            assertFalse(throwException);
-        }
+        metadataManager.setAuthorizationContext(act);
+        TestEntity ste = metadataManager.find(TestEntity.class).get(0);
+        assertTrue(metadataManager.contains(ste));
+        ste.setDescription(userId.getStringRepresentation() + groupId.getStringRepresentation());
+        Long id = ste.getId();
+        metadataManager.save(ste);
+        TestEntity te2 = metadataManager.find(TestEntity.class, id);
+        assertEquals(ste.getDescription(), te2.getDescription());
+        assertEquals(ste.getId(), te2.getId());
+        assertFalse(throwException);
     }
     //</editor-fold>
 
@@ -395,20 +388,20 @@ public class WriteResourcesTest extends SecurityUtil {
             throwException = true;
         }
         AuthorizationContext act = new AuthorizationContext(userId, groupId, userRole);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         try {
-            entityManager.persist(ste);
+            metadataManager.persist(ste);
             assertFalse(throwException);
-            assertTrue(entityManager.contains(ste));
+            assertTrue(metadataManager.contains(ste));
             // Check for Changes in saved entity
-            entityManager.setAuthorizationContext(adminContext);
-            List<SecurityTestEntity> ste2 = entityManager.find(ste, ste);
+            metadataManager.setAuthorizationContext(adminContext);
+            List<SecurityTestEntity> ste2 = metadataManager.find(ste, ste);
             assertEquals(1, ste2.size());
             assertEquals(ste2.get(0).getDescription(), ste.getDescription());
             assertEquals(ste2.get(0).getAnyValue(), ste.getAnyValue());
             assertEquals(ste2.get(0).getId(), ste.getId());
 
-            entityManager.remove(ste);
+            metadataManager.remove(ste);
         } catch (UnauthorizedAccessAttemptException ex) {
             assertTrue(throwException);
         }
@@ -421,7 +414,7 @@ public class WriteResourcesTest extends SecurityUtil {
     @Test
     public void testPersistSecureWithRoleAndManagedEntity() throws EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, userRole);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         SecurityTestEntity ste = getSecurityTestEntity();
         boolean throwException = false;
         if (groupId.getStringRepresentation().startsWith("guest")
@@ -429,27 +422,27 @@ public class WriteResourcesTest extends SecurityUtil {
             throwException = true;
         }
         try {
-            entityManager.setAuthorizationContext(adminContext);
-            ste = entityManager.find(SecurityTestEntity.class, ste.getId());
+            metadataManager.setAuthorizationContext(adminContext);
+            ste = metadataManager.find(SecurityTestEntity.class, ste.getId());
             String oldDescription = ste.getDescription();
             ste.setDescription("beforeDes");
             ste.setAnyValue(123L);
-            entityManager.setAuthorizationContext(act);
-            assertTrue(entityManager.contains(ste));
+            metadataManager.setAuthorizationContext(act);
+            assertTrue(metadataManager.contains(ste));
             // Save entity
-            entityManager.persist(ste);
+            metadataManager.persist(ste);
             assertFalse(throwException);
-            assertTrue(entityManager.contains(ste));
+            assertTrue(metadataManager.contains(ste));
             // Check for Changes in saved entity
-            entityManager.setAuthorizationContext(adminContext);
-            List<SecurityTestEntity> ste2 = entityManager.find(ste, ste);
+            metadataManager.setAuthorizationContext(adminContext);
+            List<SecurityTestEntity> ste2 = metadataManager.find(ste, ste);
             assertEquals(1, ste2.size());
             assertEquals(ste2.get(0).getDescription(), ste.getDescription());
             assertEquals(ste2.get(0).getAnyValue(), ste.getAnyValue());
             assertEquals(ste2.get(0).getId(), ste.getId());
             // Restore old values
             ste.setDescription(oldDescription);
-            entityManager.save(ste);
+            metadataManager.save(ste);
             assertFalse(throwException);
         } catch (UnauthorizedAccessAttemptException ex) {
             assertTrue(throwException);
@@ -462,62 +455,58 @@ public class WriteResourcesTest extends SecurityUtil {
     /**
      * Test contains with role NOACCESS
      */
-    @Test
+    @Test(expected = UnauthorizedAccessAttemptException.class)
     public void testPersistWithNoAccess() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.NO_ACCESS);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         TestEntity te = new TestEntity();
         te.setDescription("aiuh4rbk");
         te.setSummary("kjawephira");
-        assertFalse(entityManager.contains(te));
-        entityManager.persist(te);
-        assertTrue(entityManager.contains(te));
-        List<TestEntity> te2 = entityManager.find(te, te);
+        assertFalse(metadataManager.contains(te));
+        metadataManager.persist(te);
+        assertTrue(metadataManager.contains(te));
+        List<TestEntity> te2 = metadataManager.find(te, te);
         assertEquals(1, te2.size());
         assertEquals(te2.get(0).getDescription(), te.getDescription());
         assertEquals(te2.get(0).getSummary(), te.getSummary());
         assertEquals(te2.get(0).getId(), te.getId());
-        entityManager.remove(te);
+        metadataManager.remove(te);
         assertTrue(true);
     }
 
     /**
      * Test contains with role GUEST
      */
-    @Test
+    @Test(expected = UnauthorizedAccessAttemptException.class)
     public void testPersistWithGuest() throws EntityNotFoundException, UnauthorizedAccessAttemptException {
         TestEntity ste = new TestEntity();
         ste.setDescription("kiepripiioi");
         ste.setSummary("ksdjrh");
         boolean throwException = false;
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.GUEST);
-        assertFalse(entityManager.contains(ste));
-        entityManager.persist(ste);
+        metadataManager.setAuthorizationContext(act);
+        assertFalse(metadataManager.contains(ste));
+        metadataManager.persist(ste);
         assertFalse(throwException);
     }
 
     /**
      * Test contains with role GUEST
      */
-    @Test(expected = EntityExistsException.class)
-    public void testPersistExistingEntityWithGuest() throws EntityNotFoundException {
+    @Test(expected = UnauthorizedAccessAttemptException.class)
+    public void testPersistExistingEntityWithGuest() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         TestEntity ste = new TestEntity();
         ste.setDescription("kasjelrhg");
         ste.setSummary("ioewrhah");
-        boolean throwException = false;
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.GUEST);
-        entityManager.setAuthorizationContext(act);
-        try {
-            assertFalse(entityManager.contains(ste));
-            entityManager.persist(ste);
-            assertTrue(entityManager.contains(ste));
-            entityManager.persist(ste);
-            assertFalse(throwException);
-            entityManager.setAuthorizationContext(adminContext);
-            entityManager.remove(ste);
-        } catch (UnauthorizedAccessAttemptException ex) {
-            assertTrue(throwException);
-        }
+        metadataManager.setAuthorizationContext(act);
+        assertFalse(metadataManager.contains(ste));
+        metadataManager.persist(ste);
+        assertTrue(metadataManager.contains(ste));
+        metadataManager.persist(ste);
+        metadataManager.setAuthorizationContext(adminContext);
+        metadataManager.remove(ste);
+
     }
     //</editor-fold>
 
@@ -539,9 +528,9 @@ public class WriteResourcesTest extends SecurityUtil {
             entityNotExist = false;
         }
         AuthorizationContext act = new AuthorizationContext(userId, groupId, userRole);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         try {
-            SecurityTestEntity update = entityManager.update(ste);
+            SecurityTestEntity update = metadataManager.update(ste);
             // should not happen
             assertFalse(true);
         } catch (UnauthorizedAccessAttemptException ex) {
@@ -560,7 +549,7 @@ public class WriteResourcesTest extends SecurityUtil {
     @Test
     public void testUpdateSecureWithRoleAndManagedEntity() throws EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, userRole);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         SecurityTestEntity ste = getSecurityTestEntity();
         boolean throwException = false;
         if (groupId.getStringRepresentation().startsWith("guest")
@@ -568,27 +557,27 @@ public class WriteResourcesTest extends SecurityUtil {
             throwException = true;
         }
         try {
-            entityManager.setAuthorizationContext(adminContext);
-            ste = entityManager.find(SecurityTestEntity.class, ste.getId());
+            metadataManager.setAuthorizationContext(adminContext);
+            ste = metadataManager.find(SecurityTestEntity.class, ste.getId());
             String oldDescription = ste.getDescription();
             ste.setDescription("beforeDes");
             ste.setAnyValue(123L);
-            entityManager.setAuthorizationContext(act);
-            assertTrue(entityManager.contains(ste));
+            metadataManager.setAuthorizationContext(act);
+            assertTrue(metadataManager.contains(ste));
             // Save entity
-            entityManager.update(ste);
+            metadataManager.update(ste);
             assertFalse(throwException);
-            assertTrue(entityManager.contains(ste));
+            assertTrue(metadataManager.contains(ste));
             // Check for Changes in saved entity
-            entityManager.setAuthorizationContext(adminContext);
-            List<SecurityTestEntity> ste2 = entityManager.find(ste, ste);
+            metadataManager.setAuthorizationContext(adminContext);
+            List<SecurityTestEntity> ste2 = metadataManager.find(ste, ste);
             assertEquals(1, ste2.size());
             assertEquals(ste2.get(0).getDescription(), ste.getDescription());
             assertEquals(ste2.get(0).getAnyValue(), ste.getAnyValue());
             assertEquals(ste2.get(0).getId(), ste.getId());
             // Restore old values
             ste.setDescription(oldDescription);
-            entityManager.save(ste);
+            metadataManager.save(ste);
             assertFalse(throwException);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error(ste.getDescription() + " / " + ste.getSummary());
@@ -600,65 +589,55 @@ public class WriteResourcesTest extends SecurityUtil {
     /**
      * Test contains with role NOACCESS
      */
-    @Test(expected = EntityNotFoundException.class)
+    @Test(expected = UnauthorizedAccessAttemptException.class)
     public void testUpdateWithNoAccess() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.NO_ACCESS);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         TestEntity te = new TestEntity();
         Date date = new Date();
         te.setDescription("eruyaweuoyr" + date.toString());
         te.setSummary("io3uq2ouhrjhl" + date.getTime());
         TestEntity update;
-        update = entityManager.update(te);
-        assertTrue(entityManager.contains(update));
-        List<TestEntity> te2 = entityManager.find(te, te);
+        update = metadataManager.update(te);
+        assertTrue(metadataManager.contains(update));
+        List<TestEntity> te2 = metadataManager.find(te, te);
         assertEquals(1, te2.size());
         assertEquals(te2.get(0).getDescription(), te.getDescription());
         assertEquals(te2.get(0).getSummary(), te.getSummary());
         assertEquals(te2.get(0).getId(), te.getId());
-        entityManager.remove(te);
+        metadataManager.remove(te);
         assertTrue(true);
     }
 
     /**
      * Test contains with role GUEST
      */
-    @Test(expected = EntityNotFoundException.class)
-    public void testUpdateWithGuest() throws EntityNotFoundException {
+    @Test(expected = UnauthorizedAccessAttemptException.class)
+    public void testUpdateWithGuest() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.GUEST);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         TestEntity ste = new TestEntity();
-        try {
-            assertFalse(entityManager.contains(ste));
-            entityManager.update(ste);
-            // An exception should be thrown.
-            assertTrue(false);
-        } catch (UnauthorizedAccessAttemptException ex) {
-            assertTrue(true);
-        }
+        assertFalse(metadataManager.contains(ste));
+        metadataManager.update(ste);
+        // An exception should be thrown.
+        assertTrue(false);
     }
 
     /**
      * Test contains with role GUEST
      */
-    @Test
+    @Test(expected = UnauthorizedAccessAttemptException.class)
     public void testUpdateExistingEntityWithGuest() throws EntityNotFoundException, UnauthorizedAccessAttemptException {
-        boolean throwException = false;
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.GUEST);
-        entityManager.setAuthorizationContext(act);
-        TestEntity ste = entityManager.find(TestEntity.class).get(0);
-        try {
-            assertTrue(entityManager.contains(ste));
-            ste.setDescription(userId.getStringRepresentation() + groupId.getStringRepresentation());
-            Long id = ste.getId();
-            entityManager.update(ste);
-            TestEntity te2 = entityManager.find(TestEntity.class, id);
-            assertEquals(ste.getDescription(), te2.getDescription());
-            assertEquals(ste.getId(), te2.getId());
-            assertFalse(throwException);
-        } catch (UnauthorizedAccessAttemptException ex) {
-            assertTrue(throwException);
-        }
+        metadataManager.setAuthorizationContext(act);
+        TestEntity ste = metadataManager.find(TestEntity.class).get(0);
+        assertTrue(metadataManager.contains(ste));
+        ste.setDescription(userId.getStringRepresentation() + groupId.getStringRepresentation());
+        Long id = ste.getId();
+        metadataManager.update(ste);
+        TestEntity te2 = metadataManager.find(TestEntity.class, id);
+        assertEquals(ste.getDescription(), te2.getDescription());
+        assertEquals(ste.getId(), te2.getId());
     }
     //</editor-fold>
 
@@ -680,9 +659,9 @@ public class WriteResourcesTest extends SecurityUtil {
             throwException = false;
         }
         AuthorizationContext act = new AuthorizationContext(userId, groupId, userRole);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         try {
-            entityManager.remove(ste);
+            metadataManager.remove(ste);
             assertFalse(throwException);
         } catch (UnauthorizedAccessAttemptException ex) {
             assertTrue(throwException);
@@ -699,7 +678,7 @@ public class WriteResourcesTest extends SecurityUtil {
     @Test
     public void testRemoveSecureWithRoleAndManagedEntity() throws EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, userRole);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         SecurityTestEntity ste = getSecurityTestEntity();
         boolean throwException = true;
         boolean admin = false;
@@ -709,18 +688,18 @@ public class WriteResourcesTest extends SecurityUtil {
             throwException = false;
         }
         try {
-            entityManager.setAuthorizationContext(adminContext);
-            ste = entityManager.find(SecurityTestEntity.class, ste.getId());
+            metadataManager.setAuthorizationContext(adminContext);
+            ste = metadataManager.find(SecurityTestEntity.class, ste.getId());
             String oldDescription = ste.getDescription();
             ste.setDescription("beforeDes");
             ste.setAnyValue(123L);
-            entityManager.setAuthorizationContext(act);
-            assertTrue(entityManager.contains(ste));
+            metadataManager.setAuthorizationContext(act);
+            assertTrue(metadataManager.contains(ste));
             // Save entity
-            entityManager.remove(ste);
+            metadataManager.remove(ste);
             assertFalse(throwException);
             assertTrue(admin);
-            assertFalse(entityManager.contains(ste));
+            assertFalse(metadataManager.contains(ste));
         } catch (UnauthorizedAccessAttemptException ex) {
             assertTrue(throwException);
         }
@@ -729,56 +708,46 @@ public class WriteResourcesTest extends SecurityUtil {
     /**
      * Test contains with role NOACCESS
      */
-    @Test(expected = EntityNotFoundException.class)
+    @Test(expected = UnauthorizedAccessAttemptException.class)
     public void testRemoveWithNoAccess() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.NO_ACCESS);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         TestEntity te = new TestEntity();
         te.setDescription("eruyaweuoyr");
         te.setSummary("io3uq2ouhrjhl");
-        assertFalse(entityManager.contains(te));
-        entityManager.remove(te);
+        assertFalse(metadataManager.contains(te));
+        metadataManager.remove(te);
 //    assertTrue(false);
     }
 
     /**
      * Test contains with role GUEST
      */
-    @Test
-    public void testRemoveWithGuest() {
+    @Test(expected = UnauthorizedAccessAttemptException.class)
+    public void testRemoveWithGuest() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.GUEST);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         TestEntity ste = new TestEntity();
-        try {
-            assertFalse(entityManager.contains(ste));
-            entityManager.remove(ste);
-            // An exception should be thrown.
-            assertTrue(false);
-        } catch (EntityNotFoundException ex) {
-            assertTrue(true);
-        } catch (UnauthorizedAccessAttemptException ex) {
-            // Should not happen
-            assertTrue(false);
-        }
+        assertFalse(metadataManager.contains(ste));
+        metadataManager.remove(ste);
+        // An exception should be thrown.
+        assertTrue(false);
     }
 
     /**
      * Test contains with role GUEST
      */
-    @Test
+    @Test(expected = UnauthorizedAccessAttemptException.class)
     public void testRemoveExistingEntityWithGuest() throws EntityNotFoundException, UnauthorizedAccessAttemptException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.GUEST);
-        entityManager.setAuthorizationContext(act);
-        TestEntity ste = entityManager.find(TestEntity.class).get(0);
-        try {
-            assertTrue(entityManager.contains(ste));
-            ste.setDescription(userId.getStringRepresentation() + groupId.getStringRepresentation());
-            Long id = ste.getId();
-            entityManager.remove(ste);
-            assertFalse(entityManager.contains(ste));
-        } catch (UnauthorizedAccessAttemptException ex) {
-            assertTrue(true);
-        }
+        metadataManager.setAuthorizationContext(act);
+        TestEntity ste = metadataManager.find(TestEntity.class).get(0);
+
+        assertTrue(metadataManager.contains(ste));
+        ste.setDescription(userId.getStringRepresentation() + groupId.getStringRepresentation());
+        Long id = ste.getId();
+        metadataManager.remove(ste);
+        assertFalse(metadataManager.contains(ste));
     }
     //</editor-fold>
 
@@ -799,9 +768,9 @@ public class WriteResourcesTest extends SecurityUtil {
             entityNotExist = false;
         }
         AuthorizationContext act = new AuthorizationContext(userId, groupId, userRole);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         try {
-            ste = entityManager.refresh(ste);
+            ste = metadataManager.refresh(ste);
             // should not happen
             assertFalse(true);
         } catch (UnauthorizedAccessAttemptException ex) {
@@ -820,7 +789,7 @@ public class WriteResourcesTest extends SecurityUtil {
     @Test
     public void testRefreshSecureWithRoleAndManagedEntity() throws EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, userRole);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         SecurityTestEntity ste = getSecurityTestEntity();
         boolean throwException = false;
         boolean unauhorized = false;
@@ -830,17 +799,17 @@ public class WriteResourcesTest extends SecurityUtil {
         }
         try {
 //      entityManager.setAuthorizationContext(adminContext);
-            ste = entityManager.find(SecurityTestEntity.class, ste.getId());
+            ste = metadataManager.find(SecurityTestEntity.class, ste.getId());
             String oldDescription = ste.getDescription();
             Long oldAnyValue = ste.getAnyValue();
             ste.setDescription("beforeDes" + new Date().getTime() % 10000);
             ste.setAnyValue(12345L);
 //      entityManager.setAuthorizationContext(act);
-            assertTrue(entityManager.contains(ste));
+            assertTrue(metadataManager.contains(ste));
             // Refresh entity
-            ste = entityManager.refresh(ste);
+            ste = metadataManager.refresh(ste);
             assertFalse(throwException);
-            assertTrue(entityManager.contains(ste));
+            assertTrue(metadataManager.contains(ste));
             assertEquals(oldDescription, ste.getDescription());
             assertEquals(oldAnyValue, new Long(ste.getAnyValue()));
             assertFalse(throwException);
@@ -852,36 +821,36 @@ public class WriteResourcesTest extends SecurityUtil {
     /**
      * Test contains with role NOACCESS
      */
-    @Test(expected = EntityNotFoundException.class)
+    @Test(expected = UnauthorizedAccessAttemptException.class)
     public void testRefreshWithNoAccess() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.NO_ACCESS);
-        entityManager.setAuthorizationContext(act);
+        metadataManager.setAuthorizationContext(act);
         TestEntity te = new TestEntity();
         Date date = new Date();
         te.setDescription("eruyaweuoyr" + date.toString());
         te.setSummary("io3uq2ouhrjhl" + date.getTime());
-        assertFalse(entityManager.contains(te));
-        entityManager.refresh(te);
+        assertFalse(metadataManager.contains(te));
+        metadataManager.refresh(te);
         //should not happen
-        assertTrue(entityManager.contains(te));
+        assertTrue(metadataManager.contains(te));
         assertTrue(false);
     }
 
     /**
      * Test contains with role GUEST
      */
-    @Test(expected = EntityNotFoundException.class)
-    public void testRefreshWithGuest() throws EntityNotFoundException {
+    @Test
+    public void testRefreshWithGuest() throws UnauthorizedAccessAttemptException, EntityNotFoundException {
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.GUEST);
-        entityManager.setAuthorizationContext(act);
-        TestEntity ste = new TestEntity();
+        metadataManager.setAuthorizationContext(act);
         try {
-            assertFalse(entityManager.contains(ste));
-            entityManager.refresh(ste);
-            // An exception should be thrown.
-            assertTrue(false);
+            TestEntity ste = metadataManager.find(TestEntity.class).get(0);
+            TestEntity te2 = new TestEntity();
+            te2.setId(ste.getId());
+            metadataManager.refresh(te2);
         } catch (UnauthorizedAccessAttemptException ex) {
-            assertTrue(false);
+            //does not work for group 'no access'
+            assertEquals("no access", groupId.getStringRepresentation());
         }
     }
 
@@ -890,23 +859,25 @@ public class WriteResourcesTest extends SecurityUtil {
      */
     @Test
     public void testRefreshExistingEntityWithGuest() throws EntityNotFoundException, UnauthorizedAccessAttemptException {
-        boolean throwException = false;
         AuthorizationContext act = new AuthorizationContext(userId, groupId, Role.GUEST);
-        entityManager.setAuthorizationContext(act);
-        TestEntity ste = entityManager.find(TestEntity.class).get(0);
-        String oldDescription = ste.getDescription();
-        assertTrue(entityManager.contains(ste));
-        ste.setDescription(userId.getStringRepresentation() + groupId.getStringRepresentation() + (new Date().getTime() % 10000));
-        String wrongDescription = ste.getDescription();
-        ste = entityManager.refresh(ste);
-        Long id = ste.getId();
-        TestEntity te2 = entityManager.find(TestEntity.class, id);
-        assertNotSame(wrongDescription, ste.getDescription());
-        assertNotSame(wrongDescription, ste.getDescription());
-        assertEquals(oldDescription, te2.getDescription());
-        assertEquals(ste.getDescription(), te2.getDescription());
-        assertEquals(ste.getId(), te2.getId());
-        assertFalse(throwException);
+        metadataManager.setAuthorizationContext(act);
+        try {
+            TestEntity ste = metadataManager.find(TestEntity.class).get(0);
+            String oldDescription = ste.getDescription();
+            assertTrue(metadataManager.contains(ste));
+            ste.setDescription(userId.getStringRepresentation() + groupId.getStringRepresentation() + (new Date().getTime() % 10000));
+            String wrongDescription = ste.getDescription();
+            ste = metadataManager.refresh(ste);
+            Long id = ste.getId();
+            TestEntity te2 = metadataManager.find(TestEntity.class, id);
+            assertNotSame(wrongDescription, ste.getDescription());
+            assertNotSame(wrongDescription, ste.getDescription());
+            assertEquals(oldDescription, te2.getDescription());
+            assertEquals(ste.getDescription(), te2.getDescription());
+            assertEquals(ste.getId(), te2.getId());
+        } catch (UnauthorizedAccessAttemptException ex) {
+            assertEquals("no access", groupId.getStringRepresentation());
+        }
     }
     //</editor-fold>
 }

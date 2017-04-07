@@ -76,7 +76,7 @@ public interface ISharingService extends ICommonRestInterface {
             @FormParam("domainUniqueId") String pDomainUniqueId,
             @FormParam("referenceGroupId") String pReferenceGroupId,
             @FormParam("role") String pRole,
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String pGroupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String pGroupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
     /**
@@ -148,6 +148,8 @@ public interface ISharingService extends ICommonRestInterface {
      * deleted.
      * @param pDomainUniqueId The id of the resource reference which should be
      * deleted.
+     * @param pReferenceGroupId The group id of the reference that should be
+     * deleted.
      * @param pGroupId The id of the group which owns the resource reference
      * which should be deleted.
      *
@@ -162,6 +164,7 @@ public interface ISharingService extends ICommonRestInterface {
     Response deleteReference(
             @QueryParam("domain") String pDomain,
             @QueryParam("domainUniqueId") String pDomainUniqueId,
+            @QueryParam("referenceGroupId") String pReferenceGroupId,
             @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String pGroupId,
             @javax.ws.rs.core.Context HttpContext hc);
 
@@ -249,12 +252,11 @@ public interface ISharingService extends ICommonRestInterface {
             @FormParam("domain") String pDomain,
             @FormParam("domainUniqueId") String pDomainUniqueId,
             @FormParam("userId") String pUserId,
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String pGroupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String pGroupId,
             @FormParam("role") String pRole,
             @javax.ws.rs.core.Context HttpContext hc
     );
 
-        
     /**
      * Revoke the grant with the provided id.
      *
@@ -327,7 +329,7 @@ public interface ISharingService extends ICommonRestInterface {
     @ReturnType("edu.kit.dama.rest.base.IEntityWrapper<edu.kit.dama.authorization.entities.IDefaultGrant>")
     IEntityWrapper<? extends IDefaultGrant> updateGrant(
             @PathParam("id") Long pId,
-            @QueryParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String pGroupId,
+            @FormParam("groupId") @DefaultValue(Constants.USERS_GROUP_ID) String pGroupId,
             @FormParam("role") String pRole,
             @javax.ws.rs.core.Context HttpContext hc
     );

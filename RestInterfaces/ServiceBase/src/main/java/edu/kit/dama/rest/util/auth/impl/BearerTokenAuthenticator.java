@@ -19,6 +19,7 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.core.HttpContext;
+import com.sun.jersey.api.core.HttpRequestContext;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
@@ -31,6 +32,7 @@ import edu.kit.dama.mdm.admin.ServiceAccessToken;
 import edu.kit.dama.mdm.admin.util.ServiceAccessUtil;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.mdm.core.MetaDataManagement;
+import edu.kit.dama.rest.util.auth.exception.MissingCredentialException;
 import edu.kit.dama.util.CryptUtil;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -83,10 +85,10 @@ public class BearerTokenAuthenticator extends SimpleTokenAuthenticator {
     private String tokenInfoServiceUrl = null;
 
     @Override
-    public IAuthorizationContext obtainAuthorizationContext(HttpContext hc, GroupId groupId) throws UnauthorizedAccessAttemptException {
-        String token = hc.getRequest().getHeaderValue("Authorization");//getQueryParameters().getFirst("authToken");
+    public IAuthorizationContext obtainAuthorizationContext(HttpRequestContext hc, GroupId groupId) throws UnauthorizedAccessAttemptException, MissingCredentialException {
+        String token = hc.getHeaderValue("Authorization");
         if (token == null) {
-            throw new UnauthorizedAccessAttemptException("No authorization header entry provided.");
+            throw new MissingCredentialException("No authorization header entry provided.");
         }
         if (token.startsWith("Bearer ")) {
             LOGGER.debug("Starting bearer token authentication.");
@@ -121,7 +123,7 @@ public class BearerTokenAuthenticator extends SimpleTokenAuthenticator {
             LOGGER.debug("Token validation succeeded/skipped. Proceeding with authentication");
             token = token.replaceFirst("Bearer ", "");
         } else {
-            throw new UnauthorizedAccessAttemptException("No bearer token provided in authorization header. Token is '" + token + "'");
+            throw new MissingCredentialException("No bearer token provided in authorization header. Token is '" + token + "'");
         }
 
         IMetaDataManager manager = MetaDataManagement.getMetaDataManagement().getMetaDataManager();

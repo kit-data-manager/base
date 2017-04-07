@@ -29,8 +29,6 @@ import edu.kit.dama.authorization.entities.SecurableResourceId;
 import edu.kit.dama.authorization.entities.UserId;
 import edu.kit.dama.authorization.entities.impl.Grant;
 import edu.kit.dama.authorization.entities.impl.GrantSet;
-import edu.kit.dama.authorization.entities.impl.SecurableResource;
-import edu.kit.dama.authorization.entities.impl.User;
 import edu.kit.dama.authorization.entities.util.FindUtil;
 import edu.kit.dama.authorization.entities.util.PU;
 import edu.kit.dama.authorization.exceptions.EntityAlreadyExistsException;
@@ -65,16 +63,17 @@ import org.slf4j.LoggerFactory;
 @Path("/")
 public final class SharingRestServiceImpl implements ISharingService {
 
-    private static final Class[] IMPL_CLASSES = new Class[]{
-        GrantSetWrapper.class,
-        ReferenceIdWrapper.class,
-        GrantSet.class,
-        Grant.class,
-        SecurableResource.class,
-        ReferenceId.class,
-        Role.class,
-        User.class
-    };
+//    private static final Class[] IMPL_CLASSES = new Class[]{
+//        GrantSetWrapper.class,
+//        ReferenceIdWrapper.class,
+//        GrantSet.class,
+//        Grant.class,
+//        SecurableResource.class,
+//        SecurableResourceId.class,
+//        ReferenceId.class,
+//        Role.class,
+//        User.class
+//    };
     private static final Logger LOGGER = LoggerFactory.getLogger(SharingRestServiceImpl.class);
 
     @Override
@@ -134,9 +133,14 @@ public final class SharingRestServiceImpl implements ISharingService {
     }
 
     @Override
-    public Response deleteReference(String pDomain, String pDomainUniqueId, String pGroupId, HttpContext hc) {
+    public Response deleteReference(String pDomain, String pDomainUniqueId, String pReferenceGroupId, String pGroupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(pGroupId));
-        ReferenceId refId = factoryReferenceId(pDomain, pDomainUniqueId, pGroupId);
+        if (pReferenceGroupId == null) {
+            LOGGER.error("Mandatory argument 'referenceGroupId' missing");
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        ReferenceId refId = factoryReferenceId(pDomain, pDomainUniqueId, pReferenceGroupId);
         try {
             LOGGER.debug("Try to delete reference {}", refId);
             ResourceServiceLocal.getSingleton().deleteReference(refId, ctx);
@@ -179,7 +183,7 @@ public final class SharingRestServiceImpl implements ISharingService {
         } catch (EntityNotFoundException ex) {
             LOGGER.error("EntityNotFoundException caught while obtaining ResourceReferences. Probably, the resource " + resId + " was not registered before.", ex);
             throw new WebApplicationException(404);
-        } 
+        }
     }
 
     @Override
@@ -207,8 +211,7 @@ public final class SharingRestServiceImpl implements ISharingService {
             LOGGER.debug("Checking whether grants are allowed.");
             if (!ResourceServiceLocal.getSingleton().grantsAllowed(resId, ctx)) {
                 LOGGER.debug("Grants are not allowed. Enabling grants with max. role MANAGER.");
-                //allow grants with max. role MANAGER.
-                //@TODO check whether this should be solved in a configurable way.
+                //allow grants with max. role MANAGER...however, typically granted roles should be  GUEST or MEMBER
                 ResourceServiceLocal.getSingleton().allowGrants(resId, Role.MANAGER, ctx);
                 LOGGER.debug("Grants are now allowed.");
             } else {
@@ -275,7 +278,7 @@ public final class SharingRestServiceImpl implements ISharingService {
     public Response revokeAllGrants(String pDomain, String pDomainUniqueId, String pGroupId, HttpContext hc) {
         IAuthorizationContext ctx = RestUtils.authorize(hc, new GroupId(pGroupId));
         SecurableResourceId resId = factoryResourceId(pDomain, pDomainUniqueId);
-        
+
         try {
             ResourceServiceLocal.getSingleton().revokeAllAndDisallowGrants(resId, ctx);
             return Response.ok().build();

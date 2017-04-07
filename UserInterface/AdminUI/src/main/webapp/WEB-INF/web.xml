@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
+    <!--AdminUI interface-->
+    <servlet>
+        <servlet-name>AdminUI</servlet-name>
+        <servlet-class>edu.kit.dama.ui.admin.AdminUIServlet</servlet-class>
+        <init-param>
+            <param-name>UI</param-name>
+            <param-value>edu.kit.dama.ui.admin.AdminUIMainView</param-value>
+        </init-param>
+        <init-param>
+            <param-name>widgetset</param-name>
+            <param-value>edu.kit.dama.ui.admin.AppWidgetSet</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminUI</servlet-name>
+        <url-pattern>/*</url-pattern>
+    </servlet-mapping>
+    <!--Staging REST interface-->
+    <servlet>
+        <servlet-name>StagingServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.staging.services.impl</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>StagingServiceAdapter</servlet-name>
+        <url-pattern>/rest/staging/*</url-pattern>
+    </servlet-mapping>
+    <!--BaseMD REST interface-->
+    <servlet>
+        <servlet-name>BaseMetadataServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.basemetadata.services.impl</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>BaseMetadataServiceAdapter</servlet-name>
+        <url-pattern>/rest/basemetadata/*</url-pattern>
+    </servlet-mapping>
+    <!--UserGroup REST interface-->
+    <servlet>
+        <servlet-name>UserGroupManagementServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.usergroupmanagement.services.impl</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>UserGroupManagementServiceAdapter</servlet-name>
+        <url-pattern>/rest/usergroup/*</url-pattern>
+    </servlet-mapping>
+    <!--DataOrganization REST interface-->
+    <servlet>
+        <servlet-name>DataOrganizationServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.dataorganization.services.impl</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <!--Access to all nodes in the listed view(s), multiple views are separated by ';', is allowed without any authorization. (Only recommended for special views) -->
+        <!--init-param>
+            <param-name>public.view.names</param-name>
+            <param-value>public</param-value>
+        </init-param-->
+        <!--Access to all nodes having an attribute with the mentioned key assigned is allowed without any authorization. (Can be used for fine-grained selection) 
+        Attention: Enabling the attribute check adds an overhead of approximately 600 ms per download call. This is due to lazy loading of attributes. If response time matters, please
+        consider using another option, e.g. a dedicated views.
+        -->
+        <!--init-param>
+            <param-name>public.attribute.key</param-name>
+            <param-value>public</param-value>
+        </init-param-->
+        <!--Access collection nodes (download zipped version of all children) is allowed (Typically not recommended) -->
+        <!--init-param>
+            <param-name>public.collection.node.access.allowed</param-name>
+            <param-value>false</param-value>
+        </init-param-->
+        <!--Access to file nodes is allowed if node name matches the provided pattern, e.g. (.*)\.jpg$ for all nodes ending with .jpg
+        Note that special characters are only escaped with one slash, not with two as if the pattern is provided as string!-->
+        <!--init-param>
+            <param-name>public.file.node.filter</param-name>
+            <param-value>(.*)\.jpg$</param-value>
+        </init-param-->
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DataOrganizationServiceAdapter</servlet-name>
+        <url-pattern>/rest/dataorganization/*</url-pattern>
+    </servlet-mapping> 
+    <!--Sharing REST interface-->
+    <servlet>
+        <servlet-name>SharingServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.sharing.services.impl</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SharingServiceAdapter</servlet-name>
+        <url-pattern>/rest/sharing/*</url-pattern>
+    </servlet-mapping> 
+    <!--DataWorkflow REST interface-->
+    <servlet>
+        <servlet-name>DataWorkflowServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.dataworkflow.services.impl</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DataWorkflowServiceAdapter</servlet-name>
+        <url-pattern>/rest/dataworkflow/*</url-pattern>
+    </servlet-mapping> 
+    <!--Audit REST interface-->
+    <servlet>
+        <servlet-name>AuditServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.audit.services.impl</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AuditServiceAdapter</servlet-name>
+        <url-pattern>/rest/audit/*</url-pattern>
+    </servlet-mapping> 
+    <!--Job Scheduler REST interface-->
+    <servlet>
+        <servlet-name>SchedulerServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.rest.scheduler.service.impl</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SchedulerServiceAdapter</servlet-name>
+        <url-pattern>/rest/scheduler/*</url-pattern>
+    </servlet-mapping>
+    <!--OAI-PMH interface-->
+    <servlet>
+        <servlet-name>OAIPMHServiceAdapter</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>edu.kit.dama.mdm.content.oaipmh.service</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>OAIPMHServiceAdapter</servlet-name>
+        <url-pattern>/rest/*</url-pattern>
+    </servlet-mapping>
+	
+    <!-- Job-Scheduler initialization -->
+    <listener>
+        <listener-class>edu.kit.dama.scheduler.servlet.JobSchedulerInitializerListener</listener-class>
+    </listener>
+    <!-- RabbitMQ initialization -->
+    <listener>
+        <listener-class>edu.kit.dama.mdm.audit.servlet.RabbitMQInitializerListener</listener-class>
+    </listener>
+</web-app>

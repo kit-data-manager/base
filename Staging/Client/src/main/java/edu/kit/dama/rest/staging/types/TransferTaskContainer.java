@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,11 +69,16 @@ import edu.kit.dama.staging.entities.interfaces.IDefaultTransferTaskContainer;
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("transferId"),
-                @XmlNamedAttributeNode("closed"),
-                @XmlNamedAttributeNode("serviceUrl"),
-                @XmlNamedAttributeNode(value = "tree", subgraph = "default"),
-                @XmlNamedAttributeNode("destination"),
+                @XmlNamedAttributeNode("transferId")
+                ,
+                @XmlNamedAttributeNode("closed")
+                ,
+                @XmlNamedAttributeNode("serviceUrl")
+                ,
+                @XmlNamedAttributeNode(value = "tree", subgraph = "default")
+                ,
+                @XmlNamedAttributeNode("destination")
+                ,
                 @XmlNamedAttributeNode("type")
             })})
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -208,7 +213,7 @@ public class TransferTaskContainer implements IDefaultTransferTaskContainer {
         return container;
     }
 
-     /**
+    /**
      * Factory a new download container. This method will set the provided
      * attributes and returns the container. This method is intended to be used
      * on the server side to create a download container for a previously
@@ -229,14 +234,14 @@ public class TransferTaskContainer implements IDefaultTransferTaskContainer {
     public static TransferTaskContainer factoryDownloadContainer(DownloadInformation pTransferInfo, IFileTree pFileTree, String pServiceUrl) {
         TransferTaskContainer container = new TransferTaskContainer();
         container.setServiceUrl(pServiceUrl);
-         container.setTransferId(pTransferInfo.getId());
+        container.setTransferId(pTransferInfo.getId());
         container.setTransferInformation(pTransferInfo);
         container.setType(TYPE.DOWNLOAD);
         container.setFileTree(pFileTree);
         container.close();
         return container;
     }
-    
+
     /**
      * Factory an internal container. Internal containers are used e.g. for
      * internal staging processes where no external transfer information entity
@@ -406,7 +411,9 @@ public class TransferTaskContainer implements IDefaultTransferTaskContainer {
 
     @Override
     public final URL getDestination() {
-        LOGGER.warn("No destination set. The destination must be set manually depending on the base path of the internal file tree.");
+        if (destination == null) {
+            LOGGER.warn("No destination set. The destination must be set manually depending on the base path of the internal file tree.");
+        }
         return destination;
     }
 

@@ -47,6 +47,8 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -69,6 +71,7 @@ import org.eclipse.persistence.sessions.Session;
 @DiscriminatorColumn(name = "OBJ_TYPE")
 @DiscriminatorValue(value = "DEFAULT")
 @XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 @XmlNamedObjectGraphs({
     @XmlNamedObjectGraph(
             name = "simple",
@@ -168,7 +171,8 @@ public class DigitalObject implements Serializable, IDefaultDigitalObject, IDigi
      * Reference to the DigitalObject.
      */
     @Transient
-
+    @XmlTransient
+    @JsonIgnore
     private DigitalObjectId digitalObjectId;
     /**
      * Digital Object Identity (DOI) of the dataset. The DOI should be unique

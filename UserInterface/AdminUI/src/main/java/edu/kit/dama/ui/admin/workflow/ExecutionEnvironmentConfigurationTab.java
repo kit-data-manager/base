@@ -37,7 +37,7 @@ import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.IconContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import edu.kit.dama.ui.commons.util.UIUtils7;
 import edu.kit.dama.util.PropertiesUtil;
 import java.io.IOException;

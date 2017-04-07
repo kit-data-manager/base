@@ -26,6 +26,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.eclipse.persistence.oxm.annotations.XmlNamedAttributeNode;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraph;
 import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
+import org.eclipse.persistence.queries.FetchGroupTracker;
+import org.eclipse.persistence.sessions.Session;
 
 /**
  *
@@ -46,7 +48,27 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
 @XmlAccessorType(XmlAccessType.FIELD)
 @Entity(name = "Groups")
 @Table(name = "Groups")
-public class Group implements Serializable {
+@NamedEntityGraphs({
+    @NamedEntityGraph(
+            name = "Group.simple",
+            includeAllAttributes = false,
+            attributeNodes = {
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode("groupId")})
+    ,
+    @NamedEntityGraph(
+            name = "Group.memberships",
+            includeAllAttributes = false,
+            attributeNodes = {
+                @NamedAttributeNode("id")
+                ,
+                @NamedAttributeNode("groupId")
+                ,
+                @NamedAttributeNode(value = "memberships")
+            })
+})
+public class Group implements Serializable, FetchGroupTracker {
 
     private static final long serialVersionUID = 1L;
     @Id
@@ -175,5 +197,46 @@ public class Group implements Serializable {
     @Override
     public String toString() {
         return "Group{" + "id=" + id + ", groupId=" + groupId + "}";
+    }
+    private transient org.eclipse.persistence.queries.FetchGroup fg;
+    private transient Session sn;
+
+    @Override
+    public org.eclipse.persistence.queries.FetchGroup _persistence_getFetchGroup() {
+        return this.fg;
+    }
+
+    @Override
+    public void _persistence_setFetchGroup(org.eclipse.persistence.queries.FetchGroup fg) {
+        this.fg = fg;
+    }
+
+    @Override
+    public boolean _persistence_isAttributeFetched(String string) {
+        return true;
+    }
+
+    @Override
+    public void _persistence_resetFetchGroup() {
+    }
+
+    @Override
+    public boolean _persistence_shouldRefreshFetchGroup() {
+        return false;
+    }
+
+    @Override
+    public void _persistence_setShouldRefreshFetchGroup(boolean bln) {
+
+    }
+
+    @Override
+    public Session _persistence_getSession() {
+        return sn;
+    }
+
+    @Override
+    public void _persistence_setSession(Session sn) {
+        this.sn = sn;
     }
 }

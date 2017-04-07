@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama.rest</groupId>
         <artifactId>RestInterfaces</artifactId>
-        <version>1.4</version>
+        <version>1.5</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -54,11 +54,6 @@
     </developers>
   
     <dependencies>
-        <dependency>
-            <groupId>com.sun.jersey.contribs.jersey-oauth</groupId>
-            <artifactId>oauth-server</artifactId>
-            <version>1.8</version>
-        </dependency>
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>MDM-Core</artifactId>

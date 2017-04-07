@@ -240,7 +240,7 @@ public final class MetadataIndexingHelper {
      */
     public boolean performIndexing(String pCluster, String pIndex, GroupId pGroupId, int pMaxNumberOfTasks, IAuthorizationContext pContext) {
         GroupId group = (pGroupId != null) ? pGroupId : new GroupId(Constants.USERS_GROUP_ID);
-        LOGGER.debug("Perform indexing of items of group '{}' to cluster '{}' and index '{}'", group, pCluster, pIndex);
+        LOGGER.info("Perform indexing of items of group '{}' to cluster '{}' and index '{}'", group, pCluster, pIndex);
         List<MetadataIndexingTask> tasks = getTasksToSchedule(group, pMaxNumberOfTasks, pContext);
         int errors = 0;
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
@@ -288,7 +288,7 @@ public final class MetadataIndexingHelper {
                 }
 
                 if (isError) {
-                    LOGGER.warn("Setting lastError timestamp for task #{} to NOW and increasing the fail count.", task.getId());
+                    LOGGER.info("Setting lastError timestamp for task #{} to NOW and increasing the fail count.", task.getId());
                     task.setLastErrorTimestamp(System.currentTimeMillis());
                     task.setFailCount(task.getFailCount() + 1);
                     errors++;
@@ -305,6 +305,8 @@ public final class MetadataIndexingHelper {
         } finally {
             mdm.close();
         }
+
+        LOGGER.info("Finished indexing of {} items of group '{}' to cluster '{}' and index '{}'", tasks.size(), group, pCluster, pIndex);
         //return TRUE only if no errors occured
         return (errors == 0);
     }
@@ -328,17 +330,16 @@ public final class MetadataIndexingHelper {
      */
     private void indexJson(MetadataIndexingTask pTask, String pJson, String pCluster, String pIndexName) {
         LOGGER.debug("Intitializing transport client..");
-        //Node node = nodeBuilder().clusterName(pCluster).node();
-        //Client client = node.client();
-        TransportClient client = ElasticHelper.getTransportClient(getHostname(), getPort(), pCluster);
-
-        LOGGER.debug("Indexing document...");
-        IndexResponse response = client.prepareIndex(pIndexName,
-                pTask.getSchemaReference().getSchemaIdentifier(),
-                pTask.getDigitalObjectId() + "_" + pTask.getSchemaReference().getSchemaIdentifier()).
-                setSource(pJson)
-                .execute()
-                .actionGet();
+        IndexResponse response;
+        try (TransportClient client = ElasticHelper.getTransportClient(getHostname(), getPort(), pCluster)) {
+            LOGGER.debug("Indexing document...");
+            response = client.prepareIndex(pIndexName,
+                    pTask.getSchemaReference().getSchemaIdentifier(),
+                    pTask.getDigitalObjectId() + "_" + pTask.getSchemaReference().getSchemaIdentifier()).
+                    setSource(pJson)
+                    .execute()
+                    .actionGet();
+        }
         LOGGER.debug("Document with id {} was {}. Current document version: {}", response.getId(), (response.status().equals(RestStatus.CREATED)) ? "created" : "updated", response.getVersion());
     }
 

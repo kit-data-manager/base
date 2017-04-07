@@ -30,7 +30,7 @@ import edu.kit.dama.ui.admin.exception.NoteBuilder;
 import edu.kit.dama.ui.admin.exception.UIComponentUpdateException;
 import edu.kit.dama.ui.admin.utils.CSSTokenContainer;
 import edu.kit.dama.ui.admin.utils.UIComponentTools;
-import edu.kit.dama.ui.admin.utils.UIHelper;
+import edu.kit.dama.ui.commons.util.UIHelper;
 import static edu.kit.dama.util.Constants.USERS_GROUP_ID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

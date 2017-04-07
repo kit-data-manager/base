@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 Karlsruhe Institute of Technology 
+ * Copyright (C) 2014 Karlsruhe Institute of Technology
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,20 +39,22 @@ import org.eclipse.persistence.oxm.annotations.XmlNamedObjectGraphs;
  *
  * @author mf6319
  */
-//XML simple -> Grant.id
-//XML default -> all grant
 @XmlNamedObjectGraphs({
     @XmlNamedObjectGraph(
             name = "simple",
             attributeNodes = {
                 @XmlNamedAttributeNode("id")
-            }),
+            })
+    ,
     @XmlNamedObjectGraph(
             name = "default",
             attributeNodes = {
-                @XmlNamedAttributeNode("id"),
-                @XmlNamedAttributeNode("resource"),
-                @XmlNamedAttributeNode("roleRestriction"),
+                @XmlNamedAttributeNode("id")
+                ,
+                @XmlNamedAttributeNode("resource")
+                ,
+                @XmlNamedAttributeNode("roleRestriction")
+                ,
                 @XmlNamedAttributeNode(value = "grants", subgraph = "simple")
             })})
 @XmlAccessorType(XmlAccessType.FIELD)

@@ -28,6 +28,7 @@ import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.authorization.services.administration.IUserService;
 import edu.kit.dama.authorization.entities.util.PU;
+import edu.kit.dama.util.Constants;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.PersistenceException;
@@ -46,6 +47,11 @@ public class UserServiceImpl implements IUserService {
     @SecuredMethod(roleRequired = Role.MANAGER)
     public final void register(UserId userId, Role maximumRole, @Context IAuthorizationContext ctx) throws UnauthorizedAccessAttemptException, EntityAlreadyExistsException {
         LOGGER.debug("Registering user {} with maximum role {}", new Object[]{userId, maximumRole});
+
+        if (userId.getStringRepresentation().equals(Constants.SYSTEM_ADMIN)) {
+            throw new UnauthorizedAccessAttemptException("Invalid user id.");
+        }
+
         EntityManager em = PU.entityManager();
         try {
             LOGGER.debug(" - Checking for existing user");
@@ -83,7 +89,7 @@ public class UserServiceImpl implements IUserService {
         EntityManager em = PU.entityManager();
         try {
             LOGGER.debug(" - Finding user");
-            User user = FindUtil.findUser(em, userId);
+            User user = FindUtil.findUserQuick(em, userId);
             LOGGER.debug("Returning maximum role {}", user.getMaximumRole());
             return user.getMaximumRole();
         } catch (PersistenceException except) {
