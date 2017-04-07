@@ -20,7 +20,7 @@ In order to build KIT Data Manager you'll need:
 After obtaining the sources change to the folder where the sources are located and just call:
 
 ```
-user@localhost:/home/user/KITDM/base$ mvn install
+user@localhost:/home/user/KITDM/base$ mvn install -DskipTests=true
 [INFO] Scanning for projects...
 [INFO] ------------------------------------------------------------------------
 [INFO] Reactor Build Order:
