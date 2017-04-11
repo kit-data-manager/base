@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataOrganization xmlns="http://kitdatamanager.net/dama/dataorganization"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://kitdatamanager.net/dama/dataorganization ../dataorganization.xsd">
+  <digitalObjectId>b4251d93-ab4f-4410-93f2-8c6859539f69</digitalObjectId>
+  <view> <!-- default view name: "default" -->
+    <root>
+      <name/>
+    </root>
+  </view>
+</dataOrganization>

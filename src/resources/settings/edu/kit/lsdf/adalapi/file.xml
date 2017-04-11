@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<protocol>
+<file>
+<protocolClass>edu.kit.lsdf.adalapi.protocols.Local</protocolClass>
+</file>
+</protocol>

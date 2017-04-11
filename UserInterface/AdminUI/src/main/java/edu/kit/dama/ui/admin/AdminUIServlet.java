@@ -15,6 +15,7 @@
  */
 package edu.kit.dama.ui.admin;
 
+import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.server.VaadinServlet;
 import edu.kit.dama.mdm.core.MetaDataManagement;
 

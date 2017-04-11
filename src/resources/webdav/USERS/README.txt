@@ -1,0 +1,1 @@
+This is the default staging folder accessible by all registered users of the local repository system. Please do not remove this folder, even if you do not plan to use it.

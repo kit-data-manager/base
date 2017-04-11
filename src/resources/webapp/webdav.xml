@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context antiJARLocking="true" docBase="KITDM_LOCATION/webdav" path="/webdav">
+<Realm className="org.apache.catalina.realm.LockOutRealm">
+<Realm className="edu.kit.dama.tomcat.KITDMJdbcRealm" 
+	driverName="org.postgresql.Driver"
+        connectionName="DB_USER"
+        connectionPassword="DB_PASSWORD"
+        connectionURL="jdbc:postgresql://DB_HOST:DB_PORT/DB_NAME"/>
+</Realm>
+</Context>
+

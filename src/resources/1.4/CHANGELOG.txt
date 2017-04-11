@@ -1,0 +1,108 @@
+KIT Data Manager Changelog
+==========================
+1.4
+--------
+(NEW) More flexible download supporting download of views, sub-trees and to restructure the downloaded view for download.
+(NEW) Configurable authorization for RESTful endpoints supporting OAuth, OAuth2 Bearer token, HTTP Basic/Digest and SimpleToken.
+(NEW) Support for ORCiD based login and user registration.
+(NEW) Added audit feature including RESTful service to capture creation/modification events of metadata entities.
+(NEW) Digital Objects can be published and accessed via landing page.
+(NEW) Implemented OAI-PMH service for metadata harvesting.
+(NEW) Support for METS export of digital objects.
+(NEW) Custom WebDav implementation and authentication realm allowing to authorize WebDav access on user/group level.
+
+(CHANGE) Cleanup of element names and structure in datamanager.xml
+(CHANGE) Changed default OAuth consumer key used in all REST client to proper value ‚key‘ instead of previous value ‚secret‘. Update of client libraries necessary!
+(CHANGE) Improved handling of metadata management misconfiguration in datamanager.xml.
+(CHANGE) Added namespace attribute to metadata schema entity (needed for OAI-PMH). 
+(CHANGE) Enhanced metadata module is not longer optional. In order to support OAI-PMH including this module was necessary.
+(CHANGE) Metadata extractors should no extends ‚MetsMetadataExtractor‘ in order to be compliant to internal workflows.
+(CHANGE) Staging processors are now running only on server-side before and after archiving.
+(CHANGE) Staging processor execution can now have a priority.
+(CHANGE) Update to Elastic 5.0.0
+(CHANGE) Update to ADALAPI 2.3 for proper support of the new WebDav implementation.
+(CHANGE) Cleanup of AdminUI, added credential management to profile tab.
+
+(FIX) Reduced response time of download via DataOrganization.
+
+1.3
+--------
+(NEW) Added support for StagingProcessors for download operations. 
+(NEW) StagingProcessors can now be set via REST interface.
+(NEW) Full transition support in BaseMetadataRest service including n:n transitions and transition type support.
+(NEW) Download of file and collection nodes of DataOrganization that has already been available in version 1.2 is now officially supported and documented.
+(NEW) Direct download of file nodes having their LFN referring to HTTP URLs is now supported.
+(NEW) Download access to parts of the DataOrganization of a digital object can now be set to be available without authorization. Please refer to the manual, section architecture for more details.
+(NEW) Ingest of custom Data Organizations provided as JSON file referring to remotely stored data is now supported. Please refer to the manual on how configure the feature and how to achieve Staging Service access to remotely stored data. 
+(NEW) Neo4j-based DataOrganization implementation the can be enabled optionally for better read performance of huge data organizations.
+(NEW) Added numerous samples in a separate module ’Sample’ showing how to use different features on KIT Data Manager via REST endpoints. See Github repository for more details.
+
+(CHANGE) Increased performance of BaseMetadata REST Service.
+(CHANGE) REST endpoints returning lists of resources now also return the resources with all available attributes instead of returning only the resource id. This was possible due to the performance improvements of the last versions and it will reduce the number of needed REST calls.
+(CHANGE) Due to performance issued in huge repository instances, the own share column in the information view of the AdminUI was removed.
+(CHANGE) The Staging Service now used the standard KIT Data Manager MetadataManagement components instead of an own JPA-based implementation.
+(CHANGE) The POST rest/dataworkflow/tasks/ endpoint now allows to provide input map and execution settings as JSON arrays. See REST documentation for details.
+(CHANGE) Updated to new versions (ADALAPI 2.2.2).
+
+(FIX) Fixed unit tests by changing test database from intranet SQL database to HSQL database. 
+(FIX) Fixed an issue which made it impossible to register AccessPoints/StagingProcessors using the AdminUI. 
+(FIX) Disabled StagingProcessors are now properly ignored.
+(FIX) Disabled AccessPoints are now properly hidden while querying for available APs via REST service.
+(FIX) MetadataIndexer.sh script is now working properly. However, it is recommended to use the internal scheduler for metadata indexing.
+(FIX) The Dublin Core metadata extractor of the Enhanced Metadata Module now performs proper XML special character escaping.
+(FIX) Fixed several bugs in different REST endpoints, e.g. Sharing, BaseMetadata and DataOrganization.
+
+1.2
+--------
+(NEW) Assign/remove digital object type now possible via JavaAPI (DigitalObjectTypeQueryHelper).
+(NEW) Added DataWorkflowService related extensions to documentation, persistence.xml and AdminUI.
+(NEW) Added Quartz-based scheduler implementation as Cron-replacement to documentation and AdminUI.
+(NEW) Entities of internal metadata structure are now fetched in a more optimized way from the database. This greatly increases the performance for fetching
+huge object trees, for communication, mainly while using the BaseMetadata REST service, and reduces the memory consumption of the KIT DM Web application. 
+(NEW) Added interface layer to all entities in order to show only attributes actually fetched in the REST documentation.
+(NEW) Added ability to support JSON and XML output in all REST services via ACCEPT header provided by the client.
+(NEW) IMetaDataManager interface now supports to add implementation-specific properties, e.g. to tweak queries.
+(NEW) FQ Class inputs in AdminUI now offer autocompletion after typing three characters.
+
+(CHANGE) Files generated during ingest and stored in the 'generated' directory, e.g. extracted metadata, is now also registered 
+in the DataOrganization in a view called 'generated'. All uploaded data is still registered in a view named 'default', settings are just archived but not registered.
+(CHANGE) All DataOrganization entities used by the StagingService were moved back to DataOrganization module.
+(CHANGE) Return types in REST documentation now show only available attributes returned by the according methods. 
+
+(FIX) Removed Cascade JPA annotation from resource access grant implementation that caused the removal of user and user group if a resource access grant was removed.
+(FIX) Fixed a type in ExecutionEnvironmentConfiguration (SQL update script for database needed if table exists).
+(FIX) Fixed some issues in the data workflow execution.
+(FIX) Added plenty of JavaDoc.
+
+1.1
+--------
+(NEW) Basic data processing support by DataWorkflow components to process digital objects. (Internal testing only.)
+(NEW) Support for defining transitions between digital objects including support for adding generic transitions via BaseMetaData REST interface. Custom transition types and properties can  only be provided by Java APIs at the moment. An integration into the REST interface is targeted for version 1.2
+(NEW) Support for digital object types including full support by the BaseMetaData REST interface.
+(NEW) Direct (JPQL) update functionality added to MetadataManagement API. This increases the performance for updating single properties in huge object trees significantly.
+(NEW) Max. ingest and download lifetime can now be configured in datamanager.xml.
+(NEW) Extended checkService call of all REST interfaces now returns the status of the accessed service as well as build and version information about all installed sub-modules.
+(NEW) Enhanced Metadata Module available as separate download offering features and examples to implement custom metadata extraction and publishing in e.g. elasticsearch
+
+(CHANGE) Modified how to query for linked base metadata entities, which increases the query performance for huge object trees significantly.
+(CHANGE) The provided identifiers for digital object and access point in the staging REST service can now be both, the alphanumeric digitalObjectId/uniqueIdentifier or the numeric baseId/processorId (e.g. 4711). However, the numeric id should be preferred as using the alphanumeric identifier will be deprecated in future versions.
+(CHANGE) OAuth access now also supports HMAC-SHA1 as signature method in addition to PLAINTEXT.
+(CHANGE) Changed id generation type in ingest- and downloadinformation from AUTO to IDENTITY as this is also used for all other entities.
+(CHANGE) Updated to new versions (javax.servlet 3.1, ADALAPI 2.1.2)
+(CHANGE) Removed Liferay section from configuration as this is not longer needed.
+(CHANGE) The loggers for the different components are now listed in logback.xml in order to allow focussed logging.
+(CHANGE) Added more examples to coding documentation.
+(CHANGE) Added update description to documentation.
+(CHANGE) Added description for installation and usage of Enhanced Metadata Module to documentation.
+
+(FIX) BaseMetaData REST service ignored investigationId in getDigitalObjects(Count)
+(FIX) Adding metadata schema to investigation now works properly.
+(FIX) Adding organization unit to study now works properly.
+(FIX) ObjectIds are now checked before creating an ingest/download.
+(FIX) Access permissions to objects are now checked before scheduling an ingest.
+(FIX) Both, object id and access point id are now trimmed before creating an ingest/download in order to remove spaces that could cause failed ingests.
+(FIX) Disabled StagingProcessors are now properly ignored.
+(FIX) Default StagingProcessors are now properly added, also while using the Java APIs.
+(FIX) ErrorMessage in ingest- and downloadinformation is now properly limited to 255 characters to avoid error while storing large messages.
+(FIX) Logout in AdminUI now properly resets the user interface.
+(FIX) Java 8 is now supported.

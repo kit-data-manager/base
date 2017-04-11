@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataOrganization xmlns="http://kitdatamanager.net/dama/dataorganization"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://kitdatamanager.net/dama/dataorganization ../dataorganization.xsd">
+	<digitalObjectId>b4251d93-ab4f-4410-93f2-8c6859539f69</digitalObjectId>
+
+  <view name="default">
+    <root><name>Root Name 1</name></root>
+	</view>
+  <view name="webdav">
+    <root><name>Root Name 2</name></root>
+	</view>
+  <view name="mobile">
+    <root><name>Root Name 3</name></root>
+	</view>
+
+</dataOrganization>

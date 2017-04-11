@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (C) 2014 Karlsruhe Institute of Technology 
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+--><actions>
+       <action>
+            <actionName>CUSTOM-installJar2IPERepo</actionName>
+            <displayName>installJar2IPERepo</displayName>
+            <goals>
+               <goal>deploy</goal>
+            </goals>
+        </action>
+        <action>
+            <actionName>CUSTOM-cleanRelease</actionName>
+            <displayName>cleanRelease</displayName>
+            <goals>
+                <goal>release:clean</goal>
+            </goals>
+        </action>
+        <action>
+            <actionName>CUSTOM-PrepareTest</actionName>
+            <displayName>prepareReleaseTest</displayName>
+            <goals>
+                <goal>release:prepare</goal>
+            </goals>
+            <properties>
+                <dryRun>true</dryRun>
+            </properties>
+        </action>
+        <action>
+            <actionName>CUSTOM-ReleasePrepare</actionName>
+            <displayName>prepareRelease</displayName>
+            <goals>
+                <goal>release:prepare</goal>
+            </goals>
+        </action>
+        <action>
+            <actionName>CUSTOM-performRelease</actionName>
+            <displayName>performRelease</displayName>
+            <goals>
+                <goal>release:perform</goal>
+            </goals>
+        </action>
+        <action>
+            <actionName>build</actionName>
+            <goals>
+                <goal>install</goal>
+            </goals>
+            <properties>
+                <skipTests>true</skipTests>
+            </properties>
+        </action>
+        <action>
+            <actionName>CUSTOM-KITDMDistribution</actionName>
+            <displayName>Create KITDM Distribution</displayName>
+            <goals>
+                <goal>assembly:assembly</goal>
+            </goals>
+            <activatedProfiles>
+                <activatedProfile>Release</activatedProfile>
+                <activatedProfile>generate-doc</activatedProfile>
+            </activatedProfiles>
+        </action>
+        <action>
+            <actionName>CUSTOM-DockerDistribution</actionName>
+            <displayName>Create Docker Distribution</displayName>
+            <goals>
+                <goal>assembly:assembly</goal>
+            </goals>
+            <activatedProfiles>
+                <activatedProfile>DockerRelease</activatedProfile>
+            </activatedProfiles>
+        </action>
+    </actions>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--   ******************************************************************
+***                    persistence.xml                                ***
+*************************************************************************
+***   This file have to hold all persistence units which are used     ***
+***   by KIT Data Manager.  										  ***
+*************************************************************************-->
+
+<persistence version="1.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence     http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd">
+  <!-- *************************************************************************
+  ***                                                                   ***
+  ***               M O D U L E:  A U T H O R I S A T I O N              ***
+  ***                                                                   ***
+  *************************************************************************-->
+  <persistence-unit name="AuthorizationPU" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.authorization.entities.impl.Group</class>
+    <class>edu.kit.dama.authorization.entities.impl.User</class>
+    <class>edu.kit.dama.authorization.entities.impl.Membership</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
+    <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
+    <class>edu.kit.dama.authorization.entities.impl.Grant</class>
+    <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+    <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
+    <shared-cache-mode>NONE</shared-cache-mode>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://DATABASE_HOST:5432/datamanager"/>
+	  <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+	  <property name="javax.persistence.jdbc.user" value="docker"/>
+      <property name="javax.persistence.jdbc.password" value="docker"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <property name="eclipselink.ddl-generation" value="create-tables"/>
+      <property name="eclipselink.canonicalmodel.subpackage" value="release"/>
+    </properties>
+  </persistence-unit>
+
+  <!-- *************************************************************************
+  ***                    DataOrganizationPU                             ***
+  *************************************************************************-->
+  <persistence-unit name="DataOrganizationPU" transaction-type="RESOURCE_LOCAL">
+   <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.Attribute</class>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.CollectionNode</class>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.DataOrganizationNode</class>
+    <class>edu.kit.dama.mdm.dataorganization.impl.jpa.FileNode</class>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://DATABASE_HOST:5432/datamanager"/>
+      <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+      <property name="javax.persistence.jdbc.user" value="docker"/>
+	  <property name="javax.persistence.jdbc.password" value="docker"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <property name="eclipselink.ddl-generation" value="create-tables"/>
+      <shared-cache-mode>NONE</shared-cache-mode>
+    </properties>
+  </persistence-unit>
+  
+
+  <!-- *************************************************************************
+  ***                                                                   ***
+  ***          M O D U L E:  M E T A D A T A M A N A G E M E N T         ***
+  ***                                                                   ***
+  *************************************************************************-->
+  <!-- *************************************************************************
+  ***                    MDM-Core                                             ***
+  *************************************************************************-->
+  <persistence-unit name="MDM-Core" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+    <class>edu.kit.dama.authorization.entities.impl.Group</class>
+        <class>edu.kit.dama.authorization.entities.impl.User</class>
+        <class>edu.kit.dama.authorization.entities.impl.Membership</class>
+        <class>edu.kit.dama.authorization.entities.impl.GrantImpl</class>
+        <class>edu.kit.dama.authorization.entities.impl.ResouceReference</class>
+        <class>edu.kit.dama.authorization.entities.impl.GrantSet</class>
+        <class>edu.kit.dama.authorization.entities.impl.ResourceReference</class>
+        <class>edu.kit.dama.authorization.entities.impl.Grant</class>
+        <class>edu.kit.dama.mdm.base.OrganizationUnit</class>
+        <class>edu.kit.dama.mdm.base.Study</class>
+        <class>edu.kit.dama.mdm.base.Investigation</class>
+        <class>edu.kit.dama.mdm.base.DigitalObject</class>
+        <class>edu.kit.dama.mdm.base.Participant</class>
+        <class>edu.kit.dama.mdm.base.Relation</class>
+        <class>edu.kit.dama.mdm.base.Task</class>
+        <class>edu.kit.dama.mdm.base.UserData</class>
+        <class>edu.kit.dama.mdm.base.MetaDataSchema</class>
+        <class>edu.kit.dama.mdm.base.DigitalObjectType</class>
+        <class>edu.kit.dama.mdm.base.ObjectTypeMapping</class>
+        <class>edu.kit.dama.mdm.base.DigitalObjectTransition</class>
+        <class>edu.kit.dama.mdm.base.ObjectViewMapping</class>
+        <class>edu.kit.dama.authorization.entities.impl.FilterHelper</class>
+        <class>edu.kit.dama.authorization.entities.impl.SecurableResource</class>
+        <class>edu.kit.dama.workflow.ExecutionEnvironmentConfiguration</class>
+        <class>edu.kit.dama.workflow.properties.ExecutionEnvironmentProperty</class>
+        <class>edu.kit.dama.workflow.DataWorkflowTask</class>
+        <class>edu.kit.dama.workflow.DataWorkflowTaskConfiguration</class>
+        <class>edu.kit.dama.mdm.dataworkflow.DataWorkflowTransition</class>
+        <class>edu.kit.dama.workflow.StringValueProperty</class>
+        <class>edu.kit.dama.mdm.admin.ServiceAccessToken</class>
+        <class>edu.kit.dama.mdm.admin.UserGroup</class>
+        <class>edu.kit.dama.mdm.admin.UserProperty</class>
+        <class>edu.kit.dama.mdm.admin.UserPropertyCollection</class>
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://DATABASE_HOST:5432/datamanager"/>
+      <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>      
+      <property name="javax.persistence.jdbc.user" value="docker"/>
+	  <property name="javax.persistence.jdbc.password" value="docker"/>
+      <property name="eclipselink.ddl-generation" value="create-tables"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <shared-cache-mode>NONE</shared-cache-mode>
+    </properties>
+  </persistence-unit>
+
+  <!-- *************************************************************************
+  ***                                                                   ***
+  ***          M O D U L E:  S T A G I N G                               ***
+  ***                                                                   ***
+  *************************************************************************-->  
+  <persistence-unit name="StagingUnit" transaction-type="RESOURCE_LOCAL">
+    <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+     <class>edu.kit.dama.staging.entities.ingest.IngestInformation</class>
+    <class>edu.kit.dama.staging.entities.download.DownloadInformation</class>
+    <class>edu.kit.dama.staging.entities.StagingAccessPointConfiguration</class>
+    <class>edu.kit.dama.staging.entities.StagingAccessProviderConfiguration</class>
+    <class>edu.kit.dama.staging.entities.StagingProcessor</class>   
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://DATABASE_HOST:5432/datamanager"/>
+      <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+      <property name="javax.persistence.jdbc.user" value="docker"/>
+	  <property name="javax.persistence.jdbc.password" value="docker"/>
+      <property name="eclipselink.logging.level" value="SEVERE"/>
+      <property name="eclipselink.ddl-generation" value="create-tables"/>
+      <shared-cache-mode>NONE</shared-cache-mode>
+    </properties>
+  </persistence-unit>
+</persistence>

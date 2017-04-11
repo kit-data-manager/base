@@ -17,6 +17,7 @@ package edu.kit.dama.ui.admin.wizard;
 
 import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.VerticalLayout;
+import edu.kit.dama.ui.commons.util.UIUtils7;
 import java.util.Map;
 
 /**

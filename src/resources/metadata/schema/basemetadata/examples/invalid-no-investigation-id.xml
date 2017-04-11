@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<baseMetadata xsi:schemaLocation="http://kitdatamanager.net/dama/basemetadata ../basemetadata.xsd"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns="http://kitdatamanager.net/dama/basemetadata">
+
+<digitalObject>
+  <digitalObjectId>1</digitalObjectId>
+  <investigation>
+    <!-- <investigationId>2</investigationId> -->
+    <study>
+      <studyId>3</studyId>
+    </study>
+  </investigation>
+</digitalObject>
+
+</baseMetadata>
