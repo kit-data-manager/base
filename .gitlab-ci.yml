@@ -1,0 +1,3 @@
+release_test:
+  script:
+    - mvn assembly:assembly -P Release,generate-doc
