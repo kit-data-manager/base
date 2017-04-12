@@ -219,11 +219,6 @@
             <version>${project.kit.datamanager.version}</version>
         </dependency>
         <dependency>
-            <groupId>edu.kit.dama</groupId>
-            <artifactId>AdminUI</artifactId>
-            <version>${project.kit.datamanager.version}</version>
-        </dependency>
-        <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>1.2</version>

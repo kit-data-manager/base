@@ -28,6 +28,7 @@ import edu.kit.dama.authorization.entities.util.FindUtil;
 import edu.kit.dama.authorization.entities.util.PU;
 import edu.kit.dama.authorization.exceptions.EntityNotFoundException;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
+import edu.kit.dama.authorization.services.administration.GroupServiceLocal;
 import edu.kit.dama.authorization.services.administration.UserServiceLocal;
 import edu.kit.dama.authorization.services.base.IAuthorizationService;
 import edu.kit.dama.util.Constants;

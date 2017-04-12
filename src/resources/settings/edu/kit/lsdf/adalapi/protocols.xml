@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
-
-<configuration>
-    <xml fileName="gridftp.xml"/>
-    <xml fileName="file.xml"/>
-    <xml fileName="webdav.xml"/>
-	<xml fileName="webdavs.xml"/>
-</configuration>

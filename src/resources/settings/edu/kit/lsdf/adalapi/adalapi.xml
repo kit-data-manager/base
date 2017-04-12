@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<configuration>
-    <overwriteIfFileExists>FORBIDDEN</overwriteIfFileExists>
-    <maxProtocolInstances>10</maxProtocolInstances>
-    <checkLevel>FINEST</checkLevel>
-</configuration>
