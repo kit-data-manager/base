@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<protocol>
+<gsiftp>
+<identifier>gsiftp+x509</identifier>
+<protocolClass>edu.kit.lsdf.adalapi.protocols.GsiFtp</protocolClass>
+<authClass>edu.kit.lsdf.adalapi.authentication.X509</authClass>
+<stripingEnabled>false</stripingEnabled>
+<stripingConnections>10</stripingConnections>
+</gsiftp>
+</protocol>

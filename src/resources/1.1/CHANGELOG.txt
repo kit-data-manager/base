@@ -1,0 +1,35 @@
+KIT Data Manager Changelog
+==========================
+
+1.1
+--------
+(NEW) Basic data processing support by DataWorkflow components to process digital objects. (Internal testing only.)
+(NEW) Support for defining transitions between digital objects including support for adding generic transitions via BaseMetaData REST interface. Custom transition types and properties can  only be provided by Java APIs at the moment. An integration into the REST interface is targeted for version 1.2
+(NEW) Support for digital object types including full support by the BaseMetaData REST interface.
+(NEW) Direct (JPQL) update functionality added to MetadataManagement API. This increases the performance for updating single properties in huge object trees significantly.
+(NEW) Max. ingest and download lifetime can now be configured in datamanager.xml.
+(NEW) Extended checkService call of all REST interfaces now returns the status of the accessed service as well as build and version information about all installed sub-modules.
+(NEW) Enhanced Metadata Module available as separate download offering features and examples to implement custom metadata extraction and publishing in e.g. elasticsearch
+
+(CHANGE) Modified how to query for linked base metadata entities, which increases the query performance for huge object trees significantly.
+(CHANGE) The provided identifiers for digital object and access point in the staging REST service can now be both, the alphanumeric digitalObjectId/uniqueIdentifier or the numeric baseId/processorId (e.g. 4711). However, the numeric id should be preferred as using the alphanumeric identifier will be deprecated in future versions.
+(CHANGE) OAuth access now also supports HMAC-SHA1 as signature method in addition to PLAINTEXT.
+(CHANGE) Changed id generation type in ingest- and downloadinformation from AUTO to IDENTITY as this is also used for all other entities.
+(CHANGE) Updated to new versions (javax.servlet 3.1, ADALAPI 2.1.2)
+(CHANGE) Removed Liferay section from configuration as this is not longer needed.
+(CHANGE) The loggers for the different components are now listed in logback.xml in order to allow focussed logging.
+(CHANGE) Added more examples to coding documentation.
+(CHANGE) Added update description to documentation.
+(CHANGE) Added description for installation and usage of Enhanced Metadata Module to documentation.
+
+(FIX) BaseMetaData REST service ignored investigationId in getDigitalObjects(Count)
+(FIX) Adding metadata schema to investigation now works properly.
+(FIX) Adding organization unit to study now works properly.
+(FIX) ObjectIds are now checked before creating an ingest/download.
+(FIX) Access permissions to objects are now checked before scheduling an ingest.
+(FIX) Both, object id and access point id are now trimmed before creating an ingest/download in order to remove spaces that could cause failed ingests.
+(FIX) Disabled StagingProcessors are now properly ignored.
+(FIX) Default StagingProcessors are now properly added, also while using the Java APIs.
+(FIX) ErrorMessage in ingest- and downloadinformation is now properly limited to 255 characters to avoid error while storing large messages.
+(FIX) Logout in AdminUI now properly resets the user interface.
+(FIX) Java 8 is now supported.

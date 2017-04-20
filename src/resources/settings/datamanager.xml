@@ -1,0 +1,257 @@
+<!--KIT Data Manager configuration file. This file contains all general properties used to configure your KIT Data Manager instance. 
+Depending on your setup some properties may or may not be needed (e.g. Liferay- or Elasticsearch-related settings), others are mandatory.
+-->
+<config>
+<general>
+	<repositoryName>KIT Data Manager</repositoryName>
+	<repositoryLogoUrl>http://datamanager.kit.edu/dama/logo_default.png</repositoryLogoUrl>
+	<!--Can be accessed e.g. by GUIs to send system mail.-->
+	<systemMailAddress>${general.mail.sender}</systemMailAddress>
+	<mailServer>${general.mail.server}</mailServer>
+	<globalSecret>qr2I9Hyp0CBhUUXj</globalSecret>
+	<!--The base URL of your application server, e.g. http://$HOSTNAME:8080. Please replace $HOSTNAME by the local hostname. -->
+	<baseUrl>${general.base.url}</baseUrl>
+	<!--Enable/Disable production mode to show/hide additional logging output.-->
+	<productionMode>true</productionMode>
+</general>
+
+<!--
+SimpleMonitoring-related settings.
+-->
+<simon>
+	<!--The path where the configuration files for the SimpleMonitoring are located. Please replace $KITDM_LOCATION by the absolut path of your KIT Data Manager installation.-->
+	<configLocation>${simon.config.location}</configLocation>
+</simon>
+<!--
+Elasticsearch-related settings.
+-->
+<elasticsearch>
+	<!--The cluster name used by KIT Data Manager to publish metadata. (default: KITDataManager)-->
+	<cluster>${elasticsearch.cluster}</cluster>
+	<!--The hostname of the node where metadata should be published to. (default: localhost)-->
+	<host>${elasticsearch.host}</host>
+	<!--The port of the Elasticsearch instance. (default: 9300)-->
+	<port>${elasticsearch.port}</port>
+	<!--The default index that is access for metadata publishing/querying. 
+	The index to which metadata is published depends on the published metadata schema. (default: dc)
+	-->
+	<index>${elasticsearch.default.index}</index>
+	<!--The elasticsearch document key which contains the fulltext representation of an entire document. 
+	The availability of this key depends on the metadata stored in the document. 
+	The default value is 'es.fulltext', this property should not be changed, 
+	-->
+	<!--fulltextKey>es.fulltext</fulltextKey-->
+</elasticsearch>
+<!--
+MetaDataManagement-related settings.
+-->
+<metaDataManagement>
+    <persistenceImplementations>
+      <persistenceImplementation>
+        <!--Name of the persistence implementation-->
+        <name>JPA</name>
+        <!--Implementation class of the persistence implementation-->
+        <class>edu.kit.dama.mdm.core.jpa.PersistenceFactoryJpa</class>
+        <persistenceUnits>
+          <!-- A list of persistence units (configured endpoints) to store metadata. 
+          In case of the default JPA implementation these persistence units are 
+          actual persistence units configured in a persistence.xml file using the 
+		  MetaDataManagement implementation defined above. JPA persistence units not using 
+		  this implementation are not listed here. For other implementations of the 
+		  MetaDataManagement, these persistence units are probably mapped to something different.
+
+          Attention: 
+		  
+		  PersistenceUnit labels should be the same for all implementations 
+          in order to be able to switch implementations.
+		  
+		  The default persistence unit can be marked by an attribute 'default=true', 
+		  otherwise the first entry is interpreted as default persistence unit used by the 
+		  implementation if no persistence unit is specified.
+		  -->
+		  <persistenceUnit authorization="true">${persistence.authorizationPU}</persistenceUnit>  
+		  <persistenceUnit>DataOrganizationPU</persistenceUnit>
+		  <!--Default persistence unit if the used persistence unit is not explicitly named.-->
+		  <persistenceUnit default="true">MDM-Core</persistenceUnit>  
+		  <persistenceUnit staging="true">${persistence.stagingPU}</persistenceUnit>
+        </persistenceUnits>
+      </persistenceImplementation>  
+    </persistenceImplementations>
+
+    <!--Transition type definitions and their handler implementations used by the base metadata REST 
+    endpoint to handle transition information provided as JSON structure.-->
+    <transitionTypes>
+     <NONE>
+      <handlerClass>edu.kit.dama.mdm.tools.NullTransitionTypeHandler</handlerClass>
+     </NONE>
+     <DATAWORKFLOW>
+      <handlerClass>edu.kit.dama.mdm.dataworkflow.tools.DataWorkflowTransitionTypeHandler</handlerClass>
+     </DATAWORKFLOW>
+     <ELASTICSEARCH>
+      <handlerClass>edu.kit.dama.mdm.content.util.ElasticsearchTransitionTypeHandler</handlerClass>
+     </ELASTICSEARCH>
+    </transitionTypes>
+</metaDataManagement>  
+<!--
+Staging-related settings.
+-->
+<staging>   
+  <adapters>
+    <storageVirtualizationAdapter class="edu.kit.dama.staging.adapters.DefaultStorageVirtualizationAdapter" target="LOCAL">
+	  <!--The Url where the managed repository storage (archive) is located. All data ingested into the repository system will be located here.
+		  Currently, the DefaultStorageVirtualizationAdapter only supports locally accessible Urls. However, this can be remote storages mounted
+		  into the local filesystem. Please replace $ARCHIVE_STORAGE by the absolute path of your archive location, e.g. file:///mnt/archive/
+		  Attention: Please pay attention to provide three (!) slashes. Otherwise, all data transfer services of KIT Data Manager won't work.
+		  -->
+      <archiveUrl>${staging.archive.url}</archiveUrl>
+	  <!--Pattern that is used to structure the data at 'archiveUrl'. Valid variables are:
+		$year: The current year, e.g. 2015
+		$month: The current month, e.g. 9
+		$day: The day of the month, e.g. 1
+		$owner: The userId of the user who has ingested the data, e.g. admin
+		$group: The groupId of the group on whose behalf the user has ingested the data, e.g. USERS
+	   -->
+      <pathPattern>${staging.archive.path.pattern}</pathPattern>
+    </storageVirtualizationAdapter>
+  </adapters>
+  <!--Possible overwrite for persistence unit defined in persistence section.-->
+  <!--persistenceUnit>${persistence.stagingPU}</persistenceUnit-->   
+  <remoteAccess>
+  	<!--The remove access Url of the staging service (currently not used). Please replace $HOSTNAME by the local hostname.-->
+    <restUrl>${staging.rest.url}</restUrl>
+  </remoteAccess>
+  <!--The max. number of single files that is transferred in parallel to/from the archive location to access point locations. 
+      This number refers to one single staging operation (ingest/download). If there are two staging operations running in parallel, 
+	  two times 'maxParallelTransfers' are used.-->  
+  <maxParallelTransfers>${staging.max.parallel.transfers}</maxParallelTransfers>
+  <!--The max. number of simultaneous ingest/download operations. This setting is used by the TransferFinalizer tool. The tool itself 
+      handles one ingest/download per execution. However, by running the TransferFinalizer as Cron job multiple instances may run in 
+      parallel. As soon as maxParallelIngests/maxParallelDownloads is reached TransferFinalizer will return without doing anything.-->
+  <maxParallelIngests>${staging.max.parallel.ingests}</maxParallelIngests>
+  <maxParallelDownloads>${staging.max.parallel.downloads}</maxParallelDownloads>
+  <!--The max. lifetime in seconds before completed/failed ingests/downloads are removed from the database by the TransferFinalizer. 
+      The default value is one week.-->
+  <maxIngestLifetime>604800</maxIngestLifetime>
+  <maxDownloadLifetime>604800</maxDownloadLifetime>
+</staging>
+
+ <!--
+ DataOrganization-related settings.
+ -->
+
+ <dataOrganization>
+     <!--dataOrganizerAdapter class="edu.kit.dama.util.DataOrganizerImpl">  
+         <neo4jUrl>http://localhost:7474</neo4jUrl>
+         <neo4jUser>neo4j</neo4jUser>
+         <neo4jPassword>test</neo4jPassword>
+     </dataOrganizerAdapter-->
+    
+    <download>
+       <!--The block size used for streaming of e.g. zipped data organization content during direct download. (default: 10Kb)-->
+       <blockSize>10240</blockSize>
+       <!--Compression level used while downloading zipped data organization content, e.g. while downloading a collection node. 
+       allowed values are in the range between -1 and 9 where -1 is the default compression, 0 is no compression and 9 is the max. compression.-->
+       <compression>-1</compression>
+    </download>     
+ </dataOrganization>
+
+<scheduler>
+  <!--Connection information for the JobStore used to hold information about scheduled jobs. Typically, the same information also used
+      in the persistence.xml can be applied here in order to keep everything together in one place.-->
+  <jobStoreConnectionDriver>${persistence.connection.driver}</jobStoreConnectionDriver>
+  <jobStoreConnectionString>${persistence.connection.string}</jobStoreConnectionString>
+  <jobStoreUser>${persistence.database.user}</jobStoreUser>
+  <jobStorePassword>${persistence.database.user.password}</jobStorePassword>
+  <!--Wait for running tasks if the scheduler is shutting down, e.g. due to shutting down the application server. default: true-->
+  <waitOnShutdown>true</waitOnShutdown>
+  <!--Delay in seconds before the scheduler starts the execution of tasks. This delay is useful as services needed to perform tasks
+      may not be running, yet, when the scheduler starts. The default value is 5 seconds.-->
+  <startDelaySeconds>5</startDelaySeconds>
+   <!--Add default schedules during the first startup of the scheduler. These schedules are executing transfer finalization 
+       (ingest/download) every 60/30 seconds. The default value is true.-->
+  <addDefaultSchedules>${scheduler.add.default.schedules}</addDefaultSchedules>
+</scheduler>
+
+<authorization>
+    <login>
+        <orcid>
+            <!--Configuration for ORCiD login. The ORCiD login is only enabled if id and secret are provided.
+            Furthermore, the base Url of the repository instance, e.g. http://$HOSTNAME:8080/KITDM,  has to be registered as 
+            valid redirection of the ORCiD OAuth2 login. -->
+            <clientid>${authorization.login.orcid.clientid}</clientid>
+            <clientsecret>${authorization.login.orcid.clientsecret}</clientsecret>
+        </orcid>
+        <b2access>
+            <!--Configuration for B2Access login. The B2Access login is only enabled if id and secret are provided.
+            Furthermore, the base Url of the repository instance, e.g. http://$HOSTNAME:8080/KITDM,  has to be registered as 
+            valid redirection of the B2Access OAuth2 login. -->
+            <clientid>${authorization.login.b2access.clientid}</clientid>
+            <clientsecret>${authorization.login.b2access.clientsecret}</clientsecret>
+        </b2access>
+    </login>
+    <rest>
+        <!--Configuration of available authenticators. An authenticator allows to secure the access to 
+        KITDM RESTful web services. By default, the access is secured via OAuth using fixed consumer key and secret.
+        The user credentials are stored as ServiceAccessToken entities with the default serviceId 'restServiceAccess'.
+        -->
+        <authenticators>
+            <!--The authenticator element and its implementation class-->
+            <authenticator class="edu.kit.dama.rest.util.auth.impl.OAuthAuthenticator">
+                <!--The id used as serviceId in associatedService AccessToken entities.-->
+                <authenticatorId>restServiceAccess</authenticatorId>
+                <!--Regular expression allowing to enable this authenticator for specific services. The value below 
+                enables the authenticator for all services, but it is also imaginable to enable an authenticator 
+                only for one specific service. 
+                The expression is applied to the base URL of the request and does not include the resource portion.-->
+                <enableFor>(.*)</enableFor>                       			<!--enableFor>(.*)(basemetadata|sharing|dataorganization|staging|usergroup|dataworkflow|scheduler)(.*)</enableFor-->
+                <!--Authenticator-specific properties, in this case these are OAuth consumer key and secret. -->
+                <defaultConsumerKey>key</defaultConsumerKey>
+                <defaultConsumerSecret>secret</defaultConsumerSecret>
+            </authenticator>
+            <!--HTTP Authenticator for WebDav access. Please keep in mind that the settings here (realm, type) must match the settings in the web.xml of the WebDav servlet.-->
+            <authenticator class="edu.kit.dama.rest.util.auth.impl.HTTPAuthenticator">
+                <authenticatorId>webdav</authenticatorId>
+                <!--The HTTP realm needed if type is 'DIGEST'.-->
+                <realm>kitdm</realm>
+                <!--The type that must be either BASIC or DIGEST.-->
+                <type>DIGEST</type>
+            </authenticator>
+            <!--Helper authenticator to support ORCID login.-->
+            <authenticator class="edu.kit.dama.rest.util.auth.impl.BearerTokenAuthenticator">
+                <authenticatorId>ORCID</authenticatorId>
+            </authenticator>
+            <!--Helper authenticator to support B2ACCESS login.-->
+            <!--B2Access is NOT officially supported, yet. Thus, this setting has no effect.             
+            <authenticator class="edu.kit.dama.rest.util.auth.impl.BearerTokenAuthenticator">
+                <authenticatorId>B2ACCESS</authenticatorId>
+            </authenticator>
+            -->
+        </authenticators>
+    </rest>
+    <!--The default persistence unit for KIT Data Manager Authorization services.
+    Due to its complexity, the generic nature of KIT Data Manager MetaDataManagement is not feasible for Authorization services.
+    Therefore, they will be configured separately also in future releases.
+    -->
+    <defaultPU>AuthorizationPU</defaultPU>
+</authorization>
+
+<audit>
+<!--Audit message publisher implementation. This publisher is contacted by the audit component as soon as an audit message occurs. 
+It is the responsibility of the publisher to distribute the messages to connected consumers. By default, KITDM used a RabbitMQ based
+publisher in order to allow asynchronous, reliable publishing of audit messages. The according receiver is implemented as ServletContextListener
+publishing all received events to connected message consumers.-->
+   <publisher class="edu.kit.dama.mdm.audit.impl.RabbitMQPublisher">
+   	  <!--Each publisher might have custom properties, in this case they are the RabbitMQ server hostname and the RabbitMQ exchange used 
+   	  to publish audit messages.-->
+      <hostname>${rabbitmq.host}</hostname>
+      <exchange>audit</exchange>
+   </publisher>
+   
+   <!--Configuration of connected audit message consumers. Received audit messages are forwarded to the consumer which is responsible for
+     handling the message according to its implementation.-->
+   <consumers>
+      <consumer class="edu.kit.dama.mdm.audit.impl.ConsoleConsumer"/>
+      <consumer class="edu.kit.dama.mdm.audit.impl.DatabaseConsumer"/>
+   </consumers>
+</audit>
+</config>

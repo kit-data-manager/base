@@ -1,0 +1,32 @@
+KIT Data Manager Changelog
+==========================
+
+1.0 build 27
+------------
+(CHANGE) Updating groups now produces 404 Error if groupId does not exist
+(CHANGE) Documentation of GET /users in UserGroupManagement REST service was corrected
+(FIX) Transfer preparation failed for REST-scheduled transfers due to NullPointerException
+(FIX) getDigitalObjects and getDigitalObjectCount methods of BaseMetaData REST service ignored investigationId argument
+(FIX) Adding groups via Java REST client for UserGroup REST service now sends groupId as FormParameter as documented
+(FIX) Getting all users via Java REST client for UserGroup REST service now uses groupId query parameter as documented
+(FIX) Adding users to group via POST /groups/{id}/users in UserGroupManagement REST service is now possible
+(FIX) Updating users via PUT /users/{id} in UserGroupManagement REST service is now possible
+(FIX) Getting group users via GET /groups/{id}/users in UserGroupManagement REST service not longer ignores first and results arguments
+
+1.0 build 25
+------------
+(NEW) Adding groups via the UserGroupManagement ReST Service is now supported.
+(NEW) Simple UI integration of Elasticsearch access into KIT Data Manager Portlet (navigation entry 'Search').
+(NEW) KIT Data Manager Manual in a first version including architecture and some coding chapters.
+(CHANGE) Improvement of Java ReST clients in order to re-use the security context if it was set once.
+(CHANGE) Improved XML serialization of Study, Investigation and DigitalObject in order to get them into a proper XML format.
+(CHANGE) Internal redesign of AccessMethod handling for Staging service (nothing changes for existing clients).
+(FIX) Elasticsearch indexing should now work for all DigitalObjects (fixed an issue with XML serializing).
+(FIX) Fixed an issue where Investigations were missing their DigitalObjects while serializing them  into XML.
+(FIX) ReST method with path BaseMetaData/investigations?studyId=1 now handles studyId argument properly.
+(FIX) BaseMetaData ReST client now returns results of getInvestigationCount to getInvestigationById properly.
+(FIX) Upload date is now set properly as soon as the ingest into the archive was successfully finished.
+(FIX) Many small bugfixes for issues that where reported since the last version.
+
+
+

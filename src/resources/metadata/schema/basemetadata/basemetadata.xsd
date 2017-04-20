@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://kitdatamanager.net/dama/basemetadata" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:bmd="http://kitdatamanager.net/dama/basemetadata">
+
+	<xs:element name="baseMetadata">
+		<xs:annotation>
+			<xs:documentation xml:lang="en">The KIT Data Manager (KIT DM) basemetadata describes the context for one digital object. In addition to basic information like upload date or start date participating experimenters can be related to the digital object. Each digital object belongs to one investigation. Every investigation can provide associated metadata schemas and relates participants with their tasks to the investigation. One step further every investigation has to be part of a study, which relates the involved organization units with their tasks to the study. In order to follow e.g. privacy policies it is possible to store an identifier (e.g. ORCID) for users instead of the personalized profile.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="digitalObject">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="digitalObjectId" type="bmd:id"/>
+							<xs:element name="note"            type="xs:string"   minOccurs="0"/>
+							<xs:element name="label"           type="xs:string"   minOccurs="0"/>
+							<xs:element name="startDate"       type="xs:dateTime" minOccurs="0"/>
+							<xs:element name="endDate"         type="xs:dateTime" minOccurs="0"/>
+							<xs:element name="uploadDate"      type="xs:dateTime" minOccurs="0"/>
+							<xs:element name="uploader"        type="bmd:user"    minOccurs="0"/>
+
+							<xs:element name="experimenters"                      minOccurs="0">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="experimenter" type="bmd:user" maxOccurs="unbounded"/>
+									</xs:sequence>
+								</xs:complexType>
+					 			<xs:unique name="onlyUniqueDistinguishedNamesAllowed">
+									<xs:selector xpath="bmd:experimenter/bmd:distinguishedName"/>
+									<xs:field xpath="."/>
+ 								</xs:unique>
+							</xs:element>
+
+							<xs:element name="investigation" type="bmd:investigation"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+
+
+	<xs:complexType name="investigation">
+		<xs:sequence>
+			<xs:element name="investigationId" type="bmd:id"/>
+			<xs:element name="note"      			 type="xs:string"   minOccurs="0"/>
+			<xs:element name="topic"     			 type="xs:string"   minOccurs="0"/>
+			<xs:element name="startDate" 			 type="xs:dateTime" minOccurs="0"/>
+			<xs:element name="endDate"   			 type="xs:dateTime" minOccurs="0"/>
+
+			<xs:element name="metadataSchemas"                    minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="metadataSchema" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="schemaIdentifier" type="xs:string"/>
+									<xs:element name="schemaUrl"        type="xs:anyURI"/>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+
+			<xs:element name="participants"                       minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="participant" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="task" type="xs:string"/>
+									<xs:element name="user" type="bmd:user"/>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+
+			<xs:element name="study" type="bmd:study"/>
+		</xs:sequence>
+	</xs:complexType>
+
+
+
+	<xs:complexType name="study">
+		<xs:sequence>
+			<xs:element name="studyId"   type="xs:string"/>
+			<xs:element name="note"      type="xs:string"   minOccurs="0"/>
+			<xs:element name="topic"     type="xs:string"   minOccurs="0"/>
+			<xs:element name="legalNote" type="xs:string"   minOccurs="0"/>
+			<xs:element name="startDate" type="xs:dateTime" minOccurs="0"/>
+			<xs:element name="endDate"   type="xs:dateTime" minOccurs="0"/>
+			<xs:element name="manager"   type="bmd:user"    minOccurs="0"/>
+
+			<xs:element name="relations"                    minOccurs="0">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="relation" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:sequence>
+									<xs:element name="task"             type="xs:string"/>
+									<xs:element name="organizationUnit" type="bmd:organizationUnit"/>
+								</xs:sequence>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+
+
+
+	<xs:complexType name="organizationUnit">
+		<xs:sequence>
+			<xs:element name="name"    type="xs:string"/>
+			<xs:element name="address" type="xs:string" minOccurs="0"/>
+			<xs:element name="zipcode" type="xs:string" minOccurs="0"/>
+			<xs:element name="city"    type="xs:string" minOccurs="0"/>
+			<xs:element name="country" type="xs:string" minOccurs="0"/>
+			<xs:element name="website" type="xs:anyURI" minOccurs="0"/>
+			<xs:element name="manager" type="bmd:user"  minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+
+
+
+	<xs:complexType name="user">
+		<xs:sequence>
+			<xs:element name="distinguishedName" type="xs:string"/>
+			<xs:element name="firstName"         type="xs:string"        minOccurs="0"/>
+			<xs:element name="lastName"          type="xs:string"        minOccurs="0"/>
+			<xs:element name="email"             type="bmd:emailAddress" minOccurs="0"/>
+			<xs:element name="validFrom"         type="xs:dateTime"      minOccurs="0"/>
+			<xs:element name="validUntil"        type="xs:dateTime"      minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+
+
+
+	<xs:simpleType name="emailAddress">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="[^@]+@[^\.]+\..+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+
+
+	<xs:simpleType name="id">
+		<xs:restriction base="xs:string">
+			<xs:minLength value="1"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+</xs:schema>
