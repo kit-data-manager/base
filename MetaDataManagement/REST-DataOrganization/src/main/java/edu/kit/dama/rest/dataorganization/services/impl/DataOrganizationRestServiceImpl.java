@@ -303,6 +303,7 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
         try {
             LOGGER.debug("Trying to obtain real authorization context for groupId {}.", pGroupId);
             ctx = RestUtils.authorize(hc, new GroupId(pGroupId));
+
             //preliminaryAccess = true;
             //ctx = AuthorizationContext.factorySystemContext();
             LOGGER.debug("Authorization context obtained. No preliminary access required.");
