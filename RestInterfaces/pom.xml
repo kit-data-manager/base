@@ -20,7 +20,7 @@
     <parent>
         <groupId>edu.kit.dama</groupId>
         <artifactId>KITDM</artifactId>
-        <version>1.5</version>
+        <version>1.6-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -58,11 +58,7 @@
     <profiles>
         <profile>
             <id>generate-doc</id>
-            <activation>
-                <property>
-                    <name>assembleMode</name>
-                </property>
-            </activation>
+          
             <build>
                 <plugins>
                     <!--Create Rest documentation-->
@@ -73,7 +69,7 @@
                         <executions>
                             <execution>
                                 <id>miredot</id>
-                                <phase>package</phase> 
+                                <phase>prepare-package</phase> 
                                 <goals>
                                     <goal>restdoc</goal>
                                 </goals>

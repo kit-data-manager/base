@@ -35,3 +35,11 @@
 /Documentation/target/
 /DataOrganization_Neo4j/target/
 /Samples/target/
+/Scheduler/JobSchedulerTest/target/
+/target/
+/RestInterfaces/SchedulerRestInterface/target/
+/MetaDataManagement/REST-Scheduler/target/
+/MetaDataManagement/MDM-Audit/target/
+/RestInterfaces/AuditRestInterface/target/
+/MetaDataManagement/REST-Audit/target/
+/UserInterface/AdminUI/src/main/webapp/VAADIN/widgetsets/

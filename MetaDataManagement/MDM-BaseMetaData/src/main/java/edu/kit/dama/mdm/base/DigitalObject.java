@@ -109,7 +109,8 @@ import org.eclipse.persistence.sessions.Session;
             attributeNodes = {
                 @NamedAttributeNode("baseId")
                 ,
-                @NamedAttributeNode("digitalObjectIdentifier")})
+                @NamedAttributeNode("digitalObjectIdentifier")
+            })
     ,
     @NamedEntityGraph(
             name = "DigitalObject.default",

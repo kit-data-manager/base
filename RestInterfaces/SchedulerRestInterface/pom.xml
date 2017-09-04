@@ -21,7 +21,7 @@
     <parent>
         <groupId>edu.kit.dama.rest</groupId>
         <artifactId>RestInterfaces</artifactId>
-        <version>1.5</version>
+        <version>1.6-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     

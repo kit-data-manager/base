@@ -25,7 +25,6 @@ import edu.kit.dama.commons.exceptions.PropertyValidationException;
 import edu.kit.dama.commons.types.DigitalObjectId;
 import edu.kit.dama.rest.staging.types.TransferTaskContainer;
 import edu.kit.dama.staging.ap.AbstractStagingAccessPoint;
-import edu.kit.dama.staging.entities.StagingProcessor;
 import edu.kit.dama.staging.entities.TransferClientProperties;
 import edu.kit.dama.staging.entities.download.DOWNLOAD_STATUS;
 import edu.kit.dama.staging.entities.download.DownloadInformation;

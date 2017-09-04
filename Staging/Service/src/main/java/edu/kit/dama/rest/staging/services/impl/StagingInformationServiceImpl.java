@@ -123,6 +123,7 @@ public class StagingInformationServiceImpl implements IStagingService {
 
     @Override
     public IEntityWrapper<? extends IDefaultIngestInformation> createIngest(String groupId, String objectId, String accessPointId, String stagingProcessors, HttpContext hc) {
+        LOGGER.debug("Creating ingest for object id '{}' using access point id '{}' and group '{}'.", objectId, accessPointId, groupId);
         TransferClientProperties props = new TransferClientProperties();
         IAuthorizationContext ctx = authorize(hc, new GroupId(groupId));
         props.setStagingAccessPointId(getAccessPointConfigurationForId(accessPointId, ctx).getUniqueIdentifier());
@@ -154,7 +155,7 @@ public class StagingInformationServiceImpl implements IStagingService {
             }
         }
 
-        LOGGER.debug("Start preparing ingest entity.");
+        LOGGER.debug("Start preparing ingest entity for object id {}.", objectId);
         try {
             DigitalObjectId digitalObjectIdentifier = getObjectIdentifierForId(objectId, ctx);
             final IngestInformation result = IngestInformationServiceLocal.getSingleton().prepareIngest(digitalObjectIdentifier, props, ctx);
@@ -479,7 +480,7 @@ public class StagingInformationServiceImpl implements IStagingService {
     private DigitalObjectId getObjectIdentifierForId(String pId, IAuthorizationContext pCtx) {
         if (pId == null) {
             LOGGER.error("Argument pId must not be null.");
-            throw new WebApplicationException(401);
+            throw new WebApplicationException(400);
         }
         String s_id = pId.trim();
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
@@ -519,12 +520,12 @@ public class StagingInformationServiceImpl implements IStagingService {
      * representation of the numeric id or the unique identifier of the digital
      * object. This helper method will take care of the transformation.
      */
-    private StagingAccessPointConfiguration getAccessPointConfigurationForId(String pId, IAuthorizationContext pCtx) {
-        if (pId == null) {
-            LOGGER.error("Argument pId must not be null.");
-            throw new WebApplicationException(401);
+    private StagingAccessPointConfiguration getAccessPointConfigurationForId(String accessPointId, IAuthorizationContext pCtx) {
+        if (accessPointId == null) {
+            LOGGER.error("Argument accessPointId must not be null.");
+            throw new WebApplicationException(400);
         }
-        String s_id = pId.trim();
+        String s_id = accessPointId.trim();
         String stagingPU = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.PERSISTENCE_STAGING_PU_ID, "StagingUnit");
         StagingAccessPointConfiguration result;
         try {

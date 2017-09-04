@@ -20,12 +20,12 @@ limitations under the License.
   <parent>
     <artifactId>UserInterface</artifactId>
     <groupId>edu.kit.dama</groupId>
-    <version>1.5</version>
+    <version>1.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <groupId>edu.kit.dama</groupId>
   <artifactId>AdminUI</artifactId>
-  <packaging>war</packaging>
+  <packaging>jar</packaging>
   <name>AdminUI</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -129,12 +129,12 @@ limitations under the License.
             <version>2.0</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
+        <!--dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>Core</artifactId>
             <version>${project.kit.datamanager.version}</version>
             <type>war</type>
-        </dependency>
+        </dependency-->
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>UICommons7</artifactId>
@@ -200,7 +200,7 @@ limitations under the License.
         <dependency>
             <groupId>edu.kit.dama</groupId>
             <artifactId>MDM-Core</artifactId>
-            <version>1.5</version>
+            <version>1.6-SNAPSHOT</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
@@ -235,7 +235,7 @@ limitations under the License.
             <groupId>edu.kit.dama</groupId>
             <artifactId>Commons</artifactId>
             <type>jar</type>
-            <version>1.5</version>
+            <version>1.6-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>log4j</groupId>
@@ -270,13 +270,6 @@ limitations under the License.
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-                <includes>
-                    <include>**/version.txt</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>src/main/resources</directory>
                 <filtering>false</filtering>
                 <excludes>
                     <exclude>**/version.txt</exclude>
@@ -297,44 +290,11 @@ limitations under the License.
                     </filesets>
                 </configuration>
             </plugin>
-            <!--plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>2.2</version>
-                <configuration>
-                    <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                        <manifestEntries>
-                            <Implementation-Build>${buildNumber}</Implementation-Build>
-                            <Build-Time>${maven.build.timestamp}</Build-Time>
-                        </manifestEntries>
-                    </archive>
-                    <webResources>
-                        <resource>
-                            <directory>src/main/javascript/</directory>
-                            <targetPath>WEB-INF/classes/edu/kit/dama/ui/admin/d3/</targetPath>
-                        </resource>
-                    </webResources>
-                </configuration>
-            </plugin-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.6</version>
                 <configuration>
-                    <!--archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                        </manifest>
-                        <manifestEntries>
-                            <Implementation-Build>${buildNumber}</Implementation-Build>
-                            <Build-Time>${maven.build.timestamp}</Build-Time>
-                        </manifestEntries>
-                    </archive-->  
                     <excludes>
                         <exclude>**/META-INF/persistence.xml</exclude>
                         <exclude>**/datamanager.xml</exclude>

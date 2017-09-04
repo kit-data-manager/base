@@ -41,6 +41,11 @@ Reading package lists... Done
 Building dependency tree       
 Reading state information... Done
 tomcat7 is already the newest version.
+user@localhost:/home/user$ sudo apt-get install havegd
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+havegd is already the newest version.
 user@localhost:/home/user$ sudo apt-get install rabbitmq-server
 Reading package lists...
 Building dependency tree...
@@ -464,14 +469,12 @@ In the first two steps, all libraries and classes of the old version are deleted
 by the classloader even if there is a new version named `Authorization-1.1.jar`. Afterwards, by extracting `KITDM-Update-<VERSION>.zip` all libraries of version <VERSION> are placed 
 directly at `$KITDM_LOCATION/KITDM/WEB-INF/lib/`.
 
-Since KIT Data Manager 1.2 there is an update tool offering support for the process of updating libraries from one version to another. You'll find the tool under 
-`$KITDM_LOCATION/scripts/LibraryCompare.sh`. The tool allows you to compare the contents of a library folder of an old installation with the contents of a library folder of a 
-new installation. The differences can be printed out to StdOut or written into a script that can be used to merge both library folders. However, it is highly recommended to backup the 
-old library folder before applying the update script. Please refer to the command line help of the script for further information. 
-
 After updating all core libraries there might be additional steps necessary, e.g. applying database schema or configuration file changes. Necessary steps are described for each
 new version in section <<SectionChanges,Additional Update Steps>>. If you skip one or more versions you typically have to apply all intermediate steps unless the documentation 
 states something different.
+
+[NOTE]
+From KIT DM 1.5 on running under Ubuntu you should also install the package 'haveged' if not done yet. This package replaces the default, blocking random number generator of the system causing an `extremely long startup` of the KIT DM Web application.
 
 [[SectionCustomUpdate]]
 Update Custom Libraries
@@ -479,8 +482,9 @@ Update Custom Libraries
 
 As soon as you've started integrating community-specific features into the basic repository system, the question arises, how these customizations are carried from one version to the other.
 Basically, this is quite simple. At first, it is highly recommended to rebuild all customizations, e.g. Staging Processors or custom metadata entities, against the current version of 
-KIT Data Manager in order to detect the use of deprecated interfaces or updated imports. Afterwards, all custom libraries can be placed at `$KITDM_LOCATION/KITDM/WEB-INF/lib/` again and 
-should work as before. If this can not be expected, e.g. due to internal changes, an according remark will be stated in the following chapter.
+KIT Data Manager in order to detect the use of deprecated interfaces or updated imports. Afterwards, the external libraries must be updated inside `$CATALINA_HOME/webapps/KITDM/WEB-INF/lib/`.
+If you are following the recommendation to place all your extensions at `$CATALINA_HOME/webapps/KITDM/WEB-INF/lib/ext/` you may now want to recreate the hard links by executing `ln ext/* .` 
+inside `$CATALINA_HOME/webapps/KITDM/WEB-INF/lib/`. If you did not follow the recommendations you should now manually copy all your extension JARS to `$CATALINA_HOME/webapps/KITDM/WEB-INF/lib/`.
 
 [[SectionChanges]]
 Additional Update Steps
@@ -993,8 +997,8 @@ Finally, you should compare your configuration with the <<WebDavConfig, configur
 [cols="1,1,6,2", options="header"]
 |============================================================================================================================
 |Type|Optional|Todo|Side Effects
-|image:data.png[DatabaseUpdate]|No|Apply script `sql/update.1.4-1.5.sql`|This script updates constraints in the data organization tables in order to avoid conflicts during updates.|None
-|image:gear_preferences.png[ConfigurationUpdate]|Yes|Due to an update of the behaviour of transfer finalization jobs it is recommended to change the trigger rate of the ingest and download finalizer jobs to one execution per 2 or 3 seconds after removing the existing triggers from both jobs. Please refer to the <<ChapterJobScheduling,AdminUI documentation>> on how to do this. |None.
+|image:data.png[DatabaseUpdate]|No|Apply script `sql/update.1.4-1.5.sql`|This script updates constraints in the data organization tables in order to avoid conflicts during updates.
+|image:gear_preferences.png[ConfigurationUpdate]|Yes|Due to an update of the behaviour of transfer finalization jobs it is recommended to change the trigger rate of the ingest and download finalizer jobs to one execution per 2 or 3 seconds after removing the existing triggers from both jobs. Please refer to the <<ChapterJobScheduling,AdminUI documentation>> on how to do this.|None.
 |image:server_client_exchange.png[RESTInterfaceChanges]|No|PUT and POST do not longer accept query parameters. Instead, previous query parameters must be provided as form parameters. This affects only the 'groupId' parameter used in almost in every endpoint. |Form parameters provide as query parameters are ignored. In case of the groupId, the default groupId 'USERS' would be used.
 |image:server_client_exchange.png[RESTInterfaceChanges]|No|DELETE rest/sharing/resources/references now takes an additional parameter `referenceGroupId` to provide the groupId of the resource reference. Previously, `groupId` has been used for this purpose, which is now used for authorization only.|Not providing `referenceGroupId` will results in HTTP BAD_REQUEST.
 |============================================================================================================================

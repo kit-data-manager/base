@@ -20,13 +20,18 @@ import edu.kit.dama.mdm.dataorganization.entity.core.ICollectionNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
 import edu.kit.dama.mdm.dataorganization.entity.core.IFileTree;
 import edu.kit.dama.mdm.dataorganization.entity.impl.client.NodeId;
+import edu.kit.dama.mdm.dataorganization.impl.jpa.DataOrganizationNode;
+import edu.kit.dama.mdm.dataorganization.impl.staging.CollectionNodeImpl;
+import edu.kit.dama.mdm.dataorganization.impl.staging.DataOrganizationNodeImpl;
 import edu.kit.dama.mdm.dataorganization.impl.util.Util;
 import edu.kit.dama.mdm.dataorganization.service.core.DataOrganizer;
 import edu.kit.dama.mdm.dataorganization.service.core.DataOrganizerFactory;
 import edu.kit.dama.mdm.dataorganization.service.exception.EntityNotFoundException;
 import edu.kit.dama.mdm.dataorganization.service.exception.InvalidNodeIdException;
+import edu.kit.dama.staging.util.DataOrganizationUtils;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
@@ -62,14 +67,18 @@ public class ElementPath implements Serializable {
 
     public IDataOrganizationNode getNodeForPath(DigitalObjectId pObjectId, String pView) throws EntityNotFoundException, InvalidNodeIdException {
         long id = -1l;
+        LOGGER.debug("Obtaining data organization node for path {} in object {} and view {}", Arrays.asList(path), pObjectId, pView);
         if (path.length == 1) {
             //check for node id
             try {
                 //check for node id
+                LOGGER.debug("Checking for node id in first path element.");
                 id = Long.parseLong(path[0]);
+                LOGGER.debug("First path element is nodeId {}.", id);
                 //is node id...
             } catch (NumberFormatException ex) {
                 //is normal path...obtain id by path
+                LOGGER.debug("First path element is no nodeId.");
             }
         }//
 
@@ -89,18 +98,30 @@ public class ElementPath implements Serializable {
             paths.remove("");
             if (paths.isEmpty()) {
                 //no children...just return root
+                LOGGER.debug("No paths found, returning root node {}.", rootNode);
                 return rootNode;
             }
-            result = getChildByPath(rootNode, paths);
+            LOGGER.debug("Getting child of rootNode {} by path {}", rootNode, paths);
+            result = (DataOrganizationNodeImpl) DataOrganizationUtils.copyNode(getChildByPath(rootNode, paths), false);
         } else {
             //use direct node id
             LOGGER.debug("Loading subtree for object {}, view {} and nodeId {}", pObjectId, pView, id);
             NodeId nodeId = new NodeId(pObjectId, id, 1, pView);
+            LOGGER.debug("NodeId {} obtained. Loading node.", nodeId);
             IDataOrganizationNode thisNode = dataOrganizer.loadNode(nodeId);
-            result = dataOrganizer.loadSubTree(nodeId, 100).getRootNode();
-            result.setName(thisNode.getName());
+            LOGGER.debug("Node {} obtained. Loading sub tree.", thisNode);
+            IFileTree subtree = dataOrganizer.loadSubTree(nodeId, 100);
+            if (subtree == null) {
+                LOGGER.info("No subtree obtained for node. Returning node itself.");
+                result = (DataOrganizationNodeImpl) DataOrganizationUtils.copyNode(thisNode, false);
+            } else {
+                subtree.setDigitalObjectId(pObjectId);
+                result = (DataOrganizationNodeImpl) DataOrganizationUtils.copyNode(subtree.getRootNode(), false);
+                result.setName(thisNode.getName());
+            }
         }
-
+        //((DataOrganizationNodeImpl) result).setDigitalObjectIDStr(pObjectId.getStringRepresentation());
+        result.setViewName(pView);
         return result;
     }
 
@@ -112,6 +133,7 @@ public class ElementPath implements Serializable {
             return pCurrentNode;
         }
         String currentPath = pPath.remove(0);
+        LOGGER.debug("Obtaining node for currentPath {}", currentPath);
         if (pCurrentNode instanceof ICollectionNode) {
             return getChildByPath(Util.getNodeByName((ICollectionNode) pCurrentNode, currentPath), pPath);
         }

@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.kit.dama</groupId>
   <artifactId>KITDM</artifactId>
-  <version>1.5</version>
+  <version>1.6-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>KIT Data Manager</name>
   <description>The main module containing all components of KIT Data Manager. The sub-modules are separated by functionality and may contain additional sub-modules.
@@ -235,6 +235,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>sql-maven-plugin</artifactId>
+        <version>1.5</version>
         <executions>
           <execution>
             <id>drop-db</id>
@@ -371,29 +372,6 @@
         </configuration>
       </plugin>
       <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.4.1</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <descriptors>
-            <descriptor>src/main/assembly/documentation.xml</descriptor>
-            <descriptor>src/main/assembly/core.xml</descriptor>
-            <descriptor>src/main/assembly/adminUI.xml</descriptor>
-            <descriptor>src/main/assembly/settings.xml</descriptor>
-          </descriptors>
-          <filters>
-            <filter>${basedir}/src/main/assembly/filter.${deploy.target}.properties</filter>
-          </filters>
-          <outputDirectory>${basedir}/assembly</outputDirectory>
-        </configuration>
-      </plugin>
-      <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.10.3</version>
         <executions>
@@ -445,9 +423,58 @@
   </build>
   <profiles>
     <profile>
-      <id>PublicRelease</id>
+      <id>Release</id>
       <build>
         <plugins>
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.10.3</version>
+            <executions>
+              <execution>
+                <id>aggregate</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>aggregate</goal>
+                </goals>
+                <configuration>
+                  <tags>
+                    <tag>
+                      <name>summary</name>
+                      <placement>a</placement>
+                      <head>MireDot summary (resource title)</head>
+                    </tag>
+                    <tag>
+                      <name>title</name>
+                      <placement>a</placement>
+                      <head>MireDot summary (resource title)</head>
+                    </tag>
+                    <tag>
+                      <name>servicetag</name>
+                      <placement>a</placement>
+                      <head>MireDot resource tag (label)</head>
+                    </tag>
+                    <tag>
+                      <name>statuscode</name>
+                      <placement>a</placement>
+                      <head>MireDot resource status code(s)</head>
+                    </tag>
+                    <tag>
+                      <name>responseheader</name>
+                      <placement>a</placement>
+                      <head>MireDot response header</head>
+                    </tag>
+                    <tag>
+                      <name>TODO</name>
+                      <placement>a</placement>
+                      <head>Todo tag</head>
+                    </tag>
+                  </tags>
+                  <skip>false</skip>
+                  <excludePackageNames>edu.kit.dama.ui:org.openarchives.oai:edu.kit.dama.util.jaxb:edu.kit.dama.dataorganization.impl.neo4j</excludePackageNames>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>buildnumber-maven-plugin</artifactId>
@@ -478,6 +505,36 @@
               <tagBase>svn+ssh://ipepc21.ka.fzk.de/srv/svn/KDM/tags</tagBase>
             </configuration>
           </plugin>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.4.1</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <descriptors>
+                <descriptor>src/main/assembly/release.xml</descriptor>
+              </descriptors>
+              <filters>
+                <filter>${basedir}/src/main/assembly/filter.${deploy.target}.properties</filter>
+              </filters>
+              <outputDirectory>${basedir}/assembly</outputDirectory>
+              <systemProperties>
+                <systemProperty>
+                  <key>deploy.target</key>
+                  <value>release</value>
+                </systemProperty>
+                <systemProperty>
+                  <key>release.version</key>
+                  <value>1.5</value>
+                </systemProperty>
+              </systemProperties>
+            </configuration>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -497,8 +554,7 @@
             </executions>
             <configuration>
               <descriptors>
-                <descriptor>src/main/assembly/core.xml</descriptor>
-                <descriptor>src/main/assembly/settings.xml</descriptor>
+                <descriptor>src/main/assembly/test.xml</descriptor>
               </descriptors>
               <filters>
                 <filter>${basedir}/src/main/assembly/filter.${deploy.target}.properties</filter>
@@ -510,6 +566,41 @@
       </build>
       <properties>
         <deploy.target>docker</deploy.target>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <assembleMode>False</assembleMode>
+      </properties>
+    </profile>
+    <profile>
+      <id>DockerRelease</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.4.1</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <descriptors>
+                <descriptor>src/main/assembly/docker-release.xml</descriptor>
+              </descriptors>
+              <filters>
+                <filter>${basedir}/src/main/assembly/filter.${deploy.target}.properties</filter>
+              </filters>
+              <outputDirectory>${basedir}/assembly</outputDirectory>
+              <finalName>KITDM</finalName>
+              <appendAssemblyId>false</appendAssemblyId>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      <properties>
+        <deploy.target>docker</deploy.target>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
       </properties>
     </profile>
   </profiles>

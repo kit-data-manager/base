@@ -111,8 +111,12 @@ public class HTTPAuthenticator extends AbstractAuthenticator {
         }
 
         String authorizedUser = principal.getName();
+        if (authorizedUser.lastIndexOf("@") > 0) {
+            //probably nffa-authenticated user following schema user@group -> remove group
+            authorizedUser = authorizedUser.substring(0, authorizedUser.lastIndexOf("@"));
+        }
         try {
-            LOGGER.debug("Principal successfully obtained.  Building and returning AuthorizationContext for user '{}'", authorizedUser);
+            LOGGER.debug("Principal successfully obtained.  Building and returning AuthorizationContext for user '{}' in group '{}'.", authorizedUser, groupId);
             return buildAuthorizationContext(new UserId(authorizedUser), groupId);
         } catch (EntityNotFoundException ex) {
             throw new UnauthorizedAccessAttemptException("Failed to build authorization context. Accessing user seems not to be member of group" + groupId + ".", ex);

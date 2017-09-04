@@ -287,6 +287,12 @@ to be placed in the Web Application path of your KIT Data Manager deployment, ty
 (typically Apache Tomcat) or at least the KIT Data Manager Web Application have to be restarted. The registration and configuration of the deployed StagingProcessor can be done after a successful 
 restart using the administration user interface.
 
+[IMPORTANT]
+Placing extension JAR files to `$CATALINA_HOME/webapps/KITDM/WEB-INF/lib/` has the drawback, that updating KIT DM could be time consuming as deployed extensions have to be identified and preserved before updating 
+WEB-INF/lib by removing all old JARS and placing the new libraries of the update package. Unfortunately, it is not possible to use soft links to make external JAR files available at `$CATALINA_HOME/webapps/KITDM/WEB-INF/lib/`.
+The only and recommended way is to maintain a separate folder `$CATALINA_HOME/webapps/KITDM/WEB-INF/lib/ext/`, placing all your extensions there and create a hard link via `ln ext/* .` executed from within `$CATALINA_HOME/webapps/KITDM/WEB-INF/lib/`
+every time a new extension is placed there and after a KIT DM update.
+
 Server-sided Development
 ~~~~~~~~~~~~~~~~~~~~~~~~
 The final part of this chapter covers the delevopment on the server-side. For local, high-performance access to KIT Data Manager services, 

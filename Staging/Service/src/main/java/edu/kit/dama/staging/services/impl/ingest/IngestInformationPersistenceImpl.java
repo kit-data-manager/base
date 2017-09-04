@@ -436,7 +436,7 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         List<IngestInformation> results = new LinkedList<>();
         try {
-            results = mdm.findResultList("SELECT x FROM IngestInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < x.expiresAt) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3",
+            results = mdm.findResultList("SELECT x FROM IngestInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < ?2) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3",
                     new Object[]{IngestInformation.DEFAULT_LIFETIME, System.currentTimeMillis(), getOwnerFromContext(pSecurityContext)}, IngestInformation.class, pMinIndex, pMaxResults);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to get expired ingests using context " + pSecurityContext, ex);
@@ -453,7 +453,7 @@ public final class IngestInformationPersistenceImpl implements ITransferInformat
 
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         try {
-            result = mdm.findSingleResult("SELECT COUNT(x) FROM IngestInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < x.expiresAt) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3",
+            result = mdm.findSingleResult("SELECT COUNT(x) FROM IngestInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < ?2) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3",
                     new Object[]{IngestInformation.DEFAULT_LIFETIME, System.currentTimeMillis(), getOwnerFromContext(pSecurityContext)}, Number.class);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to get expired ingest count using context " + pSecurityContext, ex);

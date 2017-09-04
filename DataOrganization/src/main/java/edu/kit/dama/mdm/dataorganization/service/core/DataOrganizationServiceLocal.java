@@ -24,7 +24,6 @@ import edu.kit.dama.mdm.dataorganization.service.exception.EntityExistsException
 import edu.kit.dama.mdm.dataorganization.service.exception.EntityNotFoundException;
 import edu.kit.dama.mdm.dataorganization.service.exception.InvalidNodeIdException;
 import edu.kit.dama.commons.types.DigitalObjectId;
-import edu.kit.dama.mdm.dataorganization.impl.jpa.FileTree;
 import edu.kit.dama.mdm.core.IMetaDataManager;
 import edu.kit.dama.util.Constants;
 import java.util.LinkedList;
@@ -81,8 +80,7 @@ public final class DataOrganizationServiceLocal implements
     @Override
     public void createFileTree(IFileTree fileTree, IAuthorizationContext ctx)
             throws EntityExistsException {
-        DataOrganizerFactory.getInstance().getDataOrganizer().createFileTree(
-                fileTree);
+        DataOrganizerFactory.getInstance().getDataOrganizer().createFileTree(fileTree);
     }
 
     @Override

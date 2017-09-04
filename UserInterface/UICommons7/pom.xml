@@ -22,7 +22,7 @@
   <artifactId>UICommons7</artifactId>
   <name>UICommons7</name>
   <packaging>jar</packaging>
-  <version>1.5</version>
+  <version>1.6-SNAPSHOT</version>
   
   <description>The Vaadin 7 compliant version of UICommons.</description>
   
@@ -230,8 +230,8 @@
     </distributionManagement>
   
     <scm>
-        <developerConnection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/KDM/tags/KITDM-1.5/UserInterface/UICommons7</developerConnection>
-        <url>http://ipepc21.ka.fzk.de/viewcvs/KDM/tags/KITDM-1.5/UserInterface/UICommons7</url>
+        <developerConnection>scm:svn:svn+ssh://ipepc21.ka.fzk.de/srv/svn/KDM/trunk/UserInterface/UICommons7</developerConnection>
+        <url>http://ipepc21.ka.fzk.de/viewcvs/KDM/trunk/UserInterface/UICommons7</url>
     </scm>
   
 </project>

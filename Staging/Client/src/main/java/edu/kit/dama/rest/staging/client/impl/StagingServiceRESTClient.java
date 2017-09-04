@@ -41,8 +41,10 @@ import org.slf4j.LoggerFactory;
 /**
  *
  * @author jejkal
- * 
- * @deprecated Will be replaced by edu.kit.dama.rest.staging.client.impl.StagingRestClient in order to follow the RESTful client naming conventions. Functionality is not affected.
+ *
+ * @deprecated Will be replaced by
+ * edu.kit.dama.rest.staging.client.impl.StagingRestClient in order to follow
+ * the RESTful client naming conventions. Functionality is not affected.
  */
 public class StagingServiceRESTClient extends AbstractRestClient {
 

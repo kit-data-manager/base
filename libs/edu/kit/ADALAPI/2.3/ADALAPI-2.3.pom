@@ -142,7 +142,7 @@
         <dependency>
             <groupId>org.fzk.ipe</groupId>
             <artifactId>Tools</artifactId>
-            <version>1.5</version>
+            <version>1.6</version>
             <type>jar</type>
             <exclusions>
                 <exclusion>

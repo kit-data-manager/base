@@ -455,7 +455,7 @@ public final class DownloadInformationPersistenceImpl implements ITransferInform
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         List<DownloadInformation> results = new LinkedList<>();
         try {
-            results = mdm.findResultList("SELECT x FROM DownloadInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < x.expiresAt) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3",
+            results = mdm.findResultList("SELECT x FROM DownloadInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < ?2) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3",
                     new Object[]{DownloadInformation.DEFAULT_LIFETIME, System.currentTimeMillis(), getOwnerFromContext(pSecurityContext)}, DownloadInformation.class, pMinIndex, pMaxResults);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to get expired downloads using context " + pSecurityContext, ex);
@@ -489,7 +489,7 @@ public final class DownloadInformationPersistenceImpl implements ITransferInform
 
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(getPersistenceUnit(), pSecurityContext);
         try {
-            result = mdm.findSingleResult("SELECT COUNT(x) FROM DownloadInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < x.expiresAt) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3",
+            result = mdm.findSingleResult("SELECT COUNT(x) FROM DownloadInformation x WHERE (x.expiresAt = -1 AND x.lastUpdate + ?1 < ?2) OR (x.expiresAt != -1 AND x.expiresAt < ?2) AND x.ownerUuid LIKE ?3",
                     new Object[]{DownloadInformation.DEFAULT_LIFETIME, System.currentTimeMillis(), getOwnerFromContext(pSecurityContext)}, Number.class);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Not authorized to get expired download count using context " + pSecurityContext, ex);

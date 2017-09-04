@@ -83,6 +83,11 @@
             <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
             <param-value>true</param-value>
         </init-param>
+        <!--init-param>
+            <param-name>public.hosts</param-name>
+            <param-value>147.122.7.215</param-value>
+        </init-param-->
+        
         <!--Access to all nodes in the listed view(s), multiple views are separated by ';', is allowed without any authorization. (Only recommended for special views) -->
         <!--init-param>
             <param-name>public.view.names</param-name>

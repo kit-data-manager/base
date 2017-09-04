@@ -21,7 +21,7 @@
     <parent>
         <artifactId>MetaDataManagement</artifactId>
         <groupId>edu.kit.dama</groupId>
-        <version>1.5</version>
+        <version>1.6-SNAPSHOT</version>
     </parent>
 
     <groupId>edu.kit.dama.rest</groupId>

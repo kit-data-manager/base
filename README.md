@@ -1,7 +1,8 @@
 # KIT Data Manager Base Modules
 
-[![Build Status](https://api.travis-ci.org/kit-data-manager/base.png?branch=master)](https://travis-ci.org/kit-data-manager/base)
+[![Build Status (External)](https://api.travis-ci.org/kit-data-manager/base.png?branch=master)](https://travis-ci.org/kit-data-manager/base)
 
+[![build status (Internal)](https://git.scc.kit.edu/kitdatamanager/base/badges/master/build.svg)](https://git.scc.kit.edu/kitdatamanager/base/commits/master)
 
 KIT Data Manager is a generic repository architecture especially focussing on research data. This repository 
 contain all sources necessary to build the base modules of KIT Data Manager needed to implement custom

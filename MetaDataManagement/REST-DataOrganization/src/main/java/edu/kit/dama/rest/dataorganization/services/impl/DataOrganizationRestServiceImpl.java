@@ -67,6 +67,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -74,6 +75,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.persistence.NoResultException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -129,7 +131,7 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
 
         try {
             rootNode = DataOrganizerFactory.getInstance().getDataOrganizer().loadNode(rootId);
-        } catch (InvalidNodeIdException ex) {
+        } catch (InvalidNodeIdException | NoResultException ex) {
             LOGGER.error("Failed to load root node.", ex);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -168,7 +170,7 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
         List<? extends IDataOrganizationNode> l;
         try {
             l = DataOrganizerFactory.getInstance().getDataOrganizer().getChildren(nid, first, results);
-        } catch (InvalidNodeIdException ex) {
+        } catch (InvalidNodeIdException | NoResultException ex) {
             LOGGER.error("Failed to get children for node.", ex);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -184,7 +186,7 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
                 try {
                     //reload child and copy content
                     children.add(DataOrganizationUtils.copyNode(DataOrganizerFactory.getInstance().getDataOrganizer().loadNode(aChild.getTransientNodeId()), false));
-                } catch (InvalidNodeIdException ex) {
+                } catch (InvalidNodeIdException | NoResultException ex) {
                     LOGGER.error("Failed to get children for node.", ex);
                     throw new WebApplicationException(Response.Status.NOT_FOUND);
                 }
@@ -202,7 +204,7 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
         IDataOrganizationNode node;
         try {
             node = DataOrganizerFactory.getInstance().getDataOrganizer().loadNode(nid);
-        } catch (InvalidNodeIdException ex) {
+        } catch (InvalidNodeIdException | NoResultException ex) {
             LOGGER.error("Failed to load node by id.", ex);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -219,7 +221,7 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
         try {
             //return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new DataOrganizationNodeWrapper(DataOrganizerFactory.getInstance().getDataOrganizer().getChildCount(nid).intValue()));
             return new DataOrganizationNodeWrapper(DataOrganizerFactory.getInstance().getDataOrganizer().getChildCount(nid).intValue());
-        } catch (InvalidNodeIdException ex) {
+        } catch (InvalidNodeIdException | NoResultException ex) {
             LOGGER.error("Failed to get child cound for node by id.", ex);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -264,7 +266,7 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
         IDataOrganizationNode rootNode;
         try {
             rootNode = DataOrganizerFactory.getInstance().getDataOrganizer().loadNode(rootId);
-        } catch (InvalidNodeIdException ex) {
+        } catch (InvalidNodeIdException | NoResultException ex) {
             LOGGER.error("Failed to load root node.", ex);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -315,21 +317,38 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
                 throw wae;
             }
         }
-        objectId = getDigitalObjectId(pBaseId, ctx);
-
+        try {
+            LOGGER.debug("Try to obtain digital object for baseId {} using context {}", pBaseId, ctx);
+            objectId = getDigitalObjectId(pBaseId, ctx);
+            LOGGER.debug("Object successfully retrieved.");
+        } catch (WebApplicationException ex) {
+            if (ex.getResponse().getStatus() == 401) {
+                LOGGER.info("Failed to retrieve object using context {}. Trying to use preliminary access.", ctx);
+                //try preliminary access
+                preliminaryAccess = true;
+                ctx = AuthorizationContext.factorySystemContext();
+                objectId = getDigitalObjectId(pBaseId, ctx);
+                LOGGER.debug("ObjectId {} retrieved using preliminary access.", objectId);
+            } else {
+                //re-throw exception
+                throw ex;
+            }
+        }
         LOGGER.debug("Continuing with {} access to object with id {}", (preliminaryAccess) ? "preliminary" : "authorized", objectId);
 
         //check path whether it is a single id...in that case access a node directly
         //if path is a slash-separated string, obtain the according node
         //return node value depending on the media type stored in the request (either XML or octet-stream)
         try {
-            LOGGER.error("Getting data organization node for object with id '{}', view '{}' and path '{}'", objectId, pViewName, pPath);
+            LOGGER.debug("Getting data organization node for object with id '{}', view '{}' and path '{}'", objectId, pViewName, pPath);
 
             final IDataOrganizationNode node;
             try {
                 LOGGER.debug("Getting node for element path {}, object with id '{}' and view '{}'", pPath, objectId, pViewName);
                 ElementPath p = new ElementPath(pPath);
+                LOGGER.debug("Element path obtained. Getting path for objectId {} and viewName {}", objectId, pViewName);
                 node = p.getNodeForPath(objectId, pViewName);
+                LOGGER.debug("Successfully obtained node.");
                 if (node != null) {
                     LOGGER.debug("Successfully obtained node for path {}.", pPath);
                 } else {
@@ -341,12 +360,13 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
             }
 
             if (preliminaryAccess) {
-                LOGGER.debug("Preliminary access enabled. Checking if node with id {} is eligible for authorization less access.", node.getTransientNodeId());
-                checkAuthorizationLessAccess(node, config);
+                LOGGER.debug("Preliminary access enabled. Checking if node at path '{}' is eligible for authorization less access.", pPath);
+                node.setViewName(pViewName);
+                checkAuthorizationLessAccess(node, hc, config);
                 LOGGER.debug("Node is eligible for authorization less access.");
             }
             if (node instanceof IFileNode) {
-                LOGGER.debug("Obtaining LFN from file node {}", node.getName());
+                LOGGER.debug("Obtaining LFN from file node '{}'", node.getName());
                 ILFN ilfn = ((IFileNode) node).getLogicalFileName();
                 if (ilfn == null) {
                     LOGGER.error("Invalid file node at path {} for object {}. No LFN available.", pPath, pBaseId);
@@ -416,7 +436,7 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
                 LOGGER.debug("Returning response file named '{}' in stream linked to piped zip stream.", resultName);
                 //Using piped input stream rather than streaming output via DowloadStreamWrapper as this seems not to work here. 
                 return Response.ok(in, MediaType.APPLICATION_OCTET_STREAM).header("Content-Disposition",
-                        "attachment; filename=" + resultName + ".zip").build();
+                        "attachment; filename=\"" + resultName + ".zip\"").build();
             } else {
                 LOGGER.error("Data access to nodes of type '{}' is currently not supported.", node.getClass().getCanonicalName());
                 //not implemented for these nodes
@@ -454,7 +474,7 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
             IDataOrganizationNode newRoot = org.loadNode(rootId);
             // return RestUtils.transformObject(IMPL_CLASSES, Constants.REST_DEFAULT_OBJECT_GRAPH, new DataOrganizationNodeWrapper(DataOrganizationUtils.copyNode(newRoot, false)));
             return new DataOrganizationNodeWrapper(DataOrganizationUtils.copyNode(newRoot, false));
-        } catch (InvalidNodeIdException ex) {
+        } catch (InvalidNodeIdException | NoResultException ex) {
             LOGGER.error("Failed to obtain valid file tree from provided JSON data. At least one contained nodeId is invalid.", ex);
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         } catch (EntityExistsException ex) {
@@ -585,7 +605,70 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
      * containing the rule list.
      */
     private void checkAuthorizationLessAccess(IDataOrganizationNode pNode, ResourceConfig resource) {
+        checkAuthorizationLessAccess(pNode, null, resource);
+    }
+
+    /**
+     * Check is the provided node is eligable to authorization-less access. This
+     * method is called if no proper authorization context could be obtained
+     * from the user request. If one of the configured rules applies this method
+     * returns without any further notice. If no rule applies, the access is
+     * denied and an error HTTP.FORBIDDEN is returned to the client.
+     *
+     *
+     * There are multiple rules applied in the following order:
+     *
+     * <ul>
+     * <li>Is the node in a specific view?</li>
+     * <li>Has the node a specific attribute assigned?</li>
+     * <li>Is the node a collection node and is authorization-less access to
+     * collection nodes allowed?</li>
+     * <li>Is the node a file node and does its name matches a defined regular
+     * expression?</li>
+     * </ul>
+     *
+     * All these rules are configured in the web.xml section of the data
+     * organization rest service using the following init params:
+     *
+     * <ul>
+     * <li>public.view.names - Semicolon-separated list of view names (e.g.
+     * public;myView)</li>
+     * <li>public.attribute.key - Attribute key that must be assigned to an
+     * eligable node (e.g. public)</li>
+     * <li>public.collection.node.access.allowed - true or false (default:
+     * false)</li>
+     * <li>public.file.node.filter - Regular expression used to match the node
+     * name (e.g. (.*)\.jpg$ to accept all nodes ending with .jpg)</li>
+     * </ul>
+     *
+     *
+     * @param pNode The node to which the access is checked.
+     * @param resource The resource config used to obtain the init-params
+     * containing the rule list.
+     */
+    private void checkAuthorizationLessAccess(IDataOrganizationNode pNode, HttpContext context, ResourceConfig resource) {
         boolean accessAllowed = false;
+
+        List<String> allowedHostnames = new ArrayList<>();
+        String origin = context.getRequest().getHeaderValue("Origin");
+        LOGGER.debug("Obtained origin header {}", origin);
+        URI requestUri;
+        if (origin != null) {
+            if (origin.startsWith("http")) {
+                requestUri = URI.create(origin);
+            } else {
+                requestUri = URI.create("http://" + origin);
+            }
+        } else {
+            requestUri = URI.create("http://this-host-is-invalid");
+        }
+
+        String publicHosts = (String) resource.getProperty("public.hosts");
+        LOGGER.debug("Public host names: {}", publicHosts);
+        if (publicHosts != null) {
+            Collections.addAll(allowedHostnames, publicHosts.trim().split(";"));
+        }
+
         String publicViews = (String) resource.getProperty("public.view.names");
         LOGGER.debug("Public view names: {}", publicViews);
         String publicCollectionAccess = (String) resource.getProperty("public.collection.node.access.allowed");
@@ -600,38 +683,43 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
             Collections.addAll(allowedViews, publicViews.trim().split(";"));
         }
         boolean collectionAccessAllowed = Boolean.parseBoolean(publicCollectionAccess);
-
-        if (allowedViews.contains(pNode.getViewName())) {
-            LOGGER.debug("Authorization-less access to node granted by view name {}", pNode.getViewName());
-            accessAllowed = true;
-        } else {
-            LOGGER.debug("Node with in view {} not eligable to authorization-less access by view name", pNode.getViewName());
-        }
-        if (!accessAllowed && publicAttribute != null) {
-            for (IAttribute attrib : pNode.getAttributes()) {
-                if (attrib.getKey().equals(publicAttribute)) {
-                    LOGGER.debug("Authorization-less access to node granted by existence of attribute {}", publicAttribute);
-                    accessAllowed = true;
+        //apply host-based access first
+        if (allowedHostnames.isEmpty() || allowedHostnames.contains(requestUri.getHost())) {
+            LOGGER.debug("Access for host {} granted, continuing authorization-less handling.", requestUri.getHost());
+            if (allowedViews.contains(pNode.getViewName())) {
+                LOGGER.debug("Authorization-less access to node granted by view name {}", pNode.getViewName());
+                accessAllowed = true;
+            } else {
+                LOGGER.debug("Node with in view {} not eligable to authorization-less access by view name", pNode.getViewName());
+            }
+            if (!accessAllowed && publicAttribute != null) {
+                for (IAttribute attrib : pNode.getAttributes()) {
+                    if (attrib.getKey().equals(publicAttribute)) {
+                        LOGGER.debug("Authorization-less access to node granted by existence of attribute {}", publicAttribute);
+                        accessAllowed = true;
+                    }
                 }
             }
-        }
 
-        if (!accessAllowed) {
-            if ((pNode instanceof IFileNode) && publicFileNodeFilter != null && Pattern.matches(publicFileNodeFilter.trim(), pNode.getName().trim())) {
-                LOGGER.debug("Authorization-less access to node granted by type IFileNode, pattern {} and node name {}", publicFileNodeFilter, pNode.getName());
-                accessAllowed = true;
-            } else {
-                LOGGER.debug("Node with name {} not eligable to authorization-less access by file filter {}", pNode.getName(), publicFileNodeFilter);
+            if (!accessAllowed) {
+                if ((pNode instanceof IFileNode) && publicFileNodeFilter != null && Pattern.matches(publicFileNodeFilter.trim(), pNode.getName().trim())) {
+                    LOGGER.debug("Authorization-less access to node granted by type IFileNode, pattern {} and node name {}", publicFileNodeFilter, pNode.getName());
+                    accessAllowed = true;
+                } else {
+                    LOGGER.debug("Node with name {} not eligable to authorization-less access by file filter {}", pNode.getName(), publicFileNodeFilter);
+                }
             }
-        }
-        //perform attribute check at the end as this check is the most expensive one
-        if (!accessAllowed) {
-            if (pNode instanceof ICollectionNode && collectionAccessAllowed) {
-                LOGGER.debug("Authorization-less access to node granted by type ICollectionNode");
-                accessAllowed = true;
-            } else {
-                LOGGER.debug("Node with name {} not eligable to authorization-less access by type ICollectionNode", pNode.getName());
+            //perform attribute check at the end as this check is the most expensive one
+            if (!accessAllowed) {
+                if (pNode instanceof ICollectionNode && collectionAccessAllowed) {
+                    LOGGER.debug("Authorization-less access to node granted by type ICollectionNode");
+                    accessAllowed = true;
+                } else {
+                    LOGGER.debug("Node with name {} not eligable to authorization-less access by type ICollectionNode", pNode.getName());
+                }
             }
+        } else {
+            LOGGER.info("Public hosts list {} is either not empty or does not contain the origin host {}. Authorization-less access forbidden.", publicHosts, origin);
         }
         if (!accessAllowed) {
             throw new WebApplicationException(Status.FORBIDDEN);
@@ -671,12 +759,15 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
         IMetaDataManager mdm = SecureMetaDataManager.factorySecureMetaDataManager(pCtx);
         try {
             LOGGER.debug("Obtaining digital object for id {}", pBaseId);
-            mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.simple");
-            DigitalObject object = mdm.find(DigitalObject.class, pBaseId);
-            if (object == null) {
+
+            String objectIdentifier = mdm.findSingleResult("SELECT o.digitalObjectIdentifier FROM DigitalObject o WHERE o.baseId=?1", new Object[]{pBaseId}, String.class);
+
+            // mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.simple");
+            //   DigitalObject object = mdm.find(DigitalObject.class, pBaseId);
+            if (objectIdentifier == null) {
                 throw new WebApplicationException(new Exception("Object for id " + pBaseId + " not found"), 404);
             }
-            return object.getDigitalObjectId();
+            return new DigitalObjectId(objectIdentifier);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain object for baseId " + pBaseId + ".", ex);
             throw new WebApplicationException(401);

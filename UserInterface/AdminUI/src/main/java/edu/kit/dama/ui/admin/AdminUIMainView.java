@@ -94,8 +94,10 @@ public class AdminUIMainView extends UI {
 
     @Override
     protected void init(VaadinRequest request) {
+        LOGGER.debug("Initializing AdminUI");
         boolean firstStart = false;
         //check first start
+        LOGGER.debug("Checking for first start...");
         IMetaDataManager mdm = MetaDataManagement.getMetaDataManagement().getMetaDataManager();
         mdm.setAuthorizationContext(AuthorizationContext.factorySystemContext());
         try {
@@ -109,7 +111,7 @@ public class AdminUIMainView extends UI {
         } finally {
             mdm.close();
         }
-
+        LOGGER.debug("Setting up UI...");
         try {
             //setup SiMon configuration and error handler
             doBasicSetup();
@@ -121,6 +123,7 @@ public class AdminUIMainView extends UI {
             setupHeader(isLandingPage, landingObjectId);
 
             if (firstStart) {
+                LOGGER.debug("First start detected. Starting wizard.");
                 //do nothing else but first start handling
                 mainLayout = new VerticalLayout();
                 mainLayout.setMargin(false);
@@ -130,6 +133,7 @@ public class AdminUIMainView extends UI {
                 setSizeFull();
                 return;
             }
+            LOGGER.debug("No first start detected. Continuing with UI setup.");
 
             //Check for OAuth redirect
             String pendingAuthId = null;
@@ -165,6 +169,7 @@ public class AdminUIMainView extends UI {
                 LOGGER.debug("Showing landing page.");
                 setupLandingPage(landingObjectId);
             } else {
+                LOGGER.debug("Updating default UI.");
                 refreshMainLayout();
             }
             INITIALIZING = false;

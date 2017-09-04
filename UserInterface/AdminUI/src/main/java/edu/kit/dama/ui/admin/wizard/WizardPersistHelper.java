@@ -292,7 +292,7 @@ public class WizardPersistHelper {
         try {
             MetaDataSchema oai_dc = new MetaDataSchema("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc/", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd");
             MetaDataSchema bmd = new MetaDataSchema("bmd", "http://datamanager.kit.edu/dama/basemetadata/", "http://datamanager.kit.edu/dama/basemetadata/2015-08/basemetadata.xsd");
-            MetaDataSchema mets = new MetaDataSchema("bmd", "http://www.loc.gov/METS/", "http://www.loc.gov/standards/mets/mets.xsd");
+            MetaDataSchema mets = new MetaDataSchema("mets", "http://www.loc.gov/METS/", "http://www.loc.gov/standards/mets/mets.xsd");
 
             addMessage("Writing default metadata schemas to database.", 1);
             addMessage("Writing schema 'oai_dc'.", 2);
