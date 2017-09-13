@@ -19,11 +19,14 @@ import com.sun.jersey.api.core.HttpContext;
 import com.sun.jersey.api.core.ResourceConfig;
 import edu.kit.dama.authorization.entities.GroupId;
 import edu.kit.dama.authorization.entities.IAuthorizationContext;
+import edu.kit.dama.authorization.entities.ISecurableResource;
 import edu.kit.dama.authorization.entities.Role;
 import edu.kit.dama.authorization.entities.UserId;
 import edu.kit.dama.authorization.entities.impl.AuthorizationContext;
+import edu.kit.dama.authorization.entities.impl.SecurableResource;
 import edu.kit.dama.authorization.exceptions.UnauthorizedAccessAttemptException;
 import edu.kit.dama.authorization.services.administration.ResourceServiceLocal;
+import edu.kit.dama.authorization.services.base.PlainAuthorizerLocal;
 import edu.kit.dama.commons.types.DigitalObjectId;
 import edu.kit.dama.commons.types.ILFN;
 import edu.kit.dama.mdm.dataorganization.entity.core.IDataOrganizationNode;
@@ -71,6 +74,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -761,12 +766,21 @@ public final class DataOrganizationRestServiceImpl implements IDataOrganizationR
             LOGGER.debug("Obtaining digital object for id {}", pBaseId);
 
             String objectIdentifier = mdm.findSingleResult("SELECT o.digitalObjectIdentifier FROM DigitalObject o WHERE o.baseId=?1", new Object[]{pBaseId}, String.class);
-
-            // mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.simple");
-            //   DigitalObject object = mdm.find(DigitalObject.class, pBaseId);
             if (objectIdentifier == null) {
                 throw new WebApplicationException(new Exception("Object for id " + pBaseId + " not found"), 404);
             }
+
+            Collection<ISecurableResource> resourceList = new ArrayList<>();
+            resourceList.add(new SecurableResource(DigitalObject.class.getCanonicalName(), objectIdentifier));
+            PlainAuthorizerLocal.filterOnAccessAllowed(pCtx, Role.GUEST, resourceList);
+
+            if (resourceList.isEmpty()) {
+                LOGGER.error("Object with identifier " + objectIdentifier + " is not accessible by context " + pCtx + ". Returning HTTP 401.");
+                throw new WebApplicationException(401);
+            }
+            // mdm.addProperty(MetaDataManagerJpa.JAVAX_PERSISTENCE_FETCHGRAPH, "DigitalObject.simple");
+            //   DigitalObject object = mdm.find(DigitalObject.class, pBaseId);
+
             return new DigitalObjectId(objectIdentifier);
         } catch (UnauthorizedAccessAttemptException ex) {
             LOGGER.error("Failed to obtain object for baseId " + pBaseId + ".", ex);
