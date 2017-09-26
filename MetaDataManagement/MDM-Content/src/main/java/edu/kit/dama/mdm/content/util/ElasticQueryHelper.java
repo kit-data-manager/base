@@ -30,6 +30,7 @@ import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -78,7 +79,7 @@ public class ElasticQueryHelper {
         INITIALIZED = true;
     }
 
-    public static Map<String, Collection<String>> performQuery(String searchIndex, String type, JSONObject queryString, int index, int results) throws IOException {
+    public static Map<String, Collection<String>> performQuery(String searchIndex, String type, AbstractQueryBuilder queryString, int index, int results) throws IOException {
         return performQuery(searchIndex, new String[]{type}, queryString, index, results);
     }
 
@@ -97,7 +98,7 @@ public class ElasticQueryHelper {
      *
      * @throws IOException If the elastic service cannot be accessed.
      */
-    public static Map<String, Collection<String>> performQuery(String searchIndex, String[] types, JSONObject query, int index, int results) throws IOException {
+    public static Map<String, Collection<String>> performQuery(String searchIndex, String[] types, AbstractQueryBuilder query, int index, int results) throws IOException {
         if (!INITIALIZED) {
             initialize();
         }
@@ -106,7 +107,7 @@ public class ElasticQueryHelper {
         SearchResponse response = client.
                 prepareSearch(searchIndex).
                 setTypes(types).
-                setQuery(QueryBuilders.wrapperQuery(query.toString())).
+                setQuery(query).
                 setFetchSource(false).
                 setFrom(index).
                 setSize(results).
@@ -147,7 +148,7 @@ public class ElasticQueryHelper {
      *
      * @throws IOException If the elastic service cannot be accessed.
      */
-    public static Map<String, Collection<String>> performQuery(String type, JSONObject query, int index, int results) throws IOException {
+    public static Map<String, Collection<String>> performQuery(String type, AbstractQueryBuilder query, int index, int results) throws IOException {
         return performQuery(new String[]{type}, query, index, results);
     }
 
@@ -165,7 +166,7 @@ public class ElasticQueryHelper {
      *
      * @throws IOException If the elastic service cannot be accessed.
      */
-    public static Map<String, Collection<String>> performQuery(String[] types, JSONObject query, int index, int results) throws IOException {
+    public static Map<String, Collection<String>> performQuery(String[] types, AbstractQueryBuilder query, int index, int results) throws IOException {
         String elasticIndex = DataManagerSettings.getSingleton().getStringProperty(DataManagerSettings.ELASTIC_SEARCH_DEFAULT_INDEX_ID, "idrp");
         return performQuery(elasticIndex, types, query, index, results);
     }
@@ -183,7 +184,7 @@ public class ElasticQueryHelper {
      * @return A SearchHits wrapper containing all result documents and the
      * total number of results.
      */
-    public static SearchHits search(String type, JSONObject query, int index, int results) {
+    public static SearchHits search(String type, AbstractQueryBuilder query, int index, int results) {
         return search(type, query, null, null, index, results);
     }
 
@@ -197,10 +198,10 @@ public class ElasticQueryHelper {
      * @param aggregation A single aggregation builder.
      *
      *
-     * @return A SearchHits wrapper containing all result documents and the
+     * @return A SearchResponse wrapper containing all result documents and the
      * total number of results.
      */
-    public static Aggregations aggregate(String[] types, JSONObject query, AggregationBuilder aggregation) {
+    public static SearchResponse aggregate(String[] types, AbstractQueryBuilder query, AggregationBuilder aggregation) {
         return aggregate(types, query, Arrays.asList(aggregation));
     }
 
@@ -214,10 +215,10 @@ public class ElasticQueryHelper {
      * @param aggregations A list of aggregations builder.
      *
      *
-     * @return A SearchHits wrapper containing all result documents and the
+     * @return A SearchResponse wrapper containing all result documents and the
      * total number of results.
      */
-    public static Aggregations aggregate(String[] types, JSONObject query, List<AggregationBuilder> aggregations) {
+    public static SearchResponse aggregate(String[] types, AbstractQueryBuilder query, List<AggregationBuilder> aggregations) {
         if (!INITIALIZED) {
             initialize();
         }
@@ -226,18 +227,15 @@ public class ElasticQueryHelper {
         SearchRequestBuilder queryBuilder = client.
                 prepareSearch(elasticIndex).
                 setTypes(types).
-                setQuery(QueryBuilders.wrapperQuery(query.toString()));
+                setQuery(query);
 
         for (AggregationBuilder aggregation : aggregations) {
             queryBuilder = queryBuilder.addAggregation(aggregation);
         }
 
-        queryBuilder = queryBuilder.setFetchSource(true).
-                setSize(0);
+        queryBuilder = queryBuilder.setFetchSource(true).setSize(0);
 
-        SearchResponse rsponse = queryBuilder.execute().actionGet();
-        System.out.println(rsponse.getHits().getTotalHits());
-        return rsponse.getAggregations();
+        return queryBuilder.execute().actionGet();
     }
 
     /**
@@ -254,7 +252,7 @@ public class ElasticQueryHelper {
      * @return A SearchHits wrapper containing all result documents and the
      * total number of results sorted in ascending order by the provided field.
      */
-    public static SearchHits search(String type, JSONObject query, String sortField, int index, int results) {
+    public static SearchHits search(String type, AbstractQueryBuilder query, String sortField, int index, int results) {
         return search(type, query, sortField, SortOrder.ASC, index, results);
     }
 
@@ -273,7 +271,7 @@ public class ElasticQueryHelper {
      * @return A SearchHits wrapper containing all result documents and the
      * total number of results sorted by the provided field and order.
      */
-    public static SearchHits search(String type, JSONObject query, String sortField, SortOrder order, int index, int results) {
+    public static SearchHits search(String type, AbstractQueryBuilder query, String sortField, SortOrder order, int index, int results) {
         return search(new String[]{type}, query, sortField, order, index, results);
     }
 
@@ -292,7 +290,7 @@ public class ElasticQueryHelper {
      * @return A SearchHits wrapper containing all result documents and the
      * total number of results sorted by the provided field and order.
      */
-    public static SearchHits search(String[] types, JSONObject query, String sortField, SortOrder order, int index, int results) {
+    public static SearchHits search(String[] types, AbstractQueryBuilder query, String sortField, SortOrder order, int index, int results) {
         if (!INITIALIZED) {
             initialize();
         }
@@ -301,7 +299,7 @@ public class ElasticQueryHelper {
         SearchRequestBuilder queryBuilder = client.
                 prepareSearch(elasticIndex).
                 setTypes(types).
-                setQuery(QueryBuilders.wrapperQuery(query.toString())).
+                setQuery(query).
                 setFetchSource(true).
                 setFrom(index).
                 setSize(results);
@@ -344,13 +342,12 @@ public class ElasticQueryHelper {
     public static void main(String[] args) throws Exception {
 
         BoolQueryBuilder builder = QueryBuilders.boolQuery().must(QueryBuilders.queryStringQuery("f9d8950c-e0ef-4dd2-afeb-b24d58b34da8").field("measurementId.keyword"));
-        JSONObject query = new JSONObject(builder.toString());
 
         TermsAggregationBuilder aggBuilder = AggregationBuilders.terms("types").field("_type");
 
-        Aggregations response = ElasticQueryHelper.aggregate(new String[]{"experiment", "measurement", "dataasset"}, query, aggBuilder);
+        SearchResponse response = ElasticQueryHelper.aggregate(new String[]{"experiment", "measurement", "dataasset"}, builder, aggBuilder);
         // Global agg = response.get("aggs");
-        StringTerms terms = response.get("types");
+        StringTerms terms = response.getAggregations().get("types");
         for (Bucket b : terms.getBuckets()) {
             System.out.println(b.getKey() + " = " + b.getDocCount());
         }
