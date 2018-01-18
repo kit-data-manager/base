@@ -1,7 +1,7 @@
 # KIT Data Manager Base Modules
 [![Travis](https://img.shields.io/travis/rust-lang/rust.svg)](https://travis-ci.org/kit-data-manager/base) 
 
-[![Github Releases](https://img.shields.io/github/downloads/atom/atom/latest/total.svg)](https://github.com/kit-data-manager/base/releases)
+[![Github Releases](https://img.shields.io/github/downloads/kit-data-manager/base/latest/total.svg)](https://github.com/kit-data-manager/base/releases)
 
 KIT Data Manager is a generic repository architecture especially focussing on research data. This repository 
 contain all sources necessary to build the base modules of KIT Data Manager needed to implement custom
